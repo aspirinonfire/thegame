@@ -1,3 +1,17 @@
+<div class="row col-12" *ngIf="!!game">
+    <h4>{{ game.name }} :: {{ game.dateCreated | date }}</h4>
+    <div class="col-12">
+        <div [formGroup]="form" class="game-form">
+            <div class="form-group" *ngFor="let state of allstates">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" [id]="state.key" [formControlName]="state.key" />
+                    <label class="form-check-label" [attr.for]="state.key">{{ state.name }}</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <button class="btn btn-primary" id="create-game" (click)="startNewGame()">
     Start new game
 </button>

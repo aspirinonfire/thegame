@@ -29,7 +29,7 @@ export class GameService {
       dateCreated: new Date(),
       createdBy: createdBy,
       id: new Date().getTime().toString(),
-      licensePlates: [],
+      licensePlates: {},
       name: name
     };
     this.storageSvc.setValue(this.CURRENT_GAME_KEY, currentGame);
@@ -55,17 +55,15 @@ export class GameService {
     return this.storageSvc.getValue<Game[]>(this.PAST_GAMES_KEY) || [];
   }
 
-  public saveSpottedPlate(plate: UsStates | CanadaProvinces, spottedBy: string): string | LicensePlate[] {
+  public saveSpottedPlate(plate: UsStates | CanadaProvinces, spottedBy: string): string | { [K: string]: LicensePlate } {
     const currentGame = this.getCurrentGame();
     if (!currentGame) {
       return "No active game was found!";
     }
 
-    const duplicatePlate = currentGame.licensePlates
-      .filter(x => x.stateOrProvice === plate);
-
-    if (duplicatePlate.length) {
-      return `Plate was already spotted by ${duplicatePlate[0].spottedBy}!`;
+    const duplicatePlate = currentGame.licensePlates[plate];
+    if (!!duplicatePlate) {
+      return `Plate was already spotted by ${duplicatePlate.spottedBy}!`;
     }
 
     const licensePlate = {
@@ -73,7 +71,7 @@ export class GameService {
       spottedBy: spottedBy,
       stateOrProvice: plate
     }
-    currentGame.licensePlates.push(licensePlate);
+    currentGame.licensePlates[plate] = licensePlate;
     this.storageSvc.setValue(this.CURRENT_GAME_KEY, currentGame);
 
     return currentGame.licensePlates;

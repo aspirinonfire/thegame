@@ -6,7 +6,7 @@ export interface Game {
     createdBy: string,
     dateCreated: Date,
     dateFinished?: Date,
-    licensePlates: LicensePlate[]
+    licensePlates: { [K: string]: LicensePlate }
 }
 
 export interface LicensePlate {
