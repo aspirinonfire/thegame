@@ -4,11 +4,17 @@
   <div class="col-12 navbar-menu">
     <span>====== MENU ======</span>
     <ul>
-      <li><a href="#" [routerLink]="['/home']" routerLinkActive="router-link-active">Home</a></li>
-      <li><a href="#" [routerLink]="['/game']" routerLinkActive="router-link-active">Game</a></li>
-      <li><a href="#" [routerLink]="['/about']" routerLinkActive="router-link-active">About</a></li>
+      <li><a href="#" [routerLink]="['/', appRoutes.home]" routerLinkActive="router-link-active">Home</a></li>
+      <li><a href="#" [routerLink]="['/', appRoutes.game]" routerLinkActive="router-link-active">Game</a></li>
+      <li><a href="#" [routerLink]="['/', appRoutes.about]" routerLinkActive="router-link-active">About</a></li>
     </ul>
   </div>
 </div>
 
-<router-outlet></router-outlet>
+<div class="row" *ngIf="isLoading$ | async; else showRoute">
+  <div class="col-12"><h5>**** loading ****</h5></div>
+</div>
+<ng-template #showRoute>
+  <router-outlet></router-outlet>
+</ng-template>
+

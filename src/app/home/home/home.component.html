@@ -3,7 +3,8 @@
 </div>
 
 <div class="row">
-    <div class="col-6">
+    <div class="col-12 col-md-6">
+        <h4>Current game</h4>
         <div *ngIf="hasActiveGame; else showNoActiveGame">
             <div class="col-12">
                 <pre>{{ currentGame | json }}</pre>
@@ -11,12 +12,10 @@
         </div>
         <ng-template #showNoActiveGame>
             <h4>No active game!</h4>
-            <button class="btn btn-primary" id="create-game" (click)="startNewGame()">
-                Start new game
-            </button>
         </ng-template>
     </div>
-    <div class="col-6">
+    <div class="col-12 col-md-6">
+        <h4>Game history</h4>
         <div *ngIf="hasPastGames; else showNoPastGames">
             <div class="col-12">
                 <pre>{{ pastGames | json }}</pre>

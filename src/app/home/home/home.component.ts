@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { AppInitService } from 'src/app/core/services/app-init.service';
 import { Game } from 'src/app/core/models';
 import { GameService } from 'src/app/core/services/game.service';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -16,9 +15,9 @@ export class HomeComponent implements OnInit {
   public error: string | null;
 
   constructor(private readonly gameSvc: GameService,
-    private readonly router: Router, private readonly route: ActivatedRoute) {
+    private readonly router: Router) {
     
-      this.currentGame = null;
+    this.currentGame = null;
     this.pastGames = [];
     this.error = null;
   }
@@ -34,11 +33,6 @@ export class HomeComponent implements OnInit {
 
   public get hasPastGames(): boolean {
     return !!this.pastGames.length;
-  }
-
-  public startNewGame(): void {
-    this.gameSvc.createGame("Test game", "Alex");
-    this.router.navigate([`/${AppRoutes.game}`]);
   }
 
   public resetAll(): void {
