@@ -1,3 +1,3 @@
-export class AppRoutes {
-    public static home = "/home";
+export const AppRoutes = {
+    home: 'home'
 }
