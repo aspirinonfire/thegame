@@ -1,0 +1,13 @@
+.navbar-menu {
+    li {
+        display: inline;
+        text-decoration: none;
+        padding: 0 2rem 0 0;
+    }
+
+    a.router-link-active {
+        text-decoration: none;
+        color: black;
+        font-weight: bold;
+    }
+}

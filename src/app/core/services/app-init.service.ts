@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Game } from '../models';
 
 @Injectable()
 export class AppInitService {

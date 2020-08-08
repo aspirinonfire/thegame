@@ -6,7 +6,14 @@ const routes: Routes = [
   {
     path: AppRoutes.home,
     loadChildren: () => import('../home/home.module').then(m => m.HomeModule),
-
+  },
+  {
+    path: AppRoutes.game,
+    loadChildren: () => import('../game/game.module').then(m => m.GameModule)
+  },
+  {
+    path: AppRoutes.about,
+    loadChildren: () => import('../about/about.module').then(m => m.AboutModule)
   },
   {
     path: '',

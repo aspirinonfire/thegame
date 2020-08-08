@@ -5,21 +5,8 @@ import { CoreModule } from './core/core.module'
 import { AppComponent } from './app.component';
 import { RouterModule } from '@angular/router';
 import { AppInitService } from './core/services/app-init.service';
-import { of } from 'rxjs';
-import { delay, map } from 'rxjs/operators';
-
-// TODO export to core
-export function appInitFactory(appInitService: AppInitService) {
-  return (): Promise<void> => {
-    // TODO run real data init call
-    return of("some_data")
-      .pipe(delay(2000))
-      .pipe(map(x => {
-        return appInitService.loadInitData(x);
-      }))
-      .toPromise();
-  }
-}
+import { appInitFactory } from './core/appInitFactory';
+import { GameService } from './core/services/game.service';
 
 @NgModule({
   declarations: [

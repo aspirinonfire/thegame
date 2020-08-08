@@ -1,1 +1,30 @@
-<p>home works!</p>
+<div class="row col-12 alert alert-danger" *ngIf="!!error">
+    {{ error }}
+</div>
+
+<div class="row">
+    <div class="col-6">
+        <div *ngIf="hasActiveGame; else showNoActiveGame">
+            <div class="col-12">
+                <pre>{{ currentGame | json }}</pre>
+            </div>
+        </div>
+        <ng-template #showNoActiveGame>
+            <h4>No active game!</h4>
+            <button class="btn btn-primary" id="create-game" (click)="startNewGame()">
+                Start new game
+            </button>
+        </ng-template>
+    </div>
+    <div class="col-6">
+        <div *ngIf="hasPastGames; else showNoPastGames">
+            <div class="col-12">
+                <pre>{{ pastGames | json }}</pre>
+            </div>
+        </div>
+        <ng-template #showNoPastGames>
+            No past games
+        </ng-template>
+    </div>
+</div>
+<button class="btn btn-danger" (click)="resetAll()">Reset All</button>

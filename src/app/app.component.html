@@ -1,10 +1,14 @@
 <h5>License Plate Game</h5>
 
 <div class="row">
-  <div class="col-12">
-    ====== MENU ======
+  <div class="col-12 navbar-menu">
+    <span>====== MENU ======</span>
+    <ul>
+      <li><a href="#" [routerLink]="['/home']" routerLinkActive="router-link-active">Home</a></li>
+      <li><a href="#" [routerLink]="['/game']" routerLinkActive="router-link-active">Game</a></li>
+      <li><a href="#" [routerLink]="['/about']" routerLinkActive="router-link-active">About</a></li>
+    </ul>
   </div>
 </div>
-
 
 <router-outlet></router-outlet>
