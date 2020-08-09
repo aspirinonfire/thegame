@@ -8,28 +8,28 @@ Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app w
 
 ## TODO
 #### Functional game
-[x] Able to check off spotted plates.
+- [x] Able to check off spotted plates.
 #### Basic CSS
-[] Sticky header and menu.
-[] Body contents.
-[] Basic responsiveness.
-[] Colors.
+- [ ] Sticky header and menu.
+- [ ] Body contents.
+- [ ] Basic responsiveness.
+- [ ] Colors.
 #### Azure deployment.
-[] Free tier.
-[] TLS and some basic domain name.
+- [ ] Free tier.
+- [ ] TLS and some basic domain name.
 #### PWA
-[] Allow Android app installation.
-[] Offline gameplay.
+- [ ] Allow Android app installation.
+- [ ] Offline gameplay.
 #### Clean UI
-[] Previous game stats.
-[] US and Canada Map with terriotires lighting up.
-[] License plate pictures.
-[] Plate picker scroll.
+- [ ] Previous game stats.
+- [ ] US and Canada Map with terriotires lighting up.
+- [ ] License plate pictures.
+- [ ] Plate picker scroll.
 #### Backend
-[] .Net Core 3+.
-[] MSSQL persistence.
-[] Google auth.
+- [ ] .Net Core 3+.
+- [ ] MSSQL persistence.
+- [ ] Google auth.
 #### Multiuser support
-[] Domain models.
-[] SignalR.
-[] Online/offline sync.
+- [ ] Domain models.
+- [ ] SignalR.
+- [ ] Online/offline sync.
