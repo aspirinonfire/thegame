@@ -61,19 +61,19 @@ export class GameService {
       return "No active game was found!";
     }
 
-    const duplicatePlate = currentGame.licensePlates[plate];
-    if (!!duplicatePlate) {
-      return `Plate was already spotted by ${duplicatePlate.spottedBy}!`;
+    if (!!currentGame.licensePlates[plate]) {
+      delete currentGame.licensePlates[plate];
+      this.storageSvc.setValue(this.CURRENT_GAME_KEY, currentGame);
+    } else {
+      const licensePlate = {
+        dateSpotted: new Date(),
+        spottedBy: spottedBy,
+        stateOrProvice: plate
+      }
+      currentGame.licensePlates[plate] = licensePlate;
+      this.storageSvc.setValue(this.CURRENT_GAME_KEY, currentGame);
     }
-
-    const licensePlate = {
-      dateSpotted: new Date(),
-      spottedBy: spottedBy,
-      stateOrProvice: plate
-    }
-    currentGame.licensePlates[plate] = licensePlate;
-    this.storageSvc.setValue(this.CURRENT_GAME_KEY, currentGame);
-
+    
     return currentGame.licensePlates;
   }
 

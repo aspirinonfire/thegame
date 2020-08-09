@@ -6,6 +6,9 @@
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" [id]="state.key" [formControlName]="state.key" />
                     <label class="form-check-label" [attr.for]="state.key">{{ state.name }}</label>
+                    <span class="spotted-details" *ngIf="state.showDetails">
+                        On {{ state.spottedOn | date: 'E, MMM dd @ h:mm aaa' }} by {{ state.spottedBy }}
+                    </span>
                 </div>
             </div>
         </div>
