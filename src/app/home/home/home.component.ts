@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Game } from 'src/app/core/models';
+import { Game, GameVm } from 'src/app/core/models';
 import { GameService } from 'src/app/core/services/game.service';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AppRoutes } from 'src/app/core/constants';
@@ -10,8 +10,8 @@ import { AppRoutes } from 'src/app/core/constants';
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-  public currentGame: Game | null;
-  public pastGames: Game[];
+  public currentGame: GameVm | null;
+  public pastGames: GameVm[];
   public error: string | null;
 
   constructor(private readonly gameSvc: GameService,
@@ -23,12 +23,12 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.currentGame = this.gameSvc.getCurrentGame();
-    this.pastGames = this.gameSvc.getPastGames();
-  }
-
-  public get hasActiveGame(): boolean {
-    return !!this.currentGame;
+    const currGame = this.gameSvc.getCurrentGame();
+    if (!!currGame) {
+      this.currentGame = new GameVm(currGame);
+    }
+    this.pastGames = this.gameSvc.getPastGames()
+      .map(g => new GameVm(g));
   }
 
   public get hasPastGames(): boolean {
