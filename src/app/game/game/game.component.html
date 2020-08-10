@@ -1,5 +1,5 @@
 <div class="card">
-    <div class="card-header">
+    <div class="card-header" *ngIf="!!game">
         <h4>{{ game.name }} :: {{ game.dateCreated | date }}</h4>
     </div>
     <div class="card-body">
