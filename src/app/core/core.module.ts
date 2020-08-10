@@ -13,6 +13,10 @@ import { RouterModule } from '@angular/router';
     CoreRoutingModule,
     NgbModule,
     RouterModule
+  ],
+  exports: [
+    NgbModule,
+    RouterModule
   ]
 })
 export class CoreModule { }

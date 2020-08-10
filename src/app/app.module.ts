@@ -15,7 +15,6 @@ import { GameService } from './core/services/game.service';
   imports: [
     BrowserModule,
     CoreModule,
-    RouterModule
   ],
   providers: [
     AppInitService,

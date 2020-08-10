@@ -2,28 +2,33 @@
     {{ error }}
 </div>
 
-<div class="row">
-    <div class="col-12 col-md-6">
-        <h4>Current game</h4>
-        <div *ngIf="hasActiveGame; else showNoActiveGame">
-            <div class="col-12">
-                <pre>{{ currentGame | json }}</pre>
+<div class="card">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-12 col-md-6">
+                <h4>Current game</h4>
+                <div *ngIf="hasActiveGame; else showNoActiveGame">
+                    <div class="col-12">
+                        <pre>{{ currentGame | json }}</pre>
+                    </div>
+                </div>
+                <ng-template #showNoActiveGame>
+                    <h4>No active games!</h4>
+                </ng-template>
+            </div>
+            <div class="col-12 col-md-6">
+                <h4>Game history</h4>
+                <div *ngIf="hasPastGames; else showNoPastGames">
+                    <div class="col-12">
+                        <pre>{{ pastGames | json }}</pre>
+                    </div>
+                </div>
+                <ng-template #showNoPastGames>
+                    No past games
+                </ng-template>
             </div>
         </div>
-        <ng-template #showNoActiveGame>
-            <h4>No active games!</h4>
-        </ng-template>
-    </div>
-    <div class="col-12 col-md-6">
-        <h4>Game history</h4>
-        <div *ngIf="hasPastGames; else showNoPastGames">
-            <div class="col-12">
-                <pre>{{ pastGames | json }}</pre>
-            </div>
-        </div>
-        <ng-template #showNoPastGames>
-            No past games
-        </ng-template>
     </div>
 </div>
+
 <button class="btn btn-danger" (click)="resetAll()">Reset All</button>

@@ -9,10 +9,12 @@ import { AppRoutes } from './core/constants';
 })
 export class AppComponent {
   private readonly _isLoading$: Subject<boolean>;
+  public isMenuCollapsed: boolean;
 
   constructor() {
     this._isLoading$ = new Subject<boolean>();
     this._isLoading$.next(false);
+    this.isMenuCollapsed = true;
   }
 
   public get isLoading$(): Observable<boolean> {

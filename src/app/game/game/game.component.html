@@ -1,20 +1,25 @@
-<div class="row col-12" *ngIf="!!game">
-    <h4>{{ game.name }} :: {{ game.dateCreated | date }}</h4>
-    <div class="col-12">
-        <div [formGroup]="form" class="game-form">
-            <div class="form-group" *ngFor="let state of allstates">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" [id]="state.key" [formControlName]="state.key" />
-                    <label class="form-check-label" [attr.for]="state.key">{{ state.name }}</label>
-                    <span class="spotted-details" *ngIf="state.showDetails">
-                        On {{ state.spottedOn | date: 'E, MMM dd @ h:mm aaa' }} by {{ state.spottedBy }}
-                    </span>
+<div class="card">
+    <div class="card-header">
+        <h4>{{ game.name }} :: {{ game.dateCreated | date }}</h4>
+    </div>
+    <div class="card-body">
+        <div class="row col-12" *ngIf="!!game">
+            <div class="col-12">
+                <div [formGroup]="form" class="game-form">
+                    <div class="form-group" *ngFor="let state of allstates">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" [id]="state.key" [formControlName]="state.key" />
+                            <label class="form-check-label" [attr.for]="state.key">{{ state.name }}</label>
+                            <span class="spotted-details" *ngIf="state.showDetails">
+                                On {{ state.spottedOn | date: 'E, MMM dd @ h:mm aaa' }} by {{ state.spottedBy }}
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+        <button class="btn btn-primary" id="create-game" (click)="startNewGame()">
+            Start new game
+        </button>
     </div>
 </div>
-
-<button class="btn btn-primary" id="create-game" (click)="startNewGame()">
-    Start new game
-</button>
