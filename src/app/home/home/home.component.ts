@@ -35,6 +35,35 @@ export class HomeComponent implements OnInit {
     return !!this.pastGames.length;
   }
 
+  public get spottedUsStates(): ReadonlyMap<string, number>{
+    if (!this.hasPastGames) {
+      return new Map<string, number>();
+    }
+
+    const spottedUsStates = this.pastGames
+      .map(pg => pg.licensePlates)
+      .reduce((sum, plate) => {
+        Object.values(plate)
+          .filter(val => val.country === 'US')
+          .forEach(val => {
+            let counter = sum.get(val.stateOrProvice);
+            if (!counter) {
+              counter = 0;
+            }
+            counter++;
+            sum.set(val.stateOrProvice, counter);
+          });
+
+        return sum;
+      }, new Map<string, number>());
+
+    for (const key of spottedUsStates.keys()) {
+      const counter = spottedUsStates.get(key);
+      spottedUsStates.set(key, (counter || 0) / this.pastGames.length);
+    }
+    return spottedUsStates;
+  }
+
   openCurrentGame() {
     this.router.navigate(['..', AppRoutes.game]);
   }

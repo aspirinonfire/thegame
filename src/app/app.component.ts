@@ -21,6 +21,12 @@ export class AppComponent {
     return this._isLoading$.asObservable();
   }
 
+  public forceCollapse() {
+    if (!this.isMenuCollapsed) {
+      this.isMenuCollapsed = true;
+    }
+  }
+
   public get appRoutes() {
     return AppRoutes;
   }

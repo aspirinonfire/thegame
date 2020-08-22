@@ -2,7 +2,7 @@
     {{ error }}
 </div>
 <div class="row">
-    <div class="col-md-6 col-12">
+    <div class="col-12">
         <div class="card h-100 mb-3">
             <div class="card-header">
                 <h4>Current game</h4>
@@ -24,13 +24,16 @@
             </div>
         </div>
     </div>
-    <div class="col-md-6 col-12">
+    <div class="col-12">
         <div class="card">
             <div class="card-header">
                 <h4>Game history</h4>
             </div>
             <div class="card-body">
                 <div *ngIf="hasPastGames; else showNoPastGames">
+                    <div class="col-12">
+                        <app-us-map [spottedStatesLkp]="spottedUsStates"></app-us-map>
+                    </div>
                     <ul class="list-group list-group-flush" *ngFor="let pastGame of pastGames">
                         <li class="list-group-item past-game">
                             <p><strong>{{ pastGame.name }}</strong> started on {{ pastGame.dateCreated | date }}, and lasted for
