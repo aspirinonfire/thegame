@@ -6,14 +6,10 @@ import { distinctUntilChanged } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { AppInitDataService } from 'src/app/core/services/app-init-data.service';
 
-export interface plateVm {
+export interface plateVm extends LicensePlate {
   key: string,
-  stateOrProvice: string,
-  country: Country,
   name: string,
   showDetails: boolean,
-  spottedBy: string | null,
-  spottedOn: Date | null
 }
 
 @Component({
@@ -50,16 +46,15 @@ export class GameComponent implements OnInit, OnDestroy {
         .subscribe(val => {
           if (val !== null) {
             const spottedBy = this.initData.account.name;
-            
             this.gameSvc.saveSpottedPlate(state.stateOrProvice, state.country, spottedBy);
             if (val) {
               state.showDetails = true;
               state.spottedBy = spottedBy;
-              state.spottedOn = new Date();
+              state.dateSpotted = new Date();
             } else {
               state.showDetails = false;
               state.spottedBy = null;
-              state.spottedOn = null;
+              state.dateSpotted = null;
             }
           }
         });
@@ -116,12 +111,12 @@ export class GameComponent implements OnInit, OnDestroy {
 
         return <plateVm>{
           key: key,
-          stateOrProvice: ter.shortName,
           name: ter.country != 'US' ? `${ter.longName} (${ter.country})` : ter.longName,
+          stateOrProvice: ter.shortName,
+          dateSpotted: spottedOn,
           country: ter.country,
           showDetails: showDetails,
-          spottedBy: spottedBy,
-          spottedOn: spottedOn
+          spottedBy: spottedBy
         }
       });
   }
@@ -132,7 +127,9 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     Object.keys(this.game.licensePlates)
-      .forEach(key => {
+      .forEach(stateOrProvince => {
+        const plate = this.game?.licensePlates[stateOrProvince];
+        const key = `${plate?.country}-${plate?.stateOrProvice}`;
         const ctrl = this.form.get(key);
         if (!ctrl) {
           return;

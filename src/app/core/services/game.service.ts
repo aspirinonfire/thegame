@@ -55,23 +55,24 @@ export class GameService {
     return this.storageSvc.getValue<Game[]>(this.PAST_GAMES_KEY) || [];
   }
 
-  public saveSpottedPlate(plate: string, country: Country, spottedBy: string): string | { [K: string] : LicensePlate } {
+  public saveSpottedPlate(stateOrProvice: string, country: Country, spottedBy: string): string | { [K: string] : LicensePlate } {
     const currentGame = this.getCurrentGame();
     if (!currentGame) {
       return "No active game was found!";
     }
+    const key = `${country}-${stateOrProvice}`;
 
-    if (!!currentGame.licensePlates[plate]) {
-      delete currentGame.licensePlates[plate];
+    if (!!currentGame.licensePlates[key]) {
+      delete currentGame.licensePlates[key];
       this.storageSvc.setValue(this.CURRENT_GAME_KEY, currentGame);
     } else {
       const licensePlate = {
         dateSpotted: new Date(),
         spottedBy: spottedBy,
-        stateOrProvice: plate,
+        stateOrProvice: stateOrProvice,
         country: country
       };
-      currentGame.licensePlates[licensePlate.stateOrProvice] = licensePlate;
+      currentGame.licensePlates[key] = licensePlate;
       this.storageSvc.setValue(this.CURRENT_GAME_KEY, currentGame);
     }
     

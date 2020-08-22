@@ -12,6 +12,6 @@ export interface Game {
 export interface LicensePlate {
     stateOrProvice: string,
     country: Country,
-    dateSpotted: Date,
-    spottedBy: string
+    dateSpotted: Date | null,
+    spottedBy: string | null
 }
