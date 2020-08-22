@@ -1,6 +1,5 @@
 <header>
-  <h3>The License Plate Game</h3>
-  <nav class="navbar fixed-top navbar-expand-md navbar-dark bg-dark">
+  <nav class="navbar fixed-top navbar-expand-md navbar-dark bg-dark mb-10">
     <button class="navbar-toggler" type="button" (click)="isMenuCollapsed = !isMenuCollapsed"
       data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
       aria-expanded="false" aria-label="Toggle navigation">
@@ -20,10 +19,11 @@
         </li>
       </ul>
     </div>
+    <h5 class="text-muted">The License Plate Game</h5>
   </nav>
 </header>
 
-<div class="container-fluid">
+<div class="container-fluid app-contents">
   <div class="row" *ngIf="isLoading$ | async; else showRoute">
     <div class="col-12"><h5>**** loading ****</h5></div>
   </div>

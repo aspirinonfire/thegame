@@ -4,7 +4,7 @@ import { CoreModule } from './core/core.module'
 
 import { AppComponent } from './app.component';
 import { RouterModule } from '@angular/router';
-import { AppInitService } from './core/services/app-init.service';
+import { AppInitDataService } from './core/services/app-init-data.service';
 import { appInitFactory } from './core/appInitFactory';
 import { GameService } from './core/services/game.service';
 
@@ -17,10 +17,10 @@ import { GameService } from './core/services/game.service';
     CoreModule,
   ],
   providers: [
-    AppInitService,
+    AppInitDataService,
     {
       provide: APP_INITIALIZER,
-      deps: [AppInitService],
+      deps: [AppInitDataService],
       useFactory: appInitFactory,
       multi: true
     }],

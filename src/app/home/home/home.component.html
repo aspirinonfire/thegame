@@ -9,7 +9,7 @@
             </div>
             <div class="card-body">
                 <div *ngIf="!!currentGame; else showNoActiveGame">
-                    <div class="col-12">
+                    <div class="col-12 active-game" (click)="openCurrentGame()">
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item past-game">
                                 <p><strong>{{ currentGame.name }}</strong> going for {{ currentGame.gameDuration }} day(s)</p>
@@ -46,5 +46,3 @@
         </div>
     </div>
 </div>
-
-<button class="btn btn-danger" (click)="resetAll()">Reset All</button>

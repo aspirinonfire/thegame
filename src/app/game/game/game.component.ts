@@ -1,12 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { GameService } from 'src/app/core/services/game.service';
-import { Game, UsStates, CanadaProvinces, LicensePlate } from 'src/app/core/models';
+import { Game } from 'src/app/core/models';
 import { FormBuilder, FormGroup, FormControl, AbstractControl } from '@angular/forms';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
+import { AppInitDataService } from 'src/app/core/services/app-init-data.service';
 
 export interface plateVm {
-  key: UsStates | CanadaProvinces,
+  key: string,
   name: string,
   showDetails: boolean,
   spottedBy: string | null,
@@ -25,7 +26,10 @@ export class GameComponent implements OnInit, OnDestroy {
   form: FormGroup;
   allstates: plateVm[];
 
-  constructor(private readonly gameSvc: GameService, private readonly fb: FormBuilder) {
+  constructor(private readonly gameSvc: GameService,
+    private readonly initData: AppInitDataService,
+    private readonly fb: FormBuilder) {
+    
     this.game = null;
     this.form = this.fb.group({});
     this.allstates = [];
@@ -35,37 +39,15 @@ export class GameComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.game = this.gameSvc.getCurrentGame();
 
-    // TODO add Canada
-    // TODO make it app singleton
-    this.allstates = Object.keys(UsStates)
-      .map(key => {
-        let spottedBy = null;
-        let spottedOn = null;
-        let showDetails = false;
-        if (this.game) {
-          const sighting = this.game.licensePlates[key];
-          spottedBy = sighting?.spottedBy;
-          spottedOn = sighting?.dateSpotted;
-          showDetails = !!sighting;
-        }
-
-        return <plateVm>{
-          key: key,
-          name: (<any>UsStates)[key],
-          showDetails: showDetails,
-          spottedBy: spottedBy,
-          spottedOn: spottedOn
-        }
-      });
+    this.setVm();
 
     for (const state of this.allstates) {
       const ctrl = this.fb.control(null);
       const sub = ctrl.valueChanges
         .pipe(distinctUntilChanged())
         .subscribe(val => {
-          console.log(state.key, val);
           if (val !== null) {
-            const spottedBy = "Alex";
+            const spottedBy = this.initData.account.name;
             this.gameSvc.saveSpottedPlate(state.key, spottedBy);
             if (val) {
               state.showDetails = true;
@@ -89,10 +71,39 @@ export class GameComponent implements OnInit, OnDestroy {
     this._subs.forEach(sub => sub.unsubscribe());
   }
 
+  public get spottedStates() {
+    return this.game?.licensePlates;
+  }
+
   public startNewGame(): void {
-    this.game = this.gameSvc.createGame("Test game", "Alex");
+    this.game = this.gameSvc.createGame("Test game", this.initData.account.name);
+    this.setVm();
     this.loadFormValues();
     this.form.reset();
+  }
+
+  private setVm() {
+    this.allstates = [...this.initData.gameData.values()]
+      .map(ter => {
+        const key = ter.shortName;
+        let spottedBy = null;
+        let spottedOn = null;
+        let showDetails = false;
+        if (this.game) {
+          const sighting = this.game.licensePlates[key];
+          spottedBy = sighting?.spottedBy;
+          spottedOn = sighting?.dateSpotted;
+          showDetails = !!sighting;
+        }
+
+        return <plateVm>{
+          key: key,
+          name: ter.country != 'US' ? `${ter.longName} (${ter.country})` : ter.longName,
+          showDetails: showDetails,
+          spottedBy: spottedBy,
+          spottedOn: spottedOn
+        }
+      });
   }
 
   private loadFormValues() {
@@ -101,8 +112,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     Object.keys(this.game.licensePlates)
-      .forEach(k => {
-        const key =  <UsStates | CanadaProvinces>k;
+      .forEach(key => {
         const ctrl = this.form.get(key);
         if (!ctrl) {
           return;

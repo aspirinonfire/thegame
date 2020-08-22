@@ -1,3 +1,4 @@
 export * from './game';
-export * from './territories';
 export * from './gameVm';
+export * from './gameDataTerritory';
+export * from './accounts';

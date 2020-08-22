@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { Game, UsStates, CanadaProvinces, LicensePlate } from '../models'
+import { Game, LicensePlate } from '../models'
 import { LocalStorageService } from './local-storage.service';
-import { AppInitService } from './app-init.service';
+import { AppInitDataService } from './app-init-data.service';
 
 @Injectable({
   providedIn: 'root'
@@ -55,7 +55,7 @@ export class GameService {
     return this.storageSvc.getValue<Game[]>(this.PAST_GAMES_KEY) || [];
   }
 
-  public saveSpottedPlate(plate: UsStates | CanadaProvinces, spottedBy: string): string | { [K: string]: LicensePlate } {
+  public saveSpottedPlate(plate: string, spottedBy: string): string | { [K: string] : LicensePlate } {
     const currentGame = this.getCurrentGame();
     if (!currentGame) {
       return "No active game was found!";
@@ -70,7 +70,7 @@ export class GameService {
         spottedBy: spottedBy,
         stateOrProvice: plate
       }
-      currentGame.licensePlates[plate] = licensePlate;
+      currentGame.licensePlates[licensePlate.stateOrProvice] = licensePlate;
       this.storageSvc.setValue(this.CURRENT_GAME_KEY, currentGame);
     }
     

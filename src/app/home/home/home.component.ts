@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { Game, GameVm } from 'src/app/core/models';
+import { GameVm } from 'src/app/core/models';
 import { GameService } from 'src/app/core/services/game.service';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
 import { AppRoutes } from 'src/app/core/constants';
 
 @Component({
@@ -35,8 +35,7 @@ export class HomeComponent implements OnInit {
     return !!this.pastGames.length;
   }
 
-  public resetAll(): void {
-    this.gameSvc.resetAll();
-    this.ngOnInit();
+  openCurrentGame() {
+    this.router.navigate(['..', AppRoutes.game]);
   }
 }

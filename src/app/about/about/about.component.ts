@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { GameService } from 'src/app/core/services/game.service';
 
 @Component({
   selector: 'app-about',
@@ -7,9 +8,12 @@ import { Component, OnInit } from '@angular/core';
 })
 export class AboutComponent implements OnInit {
 
-  constructor() { }
+  constructor(private readonly gameSvc: GameService) { }
 
   ngOnInit(): void {
   }
 
+  public resetAll(): void {
+    this.gameSvc.resetAll();
+  }
 }

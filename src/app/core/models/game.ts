@@ -1,5 +1,3 @@
-import { UsStates, CanadaProvinces } from "./territories";
-
 export interface Game {
     id: string,
     name: string,
@@ -10,7 +8,7 @@ export interface Game {
 }
 
 export interface LicensePlate {
-    stateOrProvice: UsStates | CanadaProvinces,
+    stateOrProvice: string,
     dateSpotted: Date,
     spottedBy: string
 }
