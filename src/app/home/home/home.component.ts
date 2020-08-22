@@ -35,6 +35,14 @@ export class HomeComponent implements OnInit {
     return !!this.pastGames.length;
   }
 
+  public get numOfGames(): number {
+    if (!this.hasPastGames) {
+      return 0;
+    }
+
+    return this.pastGames.length;
+  }
+
   public get spottedUsStates(): ReadonlyMap<string, number>{
     if (!this.hasPastGames) {
       return new Map<string, number>();
@@ -56,11 +64,6 @@ export class HomeComponent implements OnInit {
 
         return sum;
       }, new Map<string, number>());
-
-    for (const key of spottedUsStates.keys()) {
-      const counter = spottedUsStates.get(key);
-      spottedUsStates.set(key, (counter || 0) / this.pastGames.length);
-    }
     return spottedUsStates;
   }
 

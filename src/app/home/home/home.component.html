@@ -32,7 +32,7 @@
             <div class="card-body">
                 <div *ngIf="hasPastGames; else showNoPastGames">
                     <div class="col-12">
-                        <app-us-map [spottedStatesLkp]="spottedUsStates"></app-us-map>
+                        <app-us-map [spottedStatesLkp]="spottedUsStates" [numberOfGames]="numOfGames"></app-us-map>
                     </div>
                     <ul class="list-group list-group-flush" *ngFor="let pastGame of pastGames">
                         <li class="list-group-item past-game">
