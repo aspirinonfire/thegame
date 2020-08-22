@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Game, LicensePlate } from '../models'
+import { Game, LicensePlate, Country } from '../models'
 import { LocalStorageService } from './local-storage.service';
 import { AppInitDataService } from './app-init-data.service';
 
@@ -55,7 +55,7 @@ export class GameService {
     return this.storageSvc.getValue<Game[]>(this.PAST_GAMES_KEY) || [];
   }
 
-  public saveSpottedPlate(plate: string, spottedBy: string): string | { [K: string] : LicensePlate } {
+  public saveSpottedPlate(plate: string, country: Country, spottedBy: string): string | { [K: string] : LicensePlate } {
     const currentGame = this.getCurrentGame();
     if (!currentGame) {
       return "No active game was found!";
@@ -68,8 +68,9 @@ export class GameService {
       const licensePlate = {
         dateSpotted: new Date(),
         spottedBy: spottedBy,
-        stateOrProvice: plate
-      }
+        stateOrProvice: plate,
+        country: country
+      };
       currentGame.licensePlates[licensePlate.stateOrProvice] = licensePlate;
       this.storageSvc.setValue(this.CURRENT_GAME_KEY, currentGame);
     }

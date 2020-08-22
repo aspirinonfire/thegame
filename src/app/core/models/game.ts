@@ -1,3 +1,5 @@
+import { Country } from './gameDataTerritory';
+
 export interface Game {
     id: string,
     name: string,
@@ -9,6 +11,7 @@ export interface Game {
 
 export interface LicensePlate {
     stateOrProvice: string,
+    country: Country,
     dateSpotted: Date,
     spottedBy: string
 }

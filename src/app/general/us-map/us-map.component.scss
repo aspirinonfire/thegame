@@ -1,0 +1,19 @@
+:host {
+	display: inline-block;
+	overflow: hidden;
+	position: relative;
+}
+
+.svg {
+  display: none;
+}
+
+.state {
+  fill:lightsteelblue;
+}
+
+@for $i from 1 through 10 {
+	.weight-#{$i * 10} {
+		fill: rgba(255, 100, 0, $i / 10)
+	}
+}

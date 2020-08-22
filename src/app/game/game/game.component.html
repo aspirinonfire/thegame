@@ -5,6 +5,10 @@
     <div class="card-body">
         <div class="row" *ngIf="!!game">
             <div class="col-12">
+                <h5>Spotted States</h5>
+                <app-us-map [spottedStatesLkp]="spottedUsStates"></app-us-map>
+            </div>
+            <div class="col-12">
                 <div [formGroup]="form" class="game-form">
                     <div class="form-group" *ngFor="let state of allstates">
                         <div class="form-check">

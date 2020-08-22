@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { GameService } from 'src/app/core/services/game.service';
-import { Game } from 'src/app/core/models';
+import { Game, Country, LicensePlate } from 'src/app/core/models';
 import { FormBuilder, FormGroup, FormControl, AbstractControl } from '@angular/forms';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
@@ -8,6 +8,8 @@ import { AppInitDataService } from 'src/app/core/services/app-init-data.service'
 
 export interface plateVm {
   key: string,
+  stateOrProvice: string,
+  country: Country,
   name: string,
   showDetails: boolean,
   spottedBy: string | null,
@@ -48,7 +50,8 @@ export class GameComponent implements OnInit, OnDestroy {
         .subscribe(val => {
           if (val !== null) {
             const spottedBy = this.initData.account.name;
-            this.gameSvc.saveSpottedPlate(state.key, spottedBy);
+            
+            this.gameSvc.saveSpottedPlate(state.stateOrProvice, state.country, spottedBy);
             if (val) {
               state.showDetails = true;
               state.spottedBy = spottedBy;
@@ -71,8 +74,23 @@ export class GameComponent implements OnInit, OnDestroy {
     this._subs.forEach(sub => sub.unsubscribe());
   }
 
-  public get spottedStates() {
-    return this.game?.licensePlates;
+  public get spottedUsStates() {
+    const game = this.gameSvc.getCurrentGame();
+    if (!game) {
+      return new Map<string, number>();
+    }
+
+    const map = Object.keys(game.licensePlates)
+      .map(key => game.licensePlates[key] || <LicensePlate>{})
+      .filter(plate => {
+        return plate.country === 'US'
+      })
+      .reduce((acc, plate) => {
+        acc.set(plate.stateOrProvice, 1);
+        return acc;
+      }, new Map<string, number>());
+
+    return map;
   }
 
   public startNewGame(): void {
@@ -85,7 +103,7 @@ export class GameComponent implements OnInit, OnDestroy {
   private setVm() {
     this.allstates = [...this.initData.gameData.values()]
       .map(ter => {
-        const key = ter.shortName;
+        const key = `${ter.country}-${ter.shortName}`;
         let spottedBy = null;
         let spottedOn = null;
         let showDetails = false;
@@ -98,7 +116,9 @@ export class GameComponent implements OnInit, OnDestroy {
 
         return <plateVm>{
           key: key,
+          stateOrProvice: ter.shortName,
           name: ter.country != 'US' ? `${ter.longName} (${ter.country})` : ter.longName,
+          country: ter.country,
           showDetails: showDetails,
           spottedBy: spottedBy,
           spottedOn: spottedOn

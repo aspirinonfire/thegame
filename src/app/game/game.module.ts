@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { GameRoutingModule } from './game-routing.module';
 import { GameComponent } from './game/game.component';
 import { ReactiveFormsModule } from '@angular/forms';
+import { GeneralModule } from '../general/general.module';
 
 
 @NgModule({
@@ -11,7 +12,8 @@ import { ReactiveFormsModule } from '@angular/forms';
   imports: [
     CommonModule,
     GameRoutingModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    GeneralModule
   ]
 })
 export class GameModule { }
