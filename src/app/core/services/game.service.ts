@@ -66,10 +66,10 @@ export class GameService {
       delete currentGame.licensePlates[key];
       this.storageSvc.setValue(this.CURRENT_GAME_KEY, currentGame);
     } else {
-      const licensePlate = {
+      const licensePlate = <LicensePlate>{
         dateSpotted: new Date(),
         spottedBy: spottedBy,
-        stateOrProvice: stateOrProvice,
+        stateOrProvince: stateOrProvice,
         country: country
       };
       currentGame.licensePlates[key] = licensePlate;

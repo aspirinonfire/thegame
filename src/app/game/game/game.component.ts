@@ -46,7 +46,7 @@ export class GameComponent implements OnInit, OnDestroy {
         .subscribe(val => {
           if (val !== null) {
             const spottedBy = this.initData.account.name;
-            this.gameSvc.saveSpottedPlate(state.stateOrProvice, state.country, spottedBy);
+            this.gameSvc.saveSpottedPlate(state.stateOrProvince, state.country, spottedBy);
             if (val) {
               state.showDetails = true;
               state.spottedBy = spottedBy;
@@ -81,7 +81,7 @@ export class GameComponent implements OnInit, OnDestroy {
         return plate.country === 'US'
       })
       .reduce((acc, plate) => {
-        acc.set(plate.stateOrProvice, 1);
+        acc.set(plate.stateOrProvince, 1);
         return acc;
       }, new Map<string, number>());
 
@@ -112,7 +112,7 @@ export class GameComponent implements OnInit, OnDestroy {
         return <plateVm>{
           key: key,
           name: ter.country != 'US' ? `${ter.longName} (${ter.country})` : ter.longName,
-          stateOrProvice: ter.shortName,
+          stateOrProvince: ter.shortName,
           dateSpotted: spottedOn,
           country: ter.country,
           showDetails: showDetails,
@@ -129,7 +129,7 @@ export class GameComponent implements OnInit, OnDestroy {
     Object.keys(this.game.licensePlates)
       .forEach(stateOrProvince => {
         const plate = this.game?.licensePlates[stateOrProvince];
-        const key = `${plate?.country}-${plate?.stateOrProvice}`;
+        const key = `${plate?.country}-${plate?.stateOrProvince}`;
         const ctrl = this.form.get(key);
         if (!ctrl) {
           return;

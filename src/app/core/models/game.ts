@@ -10,7 +10,7 @@ export interface Game {
 }
 
 export interface LicensePlate {
-    stateOrProvice: string,
+    stateOrProvince: string,
     country: Country,
     dateSpotted: Date | null,
     spottedBy: string | null

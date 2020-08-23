@@ -2,8 +2,8 @@
     {{ error }}
 </div>
 <div class="row">
-    <div class="col-12">
-        <div class="card h-100 mb-3">
+    <div class="col-12 mb-3">
+        <div class="card">
             <div class="card-header">
                 <h4>Current game</h4>
             </div>
@@ -21,6 +21,9 @@
                 <ng-template #showNoActiveGame>
                     <h4>No active games!</h4>
                 </ng-template>
+            </div>
+            <div class="card-footer" *ngIf="!!lastSpot">
+                <small>Last spot {{ lastSpot.stateOrProvince }} on {{ lastSpot?.dateSpotted | date: 'E, MMM dd @ h:mm aaa' }} by {{ lastSpot?.spottedBy }}</small>
             </div>
         </div>
     </div>
