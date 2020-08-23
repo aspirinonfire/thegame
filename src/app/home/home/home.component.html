@@ -23,7 +23,7 @@
                 </ng-template>
             </div>
             <div class="card-footer" *ngIf="!!lastSpot">
-                <small>Last spot {{ lastSpot.stateOrProvince }} on {{ lastSpot?.dateSpotted | date: 'E, MMM dd @ h:mm aaa' }} by {{ lastSpot?.spottedBy }}</small>
+                <small>Last spot <strong>{{ lastSpot.stateOrProvince }}</strong> on <strong>{{ lastSpot?.dateSpotted | date: 'E, MMM dd @ h:mm aaa' }}</strong> by {{ lastSpot?.spottedBy }}</small>
             </div>
         </div>
     </div>
