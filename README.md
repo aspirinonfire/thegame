@@ -15,16 +15,17 @@ Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app w
 - [x] Basic responsiveness.
 - [x] Colors.
 #### Azure deployment.
-- [ ] Free tier.
+- [x] Free tier. Azure Static Web App
 - [ ] TLS and some basic domain name.
 #### PWA
-- [ ] Allow Android app installation.
-- [ ] Offline gameplay.
+- [x] Allow Android app installation.
+- [x] Offline gameplay.
 #### Clean UI
 - [ ] Previous game stats.
 - [ ] US and Canada Map with terriotires lighting up.
 - [ ] License plate pictures.
 - [ ] Nicer plate picker.
+- [ ] Game state management
 #### Backend
 - [ ] .Net Core 3+.
 - [ ] MSSQL persistence.
