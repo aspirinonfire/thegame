@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { Subject, Observable } from 'rxjs';
 import { AppRoutes } from './core/constants';
+import { MatToolbarModule } from '@angular/material/toolbar';
 
 @Component({
   selector: 'app-root',
