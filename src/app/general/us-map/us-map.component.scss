@@ -4,16 +4,27 @@
 	position: relative;
 }
 
+
 .svg {
   display: none;
 }
 
+@keyframes movefrombg {
+  from { fill: lightsteelblue;}
+}
+
+@keyframes movetobg {
+	to { fill: lightsteelblue;}
+}
+
 .state {
-  fill:lightsteelblue;
+	fill:lightsteelblue;
+	animation: movetobg .5s ease-out;
 }
 
 @for $i from 1 through 10 {
 	.weight-#{$i * 10} {
-		fill: rgba(255, 100, 0, $i / 10)
+		fill: rgba(255, 100, 0, $i / 10);
+		animation: movefrombg .5s ease-out;
 	}
 }

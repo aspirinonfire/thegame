@@ -1,9 +1,11 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UsMapComponent } from './us-map/us-map.component';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+
+import { UsMapComponent } from './us-map/us-map.component';
 
 @NgModule({
   declarations: [UsMapComponent],
@@ -11,8 +13,9 @@ import { MatButtonModule } from '@angular/material/button';
     CommonModule,
     MatCardModule,
     MatDividerModule,
-    MatButtonModule
+    MatButtonModule,
+    MatIconModule
   ],
-  exports: [UsMapComponent, MatCardModule, MatDividerModule, MatButtonModule]
+  exports: [UsMapComponent, MatCardModule, MatDividerModule, MatButtonModule, MatIconModule]
 })
 export class GeneralModule { }

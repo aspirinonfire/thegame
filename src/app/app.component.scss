@@ -1,3 +1,18 @@
+@import '~@angular/material/theming';
+
 .menu-item {
     margin-right: 1rem;
+}
+
+.app-nav-menu {
+    position: absolute;
+    height: 100vh;
+}
+
+::ng-deep .sidenav {
+    background-color: mat-color($mat-deep-purple) !important;
+}
+
+.mat-nav-list > a {
+    font-size: 1.5rem;
 }

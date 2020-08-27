@@ -7,9 +7,12 @@ import { RouterModule } from '@angular/router';
 import { AppInitDataService } from './core/services/app-init-data.service';
 import { appInitFactory } from './core/appInitFactory';
 import { ServiceWorkerModule } from '@angular/service-worker';
-import { environment } from '../environments/environment';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatListModule } from '@angular/material/list'
+
+import { environment } from '../environments/environment';
 import { GeneralModule } from './general/general.module';
 
 @NgModule({
@@ -20,6 +23,8 @@ import { GeneralModule } from './general/general.module';
     BrowserModule,
     CoreModule,
     MatToolbarModule,
+    MatSidenavModule,
+    MatListModule,
     ServiceWorkerModule.register('ngsw-worker.js', { enabled: environment.production }),
     BrowserAnimationsModule,
     GeneralModule

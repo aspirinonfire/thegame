@@ -1,11 +1,22 @@
 <header>
-  <nav>
-    <mat-toolbar color="primary">
-      <span class="menu-item" [routerLink]="['/', appRoutes.home]" routerLinkActive="router-link-active">Home</span>
-      <span class="menu-item" [routerLink]="['/', appRoutes.game]" routerLinkActive="router-link-active">Game</span>
-      <span class="menu-item" [routerLink]="['/', appRoutes.about]" routerLinkActive="router-link-active">About</span>
-    </mat-toolbar>
-  </nav>
+  <mat-toolbar color="primary">
+      <mat-toolbar-row>
+        <button mat-icon-button>
+          <mat-icon (click)="sidenav.toggle()">menu</mat-icon>
+        </button>
+        <h5>License Plate Game</h5>
+      </mat-toolbar-row>
+  </mat-toolbar>
+
+  <mat-sidenav-container class="app-nav-menu">
+    <mat-sidenav #sidenav mode="side" role="navigation" class="sidenav">
+      <mat-nav-list>
+        <a mat-list-item [routerLink]="['/', appRoutes.home]"> Home </a>
+        <a mat-list-item [routerLink]="['/', appRoutes.game]"> Game </a>
+        <a mat-list-item [routerLink]="['/', appRoutes.about]"> About </a>
+      </mat-nav-list>
+    </mat-sidenav>
+  </mat-sidenav-container>
 </header>
 
 <div class="container">
