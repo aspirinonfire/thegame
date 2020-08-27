@@ -8,12 +8,14 @@
   </nav>
 </header>
 
-<div class="container-fluid app-contents">
-  <div class="row" *ngIf="isLoading$ | async; else showRoute">
-    <div class="col-12"><h5>**** loading ****</h5></div>
+<div class="container">
+  <div fxLayout="row" fxLayoutAlign="center center" class="content">
+    <div *ngIf="isLoading$ | async; else showRoute">
+      <h5>**** loading ****</h5>
+    </div>
+    <ng-template #showRoute>
+      <router-outlet></router-outlet>
+    </ng-template>
   </div>
-  <ng-template #showRoute>
-    <router-outlet></router-outlet>
-  </ng-template>
 </div>
 

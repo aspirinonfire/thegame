@@ -1,54 +1,52 @@
-<div class="row col-12 alert alert-danger" *ngIf="!!error">
+<div class="alert alert-danger" *ngIf="!!error">
     {{ error }}
 </div>
-<div class="row">
-    <div class="col-12 mb-3">
-        <div class="card">
-            <div class="card-header">
-                <h4>Current game</h4>
-            </div>
-            <div class="card-body">
-                <div *ngIf="!!currentGame; else showNoActiveGame">
-                    <div class="col-12 active-game" (click)="openCurrentGame()">
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item past-game">
-                                <p><strong>{{ currentGame.name }}</strong> going for {{ currentGame.gameDuration }} day(s)</p>
-                                <p>Spotted {{ currentGame.platesSpotted }} state(s)</p>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <ng-template #showNoActiveGame>
-                    <h4>No active games!</h4>
-                </ng-template>
-            </div>
-            <div class="card-footer" *ngIf="!!lastSpot">
-                <small>Last spot <strong>{{ lastSpot.stateOrProvince }}</strong> on <strong>{{ lastSpot?.dateSpotted | date: 'E, MMM dd @ h:mm aaa' }}</strong> by {{ lastSpot?.spottedBy }}</small>
-            </div>
+
+<mat-card class="card current-game mat-elevation-z8" (click)="openCurrentGame()">
+    <mat-card-header>
+        <mat-card-title>Current game</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+        <mat-list *ngIf="!!currentGame; else showNoActiveGame">
+            <mat-list-item>
+                <p>
+                    <strong>{{ currentGame.name }}</strong> going for {{ currentGame.gameDuration }} day(s)
+                    Spotted {{ currentGame.platesSpotted }} state(s)
+                </p>
+            </mat-list-item>
+        </mat-list>
+        <ng-template #showNoActiveGame>
+            <h4>No active games!</h4>
+        </ng-template>
+    </mat-card-content>
+    <mat-divider></mat-divider>
+    <mat-card-footer *ngIf="!!lastSpot">
+        <small>Last spot <strong>{{ lastSpot.stateOrProvince }}</strong> on <strong>{{ lastSpot?.dateSpotted | date: 'E, MMM dd @ h:mm aaa' }}</strong> by {{ lastSpot?.spottedBy }}</small>
+    </mat-card-footer>
+</mat-card>
+
+<mat-card class = "card">
+    <mat-card-header>
+        <mat-card-title>
+            Game History
+        </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+        <div *ngIf="hasPastGames; else showNoPastGames">
+            <app-us-map [spottedStatesLkp]="spottedUsStates" [numberOfGames]="numOfGames"></app-us-map>
+            <mat-divider></mat-divider>
+            <mat-list *ngFor="let pastGame of pastGames">
+                <mat-list-item>
+                    <p>
+                        <strong>{{ pastGame.name }}</strong> started on {{ pastGame.dateCreated | date }}, and lasted for
+                        {{ pastGame.gameDuration }} day(s) Spotted {{ pastGame.platesSpotted }} state(s)
+                    </p>
+                </mat-list-item>
+            </mat-list>
         </div>
-    </div>
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h4>Game history</h4>
-            </div>
-            <div class="card-body">
-                <div *ngIf="hasPastGames; else showNoPastGames">
-                    <div class="col-12">
-                        <app-us-map [spottedStatesLkp]="spottedUsStates" [numberOfGames]="numOfGames"></app-us-map>
-                    </div>
-                    <ul class="list-group list-group-flush" *ngFor="let pastGame of pastGames">
-                        <li class="list-group-item past-game">
-                            <p><strong>{{ pastGame.name }}</strong> started on {{ pastGame.dateCreated | date }}, and lasted for
-                                {{ pastGame.gameDuration }} day(s)</p>
-                            <p>Spotted {{ pastGame.platesSpotted }} state(s)</p>
-                        </li>
-                    </ul>
-                </div>
-                <ng-template #showNoPastGames>
-                    No past games
-                </ng-template>
-            </div>
-        </div>
-    </div>
-</div>
+        <ng-template #showNoPastGames>
+            <h4>No past games</h4>
+        </ng-template>
+    </mat-card-content>
+</mat-card>

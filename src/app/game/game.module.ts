@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 import { GameRoutingModule } from './game-routing.module';
 import { GameComponent } from './game/game.component';
@@ -13,7 +14,8 @@ import { GeneralModule } from '../general/general.module';
     CommonModule,
     GameRoutingModule,
     ReactiveFormsModule,
-    GeneralModule
+    GeneralModule,
+    MatCheckboxModule
   ]
 })
 export class GameModule { }

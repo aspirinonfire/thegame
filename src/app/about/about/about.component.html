@@ -1,11 +1,13 @@
-<div class="card">
-    <div class="card-header">
-        <h6>
+<mat-card class="card">
+    <mat-card-header>
+        <mat-card-title>
+            License plate game
+        </mat-card-title>
+        <mat-card-subtitle>
             Alex Chernyak &copy; 2020
-        </h6> 
-    </div>
-    <div class="card-body">
-        <h5>Safe Travels!</h5>
-    </div>
-</div>
-<button class="btn btn-danger" (click)="resetAll()">Reset All</button>
+        </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-footer>
+        <button mat-raised-button color="warn" (click)="resetAll()">Reset All</button>
+    </mat-card-footer>
+</mat-card>

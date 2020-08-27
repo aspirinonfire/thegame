@@ -1,16 +1,13 @@
 body {
-  // background-image: url('./assets/road.jpg');
-  // background-clip: padding-box;
-  // background-size: cover;
-  // background-repeat: no-repeat;
-  // background-position: center;
-  // background-attachment: fixed;
-  // background-color: dimgray;
+  background-color: gray;
 }
 
 .card {
-  background-color: lightgray;
-  opacity: 0.97;
+  margin: .8rem;
+  background-color: white;
+  mat-card-footer {
+    padding: .5rem;
+  }
 }
 
 html, body { height: 100%; }

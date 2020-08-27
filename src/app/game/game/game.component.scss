@@ -1,7 +1,13 @@
-.spotted-details {
-  margin-left: 1.3rem;
+.state-province-input {
+  font-size: 1.5rem;
+  line-height: 3.5rem;
 }
 
-.form-check-label {
-  font-size: large;
+.game-form {
+  padding: 1rem 0 0 2rem;
+}
+
+::ng-deep .mat-checkbox-inner-container {
+  height: 1.5rem !important;
+  width: 1.5rem !important;
 }
