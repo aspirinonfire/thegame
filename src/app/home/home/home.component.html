@@ -34,7 +34,7 @@
     </mat-card-header>
     <mat-card-content>
         <div *ngIf="hasPastGames; else showNoPastGames">
-            <app-us-map [spottedStatesLkp]="spottedUsStates" [numberOfGames]="numOfGames"></app-us-map>
+            <app-us-map [pastGames]="pastGameLicensePlates"></app-us-map>
             <mat-divider></mat-divider>
             <mat-list *ngFor="let pastGame of pastGames">
                 <mat-list-item>

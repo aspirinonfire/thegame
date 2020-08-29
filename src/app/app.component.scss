@@ -26,7 +26,12 @@
 }
 
 .mat-nav-list > a {
-    font-size: 1.5rem;
+    font-size: 2rem;
+    
+    &.active-link {
+        color: white;
+        background-color: $primary;
+    }
 }
 
 .app-contents {
@@ -36,8 +41,4 @@
     width: 100%;
     align-items: flex-start;
     justify-content: center;
-}
-
-.active-link {
-    background-color: $primary;
 }

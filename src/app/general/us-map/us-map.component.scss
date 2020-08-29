@@ -1,3 +1,5 @@
+@import '~src/styles/variables.scss';
+
 :host {
 	display: inline-block;
 	overflow: hidden;
@@ -22,9 +24,13 @@
 	animation: movetobg .5s ease-out;
 }
 
+.this-game-spot {
+	fill: $primary;
+}
+
 @for $i from 1 through 10 {
-	.weight-#{$i * 10} {
-		fill: rgba(255, 100, 0, $i / 10);
+	.past-games-weight-#{$i * 10} {
+		fill: rgba($color: $warn, $alpha: $i / 10);
 		animation: movefrombg .5s ease-out;
 	}
 }

@@ -1,6 +1,7 @@
 import { Component, OnInit, AfterViewInit, ElementRef, OnDestroy, Input } from '@angular/core';
 import { Subscription, Subject, interval } from 'rxjs';
 import { debounce } from 'rxjs/operators';
+import { LicensePlate } from 'src/app/core/models';
 
 @Component({
   selector: 'app-us-map',
@@ -10,18 +11,47 @@ import { debounce } from 'rxjs/operators';
 export class UsMapComponent implements OnInit, AfterViewInit, OnDestroy {
   private subs: Subscription[];
   private resizeTrigger$: Subject<boolean>;
+  private currentGameLkp: Set<string> | null;
+  private pastGamesLkp: Map<string, number>;
+  private totalPastGames: number;
 
   @Input()
-  public spottedStatesLkp: ReadonlyMap<string, number>;
+  public set currentGame(val: LicensePlate[] | null)
+  {
+    if (!val) {
+      return;
+    }
+    this.currentGameLkp = new Set<string>();
+    val.forEach(element => {
+      if (element.country !== 'US') {
+        return;
+      }
+      this.currentGameLkp?.add(element.stateOrProvince);
+    });
+  }
 
   @Input()
-  public numberOfGames: number;
+  public set pastGames(val: LicensePlate[][]) {
+    this.pastGamesLkp = new Map<string, number>();
+    this.totalPastGames = val.length;
+    val.forEach(game => {
+      game.forEach(element => {
+        if (element.country !== 'US') {
+          return;
+        }
+        let spots = this.pastGamesLkp.get(element.stateOrProvince);
+        spots = spots === undefined ? 0: spots+1;
+        this.pastGamesLkp.set(element.stateOrProvince, spots);
+      });
+    });
+  }
 
   constructor(private readonly elementRef: ElementRef) {
     this.subs = [];
     this.resizeTrigger$ = new Subject<boolean>();
-    this.spottedStatesLkp = new Map<string, number>();
-    this.numberOfGames = 0;
+    this.currentGameLkp = null;
+    this.pastGamesLkp = new Map<string, number>();
+    this.totalPastGames = 0;
   }
 
   ngOnInit(): void {
@@ -45,13 +75,17 @@ export class UsMapComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   public getWeightClass(state: string) {
-    const numOfSpots = this.spottedStatesLkp.get(state);
-    if (!numOfSpots) {
+    if (this.currentGameLkp?.has(state)) {
+      return ['this-game-spot'];
+    }
+
+    const numOfSpots = this.pastGamesLkp.get(state);
+    if (numOfSpots === undefined) {
       return [];
     }
-    const numOfGames = this.numberOfGames || 1;
-    const weight = Math.min(numOfGames, numOfSpots) / numOfGames;
-    return [`weight-${Math.ceil(weight * 100 / 10) * 10}`];
+
+    let weight = this.currentGameLkp ? .5 : numOfSpots / Math.max(1, this.totalPastGames);
+    return [`past-games-weight-${Math.ceil(weight * 100 / 10) * 10}`];
   }
 
   private redrawMap() {

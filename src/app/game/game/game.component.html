@@ -4,7 +4,7 @@
     </mat-card-header>
     <mat-card-content>
         <div *ngIf="!!game">
-            <app-us-map [spottedStatesLkp]="spottedUsStates"></app-us-map>
+            <app-us-map [currentGame]="currentGame" [pastGames]="pastGames"></app-us-map>
             <mat-divider></mat-divider>
             <div [formGroup]="form" class="game-form">
                 <div class="form-group" *ngFor="let state of allstates">

@@ -69,23 +69,24 @@ export class GameComponent implements OnInit, OnDestroy {
     this._subs.forEach(sub => sub.unsubscribe());
   }
 
-  public get spottedUsStates() {
+  public get currentGame(): LicensePlate[] {
     const game = this.gameSvc.getCurrentGame();
     if (!game) {
-      return new Map<string, number>();
+      return [];
     }
 
-    const map = Object.keys(game.licensePlates)
-      .map(key => game.licensePlates[key] || <LicensePlate>{})
-      .filter(plate => {
-        return plate.country === 'US'
-      })
-      .reduce((acc, plate) => {
-        acc.set(plate.stateOrProvince, 1);
-        return acc;
-      }, new Map<string, number>());
+    return Object.keys(game.licensePlates).map(key => game.licensePlates[key]);
+  }
 
-    return map;
+  public get pastGames(): LicensePlate[][] {
+    const pastGames = this.gameSvc.getPastGames();
+    if (!pastGames) {
+      return []
+    }
+
+    return pastGames.map(game => {
+      return Object.keys(game.licensePlates).map(key => game.licensePlates[key]);
+    });
   }
 
   public startNewGame(): void {

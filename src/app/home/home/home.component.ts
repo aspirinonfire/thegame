@@ -35,12 +35,14 @@ export class HomeComponent implements OnInit {
     return !!this.pastGames.length;
   }
 
-  public get numOfGames(): number {
-    if (!this.hasPastGames) {
-      return 0;
+  public get pastGameLicensePlates(): LicensePlate[][] {
+    if (!this.pastGames) {
+      return []
     }
 
-    return this.pastGames.length;
+    return this.pastGames.map(game => {
+      return Object.keys(game.licensePlates).map(key => game.licensePlates[key]);
+    });
   }
 
   public get lastSpot(): LicensePlate | null {
