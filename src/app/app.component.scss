@@ -1,4 +1,4 @@
-@import '~@angular/material/theming';
+@import '~src/styles/variables.scss';
 
 .menu-item {
     margin-right: 1rem;
@@ -6,13 +6,38 @@
 
 .app-nav-menu {
     position: absolute;
-    height: 100vh;
+    height: 100%;
+    width: 100%
 }
 
-::ng-deep .sidenav {
-    background-color: mat-color($mat-deep-purple) !important;
+.nav-toolbar {
+    position: fixed;
+    z-index: 1000;
+    top: 0;
+}
+
+.sidenav {
+    background-color: white;
+    top: 4rem !important;
+    min-width: 30%;
+    mat-icon {
+        padding-right: 1rem;
+    }
 }
 
 .mat-nav-list > a {
     font-size: 1.5rem;
+}
+
+.app-contents {
+    margin-top: 4rem;
+    display: flex;
+    height: 100vh;
+    width: 100%;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.active-link {
+    background-color: $primary;
 }

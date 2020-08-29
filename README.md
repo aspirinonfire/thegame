@@ -9,6 +9,7 @@ Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app w
 ## TODO
 #### Functional game
 - [x] Able to check off spotted plates.
+- [ ] Finish game
 #### Basic CSS
 - [x] Sticky header and menu.
 - [x] Body contents.
@@ -21,10 +22,11 @@ Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app w
 - [x] Allow Android app installation.
 - [x] Offline gameplay.
 #### Clean UI
-- [ ] Previous game stats.
-- [ ] US and Canada Map with terriotires lighting up.
-- [ ] License plate pictures.
+- [x] US Map with terriotires lighting up.
+- [ ] Restructure site - home: active game + history, history page: historical map
 - [ ] Nicer plate picker.
+- [ ] Previous game stats.
+- [ ] License plate pictures.
 - [ ] Game state management
 #### Backend
 - [ ] .Net Core 3+.

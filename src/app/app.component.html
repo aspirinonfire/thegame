@@ -1,32 +1,37 @@
-<header>
-  <mat-toolbar color="primary">
-      <mat-toolbar-row>
-        <button mat-icon-button>
-          <mat-icon (click)="sidenav.toggle()">menu</mat-icon>
-        </button>
-        <h5>License Plate Game</h5>
-      </mat-toolbar-row>
-  </mat-toolbar>
+<mat-toolbar class="nav-toolbar" color="primary">
+    <mat-toolbar-row>
+      <button mat-icon-button>
+        <mat-icon (click)="sidenav.toggle()">menu</mat-icon>
+      </button>
+      <h5>License Plate Game</h5>
+    </mat-toolbar-row>
+</mat-toolbar>
 
-  <mat-sidenav-container class="app-nav-menu">
-    <mat-sidenav #sidenav mode="side" role="navigation" class="sidenav">
-      <mat-nav-list (click)="sidenav.close()">
-        <a mat-list-item [routerLink]="['/', appRoutes.home]"> Home </a>
-        <a mat-list-item [routerLink]="['/', appRoutes.game]"> Game </a>
-        <a mat-list-item [routerLink]="['/', appRoutes.about]"> About </a>
-      </mat-nav-list>
-    </mat-sidenav>
-  </mat-sidenav-container>
-</header>
+<mat-drawer-container class="app-nav-menu">
+  <mat-drawer #sidenav mode="push" role="navigation" class="sidenav">
+    <mat-nav-list (click)="sidenav.close()">
+      <a mat-list-item [routerLink]="['/', appRoutes.home]" routerLinkActive="active-link">
+        <mat-icon>home</mat-icon>Home
+      </a>
+      <a mat-list-item [routerLink]="['/', appRoutes.game]" routerLinkActive="active-link">
+        <mat-icon>map</mat-icon>Game
+      </a>
+      <a mat-list-item [routerLink]="['/', appRoutes.about]" routerLinkActive="active-link">
+        <mat-icon>info</mat-icon>About
+      </a>
+    </mat-nav-list>
+  </mat-drawer>
 
-<div class="container">
-  <div fxLayout="row" fxLayoutAlign="center center" class="content">
-    <div *ngIf="isLoading$ | async; else showRoute">
-      <h5>**** loading ****</h5>
+  <div class="app-contents">
+    <div fxLayout="row" fxLayoutAlign="center center" class="content">
+      <div *ngIf="isLoading$ | async; else showRoute">
+        <h5>**** loading ****</h5>
+      </div>
+      <ng-template #showRoute>
+        <router-outlet></router-outlet>
+      </ng-template>
     </div>
-    <ng-template #showRoute>
-      <router-outlet></router-outlet>
-    </ng-template>
   </div>
-</div>
+</mat-drawer-container>
+
 
