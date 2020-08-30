@@ -12,25 +12,36 @@
 }
 
 @keyframes movefrombg {
-  from { fill: lightsteelblue;}
+  from { fill: u $unspottedState }
 }
 
 @keyframes movetobg {
-	to { fill: lightsteelblue;}
+	to { fill: u $unspottedState }
 }
 
 .state {
-	fill:lightsteelblue;
+	fill: $unspottedState;
 	animation: movetobg .5s ease-out;
+}
+
+.this-game-most-recent-spot {
+	fill: $warn;
+	animation: movefrombg .5s ease-out;
 }
 
 .this-game-spot {
 	fill: $primary;
+	animation: movefrombg .5s ease-out;
+}
+
+.past-games-unweighted {
+	fill: $spottedHistState;
+	animation: movefrombg .5s ease-out;
 }
 
 @for $i from 1 through 10 {
 	.past-games-weight-#{$i * 10} {
-		fill: rgba($color: $warn, $alpha: $i / 10);
+		fill: rgba($color: $primary, $alpha: $i / 10);
 		animation: movefrombg .5s ease-out;
 	}
 }

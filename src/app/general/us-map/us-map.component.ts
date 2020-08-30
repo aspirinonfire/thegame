@@ -14,6 +14,7 @@ export class UsMapComponent implements OnInit, AfterViewInit, OnDestroy {
   private currentGameLkp: Set<string> | null;
   private pastGamesLkp: Map<string, number>;
   private totalPastGames: number;
+  private lastSpot: string | null;
 
   @Input()
   public set currentGame(val: LicensePlate[] | null)
@@ -21,13 +22,22 @@ export class UsMapComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!val) {
       return;
     }
+    let lastSpot: string | null = null;
+    let lastSpotDate: number = 0;
     this.currentGameLkp = new Set<string>();
     val.forEach(element => {
       if (element.country !== 'US') {
         return;
       }
       this.currentGameLkp?.add(element.stateOrProvince);
+      const currSpotDate = new Date(element?.dateSpotted || 0).getTime();
+
+      if (!lastSpot || currSpotDate > lastSpotDate) {
+        lastSpot = element.stateOrProvince;
+        lastSpotDate = currSpotDate;
+      }
     });
+    this.lastSpot = lastSpot;
   }
 
   @Input()
@@ -52,6 +62,7 @@ export class UsMapComponent implements OnInit, AfterViewInit, OnDestroy {
     this.currentGameLkp = null;
     this.pastGamesLkp = new Map<string, number>();
     this.totalPastGames = 0;
+    this.lastSpot = null;
   }
 
   ngOnInit(): void {
@@ -76,7 +87,7 @@ export class UsMapComponent implements OnInit, AfterViewInit, OnDestroy {
 
   public getWeightClass(state: string) {
     if (this.currentGameLkp?.has(state)) {
-      return ['this-game-spot'];
+      return this.lastSpot === state ? ['this-game-most-recent-spot '] : ['this-game-spot'];
     }
 
     const numOfSpots = this.pastGamesLkp.get(state);
@@ -84,7 +95,11 @@ export class UsMapComponent implements OnInit, AfterViewInit, OnDestroy {
       return [];
     }
 
-    let weight = this.currentGameLkp ? .5 : numOfSpots / Math.max(1, this.totalPastGames);
+    if (!!this.currentGameLkp) {
+      return ['past-games-unweighted'];
+    }
+
+    const weight = numOfSpots / Math.max(1, this.totalPastGames);
     return [`past-games-weight-${Math.ceil(weight * 100 / 10) * 10}`];
   }
 
