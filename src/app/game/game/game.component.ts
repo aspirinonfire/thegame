@@ -5,6 +5,8 @@ import { FormBuilder, FormGroup, FormControl, AbstractControl } from '@angular/f
 import { distinctUntilChanged } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { AppInitDataService } from 'src/app/core/services/app-init-data.service';
+import { Router } from '@angular/router';
+import { AppRoutes } from 'src/app/core/constants';
 
 export interface plateVm extends LicensePlate {
   key: string,
@@ -26,7 +28,8 @@ export class GameComponent implements OnInit, OnDestroy {
 
   constructor(private readonly gameSvc: GameService,
     private readonly initData: AppInitDataService,
-    private readonly fb: FormBuilder) {
+    private readonly fb: FormBuilder,
+    private readonly router: Router) {
     
     this.game = null;
     this.form = this.fb.group({});
@@ -90,10 +93,27 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   public startNewGame(): void {
-    this.game = this.gameSvc.createGame("Test game", this.initData.account.name);
+    const newGame = this.gameSvc.createGame("Test game", this.initData.account.name);
+    if (typeof newGame === 'string') {
+      // TODO show error!
+      return;
+    }
+    this.game = newGame;
+
     this.setVm();
     this.loadFormValues();
     this.form.reset();
+  }
+
+  public finishGame(): void {
+    const res = this.gameSvc.finishActiveGame();
+    if (typeof res === 'string') {
+      // TODO show error!
+      return;
+    }
+    this.game = null;
+    this.router.navigate(['..', AppRoutes.home]);
+    return;
   }
 
   private setVm() {

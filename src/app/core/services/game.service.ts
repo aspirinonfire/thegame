@@ -16,13 +16,10 @@ export class GameService {
     return this.storageSvc.getValue<Game>(this.CURRENT_GAME_KEY);
   }
 
-  public createGame(name: string, createdBy: string): Game {
+  public createGame(name: string, createdBy: string): Game | string {
     let currentGame = this.getCurrentGame();
     if (!!currentGame) {
-      const pastGames = this.getPastGames();
-      pastGames.push(currentGame);
-      currentGame.dateFinished = new Date();
-      this.storageSvc.setValue(this.PAST_GAMES_KEY, pastGames);
+      return "Only one active game is allowed!";
     }
 
     currentGame = <Game>{

@@ -1,6 +1,11 @@
 <mat-card class="card mat-elevation-z8">
-    <mat-card-header *ngIf="!!game">
-        <mat-card-title>{{ game.name }} :: {{ game.dateCreated | date }}</mat-card-title>
+    <mat-card-header>
+        <mat-card-title *ngIf="!!game; else showNoGame">
+            {{ game.name }} :: {{ game.dateCreated | date }}
+        </mat-card-title>
+        <ng-template #showNoGame>
+            No active game. Please start a new one!
+        </ng-template>
     </mat-card-header>
     <mat-card-content>
         <div *ngIf="!!game">
@@ -21,8 +26,15 @@
     </mat-card-content>
     <mat-divider></mat-divider>
     <mat-card-footer>
-        <button mat-raised-button color="accent" id="create-game" (click)="startNewGame()">
-            Start new game
-        </button>
+        <ng-container *ngIf="!game; else showFinishGame">
+            <button mat-raised-button color="primary" id="create-game" (click)="startNewGame()">
+                Start new game
+            </button>
+        </ng-container>
+        <ng-template #showFinishGame>
+            <button mat-raised-button color="accent" id="finish-game" (click)="finishGame()">
+                Finish the game
+            </button>
+        </ng-template>
     </mat-card-footer>
 </mat-card>
