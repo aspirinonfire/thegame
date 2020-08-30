@@ -3,4 +3,10 @@
 
 $app-theme: mat-light-theme($app-primary, $app-accent, $app-warn);
 
-@include angular-material-theme($app-theme);
+$bg: map-get($app-theme, background);
+$bg: map_merge($bg, (background: $bg-color));
+$app-theme: map_merge($app-theme, (background: $bg));
+
+.app-theme {
+  @include angular-material-theme($app-theme);
+}

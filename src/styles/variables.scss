@@ -10,5 +10,8 @@ $primary: mat-color($app-primary);
 $accent: mat-color($app-accent);
 $warn: mat-color($app-warn);
 
+$bg-color: mat-color($mat-grey, 800);
+$card-color: white;
+
 $unspottedState: lightsteelblue;
 $spottedHistState: darken($unspottedState, 15%);
