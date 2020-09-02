@@ -51,17 +51,13 @@ export class SpotDialogComponent implements OnInit, OnDestroy {
           return null;
         }
 
-        if (spot) {
-          s.spottedBy = this.plateData.name;
-          s.dateSpotted = new Date();
-        } else {
-          s.spottedBy = null;
-          s.dateSpotted = null;
+        if ((spot && !!s.spottedBy) || (!spot && !s.spottedBy)) {
+          return null;
         }
-
+        
         return s;
       })
-      .filter(s => !!s);
+      .filter(s => s != null);
     this.dialogRef.close(newVals);
   }
 
