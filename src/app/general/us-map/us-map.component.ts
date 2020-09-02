@@ -43,14 +43,14 @@ export class UsMapComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input()
   public set pastGames(val: LicensePlate[][]) {
     this.pastGamesLkp = new Map<string, number>();
-    this.totalPastGames = val.length;
+    this.totalPastGames = val.filter(v => v.length > 0).length;
     val.forEach(game => {
       game.forEach(element => {
         if (element.country !== 'US') {
           return;
         }
         let spots = this.pastGamesLkp.get(element.stateOrProvince);
-        spots = spots === undefined ? 0: spots+1;
+        spots = spots === undefined ? 1: spots+1;
         this.pastGamesLkp.set(element.stateOrProvince, spots);
       });
     });

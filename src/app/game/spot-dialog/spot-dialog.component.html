@@ -1,0 +1,19 @@
+<h2 mat-dialog-title>I spy...</h2>
+<mat-dialog-content>
+    <div [formGroup]="form" class="game-form">
+      <div class="form-group" *ngFor="let state of plateData.plates">
+        <mat-checkbox class="state-province-input" [id]="state.key" [formControlName]="state.key" [color]="'primary'">
+          {{ state.name }}
+        </mat-checkbox>
+        <small style="display: block; padding-left: 1.5rem;" *ngIf="state.showDetails">
+          On {{ state.dateSpotted | date: 'E, MMM dd @ h:mm aaa' }} by {{ state.spottedBy }}
+        </small>
+      </div>
+    </div>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-raised-button color="accent" id="cancel-spot" (click)="dismiss()">Cancel</button>
+  <button mat-raised-button color="primary" id="submit-spot" (click)="submit()">Save</button>
+</mat-dialog-actions>
+
+

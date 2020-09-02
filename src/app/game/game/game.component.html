@@ -6,35 +6,24 @@
         <ng-template #showNoGame>
             No active game. Please start a new one!
         </ng-template>
+        <button *ngIf="!!game" mat-raised-button color="accent" id="finish-game" (click)="finishGame()">
+            Finish the game
+        </button>
     </mat-card-header>
     <mat-card-content>
         <div *ngIf="!!game">
             <app-us-map [currentGame]="currentGame" [pastGames]="pastGames"></app-us-map>
             <mat-divider></mat-divider>
-            <div [formGroup]="form" class="game-form">
-                <div class="form-group" *ngFor="let state of allstates">
-                    <mat-checkbox class="state-province-input" [id]="state.key"
-                        [formControlName]="state.key" [color]="'primary'">
-                        {{ state.name }}
-                    </mat-checkbox>
-                    <small style="display: block; padding-left: 1.5rem;" *ngIf="state.showDetails">
-                        On {{ state.dateSpotted | date: 'E, MMM dd @ h:mm aaa' }} by {{ state.spottedBy }}
-                    </small>
-                </div>
-            </div>
         </div>
     </mat-card-content>
     <mat-divider></mat-divider>
     <mat-card-footer>
-        <ng-container *ngIf="!game; else showFinishGame">
-            <button mat-raised-button color="primary" id="create-game" (click)="startNewGame()">
-                Start new game
-            </button>
-        </ng-container>
-        <ng-template #showFinishGame>
-            <button mat-raised-button color="accent" id="finish-game" (click)="finishGame()">
-                Finish the game
-            </button>
-        </ng-template>
+        <button *ngIf="!game" mat-raised-button color="primary" id="create-game" (click)="startNewGame()">
+            Start new game
+        </button>
     </mat-card-footer>
 </mat-card>
+<button *ngIf="!!game" mat-fab color="primary" id="open-state-dialog" class="fixed-bottom-right"
+    (click)="openStateDialog()" aria-label="Add state">
+    <mat-icon>add</mat-icon>
+</button>

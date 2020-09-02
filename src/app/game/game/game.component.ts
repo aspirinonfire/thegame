@@ -1,18 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { GameService } from 'src/app/core/services/game.service';
-import { Game, Country, LicensePlate } from 'src/app/core/models';
-import { FormBuilder, FormGroup, FormControl, AbstractControl } from '@angular/forms';
-import { distinctUntilChanged } from 'rxjs/operators';
+import { Game, LicensePlate } from 'src/app/core/models';
 import { Subscription } from 'rxjs';
 import { AppInitDataService } from 'src/app/core/services/app-init-data.service';
 import { Router } from '@angular/router';
 import { AppRoutes } from 'src/app/core/constants';
-
-export interface plateVm extends LicensePlate {
-  key: string,
-  name: string,
-  showDetails: boolean,
-}
+import { MatDialog } from '@angular/material/dialog';
+import { SpotDialogComponent } from '../spot-dialog/spot-dialog.component';
+import { plateVm, SpotDialogData } from '../models';
 
 @Component({
   selector: 'app-game',
@@ -21,51 +16,22 @@ export interface plateVm extends LicensePlate {
 })
 export class GameComponent implements OnInit, OnDestroy {
   private readonly _subs: Subscription[];
-
   game: Game | null;
-  form: FormGroup;
   allstates: plateVm[];
 
   constructor(private readonly gameSvc: GameService,
     private readonly initData: AppInitDataService,
-    private readonly fb: FormBuilder,
-    private readonly router: Router) {
+    private readonly router: Router,
+    private dialog: MatDialog) {
     
     this.game = null;
-    this.form = this.fb.group({});
     this.allstates = [];
     this._subs = [];
   }
 
   ngOnInit(): void {
     this.game = this.gameSvc.getCurrentGame();
-
     this.setVm();
-
-    for (const state of this.allstates) {
-      const ctrl = this.fb.control(null);
-      const sub = ctrl.valueChanges
-        .pipe(distinctUntilChanged())
-        .subscribe(val => {
-          if (val !== null) {
-            const spottedBy = this.initData.account.name;
-            this.gameSvc.saveSpottedPlate(state.stateOrProvince, state.country, spottedBy);
-            if (val) {
-              state.showDetails = true;
-              state.spottedBy = spottedBy;
-              state.dateSpotted = new Date();
-            } else {
-              state.showDetails = false;
-              state.spottedBy = null;
-              state.dateSpotted = null;
-            }
-          }
-        });
-      this._subs.push(sub);
-      this.form.registerControl(state.key, ctrl);
-    }
-    this.form.reset();
-    this.loadFormValues();
   }
 
   ngOnDestroy() {
@@ -92,6 +58,23 @@ export class GameComponent implements OnInit, OnDestroy {
     });
   }
 
+  public openStateDialog() {
+    const dialogRef = this.dialog.open(SpotDialogComponent, {
+      data: <SpotDialogData>{
+        name: this.initData.account.name,
+        plates: this.allstates
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((result: plateVm[]) => {
+      if (!result) {
+        return;
+      }
+      result.forEach(res => this.gameSvc.saveSpottedPlate(res.stateOrProvince, res.country, this.initData.account.name));
+      this.setVm();
+    });
+  }
+
   public startNewGame(): void {
     const newGame = this.gameSvc.createGame("Test game", this.initData.account.name);
     if (typeof newGame === 'string') {
@@ -101,8 +84,6 @@ export class GameComponent implements OnInit, OnDestroy {
     this.game = newGame;
 
     this.setVm();
-    this.loadFormValues();
-    this.form.reset();
   }
 
   public finishGame(): void {
@@ -117,18 +98,20 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private setVm() {
+    const lkp = new Map<string, LicensePlate>();
+    this.currentGame.forEach(p => lkp.set(p.stateOrProvince, p));
+
     this.allstates = [...this.initData.gameData.values()]
       .map(ter => {
         const key = `${ter.country}-${ter.shortName}`;
         let spottedBy = null;
         let spottedOn = null;
         let showDetails = false;
-        if (this.game) {
-          const sighting = this.game.licensePlates[key];
-          spottedBy = sighting?.spottedBy;
-          spottedOn = sighting?.dateSpotted;
-          showDetails = !!sighting;
-        }
+
+        const sighting = lkp.get(ter.shortName);
+        spottedBy = sighting?.spottedBy;
+        spottedOn = sighting?.dateSpotted;
+        showDetails = !!sighting;
 
         return <plateVm>{
           key: key,
@@ -139,23 +122,6 @@ export class GameComponent implements OnInit, OnDestroy {
           showDetails: showDetails,
           spottedBy: spottedBy
         }
-      });
-  }
-
-  private loadFormValues() {
-    if (!this.game || !this.form) {
-      return;
-    }
-
-    Object.keys(this.game.licensePlates)
-      .forEach(stateOrProvince => {
-        const plate = this.game?.licensePlates[stateOrProvince];
-        const key = `${plate?.country}-${plate?.stateOrProvince}`;
-        const ctrl = this.form.get(key);
-        if (!ctrl) {
-          return;
-        }
-        ctrl.setValue(true, { onlySelf: true, emitEvent: false });
       });
   }
 }
