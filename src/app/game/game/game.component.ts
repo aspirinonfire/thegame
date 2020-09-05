@@ -16,7 +16,6 @@ import { plateVm, SpotDialogData } from '../models';
 })
 export class GameComponent implements OnInit, OnDestroy {
   private readonly _subs: Subscription[];
-  game: Game | null;
   allstates: plateVm[];
 
   constructor(private readonly gameSvc: GameService,
@@ -24,13 +23,11 @@ export class GameComponent implements OnInit, OnDestroy {
     private readonly router: Router,
     private dialog: MatDialog) {
     
-    this.game = null;
     this.allstates = [];
     this._subs = [];
   }
 
   ngOnInit(): void {
-    this.game = this.gameSvc.getCurrentGame();
     this.setVm();
   }
 
@@ -38,7 +35,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this._subs.forEach(sub => sub.unsubscribe());
   }
 
-  public get currentGame(): LicensePlate[] {
+  public get currentGameSpots(): LicensePlate[] {
     const game = this.gameSvc.getCurrentGame();
     if (!game) {
       return [];
@@ -58,7 +55,29 @@ export class GameComponent implements OnInit, OnDestroy {
     });
   }
 
-  public openStateDialog() {
+  public openAddDialog() {
+    if (!!this.currentGame) {
+      this.openSpotDialog();
+    } else {
+      this.openNewGameDialog();
+    }
+  }
+
+  public finishGame(): void {
+    const res = this.gameSvc.finishActiveGame();
+    if (typeof res === 'string') {
+      // TODO show error!
+      return;
+    }
+    this.router.navigate(['..', AppRoutes.home]);
+    return;
+  }
+
+  public get currentGame() : Game | null {
+    return this.gameSvc.getCurrentGame();
+  }
+
+  private openSpotDialog() {
     const dialogRef = this.dialog.open(SpotDialogComponent, {
       data: <SpotDialogData>{
         name: this.initData.account.name,
@@ -75,31 +94,19 @@ export class GameComponent implements OnInit, OnDestroy {
     });
   }
 
-  public startNewGame(): void {
+  private openNewGameDialog() {
+    // TODO implement dialog
     const newGame = this.gameSvc.createGame("Test game", this.initData.account.name);
     if (typeof newGame === 'string') {
       // TODO show error!
       return;
     }
-    this.game = newGame;
-
     this.setVm();
-  }
-
-  public finishGame(): void {
-    const res = this.gameSvc.finishActiveGame();
-    if (typeof res === 'string') {
-      // TODO show error!
-      return;
-    }
-    this.game = null;
-    this.router.navigate(['..', AppRoutes.home]);
-    return;
   }
 
   private setVm() {
     const lkp = new Map<string, LicensePlate>();
-    this.currentGame.forEach(p => lkp.set(p.stateOrProvince, p));
+    this.currentGameSpots.forEach(p => lkp.set(p.stateOrProvince, p));
 
     this.allstates = [...this.initData.gameData.values()]
       .map(ter => {

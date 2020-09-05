@@ -10,4 +10,8 @@
 ::ng-deep .mat-checkbox-inner-container {
   height: 1.5rem !important;
   width: 1.5rem !important;
+
+  .mat-checkbox-input {
+    color: white !important;
+  }
 }

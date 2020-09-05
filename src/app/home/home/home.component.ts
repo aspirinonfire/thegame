@@ -28,6 +28,12 @@ export class HomeComponent implements OnInit {
       this.currentGame = new GameVm(currGame);
     }
     this.pastGames = this.gameSvc.getPastGames()
+      .sort((a, b) => {
+        if (!a.dateFinished || !b.dateFinished) {
+          return -1;
+        }
+        return a.dateFinished > b.dateFinished ? -1 : 1;
+      })
       .map(g => new GameVm(g));
   }
 

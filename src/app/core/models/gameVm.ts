@@ -22,6 +22,7 @@ export class GameVm implements Game {
   }
 
   public get gameDuration(): number {
-    return Math.floor((new Date().getTime() - new Date(this.dateCreated).getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const dateFinished = !!this.dateFinished ? new Date(this.dateFinished) : new Date();
+    return Math.floor((dateFinished.getTime() - new Date(this.dateCreated).getTime()) / (1000 * 60 * 60 * 24)) + 1;
   }
 }

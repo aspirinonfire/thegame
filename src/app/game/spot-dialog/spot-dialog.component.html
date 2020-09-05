@@ -1,4 +1,5 @@
 <h2 mat-dialog-title>I spy...</h2>
+<mat-divider></mat-divider>
 <mat-dialog-content>
     <div [formGroup]="form" class="game-form">
       <div class="form-group" *ngFor="let state of plateData.plates">
@@ -11,9 +12,8 @@
       </div>
     </div>
 </mat-dialog-content>
-<mat-dialog-actions>
-  <button mat-raised-button color="accent" id="cancel-spot" (click)="dismiss()">Cancel</button>
-  <button mat-raised-button color="primary" id="submit-spot" (click)="submit()">Save</button>
+<mat-divider></mat-divider>
+<mat-dialog-actions fxLayout="row wrap" fxLayoutGap="0.5%" fxLayoutAlign="space-between">
+  <button mat-raised-button color="accent" fxFlex="30%" id="cancel-spot" (click)="dismiss()">Cancel</button>
+  <button mat-raised-button color="primary" fxFlex="65%" id="submit-spot" (click)="submit()">Save</button>
 </mat-dialog-actions>
-
-
