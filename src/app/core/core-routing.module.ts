@@ -30,7 +30,7 @@ const routes: Routes = [
 
 @NgModule({
   imports: [RouterModule.forRoot(
-    routes, { preloadingStrategy: PreloadAllModules })],
+    routes, { preloadingStrategy: PreloadAllModules, scrollPositionRestoration: 'top' })],
   exports: [RouterModule]
 })
 export class CoreRoutingModule { }
