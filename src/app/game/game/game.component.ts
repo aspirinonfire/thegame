@@ -82,7 +82,8 @@ export class GameComponent implements OnInit, OnDestroy {
       data: <SpotDialogData>{
         name: this.initData.account.name,
         plates: this.allstates
-      }
+      },
+      width: '80%'
     });
 
     dialogRef.afterClosed().subscribe((result: plateVm[]) => {
