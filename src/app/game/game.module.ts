@@ -8,10 +8,11 @@ import { GameComponent } from './game/game.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { GeneralModule } from '../general/general.module';
 import { SpotDialogComponent } from './spot-dialog/spot-dialog.component';
+import { ConfirmationDialogComponent } from './confirmation-dialog/confirmation-dialog.component';
 
 
 @NgModule({
-  declarations: [GameComponent, SpotDialogComponent],
+  declarations: [GameComponent, SpotDialogComponent, ConfirmationDialogComponent],
   imports: [
     CommonModule,
     GameRoutingModule,
@@ -20,6 +21,6 @@ import { SpotDialogComponent } from './spot-dialog/spot-dialog.component';
     MatCheckboxModule,
     MatDialogModule
   ],
-  entryComponents: [SpotDialogComponent]
+  entryComponents: [SpotDialogComponent, ConfirmationDialogComponent]
 })
 export class GameModule { }

@@ -11,14 +11,12 @@ import { AppRoutes } from 'src/app/core/constants';
 })
 export class HomeComponent implements OnInit {
   public currentGame: GameVm | null;
-  public pastGames: GameVm[];
   public error: string | null;
 
   constructor(private readonly gameSvc: GameService,
     private readonly router: Router) {
     
     this.currentGame = null;
-    this.pastGames = [];
     this.error = null;
   }
 
@@ -27,28 +25,6 @@ export class HomeComponent implements OnInit {
     if (!!currGame) {
       this.currentGame = new GameVm(currGame);
     }
-    this.pastGames = this.gameSvc.getPastGames()
-      .sort((a, b) => {
-        if (!a.dateFinished || !b.dateFinished) {
-          return -1;
-        }
-        return a.dateFinished > b.dateFinished ? -1 : 1;
-      })
-      .map(g => new GameVm(g));
-  }
-
-  public get hasPastGames(): boolean {
-    return !!this.pastGames.length;
-  }
-
-  public get pastGameLicensePlates(): LicensePlate[][] {
-    if (!this.pastGames) {
-      return []
-    }
-
-    return this.pastGames.map(game => {
-      return Object.keys(game.licensePlates).map(key => game.licensePlates[key]);
-    });
   }
 
   public get lastSpot(): LicensePlate | null {
@@ -64,30 +40,6 @@ export class HomeComponent implements OnInit {
         const bDate = b.dateSpotted || 0;
         return aDate < bDate ? 1 : -1;
       })[0];
-  }
-
-  public get spottedUsStates(): ReadonlyMap<string, number>{
-    if (!this.hasPastGames) {
-      return new Map<string, number>();
-    }
-
-    const spottedUsStates = this.pastGames
-      .map(pg => pg.licensePlates)
-      .reduce((sum, plate) => {
-        Object.values(plate)
-          .filter(val => val.country === 'US')
-          .forEach(val => {
-            let counter = sum.get(val.stateOrProvince);
-            if (!counter) {
-              counter = 0;
-            }
-            counter++;
-            sum.set(val.stateOrProvince, counter);
-          });
-
-        return sum;
-      }, new Map<string, number>());
-    return spottedUsStates;
   }
 
   openCurrentGame() {

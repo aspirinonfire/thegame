@@ -10,11 +10,11 @@
 <mat-drawer-container class="app-nav-menu">
   <mat-drawer #sidenav mode="push" role="navigation" class="sidenav">
     <mat-nav-list (click)="sidenav.close()">
-      <a mat-list-item [routerLink]="['/', appRoutes.home]" routerLinkActive="active-link">
-        <mat-icon>home</mat-icon>Home
-      </a>
       <a mat-list-item [routerLink]="['/', appRoutes.game]" routerLinkActive="active-link">
         <mat-icon>map</mat-icon>Game
+      </a>
+      <a mat-list-item [routerLink]="['/', appRoutes.home, appRoutes.history]" routerLinkActive="active-link">
+        <mat-icon>home</mat-icon>History
       </a>
       <a mat-list-item [routerLink]="['/', appRoutes.about]" routerLinkActive="active-link">
         <mat-icon>info</mat-icon>About
@@ -25,7 +25,7 @@
   <div class="app-contents">
     <div fxLayout="row" fxLayoutAlign="center center" class="content">
       <div *ngIf="isLoading$ | async; else showRoute">
-        <h5>**** loading ****</h5>
+        <mat-progress-spinner></mat-progress-spinner>
       </div>
       <ng-template #showRoute>
         <router-outlet></router-outlet>

@@ -8,6 +8,7 @@ import { AppRoutes } from 'src/app/core/constants';
 import { MatDialog } from '@angular/material/dialog';
 import { SpotDialogComponent } from '../spot-dialog/spot-dialog.component';
 import { plateVm, SpotDialogData } from '../models';
+import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
 
 @Component({
   selector: 'app-game',
@@ -64,13 +65,21 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   public finishGame(): void {
-    const res = this.gameSvc.finishActiveGame();
-    if (typeof res === 'string') {
-      // TODO show error!
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent);
+
+    dialogRef.afterClosed().subscribe((res: boolean | null) => {
+      if (!res) {
+        return;
+      }
+
+      const finishGameResult = this.gameSvc.finishActiveGame();
+      if (typeof finishGameResult === 'string') {
+        // TODO show error!
+        return;
+      }
+      this.router.navigate(['..', AppRoutes.home]);
       return;
-    }
-    this.router.navigate(['..', AppRoutes.home]);
-    return;
+    });
   }
 
   public get currentGame() : Game | null {
@@ -96,7 +105,6 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private openNewGameDialog() {
-    // TODO implement dialog
     const newGame = this.gameSvc.createGame("Test game", this.initData.account.name);
     if (typeof newGame === 'string') {
       // TODO show error!

@@ -1,6 +1,8 @@
 @import '~src/styles/variables.scss';
 @include mat-core();
 
+// TODO override dark theme
+$app-theme: mat-dark-theme($app-primary, $app-accent, $app-warn);
 $app-theme: mat-light-theme($app-primary, $app-accent, $app-warn);
 
 $bg: map-get($app-theme, background);

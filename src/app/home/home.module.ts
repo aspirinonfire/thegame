@@ -5,10 +5,11 @@ import { MatListModule } from '@angular/material/list';
 import { HomeRoutingModule } from './home-routing.module';
 import { HomeComponent } from './home/home.component';
 import { GeneralModule } from '../general/general.module';
+import { HistoryComponent } from './history/history.component';
 
 
 @NgModule({
-  declarations: [HomeComponent],
+  declarations: [HomeComponent, HistoryComponent],
   imports: [
     CommonModule,
     HomeRoutingModule,

@@ -25,28 +25,3 @@
         <small>Last spot <strong>{{ lastSpot.stateOrProvince }}</strong> on <strong>{{ lastSpot?.dateSpotted | date: 'E, MMM dd @ h:mm aaa' }}</strong> by {{ lastSpot?.spottedBy }}</small>
     </mat-card-footer>
 </mat-card>
-
-<mat-card class = "card">
-    <mat-card-header>
-        <mat-card-title>
-            Game History
-        </mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-        <div *ngIf="hasPastGames; else showNoPastGames">
-            <app-us-map [pastGames]="pastGameLicensePlates"></app-us-map>
-            <mat-divider></mat-divider>
-            <mat-list *ngFor="let pastGame of pastGames">
-                <mat-list-item>
-                    <p>
-                        <strong>{{ pastGame.name }}</strong> started on {{ pastGame.dateCreated | date }}, and lasted for
-                        {{ pastGame.gameDuration }} day(s) Spotted {{ pastGame.platesSpotted }} state(s)
-                    </p>
-                </mat-list-item>
-            </mat-list>
-        </div>
-        <ng-template #showNoPastGames>
-            <h4>No past games</h4>
-        </ng-template>
-    </mat-card-content>
-</mat-card>
