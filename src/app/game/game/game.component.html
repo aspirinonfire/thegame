@@ -11,6 +11,8 @@
     <mat-card-content fxLayout="row" fxLayoutGap="0" fxLayoutAlign="center center">
         <div *ngIf="!!currentGame" class="us-map" fxFlexFill>
             <app-us-map [currentGame]="currentGameSpots" [pastGames]="pastGames"></app-us-map>
+            <mat-divider></mat-divider>
+            <app-non-us-spots [currentGame]="currentGameSpots" [pastGames]="pastGames"></app-non-us-spots>
         </div>
     </mat-card-content>
 </mat-card>

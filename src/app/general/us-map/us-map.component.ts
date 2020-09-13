@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { LicensePlate } from 'src/app/core/models';
 
 @Component({
@@ -43,7 +43,7 @@ export class UsMapComponent {
     });
   }
 
-  constructor(private readonly elementRef: ElementRef) {
+  constructor() {
     this.currentGameLkp = null;
     this.pastGamesLkp = new Map<string, number>();
     this.totalPastGames = 0;

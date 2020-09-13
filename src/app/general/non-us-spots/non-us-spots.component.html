@@ -1,0 +1,16 @@
+<div *ngIf="hasNonUsPlates; else showNoSpots">
+  <mat-chip-list aria-label="Non-US spots" cdkDropListOrientation="horizontal">
+    <mat-chip *ngFor="let plate of nonUsPlates; trackBy: plateTrackBy" color="primary" [selected]="plate.isInCurrentGame"
+      [removable]="false">
+      {{ plate.province }}
+      <span *ngIf="!plate.isInCurrentGame">
+        ({{ plate.previousSpots }})
+      </span>
+    </mat-chip>
+  </mat-chip-list>
+</div>
+<ng-template #showNoSpots>
+  <h4>
+    No non-US plates have been spotted...
+  </h4>
+</ng-template>

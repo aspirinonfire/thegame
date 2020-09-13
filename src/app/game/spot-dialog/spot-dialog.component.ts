@@ -64,4 +64,8 @@ export class SpotDialogComponent implements OnInit, OnDestroy {
   public dismiss() {
     this.dialogRef.close(null);
   }
+
+  public trackPlateSpot(index: number, state: plateVm | null) {
+    return state?.key;
+  }
 }
