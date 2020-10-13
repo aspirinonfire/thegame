@@ -10,17 +10,19 @@
     <mat-divider></mat-divider>
     <mat-card-content fxLayout="row" fxLayoutGap="0" fxLayoutAlign="center center">
         <div *ngIf="!!currentGame" class="us-map" fxFlexFill>
-            <app-us-map [currentGame]="currentGameSpots" [pastGames]="pastGames"></app-us-map>
+            <app-us-map [currentGame]="currentGameSpots" [pastGames]="pastGames" (click)="openSpotDialog()"></app-us-map>
             <mat-divider></mat-divider>
-            <app-non-us-spots [currentGame]="currentGameSpots" [pastGames]="pastGames"></app-non-us-spots>
+            <app-non-us-spots [currentGame]="currentGameSpots" [pastGames]="pastGames" (click)="openSpotDialog()"></app-non-us-spots>
         </div>
     </mat-card-content>
 </mat-card>
-<button *ngIf="currentGame" mat-mini-fab color="warn" (click)="finishGame()"
+<button *ngIf="currentGame; else showNewGameBtn" mat-mini-fab color="warn" (click)="finishGame()"
     id="finish-game" class="btn-sm fixed-bottom-left">
     <mat-icon>beenhere</mat-icon>
 </button>
-<button mat-fab color="primary" id="open-state-dialog" class="fixed-bottom-right mat-elevation-z8"
-    (click)="openAddDialog()" aria-label="Add">
-    <mat-icon>add</mat-icon>
-</button>
+<ng-template #showNewGameBtn>
+    <button *ngIf="!currentGame" mat-fab color="primary" id="open-state-dialog" class="fixed-bottom-right mat-elevation-z8"
+        (click)="openNewGameDialog()" aria-label="Add">
+        <mat-icon>add</mat-icon>
+    </button>
+</ng-template>

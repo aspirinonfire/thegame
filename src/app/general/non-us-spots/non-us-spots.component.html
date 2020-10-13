@@ -2,7 +2,7 @@
   <mat-chip-list aria-label="Non-US spots" cdkDropListOrientation="horizontal">
     <mat-chip *ngFor="let plate of nonUsPlates; trackBy: plateTrackBy" color="primary" [selected]="plate.isInCurrentGame"
       [removable]="false">
-      {{ plate.province }}
+      {{ plate.fullName }}
       <span *ngIf="!plate.isInCurrentGame">
         ({{ plate.previousSpots }})
       </span>

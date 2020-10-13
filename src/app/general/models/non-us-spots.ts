@@ -1,5 +1,6 @@
 export interface NonUsSpot {
   province: string,
   previousSpots: number,
-  isInCurrentGame: boolean
+  isInCurrentGame: boolean,
+  fullName: string
 }

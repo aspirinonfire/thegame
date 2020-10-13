@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Game, LicensePlate, Country } from '../models'
 import { LocalStorageService } from './local-storage.service';
-import { AppInitDataService } from './app-init-data.service';
+import { mockGameData } from '../mockData';
 
 @Injectable({
   providedIn: 'root'
@@ -9,8 +9,26 @@ import { AppInitDataService } from './app-init-data.service';
 export class GameService {
   private readonly CURRENT_GAME_KEY = "currentGame";
   private readonly PAST_GAMES_KEY = "pastGames";
+  private static territoryNameLkp: ReadonlyMap<string, string>;
 
-  constructor(private readonly storageSvc: LocalStorageService) { }
+  constructor(private readonly storageSvc: LocalStorageService) {
+    if (!GameService.territoryNameLkp) {
+      const lkp = new Map<string, string>();
+      mockGameData.forEach(t => {
+        lkp.set(this.getNameKey(t.shortName, t.country), t.longName);
+      });
+      GameService.territoryNameLkp = lkp;
+    }
+  }
+
+  public getNameKey(stateOrProvice: string, country: string): string {
+    return `${country}_${stateOrProvice}`;
+  }
+
+  public getLongName(stateOrProvice: string, country: string): string {
+    const key = this.getNameKey(stateOrProvice, country);
+    return GameService.territoryNameLkp.get(key) || stateOrProvice;
+  }
 
   public getCurrentGame(): Game | null {
     return this.storageSvc.getValue<Game>(this.CURRENT_GAME_KEY);

@@ -56,14 +56,6 @@ export class GameComponent implements OnInit, OnDestroy {
     });
   }
 
-  public openAddDialog() {
-    if (!!this.currentGame) {
-      this.openSpotDialog();
-    } else {
-      this.openNewGameDialog();
-    }
-  }
-
   public finishGame(): void {
     const dialogRef = this.dialog.open(ConfirmationDialogComponent);
 
@@ -86,7 +78,7 @@ export class GameComponent implements OnInit, OnDestroy {
     return this.gameSvc.getCurrentGame();
   }
 
-  private openSpotDialog() {
+  public openSpotDialog() {
     const dialogRef = this.dialog.open(SpotDialogComponent, {
       data: <SpotDialogData>{
         name: this.initData.account.name,
@@ -104,7 +96,7 @@ export class GameComponent implements OnInit, OnDestroy {
     });
   }
 
-  private openNewGameDialog() {
+  public openNewGameDialog() {
     const newGame = this.gameSvc.createGame("Test game", this.initData.account.name);
     if (typeof newGame === 'string') {
       // TODO show error!

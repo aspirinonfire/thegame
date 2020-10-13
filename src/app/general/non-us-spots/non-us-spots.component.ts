@@ -1,6 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { LicensePlate } from 'src/app/core/models';
 import { NonUsSpot } from '../models';
+import { GameService } from 'src/app/core/services/game.service';
 
 @Component({
   selector: 'app-non-us-spots',
@@ -61,7 +62,10 @@ export class NonUsSpotsComponent implements OnInit {
         return a.province.toUpperCase() > b.province.toUpperCase() ? 1 : -1;
       });
 
-    const allPlates = currGame.concat(pastGames);
+    const allPlates = currGame.concat(pastGames).map(p => {
+      p.fullName = this.gameSvc.getLongName(p.province, 'CA');
+      return p;
+    });
     const map = new Map<string, NonUsSpot>();
     for (const plate of allPlates) {
       if (plate.isInCurrentGame) {
@@ -81,7 +85,7 @@ export class NonUsSpotsComponent implements OnInit {
     return !!this.nonUsPlates.length;
   }
 
-  constructor() {
+  constructor(private readonly gameSvc: GameService) {
     this.currentGamePlates = null;
     this.pastGamesLkp = new Map<string, number>();
   }
