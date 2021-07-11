@@ -6,7 +6,7 @@
         <mat-checkbox class="state-province-input" [id]="state.key" [formControlName]="state.key" [color]="'primary'">
           {{ state.name }}
         </mat-checkbox>
-        <img class="plate-img" src="{{state.plateImage}}" alt="{{state.key}}" *ngIf="!!state.plateImage" />
+        <div class="plate-img" [style.backgroundImage]="'url('+state.plateImage+')'" *ngIf="!!state.plateImage"></div> 
         <small style="display: block; padding-left: 1.5rem;" *ngIf="state.showDetails">
           On {{ state.dateSpotted | date: 'E, MMM dd @ h:mm aaa' }} by {{ state.spottedBy }}
         </small>

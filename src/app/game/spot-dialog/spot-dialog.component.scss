@@ -12,7 +12,13 @@
 }
 
 .plate-img {
-  display: block;
+  height: 30vw;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+mat-dialog-content {
+  padding: 0;
 }
 
 ::ng-deep .mat-checkbox-inner-container {
