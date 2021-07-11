@@ -61,6 +61,11 @@ export class SpotDialogComponent implements OnInit, OnDestroy {
     this.dialogRef.close(newVals);
   }
 
+  public togglePlate(state: string) {
+    const ctrl = this.form.controls[state];
+    ctrl.setValue(!ctrl.value);
+  }
+
   public dismiss() {
     this.dialogRef.close(null);
   }
