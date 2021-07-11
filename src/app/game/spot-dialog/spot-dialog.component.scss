@@ -7,6 +7,14 @@
   padding: 1rem 0 0 2rem;
 }
 
+.plate {
+  padding-bottom: 1rem;
+}
+
+.plate-img {
+  display: block;
+}
+
 ::ng-deep .mat-checkbox-inner-container {
   height: 1.5rem !important;
   width: 1.5rem !important;

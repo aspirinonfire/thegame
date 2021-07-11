@@ -128,7 +128,8 @@ export class GameComponent implements OnInit, OnDestroy {
           dateSpotted: spottedOn,
           country: ter.country,
           showDetails: showDetails,
-          spottedBy: spottedBy
+          spottedBy: spottedBy,
+          plateImage: ter.country == "US" ? `/assets/plates/${ter.country.toLowerCase()}-${ter.shortName.toLowerCase()}.jpg` : null
         }
       });
   }

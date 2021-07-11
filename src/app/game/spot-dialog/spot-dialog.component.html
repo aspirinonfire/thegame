@@ -2,10 +2,11 @@
 <mat-divider></mat-divider>
 <mat-dialog-content>
     <div [formGroup]="form" class="game-form">
-      <div class="form-group" *ngFor="let state of plateData.plates; trackBy: trackPlateSpot">
+      <div class="form-group plate" *ngFor="let state of plateData.plates; trackBy: trackPlateSpot">
         <mat-checkbox class="state-province-input" [id]="state.key" [formControlName]="state.key" [color]="'primary'">
           {{ state.name }}
         </mat-checkbox>
+        <img class="plate-img" src="{{state.plateImage}}" alt="{{state.key}}" *ngIf="!!state.plateImage" />
         <small style="display: block; padding-left: 1.5rem;" *ngIf="state.showDetails">
           On {{ state.dateSpotted | date: 'E, MMM dd @ h:mm aaa' }} by {{ state.spottedBy }}
         </small>
