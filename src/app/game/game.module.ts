@@ -9,17 +9,25 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { GeneralModule } from '../general/general.module';
 import { SpotDialogComponent } from './spot-dialog/spot-dialog.component';
 import { ConfirmationDialogComponent } from './confirmation-dialog/confirmation-dialog.component';
-
+import { LicensePlateFilterPipe } from './license-plate.filter.pipe';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from "@angular/material/input";
 
 @NgModule({
-  declarations: [GameComponent, SpotDialogComponent, ConfirmationDialogComponent],
+  declarations: [
+    GameComponent,
+    SpotDialogComponent,
+    ConfirmationDialogComponent,
+    LicensePlateFilterPipe],
   imports: [
     CommonModule,
     GameRoutingModule,
     ReactiveFormsModule,
     GeneralModule,
     MatCheckboxModule,
-    MatDialogModule
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule
   ],
   entryComponents: [SpotDialogComponent, ConfirmationDialogComponent]
 })

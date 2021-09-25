@@ -21,6 +21,10 @@ mat-dialog-content {
   padding: 0;
 }
 
+.search-input-form-field {
+  width: 100%;
+}
+
 ::ng-deep .mat-checkbox-inner-container {
   height: 1.5rem !important;
   width: 1.5rem !important;

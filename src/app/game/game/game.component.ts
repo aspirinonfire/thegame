@@ -78,6 +78,10 @@ export class GameComponent implements OnInit, OnDestroy {
     return this.gameSvc.getCurrentGame();
   }
 
+  public get spottedPlates() : number {
+    return this.currentGameSpots.length;
+  }
+
   public openSpotDialog() {
     const dialogRef = this.dialog.open(SpotDialogComponent, {
       data: <SpotDialogData>{

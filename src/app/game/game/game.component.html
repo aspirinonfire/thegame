@@ -1,7 +1,7 @@
 <mat-card class="card mat-elevation-z8" >
     <mat-card-header>
         <mat-card-title fxFlexFill *ngIf="!!currentGame; else showNoGame">
-            {{ currentGame.name }} :: {{ currentGame.dateCreated | date }}
+            {{ currentGame.name }} :: {{ currentGame.dateCreated | date }}. Spotted {{ spottedPlates | number }} plate(s)
         </mat-card-title>
         <ng-template #showNoGame>
             No active game. Please start a new one!
