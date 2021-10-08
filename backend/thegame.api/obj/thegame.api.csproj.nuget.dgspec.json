@@ -1,0 +1,69 @@
+{
+  "format": 1,
+  "restore": {
+    "/Users/aspirin/ssd_docs/projects/thegame/thegame/backend/thegame.api/thegame.api.csproj": {}
+  },
+  "projects": {
+    "/Users/aspirin/ssd_docs/projects/thegame/thegame/backend/thegame.api/thegame.api.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/aspirin/ssd_docs/projects/thegame/thegame/backend/thegame.api/thegame.api.csproj",
+        "projectName": "thegame.api",
+        "projectPath": "/Users/aspirin/ssd_docs/projects/thegame/thegame/backend/thegame.api/thegame.api.csproj",
+        "packagesPath": "/Volumes/data_hfs/aspirin_docs/.nuget/packages/",
+        "outputPath": "/Users/aspirin/ssd_docs/projects/thegame/thegame/backend/thegame.api/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Volumes/data_hfs/aspirin_docs/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net5.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net5.0": {
+            "targetAlias": "net5.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net5.0": {
+          "targetAlias": "net5.0",
+          "dependencies": {
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[5.6.3, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/5.0.400/RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

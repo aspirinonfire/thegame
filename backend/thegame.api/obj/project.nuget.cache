@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "dgSpecHash": "4PYqwDVAgxn27iwHwQKa64/4z/0Z7AcF21lqC9IKGTKsZx6goPGCuejw+X3ZcpxFKEbjA3WH43zUXe7+b0uHYQ==",
+  "success": true,
+  "projectFilePath": "/Users/aspirin/ssd_docs/projects/thegame/thegame/backend/thegame.api/thegame.api.csproj",
+  "expectedPackageFiles": [
+    "/Volumes/data_hfs/aspirin_docs/.nuget/packages/microsoft.extensions.apidescription.server/3.0.0/microsoft.extensions.apidescription.server.3.0.0.nupkg.sha512",
+    "/Volumes/data_hfs/aspirin_docs/.nuget/packages/microsoft.openapi/1.2.3/microsoft.openapi.1.2.3.nupkg.sha512",
+    "/Volumes/data_hfs/aspirin_docs/.nuget/packages/swashbuckle.aspnetcore/5.6.3/swashbuckle.aspnetcore.5.6.3.nupkg.sha512",
+    "/Volumes/data_hfs/aspirin_docs/.nuget/packages/swashbuckle.aspnetcore.swagger/5.6.3/swashbuckle.aspnetcore.swagger.5.6.3.nupkg.sha512",
+    "/Volumes/data_hfs/aspirin_docs/.nuget/packages/swashbuckle.aspnetcore.swaggergen/5.6.3/swashbuckle.aspnetcore.swaggergen.5.6.3.nupkg.sha512",
+    "/Volumes/data_hfs/aspirin_docs/.nuget/packages/swashbuckle.aspnetcore.swaggerui/5.6.3/swashbuckle.aspnetcore.swaggerui.5.6.3.nupkg.sha512"
+  ],
+  "logs": []
+}
