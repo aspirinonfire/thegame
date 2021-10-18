@@ -6,6 +6,10 @@
 /out-tsc
 # Only exists if Bazel was run
 /bazel-out
+bin/
+obj/
+Debug/
+Release/
 
 # dependencies
 /ui/node_modules

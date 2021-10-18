@@ -2,7 +2,7 @@
 
 namespace thegame.domain
 {
-    public class Class1
+    public static class GameServices
     {
     }
 }

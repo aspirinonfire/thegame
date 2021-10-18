@@ -1,8 +1,0 @@
-{
-  "runtimeOptions": {
-    "additionalProbingPaths": [
-      "/Volumes/data_hfs/aspirin_docs/.dotnet/store/|arch|/|tfm|",
-      "/Volumes/data_hfs/aspirin_docs/.nuget/packages"
-    ]
-  }
-}
