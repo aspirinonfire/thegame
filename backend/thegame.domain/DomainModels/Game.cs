@@ -31,7 +31,7 @@ namespace thegame.domain.DomainModels
         }
 
         protected Team _team;
-        protected HashSet<LicensePlate> _licensePlate;
+        protected HashSet<LicensePlate> _licensePlate = new HashSet<LicensePlate>();
 
         public long Id { get; }
         public string Name { get; protected set; }
