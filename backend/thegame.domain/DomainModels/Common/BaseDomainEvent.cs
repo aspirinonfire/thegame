@@ -1,7 +1,7 @@
 namespace thegame.domain.DomainModels.Common
 {
-    public abstract class BaseDomainEvent
-    {
-        
-    }
+  public abstract class BaseDomainEvent
+  {
+
+  }
 }
