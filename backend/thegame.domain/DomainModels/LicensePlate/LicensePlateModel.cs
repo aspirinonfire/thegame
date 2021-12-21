@@ -2,7 +2,7 @@ namespace TheGame.Domain.DomainModels.LicensePlate
 {
   public class LicensePlateModel
   {
-    public long Id { get; protected set; }
+    public long Id { get; }
 
     public StateOrProvince StateOrProvince { get; protected set; }
 
@@ -22,6 +22,7 @@ namespace TheGame.Domain.DomainModels.LicensePlate
   public enum Country
   {
     US,
-    CA
+    CA,
+    MX
   }
 }

@@ -9,14 +9,16 @@ namespace TheGame.Domain.DomainModels.Game
   public partial class GameModel : BaseModel
   {
     protected TeamModel _team;
-    protected HashSet<LicensePlateModel> _licensePlate = new();
+    protected HashSet<LicensePlateModel> _licensePlates = new();
+
+    public IEnumerable<LicensePlateModel> LicensePlates => _licensePlates;
 
     public long Id { get; }
     public string Name { get; protected set; }
     public bool IsActive { get; protected set; }
     public DateTimeOffset? EndedOn { get; protected set; }
 
-    public Result<GameModel> EndGame(DateTimeOffset endedOn)
+    public virtual Result<GameModel> FinishGame(DateTimeOffset endedOn)
     {
       if (!IsActive)
       {
