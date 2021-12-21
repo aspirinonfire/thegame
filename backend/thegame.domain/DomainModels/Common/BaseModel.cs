@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace thegame.domain.DomainModels.Common
+namespace TheGame.Domain.DomainModels.Common
 {
   public class BaseModel
   {

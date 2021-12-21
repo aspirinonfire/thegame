@@ -1,8 +1,8 @@
-using thegame.domain.DomainModels.Game;
-using thegame.domain.DomainModels.LicensePlate;
-using thegame.domain.DomainModels.Player;
+using TheGame.Domain.DomainModels.Game;
+using TheGame.Domain.DomainModels.LicensePlate;
+using TheGame.Domain.DomainModels.Player;
 
-namespace thegame.domain.DomainModels.LicensePlateSpot
+namespace TheGame.Domain.DomainModels.LicensePlateSpot
 {
     public class LicensePlateSpot
     {

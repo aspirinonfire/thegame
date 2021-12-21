@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using thegame.domain.DomainModels.Common;
+using TheGame.Domain.DomainModels.Common;
 
-namespace thegame.domain.DomainModels.Game
+namespace TheGame.Domain.DomainModels.Game
 {
   public partial class GameModel
   {

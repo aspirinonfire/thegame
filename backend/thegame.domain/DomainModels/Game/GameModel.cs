@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using thegame.domain.DomainModels.Common;
-using thegame.domain.DomainModels.LicensePlate;
-using thegame.domain.DomainModels.Team;
+using TheGame.Domain.DomainModels.Common;
+using TheGame.Domain.DomainModels.LicensePlate;
+using TheGame.Domain.DomainModels.Team;
 
-namespace thegame.domain.DomainModels.Game
+namespace TheGame.Domain.DomainModels.Game
 {
   public partial class GameModel : BaseModel
   {

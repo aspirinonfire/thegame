@@ -4,9 +4,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using thegame.domain;
+using TheGame.Domain;
 
-namespace thegame.api
+namespace TheGame.Api
 {
   public class Startup
   {

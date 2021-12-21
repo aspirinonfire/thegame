@@ -1,9 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using thegame.domain.DomainModels.Game;
-using thegame.domain.DomainModels.Team;
+using TheGame.Domain.DomainModels.Game;
+using TheGame.Domain.DomainModels.Team;
 
-namespace thegame.domain
+namespace TheGame.Domain
 {
   public static class GameServices
   {

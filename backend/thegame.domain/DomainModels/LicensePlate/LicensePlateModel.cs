@@ -1,4 +1,4 @@
-namespace thegame.domain.DomainModels.LicensePlate
+namespace TheGame.Domain.DomainModels.LicensePlate
 {
   public class LicensePlateModel
   {

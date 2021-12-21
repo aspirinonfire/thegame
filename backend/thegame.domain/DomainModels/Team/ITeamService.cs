@@ -1,12 +1,11 @@
-using thegame.domain.DomainModels.Common;
-using thegame.domain.DomainModels.Game;
-using thegame.domain.DomainModels.Player;
+using TheGame.Domain.DomainModels.Common;
+using TheGame.Domain.DomainModels.Game;
+using TheGame.Domain.DomainModels.Player;
 
-namespace thegame.domain.DomainModels.Team
+namespace TheGame.Domain.DomainModels.Team
 {
   public interface ITeamService
   {
     Result<TeamModel> CreateNewTeam(string name);
-    Result<GameModel> AddNewGame(string name, PlayerModel player, TeamModel team);
   }
 }

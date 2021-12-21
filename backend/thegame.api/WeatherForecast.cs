@@ -1,6 +1,6 @@
 using System;
 
-namespace thegame.api
+namespace TheGame.Api
 {
     public class WeatherForecast
     {
