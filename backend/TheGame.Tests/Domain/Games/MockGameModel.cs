@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
-using TheGame.Domain.DomainModels.Game;
-using TheGame.Domain.DomainModels.LicensePlate;
+using TheGame.Domain.DomainModels.Games;
+using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.Team;
 
-namespace TheGame.Tests.Domain.Game
+namespace TheGame.Tests.Domain.Games
 {
   public class MockGameModel : GameModel
   {
     public MockGameModel(TeamModel? team,
-      IEnumerable<LicensePlateModel>? licensePlates,
+      IEnumerable<LicensePlateSpotModel>? licensePlates,
       string? name,
       bool isActive,
       DateTimeOffset? endedOn)
@@ -17,7 +17,7 @@ namespace TheGame.Tests.Domain.Game
       _team = team;
 
       _licensePlates = licensePlates != null ?
-        new HashSet<LicensePlateModel>(licensePlates) :
+        new HashSet<LicensePlateSpotModel>(licensePlates) :
         new ();
 
       Name = name;

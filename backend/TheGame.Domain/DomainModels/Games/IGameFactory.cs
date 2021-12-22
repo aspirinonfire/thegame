@@ -1,6 +1,6 @@
 using TheGame.Domain.DomainModels.Common;
 
-namespace TheGame.Domain.DomainModels.Game
+namespace TheGame.Domain.DomainModels.Games
 {
   public interface IGameFactory
   {

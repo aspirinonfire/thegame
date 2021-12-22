@@ -1,7 +1,7 @@
 using TheGame.Tests.TestUtils;
 using Xunit;
 
-namespace TheGame.Tests.Domain.Player
+namespace TheGame.Tests.Domain.Players
 {
   [Trait(XunitTestProvider.Category, XunitTestProvider.Unit)]
   public class PlayerModelTests

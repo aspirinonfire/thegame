@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Team;
 
-namespace TheGame.Domain.DomainModels.Player
+namespace TheGame.Domain.DomainModels.Players
 {
   public partial class PlayerModel : BaseModel, IEquatable<PlayerModel>
   {

@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using TheGame.Domain.DomainModels.Common;
-using TheGame.Domain.DomainModels.Game;
-using TheGame.Domain.DomainModels.Player;
-using TheGame.Domain.DomainModels.Team.Events;
+using TheGame.Domain.DomainModels.Games;
+using TheGame.Domain.DomainModels.Players;
+using TheGame.Domain.DomainModels.Games.Events;
 
 namespace TheGame.Domain.DomainModels.Team
 {

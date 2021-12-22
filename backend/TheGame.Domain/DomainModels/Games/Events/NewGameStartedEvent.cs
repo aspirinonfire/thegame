@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using TheGame.Domain.DomainModels.Common;
 
-namespace TheGame.Domain.DomainModels.Team.Events
+namespace TheGame.Domain.DomainModels.Games.Events
 {
-  public class ExistingGameFinishedEvent : BaseDomainEvent
+  public class NewGameStartedEvent : BaseDomainEvent
   {
   }
 }

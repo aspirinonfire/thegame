@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using TheGame.Domain.DomainModels.Game;
+using TheGame.Domain.DomainModels.Games;
+using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.Team;
 
 namespace TheGame.Domain
@@ -11,7 +11,8 @@ namespace TheGame.Domain
     {
       services
         .AddScoped<ITeamService, TeamModel.TeamService>()
-        .AddScoped<IGameFactory, GameModel.GameFactory>();
+        .AddScoped<IGameFactory, GameModel.GameFactory>()
+        .AddScoped<ILicensePlateSpotFactory, LicensePlateSpotModel.LicensePlateSpotFactory>();
 
       return services;
     }

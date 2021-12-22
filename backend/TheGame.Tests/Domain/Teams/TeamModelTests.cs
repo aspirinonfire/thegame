@@ -1,17 +1,17 @@
 using TheGame.Tests.TestUtils;
 using Xunit;
-using TheGame.Domain.DomainModels.Game;
+using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.Team;
 using Moq;
-using TheGame.Tests.Domain.Player;
+using TheGame.Tests.Domain.Players;
 using System.Linq;
 using TheGame.Domain.DomainModels.Common;
-using TheGame.Tests.Domain.Game;
-using TheGame.Domain.DomainModels.LicensePlate;
+using TheGame.Tests.Domain.Games;
+using TheGame.Domain.DomainModels.LicensePlates;
 using System;
-using TheGame.Domain.DomainModels.Team.Events;
+using TheGame.Domain.DomainModels.Games.Events;
 
-namespace TheGame.Tests.Domain.Team
+namespace TheGame.Tests.Domain.Teams
 {
   [Trait(XunitTestProvider.Category, XunitTestProvider.Unit)]
   public class TeamModelTests
@@ -51,7 +51,7 @@ namespace TheGame.Tests.Domain.Team
       var gameName = "test game";
 
       var existingFinishedGame = new MockGameModel(null,
-        Enumerable.Empty<LicensePlateModel>(),
+        Enumerable.Empty<LicensePlateSpotModel>(),
         "test game",
         false,
         null);
@@ -86,7 +86,7 @@ namespace TheGame.Tests.Domain.Team
       var gameName = "test game";
 
       var existingActiveGame = new MockGameModel(null,
-        Enumerable.Empty<LicensePlateModel>(),
+        Enumerable.Empty<LicensePlateSpotModel>(),
         "test game",
         true,
         null);
@@ -115,7 +115,7 @@ namespace TheGame.Tests.Domain.Team
       var player = new MockPlayerModel(null, 1, "test player");
 
       var existingActiveGame = new Mock<MockGameModel>(null,
-        Enumerable.Empty<LicensePlateModel>(),
+        Enumerable.Empty<LicensePlateSpotModel>(),
         "test game",
         true,
         null);

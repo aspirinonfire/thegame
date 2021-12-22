@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using TheGame.Domain.DomainModels.Game;
-using TheGame.Domain.DomainModels.Player;
+using TheGame.Domain.DomainModels.Games;
+using TheGame.Domain.DomainModels.Players;
 using TheGame.Domain.DomainModels.Team;
 
-namespace TheGame.Tests.Domain.Team
+namespace TheGame.Tests.Domain.Teams
 {
   public class MockTeamModel : TeamModel
   {
