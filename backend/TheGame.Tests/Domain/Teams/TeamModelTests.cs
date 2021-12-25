@@ -112,8 +112,7 @@ namespace TheGame.Tests.Domain.Teams
     {
       var player = new MockPlayerModel(null, 1, "test player");
 
-      var existingActiveGame = new Mock<MockGameModel>(null,
-        Enumerable.Empty<LicensePlateSpotModel>(),
+      var existingActiveGame = new Mock<MockGameModel>(Enumerable.Empty<LicensePlateSpotModel>(),
         "test game",
         true,
         null);

@@ -65,7 +65,7 @@ namespace TheGame.Domain.DomainModels.Games
     }
 
     public virtual Result<GameModel> RemoveLicensePlateSpot(
-      IEnumerable<(Country country, StateOrProvince stateOrProvince)> licensePlates,
+      IEnumerable<(Country country, StateOrProvince stateOrProvince)> licensePlatesToRemove,
       PlayerModel spottedBy)
     {
       if (!IsActive)
@@ -73,11 +73,11 @@ namespace TheGame.Domain.DomainModels.Games
         return Result.Error<GameModel>(InactiveGameError);
       }
 
-      var toRemove = new HashSet<(Country country, StateOrProvince stateOrProvince)>(licensePlates);
+      var toRemove = new HashSet<(Country country, StateOrProvince stateOrProvince)>(licensePlatesToRemove);
       GetWriteableCollection(LicensePlateSpots)
         .RemoveWhere(spot => toRemove.Contains((spot.LicensePlate.Country, spot.LicensePlate.StateOrProvince)));
 
-      AddEvent(new LicensePlateSpotRemovedEvent());
+      AddEvent(new LicensePlateSpotRemovedEvent(licensePlatesToRemove));
 
       return Result.Success(this);
     }

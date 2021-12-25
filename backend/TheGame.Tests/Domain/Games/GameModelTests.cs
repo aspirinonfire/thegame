@@ -44,6 +44,30 @@ namespace TheGame.Tests.Domain.Games
     }
 
     [Fact]
+    public void CanRemoveSpottedPlates()
+    {
+      var existingSpottedBy = new MockPlayerModel(null, 2, "existing");
+      var toRemove = (Country.US, StateOrProvince.CA);
+
+      var existingSpot = new MockLicensePlateSpotModel(
+        new MockLicensePlateModel(Country.US, StateOrProvince.CA),
+        existingSpottedBy);
+
+      var uut = new MockGameModel(new[] { existingSpot }, null, true, null);
+
+      var actual = uut.RemoveLicensePlateSpot(new[] { toRemove },
+        existingSpottedBy);
+
+      Assert.True(actual.IsSuccess);
+      Assert.Empty(uut.LicensePlateSpots);
+      var actualEvent = Assert.Single(uut.DomainEvents);
+      var actualRemovedEvent = Assert.IsType<LicensePlateSpotRemovedEvent>(actualEvent);
+      var removedPlate = Assert.Single(actualRemovedEvent.LicensePlatesToRemove);
+      Assert.Equal((existingSpot.LicensePlate.Country, existingSpot.LicensePlate.StateOrProvince),
+        removedPlate);
+    }
+
+    [Fact]
     public void CanHandleAlreadySpottedPlate()
     {
       var existingSpottedBy = new MockPlayerModel(null, 2, "existing");
