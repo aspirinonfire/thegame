@@ -8,15 +8,12 @@ namespace TheGame.Tests.Domain.Games
 {
   public class MockGameModel : GameModel
   {
-    public MockGameModel(TeamModel? team,
-      IEnumerable<LicensePlateSpotModel>? licensePlates,
+    public MockGameModel(IEnumerable<LicensePlateSpotModel>? licensePlates,
       string? name,
       bool isActive,
       DateTimeOffset? endedOn)
     {
-      _team = team;
-
-      _licensePlates = licensePlates != null ?
+      _licensePlateSpots = licensePlates != null ?
         new HashSet<LicensePlateSpotModel>(licensePlates) :
         new ();
 

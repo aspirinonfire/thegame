@@ -1,45 +1,85 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TheGame.Domain.DomainModels.Common;
+using TheGame.Domain.DomainModels.Games.Events;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.Players;
-using TheGame.Domain.DomainModels.Team;
 
 namespace TheGame.Domain.DomainModels.Games
 {
   public partial class GameModel : BaseModel
   {
     public const string InactiveGameError = "inactive_game";
+    public const string FailedToAddSpotError = "failed_to_add_spot";
+    public const string InvalidEndedOnDate = "invalid_ended_on_date";
 
-    protected TeamModel _team;
-    protected HashSet<LicensePlateSpotModel> _licensePlates = new();
+    protected HashSet<LicensePlateSpotModel> _licensePlateSpots = new();
 
-    public IEnumerable<LicensePlateSpotModel> LicensePlates => _licensePlates;
+    public IEnumerable<LicensePlateSpotModel> LicensePlateSpots => _licensePlateSpots;
 
     public long Id { get; }
     public string Name { get; protected set; }
     public bool IsActive { get; protected set; }
     public DateTimeOffset? EndedOn { get; protected set; }
 
-    public virtual Result<LicensePlateSpotModel> SpotLicensePlate(ILicensePlateSpotFactory licensePlateSpotFactory,
-      LicensePlateModel licensePlate,
+    public virtual Result<GameModel> AddLicensePlateSpot(ILicensePlateSpotFactory licensePlateSpotFactory,
+      IEnumerable<(Country country, StateOrProvince stateOrProvince)> licensePlateSpots,
       PlayerModel spottedBy)
     {
       if (!IsActive)
       {
-        return Result.Error<LicensePlateSpotModel>(InactiveGameError);
+        return Result.Error<GameModel>(InactiveGameError);
       }
 
-      var plateSpotResult = licensePlateSpotFactory.SpotLicensePlate(licensePlate, spottedBy);
-      if (!plateSpotResult.IsSuccess)
+      var existingSpots = LicensePlateSpots
+        .Select(spot => (spot.LicensePlate.Country, spot.LicensePlate.StateOrProvince))
+        .ToHashSet();
+
+      var newSpots = licensePlateSpots
+        .Where(spot => !existingSpots.Contains(spot));
+
+      var newSpottedPlates = new List<LicensePlateSpotModel>();
+      foreach ((Country country, StateOrProvince stateOrProvince) in newSpots)
       {
-        return plateSpotResult;
+        var licensePlateSpot = licensePlateSpotFactory.SpotLicensePlate(country,
+          stateOrProvince,
+          spottedBy);
+
+        if (!licensePlateSpot.IsSuccess)
+        {
+          return Result.Error<GameModel>(FailedToAddSpotError);
+        }
+
+        newSpottedPlates.Add(licensePlateSpot.Value);
+        GetWriteableCollection(LicensePlateSpots)
+          .Add(licensePlateSpot.Value);
       }
 
-      GetWriteableCollection(LicensePlates)
-        .Add(plateSpotResult.Value);
+      if (newSpottedPlates.Any())
+      {
+        AddEvent(new LicensePlateSpottedEvent(newSpottedPlates.AsReadOnly()));
+      }
 
-      return plateSpotResult;
+      return Result.Success(this);
+    }
+
+    public virtual Result<GameModel> RemoveLicensePlateSpot(
+      IEnumerable<(Country country, StateOrProvince stateOrProvince)> licensePlates,
+      PlayerModel spottedBy)
+    {
+      if (!IsActive)
+      {
+        return Result.Error<GameModel>(InactiveGameError);
+      }
+
+      var toRemove = new HashSet<(Country country, StateOrProvince stateOrProvince)>(licensePlates);
+      GetWriteableCollection(LicensePlateSpots)
+        .RemoveWhere(spot => toRemove.Contains((spot.LicensePlate.Country, spot.LicensePlate.StateOrProvince)));
+
+      AddEvent(new LicensePlateSpotRemovedEvent());
+
+      return Result.Success(this);
     }
 
     public virtual Result<GameModel> FinishGame(DateTimeOffset endedOn)
@@ -51,11 +91,13 @@ namespace TheGame.Domain.DomainModels.Games
 
       if (endedOn < CreatedOn)
       {
-        return Result.Error<GameModel>("invalid_ended_on_date");
+        return Result.Error<GameModel>(InvalidEndedOnDate);
       }
 
       IsActive = false;
       EndedOn = endedOn;
+
+      AddEvent(new ExistingGameFinishedEvent());
 
       return Result.Success(this);
     }

@@ -50,8 +50,7 @@ namespace TheGame.Tests.Domain.Teams
       var player = new MockPlayerModel(null, 1, "test player");
       var gameName = "test game";
 
-      var existingFinishedGame = new MockGameModel(null,
-        Enumerable.Empty<LicensePlateSpotModel>(),
+      var existingFinishedGame = new MockGameModel(Enumerable.Empty<LicensePlateSpotModel>(),
         "test game",
         false,
         null);
@@ -85,8 +84,7 @@ namespace TheGame.Tests.Domain.Teams
       var player = new MockPlayerModel(null, 1, "test player");
       var gameName = "test game";
 
-      var existingActiveGame = new MockGameModel(null,
-        Enumerable.Empty<LicensePlateSpotModel>(),
+      var existingActiveGame = new MockGameModel(Enumerable.Empty<LicensePlateSpotModel>(),
         "test game",
         true,
         null);
