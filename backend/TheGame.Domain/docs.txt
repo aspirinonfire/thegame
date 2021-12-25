@@ -1,0 +1,22 @@
+Domain and Infra are located in the same project for few reasons:
+1. Leaking abstraction due to the EF Core concerns.
+2. Simpler file management.
+
+TODO:
+[ ]   Commands (CQRS)
+[ ]   Domain event handlers (MediatR)
+[ ]   DB (EF Core) + Integration tests
+[ ]   Queries (CQRS)
+[ ]   Logging
+[ ]   APIs
+--- Backend Feature ---
+[ ]   Google auth backend
+[ ]   Google auth UI
+[ ]   Consume game APIs
+[ ]   Push notis (SignalR)
+[ ]   Offline gaming
+[ ]   Azure deployment
+--- Prod ---
+[ ]   Sendgrid for team invites
+[ ]   Containers and AKS
+[ ]   Redesign UI

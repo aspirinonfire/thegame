@@ -10,6 +10,8 @@
 
   <ItemGroup>
     <Folder Include="DomainModels\Team\Events\" />
+    <Folder Include="DbServices\" />
+    <Folder Include="Repositories\" />
   </ItemGroup>
 
 </Project>
