@@ -46,7 +46,7 @@ namespace TheGame.Domain.DomainModels.Team
       if (newGameResult.IsSuccess)
       {
         _games.Add(newGameResult.Value);
-        AddEvent(new NewGameStartedEvent());
+        AddDomainEvent(new NewGameStartedEvent());
       }
 
       return newGameResult;
@@ -68,7 +68,7 @@ namespace TheGame.Domain.DomainModels.Team
       var result = activeGame.FinishGame(System.DateTimeOffset.UtcNow);
       if (result.IsSuccess)
       {
-        AddEvent(new ExistingGameFinishedEvent());
+        AddDomainEvent(new ExistingGameFinishedEvent());
       }
       return result;
     }

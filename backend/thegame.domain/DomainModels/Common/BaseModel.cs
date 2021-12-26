@@ -3,19 +3,36 @@ using System.Collections.Generic;
 
 namespace TheGame.Domain.DomainModels.Common
 {
-  public class BaseModel
+  public class BaseModel : IDomainModel
   {
-    private readonly HashSet<BaseDomainEvent> _domainEvents = new();
-    public IReadOnlyCollection<BaseDomainEvent> DomainEvents => _domainEvents;
+    private readonly HashSet<IDomainEvent> _domainEvents = new();
+    private readonly HashSet<IIntegrationEvent> _integrationEvents = new();
+    public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents;
+    public IReadOnlyCollection<IIntegrationEvent> IntegrationEvents => _integrationEvents;
 
+
+    // TODO replace with IDatedRecordEquivalent
     public DateTimeOffset? CreatedOn { get; }
     public long? CreatedBy { get; }
     public DateTimeOffset? ModifiedOn { get; }
     public long? ModifiedBy { get; }
 
-    protected void AddEvent(BaseDomainEvent domainEvent)
+    /// <summary>
+    /// Add an event to be handled by this microservice
+    /// </summary>
+    /// <param name="domainEvent"></param>
+    protected void AddDomainEvent(IDomainEvent domainEvent)
     {
       _domainEvents.Add(domainEvent);
+    }
+
+    /// <summary>
+    /// Add an event to be handled by external system. E.g. SendGrid, SignalR, ServiceBus
+    /// </summary>
+    /// <param name="domainEvent"></param>
+    protected void AddIntegrationEvent(IIntegrationEvent domainEvent)
+    {
+      _integrationEvents.Add(domainEvent);
     }
 
     protected static HashSet<T> GetWriteableCollection<T>(IEnumerable<T> navCollection) where T: BaseModel

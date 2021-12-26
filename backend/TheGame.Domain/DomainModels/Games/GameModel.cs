@@ -58,7 +58,7 @@ namespace TheGame.Domain.DomainModels.Games
 
       if (newSpottedPlates.Any())
       {
-        AddEvent(new LicensePlateSpottedEvent(newSpottedPlates.AsReadOnly()));
+        AddDomainEvent(new LicensePlateSpottedEvent(newSpottedPlates.AsReadOnly()));
       }
 
       return Result.Success(this);
@@ -77,7 +77,7 @@ namespace TheGame.Domain.DomainModels.Games
       GetWriteableCollection(LicensePlateSpots)
         .RemoveWhere(spot => toRemove.Contains((spot.LicensePlate.Country, spot.LicensePlate.StateOrProvince)));
 
-      AddEvent(new LicensePlateSpotRemovedEvent(licensePlatesToRemove));
+      AddDomainEvent(new LicensePlateSpotRemovedEvent(licensePlatesToRemove));
 
       return Result.Success(this);
     }
@@ -97,7 +97,7 @@ namespace TheGame.Domain.DomainModels.Games
       IsActive = false;
       EndedOn = endedOn;
 
-      AddEvent(new ExistingGameFinishedEvent());
+      AddDomainEvent(new ExistingGameFinishedEvent());
 
       return Result.Success(this);
     }

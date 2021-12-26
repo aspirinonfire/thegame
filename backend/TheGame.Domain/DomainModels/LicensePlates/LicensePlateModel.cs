@@ -11,6 +11,7 @@ namespace TheGame.Domain.DomainModels.LicensePlates
 
     public Country Country { get; protected set; }
 
+
     public override string ToString() => $"{Id}_{Country}_{StateOrProvince}";
 
     public override int GetHashCode() => $"{Country}_{StateOrProvince}".GetHashCode();

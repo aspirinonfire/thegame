@@ -4,7 +4,7 @@ using TheGame.Domain.DomainModels.LicensePlates;
 
 namespace TheGame.Domain.DomainModels.Games.Events
 {
-  public class LicensePlateSpottedEvent : BaseDomainEvent
+  public class LicensePlateSpottedEvent : IDomainEvent
   {
     public LicensePlateSpottedEvent(ReadOnlyCollection<LicensePlateSpotModel> licensePlateSpotModels)
     {
