@@ -5,11 +5,12 @@ Domain and Infra are located in the same project for few reasons:
 TODO:
 [ ]   Commands (CQRS)
 [ ]   Domain event handlers (MediatR)
-[ ]   DB (EF Core) + Integration tests
+[x]   DB (EF Core)
+[x]   Integration tests
 [ ]   Queries (CQRS)
 [ ]   Logging
 [ ]   APIs
---- Backend Feature ---
+--- App Features ---
 [ ]   Google auth backend
 [ ]   Google auth UI
 [ ]   Consume game APIs
@@ -19,4 +20,24 @@ TODO:
 --- Prod ---
 [ ]   Sendgrid for team invites
 [ ]   Containers and AKS
-[ ]   Redesign UI
+[ ]   App Insights
+
+
+EF Migrations:
+Design time migrations broken:
+See fix: https://social.msdn.microsoft.com/Forums/en-US/9b82a6db-634b-47f3-acea-57e52b8ab383/ef-core-3-design-time-migrations-broken-by-microsoftentityframeworkcoredesign?forum=aspadoentitylinq
+
+-- Create initial DB migration script --
+dotnet ef migrations add initial --verbose -s ..\TheGame.Api\ --output-dir DAL\Migrations
+
+-- Add new migration --
+dotnet ef migrations add <MigrationName> --verbose
+
+-- Run migration --
+dotnet ef database update --verbose -s ..\TheGame.Api\
+
+-- Remove last migration (stack pop) --
+dotnet ef migrations remove --verbose -s ..\TheGame.Api\
+
+-- Get list of migrations --
+dotnet ef migrations list -s ..\TheGame.Api\

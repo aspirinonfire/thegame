@@ -1,11 +1,14 @@
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Reflection;
 using TheGame.Domain.DAL;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.Team;
+using TheGame.Domain.Utils;
 
 namespace TheGame.Domain
 {
@@ -15,35 +18,33 @@ namespace TheGame.Domain
       string connectionString,
       bool isDevelopment)
     {
-      services
-        .AddGameDataAccessServices(connectionString, isDevelopment)
-        .AddScoped<IGameDbContext>(isp => isp.GetRequiredService<GameDbContext>())
-        .AddScoped<ITeamService, TeamModel.TeamService>()
-        .AddScoped<IGameFactory, GameModel.GameFactory>()
-        .AddScoped<ILicensePlateSpotFactory, LicensePlateSpotModel.LicensePlateSpotFactory>();
-
-      return services;
-    }
-
-    public static IServiceCollection AddGameDataAccessServices(this IServiceCollection services,
-      string connectionString,
-      bool isDevelopment)
-    {
       if (string.IsNullOrEmpty(connectionString))
       {
         throw new ArgumentNullException(nameof(connectionString));
       }
 
-      services.AddDbContext<GameDbContext>(options =>
-      {
-        if (isDevelopment)
+      services
+        // Logging
+        .AddLogging()
+        // DB ctx
+        .AddDbContext<GameDbContext>(options =>
         {
-          options.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddConsole()));
-        }
-        options.UseLazyLoadingProxies(true);
-        // TODO configure SQL connection params
-        options.UseSqlServer(connectionString);
-      });
+          if (isDevelopment)
+          {
+            options.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddConsole()));
+          }
+          options.UseLazyLoadingProxies(true);
+          // TODO configure SQL connection params
+          options.UseSqlServer(connectionString);
+        })
+        .AddScoped<IGameDbContext>(isp => isp.GetRequiredService<GameDbContext>())
+        // Utils
+        .AddSingleton<ISystemService, SystemService>()
+        .AddMediatR(typeof(GameServiceExtensions).GetTypeInfo().Assembly)
+        // Game services
+        .AddScoped<ITeamService, TeamModel.TeamService>()
+        .AddScoped<IGameFactory, GameModel.GameFactory>()
+        .AddScoped<ILicensePlateSpotFactory, LicensePlateSpotModel.LicensePlateSpotFactory>();
 
       return services;
     }

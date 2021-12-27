@@ -7,7 +7,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheGame.Api", "thegame.api\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheGame.Domain", "thegame.domain\TheGame.Domain.csproj", "{579CF5A2-EBCC-48DE-A76A-B19DAE12B2C4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TheGame.Tests", "TheGame.Tests\TheGame.Tests.csproj", "{3D0816D7-50D9-4A6B-8DFC-BFE66B083178}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheGame.Tests", "TheGame.Tests\TheGame.Tests.csproj", "{3D0816D7-50D9-4A6B-8DFC-BFE66B083178}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{DAA97881-905A-4002-AF6C-A6B9B4C6E5F5}"
+	ProjectSection(SolutionItems) = preProject
+		..\.gitignore = ..\.gitignore
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

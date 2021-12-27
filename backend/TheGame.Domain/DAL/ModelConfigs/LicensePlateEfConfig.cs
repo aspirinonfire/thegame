@@ -1,10 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TheGame.Domain.DomainModels.LicensePlates;
 
 namespace TheGame.Domain.DAL.ModelConfigs
@@ -18,11 +13,16 @@ namespace TheGame.Domain.DAL.ModelConfigs
 
       builder
         .Property(model => model.Country)
-        .IsRequired();
+        .IsRequired()
+        .HasConversion<string>();
 
       builder
         .Property(model => model.StateOrProvince)
-        .IsRequired();
+        .IsRequired()
+        .HasConversion<string>();
+
+      // Seed data
+      builder.HasData(LicensePlateModel.AvailableLicensePlates);
     }
   }
 }

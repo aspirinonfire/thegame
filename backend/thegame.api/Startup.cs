@@ -3,8 +3,11 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using System;
 using TheGame.Domain;
+using TheGame.Domain.DAL;
 
 namespace TheGame.Api
 {
@@ -20,8 +23,15 @@ namespace TheGame.Api
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
-      var connString = "TODO: implement";
-      services.AddGameServices(connString, true);
+      var connString =  Configuration.GetConnectionString(GameDbContext.ConnectionStringName);
+      if (string.IsNullOrEmpty(connString))
+      {
+        string msg = $"{GameDbContext.ConnectionStringName} connection string is not found! Aborting...";
+        throw new ApplicationException(msg);
+      }
+      // TODO env check
+      var isDevelopment = true;
+      services.AddGameServices(connString, isDevelopment);
 
       services.AddControllers();
       services.AddSwaggerGen(c =>
@@ -31,8 +41,18 @@ namespace TheGame.Api
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    public void Configure(IApplicationBuilder app,
+      IWebHostEnvironment env,
+      ILogger<Startup> logger,
+      GameDbContext dbContext)
     {
+      if (!dbContext.Database.CanConnect())
+      {
+        string msg = "Could not connect to database! Aborting...";
+        logger.LogCritical(msg);
+        throw new ApplicationException(msg);
+      }
+
       if (env.IsDevelopment())
       {
         app.UseDeveloperExceptionPage();

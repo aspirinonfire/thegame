@@ -1,16 +1,43 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using TheGame.Domain.DomainModels.Common;
 
 namespace TheGame.Domain.DomainModels.LicensePlates
 {
   public class LicensePlateModel : BaseModel, IEquatable<LicensePlateModel>
   {
-    public long Id { get; }
+    public const string LicensePlateNotFoundError = "license_plate_not_found";
+
+    public static readonly IReadOnlyCollection<LicensePlateModel> AvailableLicensePlates = new List<LicensePlateModel>()
+    {
+      // TODO populate the rest
+      new LicensePlateModel() { Id = 1, Country = Country.CA, StateOrProvince = StateOrProvince.BC },
+      new LicensePlateModel() { Id = 2, Country = Country.US, StateOrProvince = StateOrProvince.AK },
+      new LicensePlateModel() { Id = 3, Country = Country.US, StateOrProvince = StateOrProvince.CA },
+      new LicensePlateModel() { Id = 4, Country = Country.US, StateOrProvince = StateOrProvince.NV },
+      new LicensePlateModel() { Id = 5, Country = Country.US, StateOrProvince = StateOrProvince.OR },
+      new LicensePlateModel() { Id = 6, Country = Country.US, StateOrProvince = StateOrProvince.WA },
+    };
+
+    private static readonly IReadOnlyDictionary<(Country, StateOrProvince), LicensePlateModel> _licensePlateMap =
+      AvailableLicensePlates
+        .ToDictionary(lp => (lp.Country, lp.StateOrProvince));
+
+    public long Id { get; protected set; }
 
     public StateOrProvince StateOrProvince { get; protected set; }
 
     public Country Country { get; protected set; }
 
+    public static Result<LicensePlateModel> GetLicensePlate(Country country, StateOrProvince stateOrProvince)
+    {
+      if (_licensePlateMap.TryGetValue((country, stateOrProvince), out var licensePlateModel))
+      {
+        return Result.Success(licensePlateModel);
+      }
+      return Result.Error<LicensePlateModel>(LicensePlateNotFoundError);
+    }
 
     public override string ToString() => $"{Id}_{Country}_{StateOrProvince}";
 
@@ -52,10 +79,14 @@ namespace TheGame.Domain.DomainModels.LicensePlates
   public enum StateOrProvince
   {
     // US
+    AK,
     CA,
+    NV,
+    OR,
+    WA,
 
     // Canada
-    BritishColumbia
+    BC
   }
 
   public enum Country

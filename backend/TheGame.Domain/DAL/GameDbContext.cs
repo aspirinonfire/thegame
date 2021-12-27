@@ -16,6 +16,8 @@ namespace TheGame.Domain.DAL
 {
   public class GameDbContext : DbContext, IGameDbContext
   {
+    public const string ConnectionStringName = "GameDB";
+
     private readonly IMediator _mediator;
     private readonly ILogger<GameDbContext> _logger;
     private readonly ISystemService _systemService;
