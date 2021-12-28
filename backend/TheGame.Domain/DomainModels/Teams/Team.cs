@@ -16,8 +16,8 @@ namespace TheGame.Domain.DomainModels.Teams
     protected HashSet<Player> _players = new();
     protected HashSet<Game> _games = new();
 
-    public IEnumerable<Game> Games => _games;
-    public IEnumerable<Player> Player => _players;
+    public ICollection<Game> Games => _games;
+    public ICollection<Player> Players => _players;
 
     public long Id { get; }
     public string Name { get; protected set; }

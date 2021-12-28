@@ -10,13 +10,6 @@ namespace TheGame.Domain.DomainModels.Common
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents;
     public IReadOnlyCollection<IIntegrationEvent> IntegrationEvents => _integrationEvents;
 
-
-    // TODO replace with IDatedRecordEquivalent
-    public DateTimeOffset? CreatedOn { get; }
-    public long? CreatedBy { get; }
-    public DateTimeOffset? ModifiedOn { get; }
-    public long? ModifiedBy { get; }
-
     /// <summary>
     /// Add an event to be handled by this microservice
     /// </summary>

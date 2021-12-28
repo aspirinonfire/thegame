@@ -8,7 +8,7 @@ using TheGame.Domain.DomainModels.Players;
 
 namespace TheGame.Domain.DomainModels.Games
 {
-  public partial class Game : BaseModel
+  public partial class Game : BaseModel, IAuditedRecord
   {
     public const string InactiveGameError = "inactive_game";
     public const string FailedToAddSpotError = "failed_to_add_spot";
@@ -16,12 +16,17 @@ namespace TheGame.Domain.DomainModels.Games
 
     protected HashSet<LicensePlateSpot> _licensePlateSpots = new();
 
-    public IEnumerable<LicensePlateSpot> LicensePlateSpots => _licensePlateSpots;
+    // TODO turn this into N:M relationship with explicit intermediate model
+    public ICollection<LicensePlateSpot> LicensePlateSpots => _licensePlateSpots;
 
     public long Id { get; }
     public string Name { get; protected set; }
     public bool IsActive { get; protected set; }
     public DateTimeOffset? EndedOn { get; protected set; }
+
+    public DateTimeOffset DateCreated { get; }
+
+    public DateTimeOffset? DateModified { get; }
 
     public virtual Result<Game> AddLicensePlateSpot(ILicensePlateSpotFactory licensePlateSpotFactory,
       IEnumerable<(Country country, StateOrProvince stateOrProvince)> licensePlateSpots,
@@ -89,7 +94,7 @@ namespace TheGame.Domain.DomainModels.Games
         return Result.Error<Game>(InactiveGameError);
       }
 
-      if (endedOn < CreatedOn)
+      if (endedOn < DateCreated)
       {
         return Result.Error<Game>(InvalidEndedOnDate);
       }

@@ -10,6 +10,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.LicensePlates;
+using TheGame.Domain.DomainModels.Players;
+using TheGame.Domain.DomainModels.Teams;
 using TheGame.Domain.Utils;
 
 namespace TheGame.Domain.DAL
@@ -23,14 +25,14 @@ namespace TheGame.Domain.DAL
     private readonly ISystemService _systemService;
 
     public DbSet<LicensePlate> LicensePlates { get; set; }
+    public DbSet<Team> Teams { get; set; }
+    public DbSet<Player> Players { get; set; }
 
     // Should not be accessed directly
-    //public DbSet<LicensePlateSpotModel> LicensePlateSpots { get; set; }
-
-    // TODO enable once config is completed
-    //public DbSet<PlayerModel> Players { get; set; }
-    //public DbSet<GameModel> Games { get; set; }
-    //public DbSet<TeamModel> Teams { get; set; }
+    // accessed from Player.Teams[].Games.Where
+    //public DbSet<Game> Games { get; set; }
+    // accessed from Game.LincensePlates
+    //public DbSet<LicensePlateSpot> LicensePlateSpots { get; set; }
 
     public GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
       IMediator mediator,
