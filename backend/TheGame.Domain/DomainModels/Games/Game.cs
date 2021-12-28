@@ -8,28 +8,28 @@ using TheGame.Domain.DomainModels.Players;
 
 namespace TheGame.Domain.DomainModels.Games
 {
-  public partial class GameModel : BaseModel
+  public partial class Game : BaseModel
   {
     public const string InactiveGameError = "inactive_game";
     public const string FailedToAddSpotError = "failed_to_add_spot";
     public const string InvalidEndedOnDate = "invalid_ended_on_date";
 
-    protected HashSet<LicensePlateSpotModel> _licensePlateSpots = new();
+    protected HashSet<LicensePlateSpot> _licensePlateSpots = new();
 
-    public IEnumerable<LicensePlateSpotModel> LicensePlateSpots => _licensePlateSpots;
+    public IEnumerable<LicensePlateSpot> LicensePlateSpots => _licensePlateSpots;
 
     public long Id { get; }
     public string Name { get; protected set; }
     public bool IsActive { get; protected set; }
     public DateTimeOffset? EndedOn { get; protected set; }
 
-    public virtual Result<GameModel> AddLicensePlateSpot(ILicensePlateSpotFactory licensePlateSpotFactory,
+    public virtual Result<Game> AddLicensePlateSpot(ILicensePlateSpotFactory licensePlateSpotFactory,
       IEnumerable<(Country country, StateOrProvince stateOrProvince)> licensePlateSpots,
-      PlayerModel spottedBy)
+      Player spottedBy)
     {
       if (!IsActive)
       {
-        return Result.Error<GameModel>(InactiveGameError);
+        return Result.Error<Game>(InactiveGameError);
       }
 
       var existingSpots = LicensePlateSpots
@@ -39,7 +39,7 @@ namespace TheGame.Domain.DomainModels.Games
       var newSpots = licensePlateSpots
         .Where(spot => !existingSpots.Contains(spot));
 
-      var newSpottedPlates = new List<LicensePlateSpotModel>();
+      var newSpottedPlates = new List<LicensePlateSpot>();
       foreach ((Country country, StateOrProvince stateOrProvince) in newSpots)
       {
         var licensePlateSpot = licensePlateSpotFactory.SpotLicensePlate(country,
@@ -48,7 +48,7 @@ namespace TheGame.Domain.DomainModels.Games
 
         if (!licensePlateSpot.IsSuccess)
         {
-          return Result.Error<GameModel>(FailedToAddSpotError);
+          return Result.Error<Game>(FailedToAddSpotError);
         }
 
         newSpottedPlates.Add(licensePlateSpot.Value);
@@ -64,13 +64,13 @@ namespace TheGame.Domain.DomainModels.Games
       return Result.Success(this);
     }
 
-    public virtual Result<GameModel> RemoveLicensePlateSpot(
+    public virtual Result<Game> RemoveLicensePlateSpot(
       IEnumerable<(Country country, StateOrProvince stateOrProvince)> licensePlatesToRemove,
-      PlayerModel spottedBy)
+      Player spottedBy)
     {
       if (!IsActive)
       {
-        return Result.Error<GameModel>(InactiveGameError);
+        return Result.Error<Game>(InactiveGameError);
       }
 
       var toRemove = new HashSet<(Country country, StateOrProvince stateOrProvince)>(licensePlatesToRemove);
@@ -82,16 +82,16 @@ namespace TheGame.Domain.DomainModels.Games
       return Result.Success(this);
     }
 
-    public virtual Result<GameModel> FinishGame(DateTimeOffset endedOn)
+    public virtual Result<Game> FinishGame(DateTimeOffset endedOn)
     {
       if (!IsActive)
       {
-        return Result.Error<GameModel>(InactiveGameError);
+        return Result.Error<Game>(InactiveGameError);
       }
 
       if (endedOn < CreatedOn)
       {
-        return Result.Error<GameModel>(InvalidEndedOnDate);
+        return Result.Error<Game>(InvalidEndedOnDate);
       }
 
       IsActive = false;

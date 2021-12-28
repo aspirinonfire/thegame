@@ -4,16 +4,16 @@ using TheGame.Domain.DomainModels.Players;
 
 namespace TheGame.Domain.DomainModels.LicensePlates
 {
-  public partial class LicensePlateSpotModel : BaseModel, IEquatable<LicensePlateSpotModel>
+  public partial class LicensePlateSpot : BaseModel, IEquatable<LicensePlateSpot>
   {
-    public LicensePlateModel LicensePlate { get; protected set; }
-    public PlayerModel SpottedBy { get; protected set; }
+    public LicensePlate LicensePlate { get; protected set; }
+    public Player SpottedBy { get; protected set; }
 
     public override int GetHashCode() => LicensePlate.GetHashCode();
 
-    public override bool Equals(object obj) => Equals(obj as LicensePlateSpotModel);
+    public override bool Equals(object obj) => Equals(obj as LicensePlateSpot);
 
-    public bool Equals(LicensePlateSpotModel other)
+    public bool Equals(LicensePlateSpot other)
     {
       if (other == null)
       {
@@ -23,7 +23,7 @@ namespace TheGame.Domain.DomainModels.LicensePlates
       return LicensePlate == other.LicensePlate;
     }
 
-    public static bool operator ==(LicensePlateSpotModel lhs, LicensePlateSpotModel rhs)
+    public static bool operator ==(LicensePlateSpot lhs, LicensePlateSpot rhs)
     {
       if (lhs is null)
       {
@@ -39,6 +39,6 @@ namespace TheGame.Domain.DomainModels.LicensePlates
       return lhs.Equals(rhs);
     }
 
-    public static bool operator !=(LicensePlateSpotModel lhs, LicensePlateSpotModel rhs) => !(lhs == rhs);
+    public static bool operator !=(LicensePlateSpot lhs, LicensePlateSpot rhs) => !(lhs == rhs);
   }
 }

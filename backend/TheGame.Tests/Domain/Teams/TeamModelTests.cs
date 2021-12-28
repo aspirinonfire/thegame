@@ -1,7 +1,7 @@
 using TheGame.Tests.TestUtils;
 using Xunit;
 using TheGame.Domain.DomainModels.Games;
-using TheGame.Domain.DomainModels.Team;
+using TheGame.Domain.DomainModels.Teams;
 using Moq;
 using TheGame.Tests.Domain.Players;
 using System.Linq;
@@ -22,10 +22,10 @@ namespace TheGame.Tests.Domain.Teams
       var player = new MockPlayerModel(null, 1, "test player");
       var gameName = "test game";
 
-      var expectedNewGame = new Mock<GameModel>().Object;
+      var expectedNewGame = new Mock<Game>().Object;
 
       var uut = new MockTeamModel(new [] { player },
-        Enumerable.Empty<GameModel>(),
+        Enumerable.Empty<Game>(),
         name: "Test Team");
 
       var gameFactory = new Mock<IGameFactory>();
@@ -50,12 +50,12 @@ namespace TheGame.Tests.Domain.Teams
       var player = new MockPlayerModel(null, 1, "test player");
       var gameName = "test game";
 
-      var existingFinishedGame = new MockGameModel(Enumerable.Empty<LicensePlateSpotModel>(),
+      var existingFinishedGame = new MockGameModel(Enumerable.Empty<LicensePlateSpot>(),
         "test game",
         false,
         null);
 
-      var expectedNewGame = new Mock<GameModel>().Object;
+      var expectedNewGame = new Mock<Game>().Object;
 
       var uut = new MockTeamModel(new[] { player },
         new [] { existingFinishedGame },
@@ -84,7 +84,7 @@ namespace TheGame.Tests.Domain.Teams
       var player = new MockPlayerModel(null, 1, "test player");
       var gameName = "test game";
 
-      var existingActiveGame = new MockGameModel(Enumerable.Empty<LicensePlateSpotModel>(),
+      var existingActiveGame = new MockGameModel(Enumerable.Empty<LicensePlateSpot>(),
         "test game",
         true,
         null);
@@ -99,7 +99,7 @@ namespace TheGame.Tests.Domain.Teams
 
       Assert.False(actual.IsSuccess);
       Assert.Null(actual.Value);
-      Assert.Equal(TeamModel.ActiveGameAlreadyExistsError, actual.ErrorMessage);
+      Assert.Equal(Team.ActiveGameAlreadyExistsError, actual.ErrorMessage);
       var actualGame = Assert.Single(uut.Games);
       Assert.Equal(existingActiveGame, actualGame);
       gameFactory
@@ -112,7 +112,7 @@ namespace TheGame.Tests.Domain.Teams
     {
       var player = new MockPlayerModel(null, 1, "test player");
 
-      var existingActiveGame = new Mock<MockGameModel>(Enumerable.Empty<LicensePlateSpotModel>(),
+      var existingActiveGame = new Mock<MockGameModel>(Enumerable.Empty<LicensePlateSpot>(),
         "test game",
         true,
         null);
@@ -123,7 +123,7 @@ namespace TheGame.Tests.Domain.Teams
         {
           existingActiveGame.Object.SetActiveFlag(false);
         })
-        .Returns(Result.Success<GameModel>(existingActiveGame.Object));
+        .Returns(Result.Success<Game>(existingActiveGame.Object));
 
       var uut = new MockTeamModel(new[] { player },
         new[] { existingActiveGame.Object },

@@ -4,9 +4,9 @@ using TheGame.Domain.DomainModels.LicensePlates;
 
 namespace TheGame.Domain.DAL.ModelConfigs
 {
-  class LicensePlateEfConfig : IEntityTypeConfiguration<LicensePlateModel>
+  class LicensePlateEfConfig : IEntityTypeConfiguration<LicensePlate>
   {
-    public void Configure(EntityTypeBuilder<LicensePlateModel> builder)
+    public void Configure(EntityTypeBuilder<LicensePlate> builder)
     {
       builder
         .HasKey(model => model.Id);
@@ -22,7 +22,7 @@ namespace TheGame.Domain.DAL.ModelConfigs
         .HasConversion<string>();
 
       // Seed data
-      builder.HasData(LicensePlateModel.AvailableLicensePlates);
+      builder.HasData(LicensePlate.AvailableLicensePlates);
     }
   }
 }

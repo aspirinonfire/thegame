@@ -26,7 +26,7 @@ namespace TheGame.Tests.Domain.Games
       var lpFactory = new Mock<ILicensePlateSpotFactory>();
       lpFactory
         .Setup(fac => fac.SpotLicensePlate(Country.US, StateOrProvince.CA, spottedBy))
-        .Returns(Result.Success<LicensePlateSpotModel>(lpSpot));
+        .Returns(Result.Success<LicensePlateSpot>(lpSpot));
 
       var uut = new MockGameModel(null, null, true, null);
 
@@ -85,7 +85,7 @@ namespace TheGame.Tests.Domain.Games
       var lpFactory = new Mock<ILicensePlateSpotFactory>();
       lpFactory
         .Setup(fac => fac.SpotLicensePlate(Country.US, StateOrProvince.CA, spottedBy))
-        .Returns(Result.Success<LicensePlateSpotModel>(newSpot));
+        .Returns(Result.Success<LicensePlateSpot>(newSpot));
 
       var uut = new MockGameModel(new [] { existingSpot }, null, true, null);
 
@@ -113,7 +113,7 @@ namespace TheGame.Tests.Domain.Games
       var lpFactory = new Mock<ILicensePlateSpotFactory>();
       lpFactory
         .Setup(fac => fac.SpotLicensePlate(Country.US, StateOrProvince.CA, spottedBy))
-        .Returns(Result.Success<LicensePlateSpotModel>(lpSpot));
+        .Returns(Result.Success<LicensePlateSpot>(lpSpot));
 
       var uut = new MockGameModel(null, null, false, null);
 
@@ -122,7 +122,7 @@ namespace TheGame.Tests.Domain.Games
         spottedBy);
 
       Assert.False(actual.IsSuccess);
-      Assert.Equal(GameModel.InactiveGameError, actual.ErrorMessage);
+      Assert.Equal(Game.InactiveGameError, actual.ErrorMessage);
       Assert.Empty(uut.LicensePlateSpots);
       Assert.Empty(uut.DomainEvents);
     }

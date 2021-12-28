@@ -1,15 +1,15 @@
 using System.Collections.Generic;
 using TheGame.Domain.DomainModels.Players;
-using TheGame.Domain.DomainModels.Team;
+using TheGame.Domain.DomainModels.Teams;
 
 namespace TheGame.Tests.Domain.Players
 {
-  public class MockPlayerModel : PlayerModel
+  public class MockPlayerModel : Player
   {
-    public MockPlayerModel(IEnumerable<TeamModel>? teams, long userId, string name)
+    public MockPlayerModel(IEnumerable<Team>? teams, long userId, string name)
     {
       _teams = teams != null ?
-        new HashSet<TeamModel>(teams) :
+        new HashSet<Team>(teams) :
         new ();
 
       UserId = userId;

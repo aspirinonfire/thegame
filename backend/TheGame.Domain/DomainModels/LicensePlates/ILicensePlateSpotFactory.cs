@@ -6,8 +6,8 @@ namespace TheGame.Domain.DomainModels.LicensePlates
 {
   public interface ILicensePlateSpotFactory
   {
-    Result<LicensePlateSpotModel> SpotLicensePlate(Country country,
+    Result<LicensePlateSpot> SpotLicensePlate(Country country,
       StateOrProvince stateOrProvince,
-      PlayerModel spottedBy);
+      Player spottedBy);
   }
 }

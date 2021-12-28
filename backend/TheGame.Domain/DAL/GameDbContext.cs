@@ -22,7 +22,7 @@ namespace TheGame.Domain.DAL
     private readonly ILogger<GameDbContext> _logger;
     private readonly ISystemService _systemService;
 
-    public DbSet<LicensePlateModel> LicensePlates { get; set; }
+    public DbSet<LicensePlate> LicensePlates { get; set; }
 
     // Should not be accessed directly
     //public DbSet<LicensePlateSpotModel> LicensePlateSpots { get; set; }

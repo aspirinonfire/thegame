@@ -7,15 +7,15 @@ using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.Players;
 
-namespace TheGame.Domain.DomainModels.Team
+namespace TheGame.Domain.DomainModels.Teams
 {
-  public partial class TeamModel
+  public partial class Team
   {
     public class TeamService : ITeamService
     {
-      public Result<TeamModel> CreateNewTeam(string name)
+      public Result<Team> CreateNewTeam(string name)
       {
-        var newTeam = new TeamModel
+        var newTeam = new Team
         {
           Name = name
         };

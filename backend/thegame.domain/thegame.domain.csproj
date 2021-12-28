@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="DomainModels\Team\Events\" />
+    <Folder Include="DomainModels\Teams\Events\" />
     <Folder Include="Repositories\" />
   </ItemGroup>
 

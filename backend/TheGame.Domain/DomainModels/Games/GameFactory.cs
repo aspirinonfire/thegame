@@ -7,7 +7,7 @@ using TheGame.Domain.DomainModels.Common;
 
 namespace TheGame.Domain.DomainModels.Games
 {
-  public partial class GameModel
+  public partial class Game
   {
     public class GameFactory : IGameFactory
     {
@@ -16,17 +16,15 @@ namespace TheGame.Domain.DomainModels.Games
         // TODO add dependencies
       }
 
-      public Result<GameModel> CreateNewGame(string name)
+      public Result<Game> CreateNewGame(string name)
       {
-        var newGame = new GameModel
+        var newGame = new Game
         {
           IsActive = true,
           Name = string.IsNullOrWhiteSpace(name) ?
             DateTimeOffset.UtcNow.ToString("o") :
             name
         };
-
-        // TODO track new entity
 
         return Result.Success(newGame);
       }

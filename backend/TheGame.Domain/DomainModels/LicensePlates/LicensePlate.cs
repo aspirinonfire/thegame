@@ -5,22 +5,22 @@ using TheGame.Domain.DomainModels.Common;
 
 namespace TheGame.Domain.DomainModels.LicensePlates
 {
-  public class LicensePlateModel : BaseModel, IEquatable<LicensePlateModel>
+  public class LicensePlate : BaseModel, IEquatable<LicensePlate>
   {
     public const string LicensePlateNotFoundError = "license_plate_not_found";
 
-    public static readonly IReadOnlyCollection<LicensePlateModel> AvailableLicensePlates = new List<LicensePlateModel>()
+    public static readonly IReadOnlyCollection<LicensePlate> AvailableLicensePlates = new List<LicensePlate>()
     {
       // TODO populate the rest
-      new LicensePlateModel() { Id = 1, Country = Country.CA, StateOrProvince = StateOrProvince.BC },
-      new LicensePlateModel() { Id = 2, Country = Country.US, StateOrProvince = StateOrProvince.AK },
-      new LicensePlateModel() { Id = 3, Country = Country.US, StateOrProvince = StateOrProvince.CA },
-      new LicensePlateModel() { Id = 4, Country = Country.US, StateOrProvince = StateOrProvince.NV },
-      new LicensePlateModel() { Id = 5, Country = Country.US, StateOrProvince = StateOrProvince.OR },
-      new LicensePlateModel() { Id = 6, Country = Country.US, StateOrProvince = StateOrProvince.WA },
+      new LicensePlate() { Id = 1, Country = Country.CA, StateOrProvince = StateOrProvince.BC },
+      new LicensePlate() { Id = 2, Country = Country.US, StateOrProvince = StateOrProvince.AK },
+      new LicensePlate() { Id = 3, Country = Country.US, StateOrProvince = StateOrProvince.CA },
+      new LicensePlate() { Id = 4, Country = Country.US, StateOrProvince = StateOrProvince.NV },
+      new LicensePlate() { Id = 5, Country = Country.US, StateOrProvince = StateOrProvince.OR },
+      new LicensePlate() { Id = 6, Country = Country.US, StateOrProvince = StateOrProvince.WA },
     };
 
-    private static readonly IReadOnlyDictionary<(Country, StateOrProvince), LicensePlateModel> _licensePlateMap =
+    private static readonly IReadOnlyDictionary<(Country, StateOrProvince), LicensePlate> _licensePlateMap =
       AvailableLicensePlates
         .ToDictionary(lp => (lp.Country, lp.StateOrProvince));
 
@@ -30,22 +30,22 @@ namespace TheGame.Domain.DomainModels.LicensePlates
 
     public Country Country { get; protected set; }
 
-    public static Result<LicensePlateModel> GetLicensePlate(Country country, StateOrProvince stateOrProvince)
+    public static Result<LicensePlate> GetLicensePlate(Country country, StateOrProvince stateOrProvince)
     {
       if (_licensePlateMap.TryGetValue((country, stateOrProvince), out var licensePlateModel))
       {
         return Result.Success(licensePlateModel);
       }
-      return Result.Error<LicensePlateModel>(LicensePlateNotFoundError);
+      return Result.Error<LicensePlate>(LicensePlateNotFoundError);
     }
 
     public override string ToString() => $"{Id}_{Country}_{StateOrProvince}";
 
     public override int GetHashCode() => $"{Country}_{StateOrProvince}".GetHashCode();
 
-    public override bool Equals(object obj) => Equals(obj as LicensePlateModel);
+    public override bool Equals(object obj) => Equals(obj as LicensePlate);
 
-    public bool Equals(LicensePlateModel other)
+    public bool Equals(LicensePlate other)
     {
       if (other == null)
       {
@@ -56,7 +56,7 @@ namespace TheGame.Domain.DomainModels.LicensePlates
         StateOrProvince == other.StateOrProvince;
     }
 
-    public static bool operator ==(LicensePlateModel lhs, LicensePlateModel rhs)
+    public static bool operator ==(LicensePlate lhs, LicensePlate rhs)
     {
       if (lhs is null)
       {
@@ -72,7 +72,7 @@ namespace TheGame.Domain.DomainModels.LicensePlates
       return lhs.Equals(rhs);
     }
 
-    public static bool operator !=(LicensePlateModel lhs, LicensePlateModel rhs) => !(lhs == rhs);
+    public static bool operator !=(LicensePlate lhs, LicensePlate rhs) => !(lhs == rhs);
   }
 
   //TODO Populate

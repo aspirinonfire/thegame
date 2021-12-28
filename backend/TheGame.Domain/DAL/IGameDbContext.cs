@@ -10,7 +10,7 @@ namespace TheGame.Domain.DAL
 {
   public interface IGameDbContext
   {
-    DbSet<LicensePlateModel> LicensePlates { get; set; }
+    DbSet<LicensePlate> LicensePlates { get; set; }
 
     IDbContextTransaction BeginTransaction();
     Task<IDbContextTransaction> BeginTransactionAsync();

@@ -4,6 +4,6 @@ namespace TheGame.Domain.DomainModels.Games
 {
   public interface IGameFactory
   {
-    Result<GameModel> CreateNewGame(string name);
+    Result<Game> CreateNewGame(string name);
   }
 }

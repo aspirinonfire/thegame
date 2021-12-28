@@ -3,7 +3,7 @@ using TheGame.Tests.Domain.Players;
 
 namespace TheGame.Tests.Domain.LicensePlates
 {
-  internal class MockLicensePlateSpotModel : LicensePlateSpotModel
+  internal class MockLicensePlateSpotModel : LicensePlateSpot
   {
     public MockLicensePlateSpotModel(MockLicensePlateModel licensePlateModel,
       MockPlayerModel spottedBy)

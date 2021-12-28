@@ -7,7 +7,7 @@ using System.Reflection;
 using TheGame.Domain.DAL;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
-using TheGame.Domain.DomainModels.Team;
+using TheGame.Domain.DomainModels.Teams;
 using TheGame.Domain.Utils;
 
 namespace TheGame.Domain
@@ -42,9 +42,9 @@ namespace TheGame.Domain
         .AddSingleton<ISystemService, SystemService>()
         .AddMediatR(typeof(GameServiceExtensions).GetTypeInfo().Assembly)
         // Game services
-        .AddScoped<ITeamService, TeamModel.TeamService>()
-        .AddScoped<IGameFactory, GameModel.GameFactory>()
-        .AddScoped<ILicensePlateSpotFactory, LicensePlateSpotModel.LicensePlateSpotFactory>();
+        .AddScoped<ITeamService, Team.TeamService>()
+        .AddScoped<IGameFactory, Game.GameFactory>()
+        .AddScoped<ILicensePlateSpotFactory, LicensePlateSpot.LicensePlateSpotFactory>();
 
       return services;
     }

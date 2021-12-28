@@ -1,22 +1,22 @@
 using System;
 using System.Collections.Generic;
 using TheGame.Domain.DomainModels.Common;
-using TheGame.Domain.DomainModels.Team;
+using TheGame.Domain.DomainModels.Teams;
 
 namespace TheGame.Domain.DomainModels.Players
 {
-  public partial class PlayerModel : BaseModel, IEquatable<PlayerModel>
+  public partial class Player : BaseModel, IEquatable<Player>
   {
-    protected HashSet<TeamModel> _teams = new();
+    protected HashSet<Team> _teams = new();
 
     public long UserId { get; protected set; }
     public string Name { get; protected set; }
 
     public override int GetHashCode() => UserId.GetHashCode();
 
-    public override bool Equals(object obj) => Equals(obj as PlayerModel);
+    public override bool Equals(object obj) => Equals(obj as Player);
 
-    public bool Equals(PlayerModel other)
+    public bool Equals(Player other)
     {
       if (other == null)
       {
@@ -26,7 +26,7 @@ namespace TheGame.Domain.DomainModels.Players
       return UserId == other.UserId;
     }
 
-    public static bool operator ==(PlayerModel lhs, PlayerModel rhs)
+    public static bool operator ==(Player lhs, Player rhs)
     {
       if (lhs is null)
       {
@@ -42,6 +42,6 @@ namespace TheGame.Domain.DomainModels.Players
       return lhs.Equals(rhs);
     }
 
-    public static bool operator !=(PlayerModel lhs, PlayerModel rhs) => !(lhs == rhs);
+    public static bool operator !=(Player lhs, Player rhs) => !(lhs == rhs);
   }
 }
