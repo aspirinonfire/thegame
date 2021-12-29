@@ -4,9 +4,9 @@ using TheGame.Domain.DomainModels.Players;
 
 namespace TheGame.Domain.DomainModels.LicensePlates
 {
-  public interface ILicensePlateSpotFactory
+  public interface IGameLicensePlateFactory
   {
-    Result<LicensePlateSpot> SpotLicensePlate(Country country,
+    Result<GameLicensePlate> CreateLicensePlateSpot(Country country,
       StateOrProvince stateOrProvince,
       Player spottedBy);
   }

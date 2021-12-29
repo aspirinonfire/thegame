@@ -9,7 +9,7 @@ namespace TheGame.Domain.DomainModels.Players
   {
     protected HashSet<Team> _teams = new();
 
-    public ICollection<Team> Teams => _teams;
+    public virtual ICollection<Team> Teams => _teams;
 
     public long UserId { get; protected set; }
     public string Name { get; protected set; }

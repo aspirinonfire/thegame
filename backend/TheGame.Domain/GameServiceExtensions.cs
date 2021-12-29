@@ -44,7 +44,7 @@ namespace TheGame.Domain
         // Game services
         .AddScoped<ITeamService, Team.TeamService>()
         .AddScoped<IGameFactory, Game.GameFactory>()
-        .AddScoped<ILicensePlateSpotFactory, LicensePlateSpot.LicensePlateSpotFactory>();
+        .AddScoped<IGameLicensePlateFactory, GameLicensePlate.LicensePlateSpotFactory>();
 
       return services;
     }

@@ -14,10 +14,10 @@ namespace TheGame.Domain.DomainModels.Games
     public const string FailedToAddSpotError = "failed_to_add_spot";
     public const string InvalidEndedOnDate = "invalid_ended_on_date";
 
-    protected HashSet<LicensePlateSpot> _licensePlateSpots = new();
+    protected HashSet<GameLicensePlate> _gameLicensePlates = new();
 
-    // TODO turn this into N:M relationship with explicit intermediate model
-    public ICollection<LicensePlateSpot> LicensePlateSpots => _licensePlateSpots;
+    public virtual ICollection<LicensePlate> LicensePlates { get; protected set; }
+    public virtual ICollection<GameLicensePlate> GameLicensePlates => _gameLicensePlates;
 
     public long Id { get; }
     public string Name { get; protected set; }
@@ -28,7 +28,7 @@ namespace TheGame.Domain.DomainModels.Games
 
     public DateTimeOffset? DateModified { get; }
 
-    public virtual Result<Game> AddLicensePlateSpot(ILicensePlateSpotFactory licensePlateSpotFactory,
+    public virtual Result<Game> AddLicensePlateSpot(IGameLicensePlateFactory licensePlateSpotFactory,
       IEnumerable<(Country country, StateOrProvince stateOrProvince)> licensePlateSpots,
       Player spottedBy)
     {
@@ -37,17 +37,17 @@ namespace TheGame.Domain.DomainModels.Games
         return Result.Error<Game>(InactiveGameError);
       }
 
-      var existingSpots = LicensePlateSpots
+      var existingSpots = GameLicensePlates
         .Select(spot => (spot.LicensePlate.Country, spot.LicensePlate.StateOrProvince))
         .ToHashSet();
 
       var newSpots = licensePlateSpots
         .Where(spot => !existingSpots.Contains(spot));
 
-      var newSpottedPlates = new List<LicensePlateSpot>();
+      var newSpottedPlates = new List<GameLicensePlate>();
       foreach ((Country country, StateOrProvince stateOrProvince) in newSpots)
       {
-        var licensePlateSpot = licensePlateSpotFactory.SpotLicensePlate(country,
+        var licensePlateSpot = licensePlateSpotFactory.CreateLicensePlateSpot(country,
           stateOrProvince,
           spottedBy);
 
@@ -57,7 +57,7 @@ namespace TheGame.Domain.DomainModels.Games
         }
 
         newSpottedPlates.Add(licensePlateSpot.Value);
-        GetWriteableCollection(LicensePlateSpots)
+        GetWriteableCollection(GameLicensePlates)
           .Add(licensePlateSpot.Value);
       }
 
@@ -79,7 +79,7 @@ namespace TheGame.Domain.DomainModels.Games
       }
 
       var toRemove = new HashSet<(Country country, StateOrProvince stateOrProvince)>(licensePlatesToRemove);
-      GetWriteableCollection(LicensePlateSpots)
+      GetWriteableCollection(GameLicensePlates)
         .RemoveWhere(spot => toRemove.Contains((spot.LicensePlate.Country, spot.LicensePlate.StateOrProvince)));
 
       AddDomainEvent(new LicensePlateSpotRemovedEvent(licensePlatesToRemove));

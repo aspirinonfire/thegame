@@ -14,17 +14,17 @@ using TheGame.Domain.DomainModels.Games.Events;
 namespace TheGame.Tests.Domain.Teams
 {
   [Trait(XunitTestProvider.Category, XunitTestProvider.Unit)]
-  public class TeamModelTests
+  public class TeamTests
   {
     [Fact]
     public void CanStartFirstNewGameSuccessfully()
     {
-      var player = new MockPlayerModel(null, 1, "test player");
+      var player = new MockPlayer(null, 1, "test player");
       var gameName = "test game";
 
       var expectedNewGame = new Mock<Game>().Object;
 
-      var uut = new MockTeamModel(new [] { player },
+      var uut = new MockTeam(new [] { player },
         Enumerable.Empty<Game>(),
         name: "Test Team");
 
@@ -47,17 +47,17 @@ namespace TheGame.Tests.Domain.Teams
     [Fact]
     public void CanStartNewGameSuccessfullyWithFinishedGames()
     {
-      var player = new MockPlayerModel(null, 1, "test player");
+      var player = new MockPlayer(null, 1, "test player");
       var gameName = "test game";
 
-      var existingFinishedGame = new MockGameModel(Enumerable.Empty<LicensePlateSpot>(),
+      var existingFinishedGame = new MockGame(Enumerable.Empty<GameLicensePlate>(),
         "test game",
         false,
         null);
 
       var expectedNewGame = new Mock<Game>().Object;
 
-      var uut = new MockTeamModel(new[] { player },
+      var uut = new MockTeam(new[] { player },
         new [] { existingFinishedGame },
         name: "Test Team");
 
@@ -81,15 +81,15 @@ namespace TheGame.Tests.Domain.Teams
     [Fact]
     public void CanValidateExistingActiveGame()
     {
-      var player = new MockPlayerModel(null, 1, "test player");
+      var player = new MockPlayer(null, 1, "test player");
       var gameName = "test game";
 
-      var existingActiveGame = new MockGameModel(Enumerable.Empty<LicensePlateSpot>(),
+      var existingActiveGame = new MockGame(Enumerable.Empty<GameLicensePlate>(),
         "test game",
         true,
         null);
 
-      var uut = new MockTeamModel(new[] { player },
+      var uut = new MockTeam(new[] { player },
         new [] { existingActiveGame },
         name: "Test Team");
 
@@ -110,9 +110,9 @@ namespace TheGame.Tests.Domain.Teams
     [Fact]
     public void CanFinishActiveGame()
     {
-      var player = new MockPlayerModel(null, 1, "test player");
+      var player = new MockPlayer(null, 1, "test player");
 
-      var existingActiveGame = new Mock<MockGameModel>(Enumerable.Empty<LicensePlateSpot>(),
+      var existingActiveGame = new Mock<MockGame>(Enumerable.Empty<GameLicensePlate>(),
         "test game",
         true,
         null);
@@ -125,7 +125,7 @@ namespace TheGame.Tests.Domain.Teams
         })
         .Returns(Result.Success<Game>(existingActiveGame.Object));
 
-      var uut = new MockTeamModel(new[] { player },
+      var uut = new MockTeam(new[] { player },
         new[] { existingActiveGame.Object },
         name: "Test Team");
 

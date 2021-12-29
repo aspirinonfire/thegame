@@ -4,9 +4,9 @@ using TheGame.Domain.DomainModels.Teams;
 
 namespace TheGame.Tests.Domain.Players
 {
-  public class MockPlayerModel : Player
+  public class MockPlayer : Player
   {
-    public MockPlayerModel(IEnumerable<Team>? teams, long userId, string name)
+    public MockPlayer(IEnumerable<Team>? teams, long userId, string name)
     {
       _teams = teams != null ?
         new HashSet<Team>(teams) :

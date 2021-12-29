@@ -21,6 +21,10 @@ namespace TheGame.Domain.DAL.ModelConfigs
         .IsRequired()
         .HasConversion<string>();
 
+      builder
+        .HasIndex(plate => new { plate.Country, plate.StateOrProvince })
+        .IsUnique();
+
       // Seed data
       builder.HasData(LicensePlate.AvailableLicensePlates);
     }

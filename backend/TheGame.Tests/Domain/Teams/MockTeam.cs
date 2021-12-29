@@ -5,9 +5,9 @@ using TheGame.Domain.DomainModels.Teams;
 
 namespace TheGame.Tests.Domain.Teams
 {
-  public class MockTeamModel : Team
+  public class MockTeam : Team
   {
-    public MockTeamModel(IEnumerable<Player>? players,
+    public MockTeam(IEnumerable<Player>? players,
       IEnumerable<Game>? games,
       string name)
     {

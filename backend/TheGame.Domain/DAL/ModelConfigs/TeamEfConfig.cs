@@ -29,7 +29,9 @@ namespace TheGame.Domain.DAL.ModelConfigs
         .UsingEntity(j => j.ToTable("TeamPlayers"));
 
       builder
-        .HasMany(team => team.Games);
+        .HasMany(team => team.Games)
+        .WithOne()
+        .IsRequired();
 
       // define navigation props
       builder

@@ -2,9 +2,9 @@ using TheGame.Domain.DomainModels.LicensePlates;
 
 namespace TheGame.Tests.Domain.LicensePlates
 {
-  internal class MockLicensePlateModel : LicensePlate
+  internal class MockLicensePlate : LicensePlate
   {
-    public MockLicensePlateModel(Country country,
+    public MockLicensePlate(Country country,
       StateOrProvince stateOrProvince)
     {
       Country = country;

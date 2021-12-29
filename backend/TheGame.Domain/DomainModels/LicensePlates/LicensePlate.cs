@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TheGame.Domain.DomainModels.Common;
+using TheGame.Domain.DomainModels.Games;
 
 namespace TheGame.Domain.DomainModels.LicensePlates
 {
@@ -29,6 +30,12 @@ namespace TheGame.Domain.DomainModels.LicensePlates
     public StateOrProvince StateOrProvince { get; protected set; }
 
     public Country Country { get; protected set; }
+
+    // Relationship only!
+    // TODO encapsulate or shadow these relas
+    public virtual ICollection<Game> Games { get; protected set; }
+
+    public virtual ICollection<GameLicensePlate> GameLicensePlates { get; protected set; }
 
     public static Result<LicensePlate> GetLicensePlate(Country country, StateOrProvince stateOrProvince)
     {

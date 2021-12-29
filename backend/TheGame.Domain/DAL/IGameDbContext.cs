@@ -10,19 +10,11 @@ using TheGame.Domain.DomainModels.Teams;
 
 namespace TheGame.Domain.DAL
 {
-  public interface IGameDbContext
+  public interface IGameDbContext : IGameUoW
   {
     DbSet<LicensePlate> LicensePlates { get; set; }
     DbSet<Team> Teams { get; set; }
     DbSet<Player> Players { get; set; }
-
-    IDbContextTransaction BeginTransaction();
-    Task<IDbContextTransaction> BeginTransactionAsync();
-    int SaveChanges();
-    int SaveChanges(bool acceptAllChangesOnSuccess);
-    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
-    Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default);
-
     EntityEntry<T> Entry<T>(T entity) where T : class;
     EntityEntry Add([NotNull] object entity);
   }

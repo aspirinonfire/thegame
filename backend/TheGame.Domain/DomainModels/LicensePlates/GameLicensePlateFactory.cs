@@ -3,25 +3,25 @@ using TheGame.Domain.DomainModels.Players;
 
 namespace TheGame.Domain.DomainModels.LicensePlates
 {
-  public partial class LicensePlateSpot
+  public partial class GameLicensePlate
   {
-    public class LicensePlateSpotFactory : ILicensePlateSpotFactory
+    public class LicensePlateSpotFactory : IGameLicensePlateFactory
     {
       public LicensePlateSpotFactory()
       {
       }
 
-      public Result<LicensePlateSpot> SpotLicensePlate(Country country,
+      public Result<GameLicensePlate> CreateLicensePlateSpot(Country country,
         StateOrProvince stateOrProvince,
         Player spottedBy)
       {
         var licensePlateResult = LicensePlate.GetLicensePlate(country, stateOrProvince);
         if (!licensePlateResult.IsSuccess)
         {
-          return Result.Error<LicensePlateSpot>(licensePlateResult.ErrorMessage);
+          return Result.Error<GameLicensePlate>(licensePlateResult.ErrorMessage);
         }
 
-        var newSpot = new LicensePlateSpot
+        var newSpot = new GameLicensePlate
         {
           LicensePlate = licensePlateResult.Value,
           SpottedBy = spottedBy

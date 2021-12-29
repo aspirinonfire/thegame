@@ -6,15 +6,15 @@ using TheGame.Domain.DomainModels.Teams;
 
 namespace TheGame.Tests.Domain.Games
 {
-  public class MockGameModel : Game
+  public class MockGame : Game
   {
-    public MockGameModel(IEnumerable<LicensePlateSpot>? licensePlates,
+    public MockGame(IEnumerable<GameLicensePlate>? licensePlates,
       string? name,
       bool isActive,
       DateTimeOffset? endedOn)
     {
-      _licensePlateSpots = licensePlates != null ?
-        new HashSet<LicensePlateSpot>(licensePlates) :
+      _gameLicensePlates = licensePlates != null ?
+        new HashSet<GameLicensePlate>(licensePlates) :
         new ();
 
       Name = name;

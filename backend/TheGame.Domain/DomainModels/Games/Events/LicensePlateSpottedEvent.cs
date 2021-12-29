@@ -6,11 +6,11 @@ namespace TheGame.Domain.DomainModels.Games.Events
 {
   public class LicensePlateSpottedEvent : IDomainEvent
   {
-    public LicensePlateSpottedEvent(ReadOnlyCollection<LicensePlateSpot> licensePlateSpotModels)
+    public LicensePlateSpottedEvent(ReadOnlyCollection<GameLicensePlate> licensePlateSpotModels)
     {
       LicensePlateSpotModels = licensePlateSpotModels;
     }
 
-    public ReadOnlyCollection<LicensePlateSpot> LicensePlateSpotModels { get; }
+    public ReadOnlyCollection<GameLicensePlate> LicensePlateSpotModels { get; }
   }
 }
