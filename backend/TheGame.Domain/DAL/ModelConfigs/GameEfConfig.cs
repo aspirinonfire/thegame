@@ -40,7 +40,7 @@ namespace TheGame.Domain.DAL.ModelConfigs
             .HasForeignKey(glp => glp.GameId),
           j =>
           {
-            j.HasOne(glp => glp.SpottedBy).WithMany();
+            j.HasOne(glp => glp.SpottedBy).WithMany().IsRequired();
             j.Property(glp => glp.DateCreated);
             j.HasKey(glp => new { glp.GameId, glp.LicensePlateId });
           });
