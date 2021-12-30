@@ -8,9 +8,12 @@ namespace TheGame.Domain.DAL.ModelConfigs
   {
     public void Configure(EntityTypeBuilder<Player> builder)
     {
-      // TODO no autogeneration. Must be set to unique identity id
       builder
         .HasKey(player => player.UserId);
+
+      builder
+        .Property(player => player.UserId)
+        .ValueGeneratedNever();
 
       builder
         .Property(player => player.Name)

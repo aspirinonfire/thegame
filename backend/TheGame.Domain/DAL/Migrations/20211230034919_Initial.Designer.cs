@@ -12,7 +12,7 @@ using TheGame.Domain.DAL;
 namespace TheGame.Domain.DAL.Migrations
 {
     [DbContext(typeof(GameDbContext))]
-    [Migration("20211229062345_Initial")]
+    [Migration("20211230034919_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -35,7 +35,7 @@ namespace TheGame.Domain.DAL.Migrations
                     b.Property<DateTimeOffset>("DateCreated")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<long?>("SpottedByUserId")
+                    b.Property<long>("SpottedByUserId")
                         .HasColumnType("bigint");
 
                     b.HasKey("GameId", "LicensePlateId");
@@ -160,10 +160,7 @@ namespace TheGame.Domain.DAL.Migrations
             modelBuilder.Entity("TheGame.Domain.DomainModels.Players.Player", b =>
                 {
                     b.Property<long>("UserId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("UserId"), 1L, 1);
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -207,7 +204,9 @@ namespace TheGame.Domain.DAL.Migrations
 
                     b.HasOne("TheGame.Domain.DomainModels.Players.Player", "SpottedBy")
                         .WithMany()
-                        .HasForeignKey("SpottedByUserId");
+                        .HasForeignKey("SpottedByUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Game");
 

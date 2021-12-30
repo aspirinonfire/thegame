@@ -27,8 +27,7 @@ namespace TheGame.Domain.DAL.Migrations
                 name: "Players",
                 columns: table => new
                 {
-                    UserId = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<long>(type: "bigint", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
@@ -103,7 +102,7 @@ namespace TheGame.Domain.DAL.Migrations
                 {
                     LicensePlateId = table.Column<long>(type: "bigint", nullable: false),
                     GameId = table.Column<long>(type: "bigint", nullable: false),
-                    SpottedByUserId = table.Column<long>(type: "bigint", nullable: true),
+                    SpottedByUserId = table.Column<long>(type: "bigint", nullable: false),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },
                 constraints: table =>
@@ -125,7 +124,8 @@ namespace TheGame.Domain.DAL.Migrations
                         name: "FK_GameLicensePlates_Players_SpottedByUserId",
                         column: x => x.SpottedByUserId,
                         principalTable: "Players",
-                        principalColumn: "UserId");
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.InsertData(
