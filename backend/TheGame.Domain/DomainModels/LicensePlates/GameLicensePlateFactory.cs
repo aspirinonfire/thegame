@@ -1,3 +1,4 @@
+using System;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Players;
 
@@ -13,7 +14,8 @@ namespace TheGame.Domain.DomainModels.LicensePlates
 
       public Result<GameLicensePlate> CreateLicensePlateSpot(Country country,
         StateOrProvince stateOrProvince,
-        Player spottedBy)
+        Player spottedBy,
+        DateTimeOffset spotDate)
       {
         var licensePlateResult = LicensePlate.GetLicensePlate(country, stateOrProvince);
         if (!licensePlateResult.IsSuccess)
@@ -24,7 +26,8 @@ namespace TheGame.Domain.DomainModels.LicensePlates
         var newSpot = new GameLicensePlate
         {
           LicensePlate = licensePlateResult.Value,
-          SpottedBy = spottedBy
+          SpottedBy = spottedBy,
+          DateCreated = spotDate
         };
         return Result.Success(newSpot);
       }

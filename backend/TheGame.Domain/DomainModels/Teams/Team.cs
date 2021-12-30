@@ -4,11 +4,13 @@ using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.Players;
 using TheGame.Domain.DomainModels.Games.Events;
+using TheGame.Domain.Utils;
 
 namespace TheGame.Domain.DomainModels.Teams
 {
   public partial class Team : BaseModel
   {
+    public const string PlayerAlreadyExistError = "player_already_exist";
     public const string InvalidPlayerError = "invalid_player";
     public const string ActiveGameAlreadyExistsError = "active_game_already_exists";
     public const string NoActiveGameError = "active_game_not_found";
@@ -22,9 +24,27 @@ namespace TheGame.Domain.DomainModels.Teams
     public long Id { get; }
     public string Name { get; protected set; }
 
-    public virtual Result<Player> AddPlayer(Player player)
+    public virtual Result<Player> AddNewPlayer(long userId, string playerName)
     {
-      _players.Add(player);
+      if (Players.Any(player => player.UserId == userId))
+      {
+        return Result.Error<Player>(PlayerAlreadyExistError);
+      }
+
+      var player = new Player(userId, playerName);
+
+      GetWriteableCollection(Players).Add(player);
+      return Result.Success(player);
+    }
+
+    public virtual Result<Player> AddExistingPlayer(Player player)
+    {
+      if (Players.Contains(player))
+      {
+        return Result.Error<Player>(PlayerAlreadyExistError);
+      }
+
+      GetWriteableCollection(Players).Add(player);
       return Result.Success(player);
     }
 
@@ -32,12 +52,12 @@ namespace TheGame.Domain.DomainModels.Teams
       string name,
       Player actingPlayer)
     {
-      if (actingPlayer == null || !_players.Contains(actingPlayer))
+      if (actingPlayer == null || !Players.Contains(actingPlayer))
       {
         return Result.Error<Game>(InvalidPlayerError);
       }
 
-      if (_games.Any(game => game.IsActive))
+      if (Games.Any(game => game.IsActive))
       {
         return Result.Error<Game>(ActiveGameAlreadyExistsError);
       }
@@ -45,27 +65,27 @@ namespace TheGame.Domain.DomainModels.Teams
       var newGameResult = gameFactory.CreateNewGame(name);
       if (newGameResult.IsSuccess)
       {
-        _games.Add(newGameResult.Value);
+        GetWriteableCollection(Games).Add(newGameResult.Value);
         AddDomainEvent(new NewGameStartedEvent());
       }
 
       return newGameResult;
     }
 
-    public virtual Result<Game> FinishActiveGame(Player actingPlayer)
+    public virtual Result<Game> FinishActiveGame(ISystemService systemService, Player actingPlayer)
     {
-      if (actingPlayer == null || !_players.Contains(actingPlayer))
+      if (actingPlayer == null || !Players.Contains(actingPlayer))
       {
         return Result.Error<Game>(InvalidPlayerError);
       }
 
-      var activeGame = _games.FirstOrDefault(game => game.IsActive);
+      var activeGame = Games.FirstOrDefault(game => game.IsActive);
       if (activeGame == null)
       {
         return Result.Error<Game>(NoActiveGameError);
       }
 
-      var result = activeGame.FinishGame(System.DateTimeOffset.UtcNow);
+      var result = activeGame.FinishGame(systemService.DateTimeOffset.UtcNow);
       if (result.IsSuccess)
       {
         AddDomainEvent(new ExistingGameFinishedEvent());

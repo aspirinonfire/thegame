@@ -64,6 +64,16 @@ namespace TheGame.Domain.DAL
       return new GameTransaction(trx, () => HandleIntegrationEvents());
     }
 
+    /// <summary>
+    /// Save tracked changes
+    /// </summary>
+    /// <param name="acceptAllChangesOnSuccess">
+    /// Handles tracked state after successful DB write:
+    /// True - mark tracked entities as clean,
+    /// False - keep tracked entities as updated. Useful for db error retries.
+    /// </param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess,
       CancellationToken cancellationToken = default)
     {
@@ -91,8 +101,7 @@ namespace TheGame.Domain.DAL
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-      // TODO confirm default acceptAllChangesOnSuccess value
-      return await SaveChangesAsync(false, cancellationToken);
+      return await SaveChangesAsync(true, cancellationToken);
     }
 
     /// <summary>

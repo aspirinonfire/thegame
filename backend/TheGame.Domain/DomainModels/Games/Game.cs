@@ -5,6 +5,7 @@ using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games.Events;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.Players;
+using TheGame.Domain.Utils;
 
 namespace TheGame.Domain.DomainModels.Games
 {
@@ -16,6 +17,7 @@ namespace TheGame.Domain.DomainModels.Games
 
     protected HashSet<GameLicensePlate> _gameLicensePlates = new();
 
+    // TODO hide rela from CLR somehow. Use GameLicensePlates
     public virtual ICollection<LicensePlate> LicensePlates { get; protected set; }
     public virtual ICollection<GameLicensePlate> GameLicensePlates => _gameLicensePlates;
 
@@ -29,6 +31,7 @@ namespace TheGame.Domain.DomainModels.Games
     public DateTimeOffset? DateModified { get; }
 
     public virtual Result<Game> AddLicensePlateSpot(IGameLicensePlateFactory licensePlateSpotFactory,
+      ISystemService systemService,
       IEnumerable<(Country country, StateOrProvince stateOrProvince)> licensePlateSpots,
       Player spottedBy)
     {
@@ -49,7 +52,8 @@ namespace TheGame.Domain.DomainModels.Games
       {
         var licensePlateSpot = licensePlateSpotFactory.CreateLicensePlateSpot(country,
           stateOrProvince,
-          spottedBy);
+          spottedBy,
+          systemService.DateTimeOffset.UtcNow);
 
         if (!licensePlateSpot.IsSuccess)
         {

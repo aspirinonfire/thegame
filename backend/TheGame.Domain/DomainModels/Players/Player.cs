@@ -14,6 +14,15 @@ namespace TheGame.Domain.DomainModels.Players
     public long UserId { get; protected set; }
     public string Name { get; protected set; }
 
+    public Player()
+    { }
+
+    public Player(long userId, string name)
+    {
+      UserId = userId;
+      Name = name;
+    }
+
     public override int GetHashCode() => UserId.GetHashCode();
 
     public override bool Equals(object obj) => Equals(obj as Player);

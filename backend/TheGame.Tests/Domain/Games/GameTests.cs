@@ -1,8 +1,10 @@
 using Moq;
+using System;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.Games.Events;
 using TheGame.Domain.DomainModels.LicensePlates;
+using TheGame.Domain.Utils;
 using TheGame.Tests.Domain.LicensePlates;
 using TheGame.Tests.Domain.Players;
 using TheGame.Tests.TestUtils;
@@ -13,6 +15,8 @@ namespace TheGame.Tests.Domain.Games
   [Trait(XunitTestProvider.Category, XunitTestProvider.Unit)]
   public class GameTests
   {
+
+
     [Fact]
     public void CanSpotPlate()
     {
@@ -25,12 +29,13 @@ namespace TheGame.Tests.Domain.Games
 
       var lpFactory = new Mock<IGameLicensePlateFactory>();
       lpFactory
-        .Setup(fac => fac.CreateLicensePlateSpot(Country.US, StateOrProvince.CA, spottedBy))
+        .Setup(fac => fac.CreateLicensePlateSpot(Country.US, StateOrProvince.CA, spottedBy, CommonMockedServices.DefaultDate))
         .Returns(Result.Success<GameLicensePlate>(lpSpot));
 
       var uut = new MockGame(null, null, true, null);
 
       var actual = uut.AddLicensePlateSpot(lpFactory.Object,
+        CommonMockedServices.GetSystemService(),
         new[] { toSpot },
         spottedBy);
 
@@ -84,12 +89,13 @@ namespace TheGame.Tests.Domain.Games
 
       var lpFactory = new Mock<IGameLicensePlateFactory>();
       lpFactory
-        .Setup(fac => fac.CreateLicensePlateSpot(Country.US, StateOrProvince.CA, spottedBy))
+        .Setup(fac => fac.CreateLicensePlateSpot(Country.US, StateOrProvince.CA, spottedBy, CommonMockedServices.DefaultDate))
         .Returns(Result.Success<GameLicensePlate>(newSpot));
 
       var uut = new MockGame(new [] { existingSpot }, null, true, null);
 
       var actual = uut.AddLicensePlateSpot(lpFactory.Object,
+        CommonMockedServices.GetSystemService(),
         new[] { toSpot },
         spottedBy);
 
@@ -112,12 +118,13 @@ namespace TheGame.Tests.Domain.Games
 
       var lpFactory = new Mock<IGameLicensePlateFactory>();
       lpFactory
-        .Setup(fac => fac.CreateLicensePlateSpot(Country.US, StateOrProvince.CA, spottedBy))
+        .Setup(fac => fac.CreateLicensePlateSpot(Country.US, StateOrProvince.CA, spottedBy, CommonMockedServices.DefaultDate))
         .Returns(Result.Success<GameLicensePlate>(lpSpot));
 
       var uut = new MockGame(null, null, false, null);
 
       var actual = uut.AddLicensePlateSpot(lpFactory.Object,
+        CommonMockedServices.GetSystemService(),
         new[] { toSpot },
         spottedBy);
 

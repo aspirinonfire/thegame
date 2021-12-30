@@ -10,6 +10,7 @@ using TheGame.Tests.Domain.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 using System;
 using TheGame.Domain.DomainModels.Games.Events;
+using TheGame.Domain.Utils;
 
 namespace TheGame.Tests.Domain.Teams
 {
@@ -129,7 +130,7 @@ namespace TheGame.Tests.Domain.Teams
         new[] { existingActiveGame.Object },
         name: "Test Team");
 
-      var actual = uut.FinishActiveGame(player);
+      var actual = uut.FinishActiveGame(CommonMockedServices.GetSystemService(), player);
 
       Assert.True(actual.IsSuccess);
       Assert.NotNull(actual.Value);
