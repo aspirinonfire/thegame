@@ -129,7 +129,7 @@ namespace TheGame.Tests.Domain.Games
         spottedBy);
 
       Assert.False(actual.IsSuccess);
-      Assert.Equal(Game.InactiveGameError, actual.ErrorMessage);
+      Assert.Equal(Game.ErrorMessages.InactiveGameError, actual.ErrorMessage);
       Assert.Empty(uut.GameLicensePlates);
       Assert.Empty(uut.DomainEvents);
     }

@@ -100,7 +100,7 @@ namespace TheGame.Tests.Domain.Teams
 
       Assert.False(actual.IsSuccess);
       Assert.Null(actual.Value);
-      Assert.Equal(Team.ActiveGameAlreadyExistsError, actual.ErrorMessage);
+      Assert.Equal(Team.ErrorMessages.ActiveGameAlreadyExistsError, actual.ErrorMessage);
       var actualGame = Assert.Single(uut.Games);
       Assert.Equal(existingActiveGame, actualGame);
       gameFactory

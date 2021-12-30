@@ -25,6 +25,12 @@ namespace TheGame.Domain.DAL.ModelConfigs
         .HasIndex(plate => new { plate.Country, plate.StateOrProvince })
         .IsUnique();
 
+      // Navigations
+      var gameLicensePlateNav = builder.Navigation(plate => plate.GameLicensePlates);
+      gameLicensePlateNav
+        .UsePropertyAccessMode(PropertyAccessMode.Field)
+        .HasField("_gameLicensePlates");
+
       // Seed data
       builder.HasData(LicensePlate.AvailableLicensePlates);
     }

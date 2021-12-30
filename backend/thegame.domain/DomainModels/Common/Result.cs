@@ -3,10 +3,10 @@ namespace TheGame.Domain.DomainModels.Common
 
   public record Result
   {
-    public string ErrorMessage { get; init; }
+    public string? ErrorMessage { get; init; }
     public bool IsSuccess { get; init; }
 
-    public static Result<T> Success<T>(T value) where T : BaseModel =>
+    public static Result<T> Success<T>(T? value) where T : BaseModel =>
         new()
         {
           IsSuccess = true,
@@ -23,6 +23,8 @@ namespace TheGame.Domain.DomainModels.Common
 
   public record Result<T> : Result where T : BaseModel
   {
-    public T Value { get; init; }
+    public T? Value { get; init; }
+
+    public bool HasNoValue => Value is null;
   }
 }

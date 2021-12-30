@@ -62,26 +62,26 @@ namespace TheGame.Tests.DevTests
       var teamResult = teamSvc.CreateNewTeam("test_team");
       Assert.True(teamResult.IsSuccess);
 
-      var playerResult = teamResult.Value.AddNewPlayer(22, "test player");
+      var playerResult = teamResult.Value!.AddNewPlayer(22, "test player");
       Assert.True(playerResult.IsSuccess);
 
       await db.SaveChangesAsync();
 
       // create game
       var gameFac = scope.ServiceProvider.GetRequiredService<IGameFactory>();
-      var gameResult = teamResult.Value.StartNewGame(gameFac, "Test Game", playerResult.Value);
+      var gameResult = teamResult.Value.StartNewGame(gameFac, "Test Game", playerResult.Value!);
       Assert.True(gameResult.IsSuccess);
 
       // spot plate
       var lpFac = scope.ServiceProvider.GetRequiredService<IGameLicensePlateFactory>();
-      var spotResult = gameResult.Value.AddLicensePlateSpot(lpFac,
+      var spotResult = gameResult.Value!.AddLicensePlateSpot(lpFac,
         new Mock<ISystemService>().Object,
         new[]
         {
           (Country.US, StateOrProvince.CA),
           (Country.US, StateOrProvince.OR),
         },
-        playerResult.Value);
+        playerResult.Value!);
       Assert.True(spotResult.IsSuccess);
 
       await db.SaveChangesAsync();

@@ -9,8 +9,7 @@ namespace TheGame.Domain.DomainModels.LicensePlates
     public class LicensePlateSpotFactory : IGameLicensePlateFactory
     {
       public LicensePlateSpotFactory()
-      {
-      }
+      { }
 
       public Result<GameLicensePlate> CreateLicensePlateSpot(Country country,
         StateOrProvince stateOrProvince,
@@ -20,7 +19,7 @@ namespace TheGame.Domain.DomainModels.LicensePlates
         var licensePlateResult = LicensePlate.GetLicensePlate(country, stateOrProvince);
         if (!licensePlateResult.IsSuccess)
         {
-          return Result.Error<GameLicensePlate>(licensePlateResult.ErrorMessage);
+          return Result.Error<GameLicensePlate>(licensePlateResult.ErrorMessage ?? LicensePlate.ErrorMessages.LicensePlateNotFoundError);
         }
 
         var newSpot = new GameLicensePlate

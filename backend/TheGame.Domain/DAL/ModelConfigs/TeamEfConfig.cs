@@ -1,10 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TheGame.Domain.DomainModels.Teams;
 
 namespace TheGame.Domain.DAL.ModelConfigs
@@ -31,6 +26,7 @@ namespace TheGame.Domain.DAL.ModelConfigs
       builder
         .HasMany(team => team.Games)
         .WithOne()
+        .OnDelete(DeleteBehavior.Cascade)
         .IsRequired();
 
       // define navigation props

@@ -27,8 +27,10 @@ namespace TheGame.Domain.DAL.ModelConfigs
 
       // define relationships
       builder
+#pragma warning disable CS0618 // Type or member is obsolete
         .HasMany(game => game.LicensePlates)
         .WithMany(licensePlate => licensePlate.Games)
+#pragma warning restore CS0618 // Type or member is obsolete
         .UsingEntity<GameLicensePlate>("GameLicensePlates",
           j => j
             .HasOne(glp => glp.LicensePlate)
@@ -40,10 +42,21 @@ namespace TheGame.Domain.DAL.ModelConfigs
             .HasForeignKey(glp => glp.GameId),
           j =>
           {
-            j.HasOne(glp => glp.SpottedBy).WithMany().IsRequired();
-            j.Property(glp => glp.DateCreated);
             j.HasKey(glp => new { glp.GameId, glp.LicensePlateId });
+
+            j.HasOne(glp => glp.SpottedBy)
+              .WithMany()
+              .IsRequired();
+
+            j.Property(glp => glp.DateCreated)
+              .IsRequired();
           });
+
+      // define Navigation props
+      var gameLicensePlateNav = builder.Navigation(game => game.GameLicensePlates);
+      gameLicensePlateNav
+        .UsePropertyAccessMode(PropertyAccessMode.Field)
+        .HasField("_gameLicensePlates");
     }
   }
 }
