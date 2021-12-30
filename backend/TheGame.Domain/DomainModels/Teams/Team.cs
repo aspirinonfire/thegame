@@ -29,17 +29,21 @@ namespace TheGame.Domain.DomainModels.Teams
     public string Name { get; protected set; }
 #nullable restore
 
-    public virtual Result<Player> AddNewPlayer(long userId, string playerName)
+    public virtual Result<Player> AddNewPlayer(IPlayerFactory playerFactory, long userId, string playerName)
     {
       if (Players.Any(player => player.UserId == userId))
       {
         return Result.Error<Player>(ErrorMessages.PlayerAlreadyExistError);
       }
 
-      var player = new Player(userId, playerName);
+      var playerResult = playerFactory.CreateNewPlayer(userId, playerName);
+      if (!playerResult.IsSuccess || playerResult.HasNoValue)
+      {
+        return Result.Error<Player>(ErrorMessages.InvalidPlayerError);
+      }
 
-      GetWriteableCollection(Players).Add(player);
-      return Result.Success(player);
+      GetWriteableCollection(Players).Add(playerResult.Value!);
+      return Result.Success(playerResult.Value!);
     }
 
     public virtual Result<Player> AddExistingPlayer(Player player)

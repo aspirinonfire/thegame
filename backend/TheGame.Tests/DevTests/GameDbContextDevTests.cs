@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using TheGame.Domain.DAL;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
+using TheGame.Domain.DomainModels.Players;
 using TheGame.Domain.DomainModels.Teams;
 using TheGame.Domain.Utils;
 using TheGame.Tests.Fixtures;
@@ -62,7 +63,8 @@ namespace TheGame.Tests.DevTests
       var teamResult = teamSvc.CreateNewTeam("test_team");
       Assert.True(teamResult.IsSuccess);
 
-      var playerResult = teamResult.Value!.AddNewPlayer(22, "test player");
+      var playerFac = scope.ServiceProvider.GetRequiredService<IPlayerFactory>();
+      var playerResult = teamResult.Value!.AddNewPlayer(playerFac, 22, "test player");
       Assert.True(playerResult.IsSuccess);
 
       await db.SaveChangesAsync();
@@ -74,8 +76,9 @@ namespace TheGame.Tests.DevTests
 
       // spot plate
       var lpFac = scope.ServiceProvider.GetRequiredService<IGameLicensePlateFactory>();
+      var sysService = scope.ServiceProvider.GetRequiredService<ISystemService>();
       var spotResult = gameResult.Value!.AddLicensePlateSpot(lpFac,
-        new Mock<ISystemService>().Object,
+        sysService,
         new[]
         {
           (Country.US, StateOrProvince.CA),

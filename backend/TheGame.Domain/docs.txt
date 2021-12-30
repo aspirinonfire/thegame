@@ -1,5 +1,5 @@
 Domain and Infra are located in the same project for few reasons:
-1. Leaking abstraction due to the EF Core concerns.
+1. Leaking abstraction due to the EF Core configuration.
 2. Simpler file management.
 
 TODO:

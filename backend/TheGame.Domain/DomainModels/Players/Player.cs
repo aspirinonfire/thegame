@@ -19,12 +19,6 @@ namespace TheGame.Domain.DomainModels.Players
     public Player()
     { }
 
-    public Player(long userId, string name)
-    {
-      UserId = userId;
-      Name = name;
-    }
-
     public override int GetHashCode() => UserId.GetHashCode();
 
 #pragma warning disable CS8765 // Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes).
