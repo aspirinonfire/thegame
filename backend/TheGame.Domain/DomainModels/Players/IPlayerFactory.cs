@@ -4,6 +4,6 @@ namespace TheGame.Domain.DomainModels.Players
 {
   public interface IPlayerFactory
   {
-    Result<Player> CreateNewPlayer(long userId, string name);
+    DomainResult<Player> CreateNewPlayer(long userId, string name);
   }
 }

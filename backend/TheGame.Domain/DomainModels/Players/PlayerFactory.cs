@@ -16,11 +16,11 @@ namespace TheGame.Domain.DomainModels.Players
 
       }
 
-      public Result<Player> CreateNewPlayer(long userId, string name)
+      public DomainResult<Player> CreateNewPlayer(long userId, string name)
       {
         // Add player validations here
 
-        return Result.Success<Player>(new Player
+        return DomainResult.Success<Player>(new Player
         {
           UserId = userId,
           Name = name

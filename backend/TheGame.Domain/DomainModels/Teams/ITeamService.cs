@@ -6,6 +6,6 @@ namespace TheGame.Domain.DomainModels.Teams
 {
   public interface ITeamService
   {
-    Result<Team> CreateNewTeam(string name);
+    DomainResult<Team> CreateNewTeam(string name);
   }
 }

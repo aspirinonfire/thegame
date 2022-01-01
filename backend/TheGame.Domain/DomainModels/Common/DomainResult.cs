@@ -1,19 +1,19 @@
 namespace TheGame.Domain.DomainModels.Common
 {
 
-  public record Result
+  public record DomainResult
   {
     public string? ErrorMessage { get; init; }
     public bool IsSuccess { get; init; }
 
-    public static Result<T> Success<T>(T? value) where T : BaseModel =>
+    public static DomainResult<T> Success<T>(T? value) where T : BaseModel =>
         new()
         {
           IsSuccess = true,
           Value = value
         };
 
-    public static Result<T> Error<T>(string errorMessage) where T : BaseModel =>
+    public static DomainResult<T> Error<T>(string errorMessage) where T : BaseModel =>
         new()
         {
           IsSuccess = false,
@@ -21,7 +21,7 @@ namespace TheGame.Domain.DomainModels.Common
         };
   }
 
-  public record Result<T> : Result where T : BaseModel
+  public record DomainResult<T> : DomainResult where T : BaseModel
   {
     public T? Value { get; init; }
 

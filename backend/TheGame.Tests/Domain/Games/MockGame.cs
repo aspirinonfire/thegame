@@ -9,9 +9,9 @@ namespace TheGame.Tests.Domain.Games
   public class MockGame : Game
   {
     public MockGame(IEnumerable<GameLicensePlate>? licensePlates,
-      string? name,
       bool isActive,
-      DateTimeOffset? endedOn)
+      DateTimeOffset? endedOn,
+      string name = "test game")
     {
       _gameLicensePlates = licensePlates != null ?
         new HashSet<GameLicensePlate>(licensePlates) :

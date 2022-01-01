@@ -22,11 +22,11 @@ namespace TheGame.Domain.DomainModels.Teams
         _dbContext = dbContext;
       }
 
-      public Result<Team> CreateNewTeam(string name)
+      public DomainResult<Team> CreateNewTeam(string name)
       {
         if (string.IsNullOrEmpty(name))
         {
-          return Result.Error<Team>(InvalidTeamNameError);
+          return DomainResult.Error<Team>(InvalidTeamNameError);
         }
 
         var newTeam = new Team
@@ -35,7 +35,7 @@ namespace TheGame.Domain.DomainModels.Teams
         };
         _dbContext.Teams.Add(newTeam);
 
-        return Result.Success(newTeam);
+        return DomainResult.Success(newTeam);
       }
     }
   }

@@ -32,7 +32,7 @@ namespace TheGame.Tests.Domain.Teams
       var gameFactory = new Mock<IGameFactory>();
       gameFactory
         .Setup(fac => fac.CreateNewGame(gameName))
-        .Returns(Result.Success(expectedNewGame));
+        .Returns(DomainResult.Success(expectedNewGame));
 
       var actual = uut.StartNewGame(gameFactory.Object, gameName, player);
 
@@ -52,9 +52,9 @@ namespace TheGame.Tests.Domain.Teams
       var gameName = "test game";
 
       var existingFinishedGame = new MockGame(Enumerable.Empty<GameLicensePlate>(),
-        "test game",
         false,
-        null);
+        null,
+        gameName);
 
       var expectedNewGame = new Mock<Game>().Object;
 
@@ -65,7 +65,7 @@ namespace TheGame.Tests.Domain.Teams
       var gameFactory = new Mock<IGameFactory>();
       gameFactory
         .Setup(fac => fac.CreateNewGame(gameName))
-        .Returns(Result.Success(expectedNewGame));
+        .Returns(DomainResult.Success(expectedNewGame));
 
       var actual = uut.StartNewGame(gameFactory.Object, gameName, player);
 
@@ -86,9 +86,9 @@ namespace TheGame.Tests.Domain.Teams
       var gameName = "test game";
 
       var existingActiveGame = new MockGame(Enumerable.Empty<GameLicensePlate>(),
-        "test game",
         true,
-        null);
+        null,
+        gameName);
 
       var uut = new MockTeam(new[] { player },
         new [] { existingActiveGame },
@@ -114,9 +114,9 @@ namespace TheGame.Tests.Domain.Teams
       var player = new MockPlayer(null, 1, "test player");
 
       var existingActiveGame = new Mock<MockGame>(Enumerable.Empty<GameLicensePlate>(),
-        "test game",
         true,
-        null);
+        null,
+        "Active game");
 
       existingActiveGame
         .Setup(game => game.FinishGame(It.IsAny<DateTimeOffset>()))
@@ -124,7 +124,7 @@ namespace TheGame.Tests.Domain.Teams
         {
           existingActiveGame.Object.SetActiveFlag(false);
         })
-        .Returns(Result.Success<Game>(existingActiveGame.Object));
+        .Returns(DomainResult.Success<Game>(existingActiveGame.Object));
 
       var uut = new MockTeam(new[] { player },
         new[] { existingActiveGame.Object },

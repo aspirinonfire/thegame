@@ -27,10 +27,8 @@ namespace TheGame.Domain.DAL.ModelConfigs
 
       // define relationships
       builder
-#pragma warning disable CS0618 // Type or member is obsolete
         .HasMany(game => game.LicensePlates)
         .WithMany(licensePlate => licensePlate.Games)
-#pragma warning restore CS0618 // Type or member is obsolete
         .UsingEntity<GameLicensePlate>("GameLicensePlates",
           j => j
             .HasOne(glp => glp.LicensePlate)

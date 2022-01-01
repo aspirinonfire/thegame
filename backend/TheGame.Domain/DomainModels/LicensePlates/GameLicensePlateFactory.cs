@@ -11,24 +11,24 @@ namespace TheGame.Domain.DomainModels.LicensePlates
       public LicensePlateSpotFactory()
       { }
 
-      public Result<GameLicensePlate> CreateLicensePlateSpot(Country country,
+      public DomainResult<GameLicensePlate> CreateLicensePlateSpot(Country country,
         StateOrProvince stateOrProvince,
         Player spottedBy,
         DateTimeOffset spotDate)
       {
         var licensePlateResult = LicensePlate.GetLicensePlate(country, stateOrProvince);
-        if (!licensePlateResult.IsSuccess)
+        if (!licensePlateResult.IsSuccess || licensePlateResult.HasNoValue)
         {
-          return Result.Error<GameLicensePlate>(licensePlateResult.ErrorMessage ?? LicensePlate.ErrorMessages.LicensePlateNotFoundError);
+          return DomainResult.Error<GameLicensePlate>(licensePlateResult.ErrorMessage ?? LicensePlate.ErrorMessages.LicensePlateNotFoundError);
         }
 
         var newSpot = new GameLicensePlate
         {
-          LicensePlate = licensePlateResult.Value,
+          LicensePlate = licensePlateResult.Value!,
           SpottedBy = spottedBy,
           DateCreated = spotDate
         };
-        return Result.Success(newSpot);
+        return DomainResult.Success(newSpot);
       }
     }
   }

@@ -30,9 +30,9 @@ namespace TheGame.Tests.Domain.Games
       var lpFactory = new Mock<IGameLicensePlateFactory>();
       lpFactory
         .Setup(fac => fac.CreateLicensePlateSpot(Country.US, StateOrProvince.CA, spottedBy, CommonMockedServices.DefaultDate))
-        .Returns(Result.Success<GameLicensePlate>(lpSpot));
+        .Returns(DomainResult.Success<GameLicensePlate>(lpSpot));
 
-      var uut = new MockGame(null, null, true, null);
+      var uut = new MockGame(null, true, null);
 
       var actual = uut.AddLicensePlateSpot(lpFactory.Object,
         CommonMockedServices.GetSystemService(),
@@ -58,7 +58,7 @@ namespace TheGame.Tests.Domain.Games
         new MockLicensePlate(Country.US, StateOrProvince.CA),
         existingSpottedBy);
 
-      var uut = new MockGame(new[] { existingSpot }, null, true, null);
+      var uut = new MockGame(new[] { existingSpot }, true, null);
 
       var actual = uut.RemoveLicensePlateSpot(new[] { toRemove },
         existingSpottedBy);
@@ -90,9 +90,9 @@ namespace TheGame.Tests.Domain.Games
       var lpFactory = new Mock<IGameLicensePlateFactory>();
       lpFactory
         .Setup(fac => fac.CreateLicensePlateSpot(Country.US, StateOrProvince.CA, spottedBy, CommonMockedServices.DefaultDate))
-        .Returns(Result.Success<GameLicensePlate>(newSpot));
+        .Returns(DomainResult.Success<GameLicensePlate>(newSpot));
 
-      var uut = new MockGame(new [] { existingSpot }, null, true, null);
+      var uut = new MockGame(new [] { existingSpot }, true, null);
 
       var actual = uut.AddLicensePlateSpot(lpFactory.Object,
         CommonMockedServices.GetSystemService(),
@@ -119,9 +119,9 @@ namespace TheGame.Tests.Domain.Games
       var lpFactory = new Mock<IGameLicensePlateFactory>();
       lpFactory
         .Setup(fac => fac.CreateLicensePlateSpot(Country.US, StateOrProvince.CA, spottedBy, CommonMockedServices.DefaultDate))
-        .Returns(Result.Success<GameLicensePlate>(lpSpot));
+        .Returns(DomainResult.Success<GameLicensePlate>(lpSpot));
 
-      var uut = new MockGame(null, null, false, null);
+      var uut = new MockGame(null, false, null);
 
       var actual = uut.AddLicensePlateSpot(lpFactory.Object,
         CommonMockedServices.GetSystemService(),

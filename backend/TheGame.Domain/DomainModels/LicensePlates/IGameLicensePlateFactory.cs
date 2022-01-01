@@ -7,7 +7,7 @@ namespace TheGame.Domain.DomainModels.LicensePlates
 {
   public interface IGameLicensePlateFactory
   {
-    Result<GameLicensePlate> CreateLicensePlateSpot(Country country,
+    DomainResult<GameLicensePlate> CreateLicensePlateSpot(Country country,
       StateOrProvince stateOrProvince,
       Player spottedBy,
       DateTimeOffset spotDate);

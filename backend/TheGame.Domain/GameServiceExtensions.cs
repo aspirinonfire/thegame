@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Reflection;
+using TheGame.Domain.Commands;
+using TheGame.Domain.Commands.CreateTeamAndPlayer;
 using TheGame.Domain.DAL;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
@@ -43,11 +45,13 @@ namespace TheGame.Domain
         // Utils
         .AddSingleton<ISystemService, SystemService>()
         .AddMediatR(typeof(GameServiceExtensions).GetTypeInfo().Assembly)
-        // Game services
+        // Game domain services
         .AddScoped<ITeamService, Team.TeamService>()
         .AddScoped<IPlayerFactory, Player.PlayerFactory>()
         .AddScoped<IGameFactory, Game.GameFactory>()
-        .AddScoped<IGameLicensePlateFactory, GameLicensePlate.LicensePlateSpotFactory>();
+        .AddScoped<IGameLicensePlateFactory, GameLicensePlate.LicensePlateSpotFactory>()
+        // Commands
+        .AddScoped<IRequestHandler<CreateTeamAndPlayerCommand, CommandResult<CreateTeamAndPlayerResult>>, CreateTeamAndPlayerCommandHandler>();
 
       return services;
     }

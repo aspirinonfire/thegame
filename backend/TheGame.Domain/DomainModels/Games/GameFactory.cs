@@ -10,7 +10,7 @@ namespace TheGame.Domain.DomainModels.Games
       public GameFactory()
       { }
 
-      public Result<Game> CreateNewGame(string name)
+      public DomainResult<Game> CreateNewGame(string name)
       {
         var newGame = new Game
         {
@@ -20,7 +20,7 @@ namespace TheGame.Domain.DomainModels.Games
             name
         };
 
-        return Result.Success(newGame);
+        return DomainResult.Success(newGame);
       }
     }
   }
