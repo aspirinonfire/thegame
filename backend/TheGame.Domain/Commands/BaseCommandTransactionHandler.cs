@@ -1,12 +1,7 @@
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using TheGame.Domain.DAL;
-using TheGame.Domain.DomainModels.Common;
 
 namespace TheGame.Domain.Commands
 {
@@ -31,7 +26,7 @@ namespace TheGame.Domain.Commands
       }
       else
       {
-        trx.Rollback();
+        await trx.RollbackAsync(cancellationToken);
       }
       return commandResult;
     }
