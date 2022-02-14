@@ -1,11 +1,19 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using System;
+using System.Linq;
+using System.Threading.Tasks;
+using TheGame.Api.Security;
+using TheGame.Api.Security.Models;
 using TheGame.Domain;
 using TheGame.Domain.DAL;
 
@@ -26,8 +34,7 @@ namespace TheGame.Api
       var connString =  Configuration.GetConnectionString(GameDbContext.ConnectionStringName);
       if (string.IsNullOrEmpty(connString))
       {
-        string msg = $"{GameDbContext.ConnectionStringName} connection string is not found! Aborting...";
-        throw new ApplicationException(msg);
+        throw new ApplicationException($"{GameDbContext.ConnectionStringName} connection string is not found! Aborting...");
       }
       // TODO env check
       var isDevelopment = true;
@@ -38,6 +45,10 @@ namespace TheGame.Api
       {
         c.SwaggerDoc("v1", new OpenApiInfo { Title = "thegame.api", Version = "v1" });
       });
+
+      AddAppIdentityServices(services,
+        Configuration["Auth:Google:ClientId"],
+        Configuration["Auth:Google:ClientSecret"]);
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -48,7 +59,7 @@ namespace TheGame.Api
     {
       if (!dbContext.Database.CanConnect())
       {
-        string msg = "Could not connect to database! Aborting...";
+        const string msg = "Could not connect to database! Aborting...";
         logger.LogCritical(msg);
         throw new ApplicationException(msg);
       }
@@ -61,15 +72,64 @@ namespace TheGame.Api
       }
 
       app.UseHttpsRedirection();
-
       app.UseRouting();
 
+      app.UseAuthentication();
       app.UseAuthorization();
 
       app.UseEndpoints(endpoints =>
       {
         endpoints.MapControllers();
       });
+    }
+
+    private static IServiceCollection AddAppIdentityServices(IServiceCollection services,
+      string googleClientId,
+      string googleClientSecret)
+    {
+      services.AddDbContext<AppUserIdentityDbContext>(config =>
+      {
+        // for in memory database  
+        config.UseInMemoryDatabase("MemoryBaseDataBase");
+      });
+
+      services
+        .AddIdentity<AppUser, IdentityRole>()
+        .AddEntityFrameworkStores<AppUserIdentityDbContext>()
+        .AddDefaultTokenProviders();
+
+      services
+        .AddAuthentication(options =>
+        {
+          // using cookie auth because app is web based
+          options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        })
+        .AddCookie()
+        .AddGoogle(googleOptions =>
+        {
+          googleOptions.ClientId = googleClientId;
+          googleOptions.ClientSecret = googleClientSecret;
+          googleOptions.AuthorizationEndpoint = "/account/signingoogle";
+
+          googleOptions.SaveTokens = true;
+
+          googleOptions.Events.OnCreatingTicket = ctx =>
+          {
+            var tokens = ctx.Properties.GetTokens().ToList();
+
+            tokens.Add(new AuthenticationToken()
+            {
+              Name = "TicketCreated",
+              Value = DateTime.UtcNow.ToString()
+            });
+
+            ctx.Properties.StoreTokens(tokens);
+
+            return Task.CompletedTask;
+          };
+        });
+
+      return services;
     }
   }
 }

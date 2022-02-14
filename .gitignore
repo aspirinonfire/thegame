@@ -56,3 +56,4 @@ Thumbs.db
 # configs
 appsettings.Development.json
 testsettings.override.json
+*.csproj.user
