@@ -71,6 +71,7 @@ export class SpotDialogComponent implements OnInit, OnDestroy {
       return;
     }
     ctrl.setValue(!ctrl.value);
+    this.form.get(this.searchCtrlName)?.reset();
   }
 
   public dismiss() {

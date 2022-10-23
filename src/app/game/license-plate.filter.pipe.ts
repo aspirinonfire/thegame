@@ -9,6 +9,6 @@ export class LicensePlateFilterPipe implements PipeTransform {
   transform(values: plateVm[], searchValue: string): plateVm[] {
     if (!searchValue) return values;
     return values.filter((v: any) =>
-      v.name.toLowerCase().indexOf(searchValue.toLowerCase()) > -1)
+      v.name.toLowerCase().startsWith(searchValue.toLowerCase()))
   }
 }
