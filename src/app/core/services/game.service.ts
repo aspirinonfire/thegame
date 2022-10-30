@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { Game, LicensePlate, Country } from '../models'
+import { Game, LicensePlate, Country, ScoreData, StateBorder } from '../models'
 import { LocalStorageService } from './local-storage.service';
-import { mockGameData } from '../mockData';
+import { mockGameData, UsStateBorders } from '../mockData';
 
 @Injectable({
   providedIn: 'root'
@@ -10,6 +10,16 @@ export class GameService {
   private readonly CURRENT_GAME_KEY = "currentGame";
   private readonly PAST_GAMES_KEY = "pastGames";
   private static territoryNameLkp: ReadonlyMap<string, string>;
+
+  private static westCoastUsStatesLkp = mockGameData
+    .filter(state => !!state.modifier && state.modifier.indexOf('West Coast') >= 0)
+    .map(state => state.shortName)
+    .reduce((lkp, state) => lkp.add(state), new Set<string>());
+
+    private static eastCoastStatesLkp = mockGameData
+    .filter(state => !!state.modifier && state.modifier?.indexOf('East Coast') >= 0)
+    .map(state => state.shortName)
+    .reduce((lkp, state) => lkp.add(state), new Set<string>());
 
   constructor(private readonly storageSvc: LocalStorageService) {
     if (!GameService.territoryNameLkp) {
@@ -45,7 +55,11 @@ export class GameService {
       createdBy: createdBy,
       id: new Date().getTime().toString(),
       licensePlates: {},
-      name: name
+      name: name,
+      score: <ScoreData>{
+        totalScore: 0,
+        milestones: []
+      }
     };
     this.storageSvc.setValue(this.CURRENT_GAME_KEY, currentGame);
     return currentGame;
@@ -56,7 +70,13 @@ export class GameService {
     if (!currentGame) {
       return "No active game!";
     }
-    currentGame.dateFinished = new Date();
+
+    const lastSpot = Object.keys(currentGame.licensePlates)
+      .map(key => currentGame.licensePlates[key].dateSpotted)
+      .sort()
+      .reverse()[0];
+
+    currentGame.dateFinished = lastSpot ?? new Date();
     
     const pastGames = this.getPastGames();
     pastGames.push(currentGame);
@@ -79,7 +99,6 @@ export class GameService {
 
     if (!!currentGame.licensePlates[key]) {
       delete currentGame.licensePlates[key];
-      this.storageSvc.setValue(this.CURRENT_GAME_KEY, currentGame);
     } else {
       const licensePlate = <LicensePlate>{
         dateSpotted: new Date(),
@@ -88,13 +107,123 @@ export class GameService {
         country: country
       };
       currentGame.licensePlates[key] = licensePlate;
-      this.storageSvc.setValue(this.CURRENT_GAME_KEY, currentGame);
     }
+
+    this.calculateScore(currentGame);
+    this.storageSvc.setValue(this.CURRENT_GAME_KEY, currentGame);
     
     return currentGame.licensePlates;
   }
 
   resetAll() {
     this.storageSvc.clearAll();
+  }
+
+  private calculateScore(currentGame: Game): void
+  {
+    // recalculate all scores
+    currentGame.score = <ScoreData>{
+      totalScore: 0,
+      milestones: []
+    };
+
+    const spottedPlates = Object.keys(currentGame.licensePlates);
+
+    let score = spottedPlates.length;
+    if (this.hasWestCoast(currentGame.licensePlates))
+    {
+      score += 10;
+      currentGame.score.milestones.push('West Coast');
+    }
+
+    if (this.hasEastCoast(currentGame.licensePlates))
+    {
+      score += 20;
+      currentGame.score.milestones.push('East Coast');
+    }
+
+    if (this.hasTransAtlantic(currentGame.licensePlates))
+    {
+      score += 100;
+      currentGame.score.milestones.push('Coast-to-Coast');
+    }
+
+    currentGame.score.totalScore = score;
+  }
+
+  private hasWestCoast(plates: {[key: string]: LicensePlate}) : boolean {
+    const markedUsStates = Object.keys(plates)
+      .map(key => plates[key])
+      .filter(plate => plate.country == 'US')
+      .map(plate => plate.stateOrProvince);
+
+    return markedUsStates
+      .filter(state => GameService.westCoastUsStatesLkp.has(state))
+      .length == GameService.westCoastUsStatesLkp.size;
+  }
+
+  private hasEastCoast(plates: {[key: string]: LicensePlate}) : boolean {
+    const markedUsStates = Object.keys(plates)
+      .map(key => plates[key])
+      .filter(plate => plate.country == 'US')
+      .map(plate => plate.stateOrProvince);
+
+    return markedUsStates
+      .filter(state => GameService.eastCoastStatesLkp.has(state))
+      .length == GameService.eastCoastStatesLkp.size;
+  }
+
+  private hasTransAtlantic(plates: {[key: string]: LicensePlate}) : boolean {
+    const markedUsStates = Object.keys(plates)
+      .map(key => plates[key])
+      .filter(plate => plate.country == 'US')
+      .map(plate => plate.stateOrProvince);
+
+    const markedWestCoastStates = markedUsStates
+      .filter(state => GameService.westCoastUsStatesLkp.has(state));
+
+    return this.isConnected(markedWestCoastStates,
+       (state: string) => GameService.eastCoastStatesLkp.has(state),
+       markedUsStates.map(state => state));
+  }
+
+  private isConnected(startingStates: string[],
+    isMatchingBorderState: (state: string) => boolean,
+    markedStates: string[]): boolean {
+    
+    const toCheckLkp = startingStates
+      .reduce((lkp, state) => lkp.add(state), new Set<string>());
+
+    const markedStatesLkp = markedStates
+      .reduce((lkp, state) => lkp.add(state), new Set<string>())
+    
+    const checkedStatesLkp = new Set<string>();
+
+    while (toCheckLkp.size > 0)
+    {
+      const [first] = toCheckLkp;
+      checkedStatesLkp.add(first);
+      toCheckLkp.delete(first);
+      const currentStateBorders = UsStateBorders[first] ?? <StateBorder>{};
+      const currentMarkedBorders = Object.keys(currentStateBorders)
+        // ensure border state has been marked, and hasn't been visited or been marked for visiting
+        .filter((borderState : string) => markedStatesLkp.has(borderState) &&
+          !toCheckLkp.has(borderState) &&
+          !checkedStatesLkp.has(borderState));
+
+      for (const borderingState of currentMarkedBorders)
+      {
+          if (isMatchingBorderState(borderingState))
+          {
+              return true;
+          }
+          else
+          {
+              toCheckLkp.add(borderingState);
+          }
+      }
+    }
+
+    return false;
   }
 }

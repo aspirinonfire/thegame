@@ -19,6 +19,9 @@
       <a mat-list-item [routerLink]="['/', appRoutes.about]" routerLinkActive="active-link">
         <mat-icon>info</mat-icon>About
       </a>
+      <a mat-list-item (click)="shareAppWithFriends()">
+        <mat-icon>share</mat-icon>Share App
+      </a>
     </mat-nav-list>
   </mat-drawer>
 
