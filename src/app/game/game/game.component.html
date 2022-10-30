@@ -1,7 +1,7 @@
 <mat-card class="card mat-elevation-z8" >
     <mat-card-header>
         <mat-card-title fxFlexFill *ngIf="!!currentGame; else showNoGame">
-            {{ currentGame.name }} :: {{ currentGame.dateCreated | date }}. Spotted {{ spottedPlates | number }} plate(s)
+            <strong>{{ currentGame.name }}</strong> {{ currentGame.dateCreated | date }}. Score: {{ gameScore | number }}
         </mat-card-title>
         <ng-template #showNoGame>
             No active game. Please start a new one!
@@ -13,6 +13,20 @@
             <app-us-map [currentGame]="currentGameSpots" [pastGames]="pastGames" (click)="openSpotDialog()"></app-us-map>
             <mat-divider></mat-divider>
             <app-non-us-spots [currentGame]="currentGameSpots" [pastGames]="pastGames" (click)="openSpotDialog()"></app-non-us-spots>
+            <div>
+                <h4>Achievements:</h4>
+                <div *ngIf="scoreMilestones.length > 0; else noAchievements">
+                    <mat-chip-list aria-label="Non-US spots" cdkDropListOrientation="horizontal">
+                        <mat-chip *ngFor="let milestone of scoreMilestones; trackBy: milestoneTrackBy" color="primary" [selected]="true"
+                            [removable]="false">
+                            {{ milestone }}
+                        </mat-chip>
+                    </mat-chip-list>
+                </div>
+                <ng-template #noAchievements>
+                    <small>This is just a beginning...</small>
+                </ng-template>
+            </div>
         </div>
     </mat-card-content>
 </mat-card>

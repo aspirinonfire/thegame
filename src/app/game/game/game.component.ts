@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { GameService } from 'src/app/core/services/game.service';
-import { Game, LicensePlate } from 'src/app/core/models';
+import { Game, LicensePlate, ScoreMilestone } from 'src/app/core/models';
 import { Subscription } from 'rxjs';
 import { AppInitDataService } from 'src/app/core/services/app-init-data.service';
 import { Router } from '@angular/router';
@@ -80,6 +80,18 @@ export class GameComponent implements OnInit, OnDestroy {
 
   public get spottedPlates() : number {
     return this.currentGameSpots.length;
+  }
+
+  public get gameScore(): number {
+    return this.currentGame?.score?.totalScore ?? 0;
+  }
+
+  public get scoreMilestones(): ScoreMilestone[] {
+    return this.currentGame?.score?.milestones ?? [];
+  }
+
+  public milestoneTrackBy(index: number, milestone: ScoreMilestone | null) {
+    return milestone;
   }
 
   public openSpotDialog() {

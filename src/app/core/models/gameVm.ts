@@ -1,4 +1,5 @@
-import { Game, LicensePlate } from '.';
+import { Game, LicensePlate, ScoreData } from '.';
+import { ScoreMilestone } from './game';
 
 export class GameVm implements Game {
   public readonly id: string;
@@ -7,6 +8,7 @@ export class GameVm implements Game {
   public readonly dateCreated: Date;
   public readonly dateFinished?: Date | undefined;
   public readonly licensePlates: { [K: string]: LicensePlate; };
+  public readonly score: ScoreData;
 
   public readonly platesSpotted: number;
 
@@ -17,12 +19,16 @@ export class GameVm implements Game {
     this.dateCreated = game.dateCreated;
     this.dateFinished = game.dateFinished;
     this.licensePlates = game.licensePlates;
+    this.score = game.score;
 
     this.platesSpotted = Object.keys(game.licensePlates).length;
   }
 
+  public get DateFinished(): Date {
+    return !!this.dateFinished ? new Date(this.dateFinished) : new Date();
+  }
+
   public get gameDuration(): number {
-    const dateFinished = !!this.dateFinished ? new Date(this.dateFinished) : new Date();
-    return Math.floor((dateFinished.getTime() - new Date(this.dateCreated).getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    return Math.floor((this.DateFinished.getTime() - new Date(this.dateCreated).getTime()) / (1000 * 60 * 60 * 24)) + 1;
   }
 }
