@@ -11,8 +11,8 @@
       <mat-list *ngFor="let pastGame of pastGames">
         <mat-list-item>
           <p>
-            <strong>{{ pastGame.name }}</strong> started on {{ pastGame.dateCreated | date }}, and lasted for
-            {{ pastGame.gameDuration }} day(s) Spotted {{ pastGame.platesSpotted }} state(s)
+            <strong>{{ pastGame.name }}</strong> ({{ pastGame.dateCreated | date }} - {{ pastGame.DateFinished | date }}).
+             Final score {{ GetPastGameScore(pastGame) }}.
           </p>
         </mat-list-item>
       </mat-list>

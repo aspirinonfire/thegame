@@ -63,4 +63,10 @@ export class HistoryComponent implements OnInit {
     return spottedUsStates;
   }
 
+  public GetPastGameScore(pastGame: GameVm): number {
+    if (pastGame.score != null) {
+      return pastGame.score.totalScore;
+    }
+    return pastGame.platesSpotted;
+  }
 }
