@@ -7,7 +7,8 @@ export interface Territory {
   longName: string,
   country: Country,
   licensePlateImgs: string[],
-  modifier?: TerritoryModifier[] 
+  modifier?: TerritoryModifier[],
+  scoreMultiplier?: number
 }
 
 export interface StateBorder

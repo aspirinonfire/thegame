@@ -33,3 +33,12 @@ mat-dialog-content {
     color: white !important;
   }
 }
+
+.plate-details {
+  white-space: normal;
+  font-weight: lighter;
+
+  small {
+    display: block;
+  };
+}

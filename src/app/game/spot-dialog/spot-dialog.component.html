@@ -8,19 +8,22 @@
   </mat-form-field>
   <mat-divider></mat-divider>
   <mat-dialog-content>
-    <div class="form-group plate" formGroupName="{{licenseGroupName}}" *ngFor="let state of (plateData.plates | licensePlateFilter: searchValue); trackBy: trackPlateSpot">
-      <mat-checkbox class="state-province-input" [id]="state.key" [formControlName]="state.key" [color]="'primary'">
+    <div class="form-group plate" formGroupName="{{licenseGroupName}}" *ngFor="let plate of (plateData.plates | licensePlateFilter: searchValue); trackBy: trackPlateSpot">
+      <mat-checkbox class="state-province-input" [id]="plate.key" [formControlName]="plate.key" [color]="'primary'">
         <span style="white-space: normal;">
-          {{ state.name }}
+          {{ plate.name }}
         </span>
       </mat-checkbox>
       <div class="plate-img"
-          (click)="togglePlate(state.key)"
-          [style.backgroundImage]="'url('+state.plateImage+')'"
-          *ngIf="!!state.plateImage"></div> 
-      <small style="display: block; white-space: normal;" *ngIf="state.showDetails">
-        On {{ state.dateSpotted | date: 'E, MMM dd @ h:mm aaa' }} by {{ state.spottedBy }}
-      </small>
+          (click)="togglePlate(plate.key)"
+          [style.backgroundImage]="'url('+plate.plateImage+')'"
+          *ngIf="!!plate.plateImage"></div>
+      <div class="plate-details">
+        <small *ngIf="plate.showDetails">
+          On {{ plate.dateSpotted | date: 'E, MMM dd @ h:mm aaa' }} by {{ plate.spottedBy }}
+        </small>
+        <small>{{getPlateScorePoints(plate)}} point(s)</small>
+      </div>
     </div>
   </mat-dialog-content>
   <mat-divider></mat-divider>
