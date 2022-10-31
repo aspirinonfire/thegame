@@ -16,10 +16,12 @@ export class GameService {
     .map(state => state.shortName)
     .reduce((lkp, state) => lkp.add(state), new Set<string>());
 
-    private static eastCoastStatesLkp = mockGameData
+  private static eastCoastStatesLkp = mockGameData
     .filter(state => !!state.modifier && state.modifier?.indexOf('East Coast') >= 0)
     .map(state => state.shortName)
     .reduce((lkp, state) => lkp.add(state), new Set<string>());
+
+  public static ScopeMultiplierByPlateLkp: ReadonlyMap<string, number>;
 
   constructor(private readonly storageSvc: LocalStorageService) {
     if (!GameService.territoryNameLkp) {
@@ -28,6 +30,16 @@ export class GameService {
         lkp.set(this.getNameKey(t.shortName, t.country), t.longName);
       });
       GameService.territoryNameLkp = lkp;
+    }
+
+    if (!GameService.ScopeMultiplierByPlateLkp)
+    {
+      const scoreLkp = mockGameData
+      .reduce((lkp, territory) => {
+        lkp.set(`${territory.country}-${territory.shortName}`, territory.scoreMultiplier ?? 1);
+        return lkp;
+      }, new Map<string, number>());
+      GameService.ScopeMultiplierByPlateLkp = scoreLkp;
     }
   }
 
@@ -129,7 +141,13 @@ export class GameService {
 
     const spottedPlates = Object.keys(currentGame.licensePlates);
 
-    let score = spottedPlates.length;
+    let score = spottedPlates
+      .reduce((currentScore, key) =>{
+        const multiplier = GameService.ScopeMultiplierByPlateLkp.get(key) ?? 1;
+
+        return currentScore + multiplier;
+      }, 0);
+
     if (this.hasWestCoast(currentGame.licensePlates))
     {
       score += 10;

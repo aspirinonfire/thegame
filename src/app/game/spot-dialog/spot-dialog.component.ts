@@ -3,6 +3,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { plateVm, SpotDialogData } from '../models';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { Subscription } from 'rxjs';
+import { GameService } from 'src/app/core/services/game.service';
 
 @Component({
   selector: 'app-spot-dialog',
@@ -80,6 +81,10 @@ export class SpotDialogComponent implements OnInit, OnDestroy {
 
   public trackPlateSpot(index: number, state: plateVm | null) {
     return state?.key;
+  }
+
+  public getPlateScorePoints(plate: plateVm) : number {
+    return GameService.ScopeMultiplierByPlateLkp.get(`${plate.country}-${plate.stateOrProvince}`) ?? 1;
   }
 
   get searchValue(): string {

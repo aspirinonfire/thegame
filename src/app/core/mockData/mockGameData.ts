@@ -3,16 +3,16 @@ import { Territory, StateBorder } from '../models';
 export const mockGameData: Territory[] = [
   // us
   {
-    shortName: 'AL', longName: "Alabama", country: 'US', licensePlateImgs: []
+    shortName: 'AL', longName: "Alabama", country: 'US', licensePlateImgs: [], scoreMultiplier: 2,
   },
   {
-    shortName: 'AK', longName: "Alaska", country: 'US', licensePlateImgs: []
+    shortName: 'AK', longName: "Alaska", country: 'US', licensePlateImgs: [], scoreMultiplier: 2,
   },
   {
     shortName: 'AZ', longName: "Arizona", country: 'US', licensePlateImgs: []
   },
   {
-    shortName: 'AR', longName: "Arkansas", country: 'US', licensePlateImgs: []
+    shortName: 'AR', longName: "Arkansas", country: 'US', licensePlateImgs: [], scoreMultiplier: 3,
   },
   {
     shortName: 'CA', longName: "California", country: 'US', licensePlateImgs: [], modifier: ['West Coast']
@@ -21,22 +21,22 @@ export const mockGameData: Territory[] = [
     shortName: 'CO', longName: "Colorado", country: 'US', licensePlateImgs: []
   },
   {
-    shortName: 'CT', longName: "Connecticut", country: 'US', licensePlateImgs: [], modifier: ['East Coast']
+    shortName: 'CT', longName: "Connecticut", country: 'US', licensePlateImgs: [], modifier: ['East Coast'], scoreMultiplier: 3,
   },
   {
-    shortName: 'DE', longName: "Delaware", country: 'US', licensePlateImgs: [], modifier: ['East Coast']
+    shortName: 'DE', longName: "Delaware", country: 'US', licensePlateImgs: [], modifier: ['East Coast'], scoreMultiplier: 3,
   },
   {
-    shortName: 'DC', longName: "District of Columbia", country: 'US', licensePlateImgs: [],
+    shortName: 'DC', longName: "District of Columbia", country: 'US', licensePlateImgs: [], scoreMultiplier: 5,
   },
   {
     shortName: 'FL', longName: "Florida", country: 'US', licensePlateImgs: [], modifier: ['East Coast']
   },
   {
-    shortName: 'GA', longName: "Georgia", country: 'US', licensePlateImgs: [], modifier: ['East Coast']
+    shortName: 'GA', longName: "Georgia", country: 'US', licensePlateImgs: [], modifier: ['East Coast'], scoreMultiplier: 2,
   },
   {
-    shortName: 'HI', longName: "Hawaii", country: 'US', licensePlateImgs: []
+    shortName: 'HI', longName: "Hawaii", country: 'US', licensePlateImgs: [], scoreMultiplier: 4,
   },
   {
     shortName: 'ID', longName: "Idaho", country: 'US', licensePlateImgs: []
@@ -45,52 +45,52 @@ export const mockGameData: Territory[] = [
     shortName: 'IL', longName: "Illinois", country: 'US', licensePlateImgs: []
   },
   {
-    shortName: 'IN', longName: "Indiana", country: 'US', licensePlateImgs: []
+    shortName: 'IN', longName: "Indiana", country: 'US', licensePlateImgs: [], scoreMultiplier: 3,
   },
   {
-    shortName: 'IA', longName: "Iowa", country: 'US', licensePlateImgs: []
+    shortName: 'IA', longName: "Iowa", country: 'US', licensePlateImgs: [], scoreMultiplier: 3,
   },
   {
-    shortName: 'KS', longName: "Kansas", country: 'US', licensePlateImgs: []
+    shortName: 'KS', longName: "Kansas", country: 'US', licensePlateImgs: [], scoreMultiplier: 3,
   },
   {
-    shortName: 'KY', longName: "Kentucky", country: 'US', licensePlateImgs: []
+    shortName: 'KY', longName: "Kentucky", country: 'US', licensePlateImgs: [], scoreMultiplier: 3,
   },
   {
-    shortName: 'LA', longName: "Louisiana", country: 'US', licensePlateImgs: []
+    shortName: 'LA', longName: "Louisiana", country: 'US', licensePlateImgs: [], scoreMultiplier: 3,
   },
   {
-    shortName: 'ME', longName: "Maine", country: 'US', licensePlateImgs: [], modifier: ['East Coast']
+    shortName: 'ME', longName: "Maine", country: 'US', licensePlateImgs: [], modifier: ['East Coast'], scoreMultiplier: 5,
   },
   {
-    shortName: 'MD', longName: "Maryland", country: 'US', licensePlateImgs: [], modifier: ['East Coast']
+    shortName: 'MD', longName: "Maryland", country: 'US', licensePlateImgs: [], modifier: ['East Coast'], scoreMultiplier: 5,
   },
   {
-    shortName: 'MA', longName: "Massachusetts", country: 'US', licensePlateImgs: [], modifier: ['East Coast']
+    shortName: 'MA', longName: "Massachusetts", country: 'US', licensePlateImgs: [], modifier: ['East Coast'], scoreMultiplier: 5,
   },
   {
-    shortName: 'MI', longName: "Michigan", country: 'US', licensePlateImgs: []
+    shortName: 'MI', longName: "Michigan", country: 'US', licensePlateImgs: [], scoreMultiplier: 2,
   },
   {
-    shortName: 'MN', longName: "Minnesota", country: 'US', licensePlateImgs: []
+    shortName: 'MN', longName: "Minnesota", country: 'US', licensePlateImgs: [], scoreMultiplier: 2,
   },
   {
-    shortName: 'MS', longName: "Mississippi", country: 'US', licensePlateImgs: []
+    shortName: 'MS', longName: "Mississippi", country: 'US', licensePlateImgs: [], scoreMultiplier: 2,
   },
   {
-    shortName: 'MO', longName: "Missouri", country: 'US', licensePlateImgs: []
+    shortName: 'MO', longName: "Missouri", country: 'US', licensePlateImgs: [], scoreMultiplier: 2,
   },
   {
-    shortName: 'MT', longName: "Montana", country: 'US', licensePlateImgs: []
+    shortName: 'MT', longName: "Montana", country: 'US', licensePlateImgs: [], scoreMultiplier: 2,
   },
   {
-    shortName: 'NE', longName: "Nebraska", country: 'US', licensePlateImgs: []
+    shortName: 'NE', longName: "Nebraska", country: 'US', licensePlateImgs: [], scoreMultiplier: 2,
   },
   {
     shortName: 'NV', longName: "Nevada", country: 'US', licensePlateImgs: []
   },
   {
-    shortName: 'NH', longName: "New Hampshire", country: 'US', licensePlateImgs: [], modifier: ['East Coast']
+    shortName: 'NH', longName: "New Hampshire", country: 'US', licensePlateImgs: [], modifier: ['East Coast'], scoreMultiplier: 5,
   },
   {
     shortName: 'NJ', longName: "New Jersey", country: 'US', licensePlateImgs: []
@@ -105,7 +105,7 @@ export const mockGameData: Territory[] = [
     shortName: 'NC', longName: "North Carolina", country: 'US', licensePlateImgs: [], modifier: ['East Coast']
   },
   {
-    shortName: 'ND', longName: "North Dakota", country: 'US', licensePlateImgs: [],
+    shortName: 'ND', longName: "North Dakota", country: 'US', licensePlateImgs: [], scoreMultiplier: 3,
   },
   {
     shortName: 'OH', longName: "Ohio", country: 'US', licensePlateImgs: []
@@ -120,16 +120,16 @@ export const mockGameData: Territory[] = [
     shortName: 'PA', longName: "Pennsylvania", country: 'US', licensePlateImgs: []
   },
   {
-    shortName: 'RI', longName: "Rhode Island", country: 'US', licensePlateImgs: [], modifier: ['East Coast']
+    shortName: 'RI', longName: "Rhode Island", country: 'US', licensePlateImgs: [], modifier: ['East Coast'], scoreMultiplier: 5,
   },
   {
-    shortName: 'SC', longName: "South Carolina", country: 'US', licensePlateImgs: [], modifier: ['East Coast']
+    shortName: 'SC', longName: "South Carolina", country: 'US', licensePlateImgs: [], modifier: ['East Coast'], scoreMultiplier: 3,
   },
   {
-    shortName: 'SD', longName: "South Dakota", country: 'US', licensePlateImgs: [],
+    shortName: 'SD', longName: "South Dakota", country: 'US', licensePlateImgs: [], scoreMultiplier: 2,
   },
   {
-    shortName: 'TN', longName: "Tennessee", country: 'US', licensePlateImgs: []
+    shortName: 'TN', longName: "Tennessee", country: 'US', licensePlateImgs: [], scoreMultiplier: 2,
   },
   {
     shortName: 'TX', longName: "Texas", country: 'US', licensePlateImgs: []
@@ -138,19 +138,19 @@ export const mockGameData: Territory[] = [
     shortName: 'UT', longName: "Utah", country: 'US', licensePlateImgs: []
   },
   {
-    shortName: 'VT', longName: "Vermont", country: 'US', licensePlateImgs: []
+    shortName: 'VT', longName: "Vermont", country: 'US', licensePlateImgs: [], scoreMultiplier: 5,
   },
   {
-    shortName: 'VA', longName: "Virginia", country: 'US', licensePlateImgs: [], modifier: ['East Coast']
+    shortName: 'VA', longName: "Virginia", country: 'US', licensePlateImgs: [], modifier: ['East Coast'], scoreMultiplier: 4,
   },
   {
     shortName: 'WA', longName: "Washington", country: 'US', licensePlateImgs: [], modifier: ['West Coast']
   },
   {
-    shortName: 'WV', longName: "West Virginia", country: 'US', licensePlateImgs: [],
+    shortName: 'WV', longName: "West Virginia", country: 'US', licensePlateImgs: [], scoreMultiplier: 4,
   },
   {
-    shortName: 'WI', longName: "Wisconsin", country: 'US', licensePlateImgs: []
+    shortName: 'WI', longName: "Wisconsin", country: 'US', licensePlateImgs: [], scoreMultiplier: 2,
   },
   {
     shortName: 'WY', longName: "Wyoming", country: 'US', licensePlateImgs: []
