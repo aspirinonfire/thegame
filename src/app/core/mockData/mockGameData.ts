@@ -93,10 +93,10 @@ export const mockGameData: Territory[] = [
     shortName: 'NH', longName: "New Hampshire", country: 'US', licensePlateImgs: [], modifier: ['East Coast'], scoreMultiplier: 5,
   },
   {
-    shortName: 'NJ', longName: "New Jersey", country: 'US', licensePlateImgs: []
+    shortName: 'NJ', longName: "New Jersey", country: 'US', licensePlateImgs: [], modifier: ['East Coast']
   },
   {
-    shortName: 'NM', longName: "New Mexico", country: 'US', licensePlateImgs: [], modifier: ['East Coast']
+    shortName: 'NM', longName: "New Mexico", country: 'US', licensePlateImgs: []
   },
   {
     shortName: 'NY', longName: "New York", country: 'US', licensePlateImgs: [], modifier: ['East Coast']
