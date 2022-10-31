@@ -57,3 +57,7 @@ Thumbs.db
 appsettings.Development.json
 testsettings.override.json
 *.csproj.user
+
+node_modules
+appsettings.json
+testsettings.json

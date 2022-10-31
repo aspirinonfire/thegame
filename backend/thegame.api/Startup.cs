@@ -1,5 +1,5 @@
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -10,8 +10,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using System;
-using System.Linq;
-using System.Threading.Tasks;
 using TheGame.Api.Security;
 using TheGame.Api.Security.Models;
 using TheGame.Domain;
@@ -103,30 +101,20 @@ namespace TheGame.Api
         {
           // using cookie auth because app is web based
           options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+          options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
         })
         .AddCookie()
-        .AddGoogle(googleOptions =>
+        .AddOpenIdConnect(authenticationScheme: "Google", "Google", googleAuthOpts =>
         {
-          googleOptions.ClientId = googleClientId;
-          googleOptions.ClientSecret = googleClientSecret;
-          googleOptions.AuthorizationEndpoint = "/account/signingoogle";
+          // https://stackoverflow.com/a/52493428
+          googleAuthOpts.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 
-          googleOptions.SaveTokens = true;
+          googleAuthOpts.Authority = "https://accounts.google.com";
+          googleAuthOpts.ClientId = googleClientId;
+          googleAuthOpts.ClientSecret = googleClientSecret;
+          googleAuthOpts.SaveTokens = true;
 
-          googleOptions.Events.OnCreatingTicket = ctx =>
-          {
-            var tokens = ctx.Properties.GetTokens().ToList();
-
-            tokens.Add(new AuthenticationToken()
-            {
-              Name = "TicketCreated",
-              Value = DateTime.UtcNow.ToString()
-            });
-
-            ctx.Properties.StoreTokens(tokens);
-
-            return Task.CompletedTask;
-          };
+          googleAuthOpts.CallbackPath = "/signin-google";
         });
 
       return services;

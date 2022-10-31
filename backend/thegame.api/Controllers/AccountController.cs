@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -26,24 +25,17 @@ namespace TheGame.Api.Controllers
     [Route("account/google-login")]
     public IActionResult GoogleLogin()
     {
-      var properties = new AuthenticationProperties();
-      return new ChallengeResult(GoogleDefaults.AuthenticationScheme, properties);
+      var properties = new AuthenticationProperties { RedirectUri = Url.Action("SignInGoogle") };
+      return Challenge(properties, "Google");
     }
 
     [HttpGet]
     [Route("account/signingoogle")]
     public async Task<IActionResult> SignInGoogle()
     {
-      var info = await _signinManager.GetExternalLoginInfoAsync();
+      var googleAuthResult = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
-      if (info == null)
-      {
-        return Ok(null);
-      }
-
-      var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-
-      var claims = result
+      var claims = googleAuthResult
         .Principal?
         .Identities?
         .FirstOrDefault()?
@@ -55,6 +47,9 @@ namespace TheGame.Api.Controllers
           claim.Type,
           claim.Value
         });
+
+      // TODO create user
+
 
       return Ok(claims);
     }
