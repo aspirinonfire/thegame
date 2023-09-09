@@ -44,7 +44,10 @@ namespace TheGame.Domain
         .AddScoped<IGameUoW>(isp => isp.GetRequiredService<GameDbContext>())
         // Utils
         .AddSingleton<ISystemService, SystemService>()
-        .AddMediatR(typeof(GameServiceExtensions).GetTypeInfo().Assembly)
+        .AddMediatR(cfg =>
+        {
+          cfg.RegisterServicesFromAssembly(typeof(GameServiceExtensions).GetTypeInfo().Assembly);
+        })
         // Game domain services
         .AddScoped<ITeamService, Team.TeamService>()
         .AddScoped<IPlayerFactory, Player.PlayerFactory>()

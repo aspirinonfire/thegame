@@ -2,11 +2,9 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using System.Threading.Tasks;
-using TheGame.Api.Security.Models;
 
 namespace TheGame.Api.Controllers
 {
@@ -14,18 +12,20 @@ namespace TheGame.Api.Controllers
   [AllowAnonymous]
   public class AccountController : ControllerBase
   {
-    private readonly SignInManager<AppUser> _signinManager;
+    private const string _authTokenName = "id_token";
 
-    public AccountController(SignInManager<AppUser> signinManager)
-    {
-      _signinManager = signinManager;
-    }
+    public AccountController()
+    { }
 
     [HttpGet]
     [Route("account/google-login")]
     public IActionResult GoogleLogin()
     {
-      var properties = new AuthenticationProperties { RedirectUri = Url.Action("SignInGoogle") };
+      var properties = new AuthenticationProperties
+      {
+        RedirectUri = Url.Action("SignInGoogle"),
+        AllowRefresh = true,
+      };
       return Challenge(properties, "Google");
     }
 
@@ -34,6 +34,8 @@ namespace TheGame.Api.Controllers
     public async Task<IActionResult> SignInGoogle()
     {
       var googleAuthResult = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+      var allTokens = googleAuthResult.Properties.GetTokens();
 
       var claims = googleAuthResult
         .Principal?
@@ -50,8 +52,11 @@ namespace TheGame.Api.Controllers
 
       // TODO create user
 
-
-      return Ok(claims);
+      return Ok(new
+      {
+        claims,
+        allTokens
+      });
     }
   }
 }

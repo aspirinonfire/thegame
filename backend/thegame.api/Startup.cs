@@ -2,16 +2,16 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using System;
-using TheGame.Api.Security;
-using TheGame.Api.Security.Models;
+using System.Reflection.Metadata;
+using System.Threading.Tasks;
 using TheGame.Domain;
 using TheGame.Domain.DAL;
 
@@ -85,17 +85,7 @@ namespace TheGame.Api
       string googleClientId,
       string googleClientSecret)
     {
-      services.AddDbContext<AppUserIdentityDbContext>(config =>
-      {
-        // for in memory database  
-        config.UseInMemoryDatabase("MemoryBaseDataBase");
-      });
-
-      services
-        .AddIdentity<AppUser, IdentityRole>()
-        .AddEntityFrameworkStores<AppUserIdentityDbContext>()
-        .AddDefaultTokenProviders();
-
+      // see https://stackoverflow.com/questions/60858985/addopenidconnect-and-refresh-tokens-in-asp-net-core
       services
         .AddAuthentication(options =>
         {
@@ -112,9 +102,20 @@ namespace TheGame.Api
           googleAuthOpts.Authority = "https://accounts.google.com";
           googleAuthOpts.ClientId = googleClientId;
           googleAuthOpts.ClientSecret = googleClientSecret;
+
+          googleAuthOpts.RequireHttpsMetadata = true;
           googleAuthOpts.SaveTokens = true;
 
           googleAuthOpts.CallbackPath = "/signin-google";
+
+          // get refresh token during google login
+          // https://stackoverflow.com/a/65911159
+          googleAuthOpts.Events.OnRedirectToIdentityProvider = context =>
+          {
+            context.ProtocolMessage.SetParameter("access_type", "offline");
+            context.ProtocolMessage.SetParameter("prompt", "consent");
+            return Task.CompletedTask;
+          };
         });
 
       return services;
