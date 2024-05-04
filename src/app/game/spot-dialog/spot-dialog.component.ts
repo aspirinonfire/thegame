@@ -1,7 +1,7 @@
 import { Component, OnInit, Inject, OnDestroy } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { plateVm, SpotDialogData } from '../models';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { GameService } from 'src/app/core/services/game.service';
 
@@ -13,14 +13,14 @@ import { GameService } from 'src/app/core/services/game.service';
 export class SpotDialogComponent implements OnInit, OnDestroy {
   private readonly _subs: Subscription[];
   private readonly _clonedStates: plateVm[];
-  private readonly _licenseGroup: FormGroup;
+  private readonly _licenseGroup: UntypedFormGroup;
   public readonly licenseGroupName: string = "license";
   public readonly searchCtrlName: string = "search";
-  form: FormGroup;
+  form: UntypedFormGroup;
 
   constructor(private readonly dialogRef: MatDialogRef<SpotDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public plateData: SpotDialogData,
-    private readonly fb: FormBuilder) { 
+    private readonly fb: UntypedFormBuilder) { 
       this._clonedStates = plateData.plates.map((d: plateVm) => {
         return <plateVm>{ ...d };
       });
