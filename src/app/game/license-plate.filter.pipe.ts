@@ -7,8 +7,32 @@ import { plateVm } from './models';
 export class LicensePlateFilterPipe implements PipeTransform {
 
   transform(values: plateVm[], searchValue: string): plateVm[] {
-    if (!searchValue) return values;
-    return values.filter((v: any) =>
-      v.name.toLowerCase().startsWith(searchValue.toLowerCase()))
+    if (!searchValue) {
+      return values;
+    }
+
+    var searchTerm = searchValue.toLowerCase();
+
+    return values.filter((plate: any) =>
+    {
+      var plateName = plate.name.toLowerCase();
+
+      // full name starts with
+      if (plateName.startsWith(searchTerm)) {
+        return true;
+      }
+
+      // contained in the second word
+      if (plateName.includes(` ${searchTerm}`)) {
+        return true;
+      }
+
+      // short name matches
+      if (plate.stateOrProvince.toLowerCase() == searchTerm) {
+        return true;
+      } 
+
+      return false;
+    })
   }
 }
