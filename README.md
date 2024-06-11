@@ -1,38 +1,37 @@
 # The license plate game
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 10.0.5.
+This project was generated with [Next.js](https://nextjs.org/).
 
 ## Development server
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+Run `npm run dev` for a dev server. Navigate to `http://localhost:5001/`. The app will automatically reload if you change any of the source files.
 
 ## TODO
 #### Functional game
 - [x] Able to check off spotted plates.
 - [x] Finish game
 #### Basic CSS
-- [x] Sticky header and menu.
-- [x] Body contents.
-- [x] Basic responsiveness.
-- [x] Colors.
+- [ ] Tailwind CSS
 #### Azure deployment.
-- [x] Free tier. Azure Static Web App
-- [ ] TLS and some basic domain name.
+- [ ] TBD - Web App or ACA (will include TLS and custom domain)
 #### PWA
-- [x] Allow Android app installation.
-- [x] Offline gameplay.
+- [ ] Allow Android app installation.
+- [ ] Offline gameplay.
 #### Clean UI
 - [x] US Map with terriotires lighting up.
 - [x] Restructure site - home: active game + history, history page: historical map
 - [x] Nicer plate picker.
 - [x] Previous game stats.
 - [x] License plate pictures.
-- [ ] Game state management
+- [x] Game state management
+- [ ] Cleanup history. Show readonly map.
+- [ ] Show list of selected state abbreviations in picker
 #### Backend
-- [ ] .Net 6.
-- [ ] MSSQL persistence.
-- [ ] Google auth.
-#### Multiuser support
-- [ ] Domain models.
-- [ ] SignalR.
+- [ ] .Net 8+.
+- [ ] (No)SQL persistence.
+- [ ] Google auth (oauth-proxy or easy-auth)
 - [ ] Online/offline sync.
+#### Multiuser support
+- [ ] User invite and onboarding
+- [ ] Add user to game
+- [ ] SignalR.
