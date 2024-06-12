@@ -1,4 +1,4 @@
-import { UserAccount } from "../models";
+import UserAccount from "../accounts";
 
 export const mockAccount: UserAccount = {
   name: 'Alex'
