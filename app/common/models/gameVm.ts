@@ -1,5 +1,4 @@
-import { Game, LicensePlate, ScoreData } from '.';
-import { ScoreMilestone } from './game';
+import { Game, LicensePlate, ScoreData } from '../gameCore/game';
 
 export class GameVm implements Game {
   public readonly id: string;

@@ -1,4 +1,4 @@
-import { Territory, StateBorder } from '../models';
+import { StateBorder, Territory } from "../gameCore/gameDataTerritory";
 
 export const mockGameData: Territory[] = [
   // us
