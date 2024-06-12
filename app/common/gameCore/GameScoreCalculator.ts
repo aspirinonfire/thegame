@@ -75,19 +75,24 @@ function AreBordersConnected(startingFromBorder: string[],
 }
 
 // Calculate score based on the spotted plates
-export default function CalculateScore(spottedPlates: { [K: string]: LicensePlate }): ScoreData {
+export default function CalculateScore(plateData: LicensePlate[]): ScoreData {
   const scoreData: ScoreData = {
     totalScore: 0,
     milestones: []
   };
 
-  const allSpottedPlates = Object.keys(spottedPlates);
+  if (plateData === null) {
+    return scoreData;
+  }
+
+  const allSpottedPlates = plateData
+    .filter(plate => !!plate.dateSpotted);
+
   if (allSpottedPlates.length < 1) {
     return scoreData;
   }
 
   const markedUsStates = allSpottedPlates
-    .map(key => spottedPlates[key])
     .filter(plate => plate.country == 'US')
     .map(plate => plate.stateOrProvince);
 
@@ -95,7 +100,8 @@ export default function CalculateScore(spottedPlates: { [K: string]: LicensePlat
 
   // apply score multiplier for all marked states
   const baseScore = allSpottedPlates
-    .reduce((currentScore, key) => {
+    .reduce((currentScore, plate) => {
+      const key = `${plate.country}-${plate.stateOrProvince}`;
       const multiplier = scopeMultiplierByPlateLkp.get(key) ?? 1;
       return currentScore + multiplier;
     }, 0);

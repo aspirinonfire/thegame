@@ -1,30 +1,21 @@
+import { LicensePlate } from './gameCore/gameModels';
 import styles from './usmap.module.css'
 
-export interface SpottedLicensePlates {
-  [key: string]: boolean | number;
-}
-
 interface UsMapProps {
-  plateSpots: SpottedLicensePlates;
+  plateSpots: { [K: string]: LicensePlate };
   onMapClick: () => void;
 }
 
 export default function UsMap(mapArguments: UsMapProps) {
   const defaultStateColor = styles['state'];
 
-  // todo move to parent
   function getWeightClass(state: string) : string {
-    const weightValue = mapArguments.plateSpots[state];
+    const isSpotted = mapArguments.plateSpots[state];
 
-    if (typeof weightValue === "boolean") {
-      return weightValue ? styles["this-game-spot"] : defaultStateColor
-    } 
-    else if (typeof weightValue === "number") {
-      return `fill-blue-${weightValue}`
-    }
-    else {
-      return defaultStateColor;
-    }
+    // TODO apply historical gradient classes
+
+    // if plate has a spot date, then mark it as spotted
+    return !!isSpotted && !!isSpotted.dateSpotted ? styles["this-game-spot"] : defaultStateColor;
   };
 
   return (
