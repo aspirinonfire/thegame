@@ -19,11 +19,10 @@ export default function PlatePicker({ setShowPicker, saveNewPlateData, plateData
     setShowPicker(false);
   }
 
-  function handleCheckboxChange(event: React.ChangeEvent<HTMLInputElement>) {
-    // TODO pass in lookup??
-    const plateKey = event.target.name;
+  function handleCheckboxChange(plateKey: string, clickEvent: React.MouseEvent) {
+    clickEvent.stopPropagation();
 
-    const matchingPlate = formData.find(plate => plate.stateOrProvince == plateKey);
+    const matchingPlate = formData.find(plate => plate.plateKey == plateKey);
     if (!matchingPlate) {
       console.error(`${plateKey} was not found! eh?!`);
       return;
@@ -31,13 +30,12 @@ export default function PlatePicker({ setShowPicker, saveNewPlateData, plateData
     
     const updatedPlate = {
       ...matchingPlate,
-      dateSpotted: event.target.checked ? new Date() : null,
-      // TODO wire up to backend
-      spottedBy: event.target.checked ? mockAccount.name : null
+      dateSpotted: matchingPlate.dateSpotted === null ? new Date() : null,
+      spottedBy: matchingPlate.spottedBy === null ? mockAccount.name : null
     } as LicensePlate
 
     const updatedForm = formData.map(item => {
-      if (item.stateOrProvince === updatedPlate.stateOrProvince) {
+      if (item.plateKey === updatedPlate.plateKey) {
         return updatedPlate;
       }
       return item;
@@ -48,21 +46,24 @@ export default function PlatePicker({ setShowPicker, saveNewPlateData, plateData
 
   function renderCheckboxes() {
     return formData.map((item) => (
-      // TODO use key
-      // TODO make div clickable
-      <div key={item.stateOrProvince} className="my-4 text-black text-lg leading-relaxed">
-        <label>
+      <div key={item.plateKey} className="my-4 text-black text-lg leading-relaxed" onClick={e => handleCheckboxChange(item.plateKey, e)}>
+        {/* disable default click behavior to allow clicking on entire div */}
+        <label onClick={ e => e.preventDefault() }>
           <input
             type="checkbox"
-            // TODO use key
-            name={item.stateOrProvince}
+            name={item.plateKey}
             checked={!!item.dateSpotted}
-            onChange={handleCheckboxChange}
+            readOnly
+            onClick={e => handleCheckboxChange(item.plateKey, e)}
           />
-          {/* TODO use full name */}
-          {item.stateOrProvince}
+          {item.fullName}
         </label>
-        {/* TODO add image */}
+        {item.country == "US" ? (<div className="plate-img" style={{
+          backgroundImage: `url(${item.plateImageUrl})`,
+          height: "35vw",
+          backgroundRepeat: "no-repeat",
+          backgroundSize: "contain"}}></div>) : null }
+        <div className="plate-details">...plate details...</div>
       </div>
     ));
   };

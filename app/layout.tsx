@@ -33,7 +33,11 @@ export default function RootLayout({
 
           <main className="flex flex-row grow">
             <div className="mt-4 grow">
-              {children}
+              <div className="flex flex-col gap-6 rounded-lg bg-gray-100">
+                <div className="px-4 py-4">
+                  {children}
+                </div>
+              </div>
             </div>
           </main>
         </div>
