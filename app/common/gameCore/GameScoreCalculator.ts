@@ -1,5 +1,5 @@
 import { UsStateBorders, mockGameData } from "../data";
-import { LicensePlate, ScoreData, StateBorder } from "./gameModels";
+import { LicensePlateSpot, ScoreData, StateBorder } from "./gameModels";
 
 // west-coast states lookup
 const westCoastUsStatesLkp: Set<string> = mockGameData
@@ -74,8 +74,12 @@ function AreBordersConnected(startingFromBorder: string[],
   return false;
 }
 
-// Calculate score based on the spotted plates
-export default function CalculateScore(plateData: LicensePlate[]): ScoreData {
+/**
+ * Calculate current game score
+ * @param plateData 
+ * @returns 
+ */
+export default function CalculateScore(plateData: LicensePlateSpot[]): ScoreData {
   const scoreData: ScoreData = {
     totalScore: 0,
     milestones: []

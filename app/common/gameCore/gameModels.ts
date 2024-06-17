@@ -5,7 +5,7 @@ export interface ScoreData {
   milestones: ScoreMilestone[]
 }
 
-export interface LicensePlate {
+export interface LicensePlateSpot {
   stateOrProvince: string,
   country: Country,
   fullName: string,
@@ -21,7 +21,7 @@ export interface Game {
   createdBy: string,
   dateCreated: Date,
   dateFinished?: Date,
-  licensePlates: { [K: string]: LicensePlate },
+  licensePlates: { [K: string]: LicensePlateSpot },
   score: ScoreData
 }
 

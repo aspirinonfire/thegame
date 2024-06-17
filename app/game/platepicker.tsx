@@ -1,11 +1,11 @@
 import { mockAccount } from "../common/data";
-import { LicensePlate } from "../common/gameCore/gameModels";
+import { LicensePlateSpot } from "../common/gameCore/gameModels";
 import { useState } from 'react';
 
 interface PickerControls {
   setShowPicker: (isShown: boolean) => void;
-  saveNewPlateData: (plates: LicensePlate[]) => void;
-  plateData: LicensePlate[];
+  saveNewPlateData: (plates: { [key: string]: LicensePlateSpot }) => void;
+  plateData: { [key: string]: LicensePlateSpot };
 }
 
 export default function PlatePicker({ setShowPicker, saveNewPlateData, plateData }: PickerControls) {
@@ -22,30 +22,29 @@ export default function PlatePicker({ setShowPicker, saveNewPlateData, plateData
   function handleCheckboxChange(plateKey: string, clickEvent: React.MouseEvent) {
     clickEvent.stopPropagation();
 
-    const matchingPlate = formData.find(plate => plate.plateKey == plateKey);
+    const matchingPlate = formData[plateKey];
     if (!matchingPlate) {
       console.error(`${plateKey} was not found! eh?!`);
       return;
     }
-    
-    const updatedPlate = {
+
+    const updatedForm = {
+      ...formData
+    };
+
+    updatedForm[plateKey] = {
       ...matchingPlate,
       dateSpotted: matchingPlate.dateSpotted === null ? new Date() : null,
       spottedBy: matchingPlate.spottedBy === null ? mockAccount.name : null
-    } as LicensePlate
-
-    const updatedForm = formData.map(item => {
-      if (item.plateKey === updatedPlate.plateKey) {
-        return updatedPlate;
-      }
-      return item;
-    });
+    };
 
     setFormData(updatedForm);
   }
 
   function renderCheckboxes() {
-    return formData.map((item) => (
+    return Object.keys(formData)
+      .map(key => formData[key])
+      .map((item) => (
       <div key={item.plateKey} className="my-4 text-black text-lg leading-relaxed" onClick={e => handleCheckboxChange(item.plateKey, e)}>
         {/* disable default click behavior to allow clicking on entire div */}
         <label onClick={ e => e.preventDefault() }>
