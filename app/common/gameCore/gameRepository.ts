@@ -30,7 +30,7 @@ function GetFromLocalStorage<T>(key: string) : T | null {
 }
 
 function SetLocalStorage(key: string, value: any): void {
-  localStorage.setItem(currentGameKey, JSON.stringify(value));
+  localStorage.setItem(key, JSON.stringify(value));
 }
 
 export async function GetCurrentGame() : Promise<Game | null> {
@@ -94,16 +94,20 @@ export async function FinishActiveGame(): Promise<string | null> {
   // use last spot as date finished
   const lastSpot = Object.keys(currentGame.licensePlates)
     .map(key => currentGame.licensePlates[key].dateSpotted)
+    .filter(date => !!date)
     .sort()
     .at(-1);
 
-  currentGame.dateFinished = lastSpot ?? new Date();
+  if (!!lastSpot) {
+    currentGame.dateFinished = lastSpot;
   
-  const pastGames = await GetPastGames();
-  pastGames.push(currentGame);
+    const pastGames = await GetPastGames();
+    pastGames.push(currentGame);
+  
+    SetLocalStorage(pastGamesKey, pastGames);
+  }
 
   SetLocalStorage(currentGameKey, null);
-  SetLocalStorage(pastGamesKey, pastGames);
 
   return null;
 }
