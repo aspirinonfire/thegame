@@ -64,7 +64,7 @@ export default function Game() {
           <h1 className="text-3xl text-black">::Game:: Score: {currentGame?.score.totalScore} </h1>
         </div>
         <div className="py-5">
-          <UsMap plateSpots={currentPlateSpots} onMapClick={() => setShowPicker(true)} />
+          <UsMap argType="activeGame" plateSpots={currentPlateSpots} onMapClick={() => setShowPicker(true)} />
         </div>
         <div className="py-5">
           <p className={`text-xl text-gray-800 md:text-3xl md:leading-normal`}>
@@ -73,7 +73,7 @@ export default function Game() {
         </div>
 
         <div className="flex flex-row justify-end">
-          <button type="button" className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 m-4 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700"
+          <button type="button" className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 m-4 dark:bg-gray-800 dark:hover:bg-gray-700"
             onClick={tryEndGame}>
             We have arrived!
           </button>
