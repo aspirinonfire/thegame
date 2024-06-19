@@ -2,6 +2,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Link from 'next/link';
+import { usePathname } from 'next/navigation'
 import { useEffect, useState } from "react";
 import { GetAccount, GetCurrentGame } from "./common/gameCore/gameRepository";
 import { CurrentGameContext, CurrentUserAccountContext } from "./common/gameCore/gameContext";
@@ -16,6 +17,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  
   // track user account, and current game.
   // presence of a current game will redirect index to game route.
   // current game will also be used directly on the game page.
@@ -69,20 +72,24 @@ export default function RootLayout({
              }}}>
 
             <div className="flex-col min-h-screen">
-              <header className="flex h-20 shrink-0 items-end rounded-lg bg-blue-500 p-4">
-                <nav className="inline-flex items-center gap-20">
-                  <h1 className="text-2xl">License Plate Game</h1>
-                  <div className="inline-flex items-center gap-4">
-                    <Link href="/game">Game</Link>
-                    <Link href="/history">History</Link>
-                    <Link href="/about">About</Link>
-                    <a className="text white p-4">Share App</a>
+              <header className="flex-row h-1/5 rounded-lg bg-blue-500 p-4">
+                <nav className="flex items-center">
+                  <div className="flex-none w-1/4">
+                    <h1 className="text-2xl">License Plate Game</h1>
+                  </div>
+                  <div className="flex grow gap-4 justify-end">
+                    <Link href="/game" className={`link ${pathname === '/game' ? 'font-extrabold' : ''}`}>Game</Link>
+                    <Link href="/history" className={`link ${pathname === '/history' ? 'font-extrabold' : ''}`}>History</Link>
+                    <Link href="/about" className={`link ${pathname === '/about' ? 'font-extrabold' : ''}`}>About</Link>
+                    <div>
+                      <a className="text white p-4">Share App</a>
+                    </div>
                   </div>
                 </nav>
               </header>
 
-              <main className="flex flex-row grow">
-                <div className="mt-4 grow">
+              <main className="flex flex-col">
+                <div className="mt-4">
                   { needsFetch ? showIsFetching() : showFetchedContent() }
                 </div>
               </main>

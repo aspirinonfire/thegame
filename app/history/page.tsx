@@ -33,11 +33,14 @@ export default function History() {
 
   return (
     <>
-      <p className={`text-xl text-gray-800 md:text-3xl md:leading-normal`}>
-        {isFetchingPastGames ? "Fetching Past Games" : `Total Games Played: ${pastGames.length}`}
-      </p>
-      {!isFetchingPastGames ? (<UsMap argType="historicData" totalNumberOfGames={pastGames.length} spotsByStateLookup={numberOfSpotsByPlateLkp} />) : null}
+      <div>
+          <h1 className="text-3xl text-black">
+            {isFetchingPastGames ? "Fetching Past Games" : `Total Games Played: ${pastGames.length}`}
+          </h1>
+        </div>
+        <div className="py-5">
+          {!isFetchingPastGames ? (<UsMap argType="historicData" totalNumberOfGames={pastGames.length} spotsByStateLookup={numberOfSpotsByPlateLkp} />) : null}
+        </div>
     </>
-    
   )
 }
