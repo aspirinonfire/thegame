@@ -67,7 +67,7 @@ export default function Game() {
           <UsMap argType="activeGame" plateSpots={currentPlateSpots} onMapClick={() => setShowPicker(true)} />
         </div>
         <div className="py-5">
-          <p className={`text-xl text-gray-800 md:text-3xl md:leading-normal`}>
+          <p className="text-xl text-gray-800 md:text-3xl md:leading-normal">
             ...game
           </p>
         </div>

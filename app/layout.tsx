@@ -72,12 +72,12 @@ export default function RootLayout({
              }}}>
 
             <div className="flex-col min-h-screen">
-              <header className="flex-row h-1/5 rounded-lg bg-blue-500 p-4">
+              <header className="flex-row rounded-lg bg-blue-500 p-4">
                 <nav className="flex items-center">
-                  <div className="flex-none w-1/4">
+                  <div className="flex-none w-1/3">
                     <h1 className="text-2xl">License Plate Game</h1>
                   </div>
-                  <div className="flex grow gap-4 justify-end">
+                  <div className="flex grow gap-5 justify-end text-lg">
                     <Link href="/game" className={`link ${pathname === '/game' ? 'font-extrabold' : ''}`}>Game</Link>
                     <Link href="/history" className={`link ${pathname === '/history' ? 'font-extrabold' : ''}`}>History</Link>
                     <Link href="/about" className={`link ${pathname === '/about' ? 'font-extrabold' : ''}`}>About</Link>
