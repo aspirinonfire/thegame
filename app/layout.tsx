@@ -11,7 +11,6 @@ import { Game } from "./common/gameCore/gameModels";
 
 const inter = Inter({ subsets: ["latin"] });
 
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -63,6 +62,15 @@ export default function RootLayout({
   
   return (
     <html lang="en">
+      <head>
+        <title>The License Plate Game</title>
+        <base href="/" />
+        <link rel="icon" type="image/x-icon" href="favicon.ico" />
+        {/* Enable PWA */}
+        <link rel="manifest" href="manifest.json" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta charSet="utf-8" />
+      </head>
       <body className={inter.className}>
         <CurrentUserAccountContext.Provider value={userAccount}>
           <CurrentGameContext.Provider value={{
