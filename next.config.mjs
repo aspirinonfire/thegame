@@ -14,7 +14,12 @@ const nextConfig = {
 // https://javascript.plainenglish.io/building-a-progressive-web-app-pwa-in-next-js-with-serwist-next-pwa-successor-94e05cb418d7
 const withPWA = withPWAInit({
   dest: "public",
-  cacheOnFrontendNav: false
+  register: true,
+  reloadOnOnline: false,
+  workboxOptions: {
+    skipWaiting: true,
+    clientsClaim: true
+  }
 });
 
 // Export the combined configuration for Next.js with PWA support
