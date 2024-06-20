@@ -8,6 +8,8 @@ import { GetAccount, GetCurrentGame } from "./common/gameCore/gameRepository";
 import { CurrentGameContext, CurrentUserAccountContext } from "./common/gameCore/gameContext";
 import UserAccount from "./common/accounts";
 import { Game } from "./common/gameCore/gameModels";
+import Image from 'next/image'
+import { Drawer } from "flowbite-react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -49,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  
+
   // track user account, and current game.
   // presence of a current game will redirect index to game route.
   // current game will also be used directly on the game page.
@@ -58,14 +60,17 @@ export default function RootLayout({
 
   // track is fetching
   const [needsFetch, setNeedsFetch] = useState(true);
-
+  
+  // is drawer menu open
+  const [isDrawerMenuOpen, setIsDrawerMenuOpen] = useState(false);
+  
   // fetch user account, and game data if not tracked
   useEffect(() => {
     async function FetchData() {
       if (!needsFetch) {
         return;
       }
-      const [fetchedUserAccount, fetchedCurrentGame] =  await Promise.all([
+      const [fetchedUserAccount, fetchedCurrentGame] = await Promise.all([
         GetAccount(),
         GetCurrentGame()
       ]);
@@ -81,20 +86,35 @@ export default function RootLayout({
   // register autorefresh on new version
   useEffect(() => refreshOnNewVersion());
 
-  const showFetchedContent = () =>
-    <div className="flex flex-col gap-6 rounded-lg bg-gray-100">
-      <div className="px-4 py-4 h-full">
-        {children}
-      </div>
-    </div>
+  function showFetchedContent() {
+    return (
+      <div className="flex flex-col gap-6 rounded-lg bg-gray-100">
+        <div className="px-4 py-4 h-full">
+          {children}
+        </div>
+      </div>);
+  }
 
-  const showIsFetching = () =>
-    <div className="flex flex-col gap-6 rounded-lg bg-gray-100">
-      <div className="px-4 py-4 text-gray-800">
-        ...Fetching Data
-      </div>
-    </div>
-  
+  function showIsFetching() {
+    return (
+      <div className="flex flex-col gap-6 rounded-lg bg-gray-100">
+        <div className="px-4 py-4 text-gray-800">
+          ...Fetching Data
+        </div>
+      </div>);
+  }
+
+  function renderNavLinks() {
+    return (
+      <>
+        <Link href="/game" className={`link ${pathname === '/game' ? 'font-extrabold' : ''}`}>Game</Link>
+        <Link href="/history" className={`link ${pathname === '/history' ? 'font-extrabold' : ''}`}>History</Link>
+        <Link href="/about" className={`link ${pathname === '/about' ? 'font-extrabold' : ''}`}>About</Link>
+        <a href="#" className="block">Share App</a>
+      </>
+    );
+  }
+
   return (
     <html lang="en">
       <head>
@@ -116,18 +136,38 @@ export default function RootLayout({
 
             <div className="flex-col min-h-screen">
               <header className="flex-row rounded-lg bg-blue-500 p-4">
-                <nav className="flex items-center">
-                  <div className="flex-none w-1/3">
-                    <h1 className="text-2xl">License Plate Game</h1>
+                <nav className="flex items-center justify-between">
+                  <div className="flex flex-row items-center gap-3">
+                    <Image
+                      src="/icons/license-plate-outlined-50.png"
+                      alt="Game Logo"
+                      width={50}
+                      height={50}
+                    />
+                    <span className="text-2xl">License Plate Game</span>
                   </div>
-                  <div className="flex grow gap-5 justify-end text-lg">
-                    <Link href="/game" className={`link ${pathname === '/game' ? 'font-extrabold' : ''}`}>Game</Link>
-                    <Link href="/history" className={`link ${pathname === '/history' ? 'font-extrabold' : ''}`}>History</Link>
-                    <Link href="/about" className={`link ${pathname === '/about' ? 'font-extrabold' : ''}`}>About</Link>
-                    <div>
-                      <a className="text white p-4">Share App</a>
-                    </div>
+                  <button type="button"
+                    className="inline-flex items-center p-2 w-10 h-10 justify-center md:hidden text-sm text-white text-gray-400 hover:bg-gray-700 focus:ring-gray-600" aria-controls="navbar-default"
+                    onClick={() => setIsDrawerMenuOpen(true)}>
+                    <span className="sr-only">Open main menu</span>
+                    <svg className="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 17 14">
+                      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M1 1h15M1 7h15M1 13h15"/>
+                    </svg>
+                  </button>
+                  <div className="hidden md:flex grow gap-5 justify-end text-lg">
+                    { renderNavLinks() }
                   </div>
+                  <Drawer className="md:hidden bg-blue-500"
+                    open={isDrawerMenuOpen}
+                    onClose={() => setIsDrawerMenuOpen(false) }
+                    position="right"
+                    backdrop={true}>
+                    <Drawer.Items>
+                      <div className="flex h-full flex-col justify-between gap-6 text-2xl pl-5 pt-5" onClick={() => setIsDrawerMenuOpen(false)}>
+                        { renderNavLinks() }
+                      </div>
+                    </Drawer.Items>
+                  </Drawer>
                 </nav>
               </header>
 
