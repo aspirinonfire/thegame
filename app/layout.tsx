@@ -60,10 +60,10 @@ export default function RootLayout({
 
   // track is fetching
   const [needsFetch, setNeedsFetch] = useState(true);
-  
+
   // is drawer menu open
   const [isDrawerMenuOpen, setIsDrawerMenuOpen] = useState(false);
-  
+
   // fetch user account, and game data if not tracked
   useEffect(() => {
     async function FetchData() {
@@ -88,19 +88,15 @@ export default function RootLayout({
 
   function showFetchedContent() {
     return (
-      <div className="flex flex-col gap-6 rounded-lg bg-gray-100">
-        <div className="px-4 py-4 h-full">
-          {children}
-        </div>
+      <div className="px-4 py-4">
+        {children}
       </div>);
   }
 
   function showIsFetching() {
     return (
-      <div className="flex flex-col gap-6 rounded-lg bg-gray-100">
-        <div className="px-4 py-4 text-gray-800">
-          ...Fetching Data
-        </div>
+      <div className="px-4 py-4 text-gray-800">
+        ...Fetching Data
       </div>);
   }
 
@@ -113,6 +109,43 @@ export default function RootLayout({
         <a href="#" className="block">Share App</a>
       </>
     );
+  }
+
+  function renderNavBar() {
+    return (
+      <nav className="flex items-center justify-between">
+        <div className="flex flex-row items-center gap-3">
+          <Image
+            src="/icons/license-plate-outlined-50.png"
+            alt="Game Logo"
+            width={50}
+            height={50}
+          />
+          <span className="text-2xl">License Plate Game</span>
+        </div>
+        <button type="button"
+          className="inline-flex items-center p-2 w-10 h-10 justify-center md:hidden text-sm hover:bg-gray-700 focus:ring-gray-600" aria-controls="navbar-default"
+          onClick={() => setIsDrawerMenuOpen(true)}>
+          <span className="sr-only">Open main menu</span>
+          <svg className="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 17 14">
+            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M1 1h15M1 7h15M1 13h15" />
+          </svg>
+        </button>
+        <div className="hidden md:flex grow gap-5 justify-end text-lg">
+          {renderNavLinks()}
+        </div>
+        <Drawer className="md:hidden bg-blue-500"
+          open={isDrawerMenuOpen}
+          onClose={() => setIsDrawerMenuOpen(false)}
+          position="right"
+          backdrop={true}>
+          <Drawer.Items>
+            <div className="flex h-full flex-col justify-between gap-6 text-2xl pl-5 pt-5" onClick={() => setIsDrawerMenuOpen(false)}>
+              {renderNavLinks()}
+            </div>
+          </Drawer.Items>
+        </Drawer>
+      </nav> );
   }
 
   return (
@@ -129,57 +162,23 @@ export default function RootLayout({
       <body className={inter.className}>
         <CurrentUserAccountContext.Provider value={userAccount}>
           <CurrentGameContext.Provider value={{
-             currentGame,
-             setNewCurrentGame: (newCurrentGame) => {
+            currentGame,
+            setNewCurrentGame: (newCurrentGame) => {
               setCurrentGame(newCurrentGame);
-             }}}>
+            }
+          }}>
 
-            <div className="flex-col min-h-screen">
+            <div className="flex flex-col min-h-screen">
               <header className="flex-row rounded-lg bg-blue-500 p-4">
-                <nav className="flex items-center justify-between">
-                  <div className="flex flex-row items-center gap-3">
-                    <Image
-                      src="/icons/license-plate-outlined-50.png"
-                      alt="Game Logo"
-                      width={50}
-                      height={50}
-                    />
-                    <span className="text-2xl">License Plate Game</span>
-                  </div>
-                  <button type="button"
-                    className="inline-flex items-center p-2 w-10 h-10 justify-center md:hidden text-sm hover:bg-gray-700 focus:ring-gray-600" aria-controls="navbar-default"
-                    onClick={() => setIsDrawerMenuOpen(true)}>
-                    <span className="sr-only">Open main menu</span>
-                    <svg className="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 17 14">
-                      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M1 1h15M1 7h15M1 13h15"/>
-                    </svg>
-                  </button>
-                  <div className="hidden md:flex grow gap-5 justify-end text-lg">
-                    { renderNavLinks() }
-                  </div>
-                  <Drawer className="md:hidden bg-blue-500"
-                    open={isDrawerMenuOpen}
-                    onClose={() => setIsDrawerMenuOpen(false) }
-                    position="right"
-                    backdrop={true}>
-                    <Drawer.Items>
-                      <div className="flex h-full flex-col justify-between gap-6 text-2xl pl-5 pt-5" onClick={() => setIsDrawerMenuOpen(false)}>
-                        { renderNavLinks() }
-                      </div>
-                    </Drawer.Items>
-                  </Drawer>
-                </nav>
+                { renderNavBar() }
               </header>
 
-              <main className="flex flex-col">
-                <div className="mt-4">
-                  { needsFetch ? showIsFetching() : showFetchedContent() }
-                </div>
+              <main className="flex flex-col flex-grow mt-4 rounded-lg bg-gray-700 text-gray-300">
+                {needsFetch ? showIsFetching() : showFetchedContent()}
               </main>
             </div>
           </CurrentGameContext.Provider>
         </CurrentUserAccountContext.Provider>
       </body>
-    </html>
-  );
-}
+    </html> );
+  }
