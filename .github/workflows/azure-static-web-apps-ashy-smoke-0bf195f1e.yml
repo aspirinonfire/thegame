@@ -15,10 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     steps:
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
         with:
-          node-version: '20.12.x'
-      - uses: actions/checkout@v2
+          node-version: 20
+      - name: Checkout
+        uses: actions/checkout@v2
         with:
           submodules: true
       - name: Build And Deploy
