@@ -14,7 +14,7 @@ interface HistoricalGamesData {
 }
 
 const unspottedState = "transition-all fill-blue-200";
-const uspottedCaProvince = "text-gray-700 bg-blue-200 hover:bg-blue-300";
+const uspottedCaProvince = "text-gray-700 bg-blue-200 hover:bg-blue-300 opacity-70";
 
 export default function GameMap(mapArguments: ActiveGameData | HistoricalGamesData) {
   if (!mapArguments) {
@@ -248,7 +248,7 @@ export default function GameMap(mapArguments: ActiveGameData | HistoricalGamesDa
         </g>
         <path id="frames" fill="none" stroke="#A9A9A9" strokeWidth="2" d="M215 493v55l36 45M0 425h147l68 68h85l54 54v46" />
       </svg>
-      <div className="flex flex-row flex-wrap gap-2">
+      <div className="flex flex-row justify-center flex-wrap gap-2 mt-3">
         { renderCanadaBadge("Alberta", "ab") }
         { renderCanadaBadge("British Columbia", "bc") }
         { renderCanadaBadge("Manitoba", "mb") }
