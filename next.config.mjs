@@ -2,12 +2,16 @@ import withPWAInit from '@ducanh2912/next-pwa'
 
 /** @type {import('next').NextConfig} */
 // Configuration options for Next.js
+// see https://github.com/staticwebdev/nextjs-starter for static web app support
 const nextConfig = {
   reactStrictMode: true, // Enable React strict mode for improved error handling
   swcMinify: true,      // Enable SWC minification for improved performance
   compiler: {
     removeConsole: process.env.NODE_ENV !== "development", // Remove console.log in production
   },
+  
+  trailingSlash: true,
+  output: 'export'
 };
 
 // Configuration object tells the next-pwa plugin
