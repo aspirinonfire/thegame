@@ -9,7 +9,7 @@ import { CurrentGameContext, CurrentUserAccountContext } from "./common/gameCore
 import UserAccount from "./common/accounts";
 import { Game } from "./common/gameCore/gameModels";
 import Image from 'next/image'
-import { Drawer } from "flowbite-react";
+import { Drawer, Spinner } from "flowbite-react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -163,7 +163,7 @@ export default function RootLayout({
 
               <main className={`flex flex-col flex-grow mt-4 rounded-lg bg-gradient-to-bl from-10% from-slate-700 to-gray-900 text-gray-300 p-4 transition-all ${isDrawerMenuOpen ? 'blur-sm' : ''}`}>
                 { needsFetch ?
-                  (<div className="animate-pulse flex items-center justify-center m-auto"><p className="text-3xl">Fetching Game Data...</p></div>) :
+                  (<div className="flex items-center justify-center m-auto"><Spinner color="info" className="h-20 w-20"/></div>) :
                   (<>{children}</>)}
               </main>
             </div>

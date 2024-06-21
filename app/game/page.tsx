@@ -1,7 +1,7 @@
 "use client"
 import { useContext, useState } from 'react';
 import PlatePicker from './platepicker';
-import UsMap from '../common/usmap';
+import GameMap from '../common/gamemap';
 import { CurrentGameContext, CurrentUserAccountContext } from '../common/gameCore/gameContext';
 import { CreateNewGame, FinishActiveGame, UpdateCurrentGameWithNewSpots } from '../common/gameCore/gameRepository';
 import { LicensePlateSpot } from '../common/gameCore/gameModels';
@@ -64,7 +64,7 @@ export default function Game() {
           </div>
           
           <div className="flex py-5">
-            <UsMap argType="activeGame" plateSpots={currentPlateSpots} onMapClick={() => setShowPicker(true)} />
+            <GameMap argType="activeGame" plateSpots={currentPlateSpots} onMapClick={() => setShowPicker(true)} />
           </div>
           
           <div className="flex py-5">

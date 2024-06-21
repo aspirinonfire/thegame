@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Game } from "../common/gameCore/gameModels";
 import { GetPastGames } from "../common/gameCore/gameRepository";
-import UsMap from "../common/usmap";
+import GameMap from "../common/gamemap";
 
 export default function History() {
   const [pastGames, setPastGames] = useState<Game[]>([]);
@@ -34,7 +34,7 @@ export default function History() {
   return (
     <div className="flex flex-col gap-5">
       <h1 className="text-3xl">Total Games Played: {pastGames.length}</h1>
-      <UsMap argType="historicData"
+      <GameMap argType="historicData"
         totalNumberOfGames={ isFetchingPastGames ? 0 : pastGames.length}
         spotsByStateLookup={ isFetchingPastGames ? {} : numberOfSpotsByPlateLkp} />
     </div>
