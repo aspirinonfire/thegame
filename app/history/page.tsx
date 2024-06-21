@@ -25,7 +25,8 @@ export default function History() {
         .map(key => game.licensePlates[key])
         .filter(plate => !!plate.dateSpotted)
         .forEach(plate => {
-          lkp[plate.plateKey] = (lkp[plate.plateKey] || 0) + 1;
+          const plateKey = `${plate.country}-${plate.stateOrProvince}`;
+          lkp[plateKey] = (lkp[plateKey] || 0) + 1;
         });
 
       return lkp;

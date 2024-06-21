@@ -8,9 +8,6 @@ export interface ScoreData {
 export interface LicensePlateSpot {
   stateOrProvince: string,
   country: Country,
-  fullName: string,
-  plateKey: string,
-  plateImageUrl: string
   dateSpotted: Date | null,
   spottedBy: string | null
 }

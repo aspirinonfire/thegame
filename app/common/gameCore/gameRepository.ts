@@ -1,4 +1,4 @@
-import { Game, ScoreData, LicensePlateSpot } from "./gameModels";
+import { Game, ScoreData, LicensePlateSpot, Territory } from "./gameModels";
 import CalculateScore from "./GameScoreCalculator";
 import UserAccount from "../accounts";
 import { mockGameData } from "../data/mockGameData";
@@ -51,28 +51,11 @@ export async function CreateNewGame(name: string, createdBy: string): Promise<Ga
     return "Only one active game is allowed!";
   }
 
-  const initialSpots = mockGameData
-    .map(territory => {
-      return {
-        stateOrProvince: territory.shortName,
-        country: territory.country,
-        fullName: territory.longName,
-        plateKey: `${territory.country}_${territory.shortName}`.toLowerCase(),
-        dateSpotted: null,
-        spottedBy: null,
-        plateImageUrl: `./plates/${territory.country}-${territory.shortName}.jpg`.toLowerCase()
-      } as LicensePlateSpot
-    })
-    .reduce((allSpots, plate) => {
-      allSpots[plate.plateKey] = plate;
-      return allSpots;
-    }, {} as { [key: string]: LicensePlateSpot });
-
   currentGame = <Game>{
     dateCreated: new Date(),
     createdBy: createdBy,
     id: new Date().getTime().toString(),
-    licensePlates: initialSpots,
+    licensePlates: {},
     name: name,
     score: <ScoreData>{
       totalScore: 0,
@@ -83,6 +66,23 @@ export async function CreateNewGame(name: string, createdBy: string): Promise<Ga
   SetLocalStorage(currentGameKey, currentGame);
   
   return currentGame;
+}
+
+export function GetPlateDataForRendering() : Territory[] {
+  return mockGameData
+    .map(territory => {
+      return {
+        ...territory,
+        licensePlateImgs: [
+          `./plates/${territory.country}-${territory.shortName}.jpg`.toLowerCase()
+        ]
+      }
+    })
+    .sort();
+}
+
+export function GetTerritoryKey(territory: Territory) {
+  return `${territory.country}-${territory.shortName}`;
 }
 
 export async function FinishActiveGame(): Promise<string | null> {

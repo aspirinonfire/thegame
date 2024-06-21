@@ -1,9 +1,10 @@
 "use client"
 import { mockAccount } from "../common/data";
-import { LicensePlateSpot } from "../common/gameCore/gameModels";
+import { LicensePlateSpot, Territory } from "../common/gameCore/gameModels";
 import React, { useRef, useState } from 'react';
 import { Button, Modal } from "flowbite-react";
 import Image from 'next/image'
+import { GetPlateDataForRendering, GetTerritoryKey } from "../common/gameCore/gameRepository";
 
 interface PickerControls {
   isShowPicker: boolean;
@@ -18,8 +19,7 @@ export default function PlatePicker({ isShowPicker, setShowPicker, saveNewPlateD
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const platesToRender = Object.keys(formData)
-    .map(key => formData[key])
+  const territoriesToRender = GetPlateDataForRendering()
     .filter(plate => {
       if (!searchTerm) {
         return true;
@@ -27,7 +27,7 @@ export default function PlatePicker({ isShowPicker, setShowPicker, saveNewPlateD
 
       const searchValue = searchTerm.toLowerCase();
 
-      const plateName = plate.fullName.toLowerCase()
+      const plateName = plate.longName.toLowerCase()
 
       // full name starts with
       if (plateName.startsWith(searchValue)) {
@@ -40,32 +40,35 @@ export default function PlatePicker({ isShowPicker, setShowPicker, saveNewPlateD
       }
 
       // short name matches
-      if (plate.stateOrProvince.toLowerCase() == searchValue) {
+      if (plate.shortName.toLowerCase() == searchValue) {
         return true;
       }
 
       return false;
     });
 
-  function handleCheckboxChange(plateKey: string, clickEvent: React.MouseEvent) {
+  function handleCheckboxChange(territory: Territory, clickEvent: React.MouseEvent) {
     clickEvent.stopPropagation();
-
-    const matchingPlate = formData[plateKey];
-    if (!matchingPlate) {
-      console.error(`${plateKey} was not found! eh?!`);
-      return;
-    }
 
     const updatedForm = {
       ...formData
     };
 
-    updatedForm[plateKey] = {
-      ...matchingPlate,
-      dateSpotted: matchingPlate.dateSpotted === null ? new Date() : null,
-      spottedBy: matchingPlate.spottedBy === null ? mockAccount.name : null
-    };
+    const plateKey = GetTerritoryKey(territory);
 
+    const matchingPlate = updatedForm[plateKey];
+    if (!!matchingPlate) {
+      delete updatedForm[plateKey];
+    } else {
+      updatedForm[plateKey] = {
+        country: territory.country,
+        stateOrProvince: territory.shortName,
+
+        dateSpotted: new Date(),
+        spottedBy: mockAccount.name
+      } as LicensePlateSpot;
+    }
+    
     setFormData(updatedForm);
     setSearchTerm(null);
   }
@@ -108,16 +111,16 @@ export default function PlatePicker({ isShowPicker, setShowPicker, saveNewPlateD
   }
 
   function renderCheckboxes() {
-    return platesToRender
-      .map((plate) => (
-        <div key={plate.plateKey} onClick={e => handleCheckboxChange(plate.plateKey, e)} className="flex flex-row grow gap-3 text-black justify-start items-center">
+    return territoriesToRender
+      .map((territory) => (
+        <div key={GetTerritoryKey(territory)} onClick={e => handleCheckboxChange(territory, e)} className="flex flex-row grow gap-3 text-black justify-start items-center">
           <div className="flex w-1/5 md:w-1/4 justify-end">
-            {!!plate.dateSpotted ? renderCheckedBox() : renderUncheckedBox()}
+            { !!formData[GetTerritoryKey(territory)] ? renderCheckedBox() : renderUncheckedBox()}
           </div>
           <div className="flex flex-col flex-grow justify-start">
-            {plate.country == "US" ?
-              (<Image src={`/${plate.plateImageUrl}`} alt={plate.stateOrProvince} width={300} height={500} />) :
-              (<h1 className="text-2xl">{plate.fullName} ({plate.country})</h1>)}
+            {territory.country == "US" ?
+              (<Image src={`/${territory.licensePlateImgs[0]}`} alt={territory.shortName} width={300} height={500} />) :
+              (<h1 className="text-2xl">{territory.longName} ({territory.country})</h1>)}
           </div>
         </div>
       ));
