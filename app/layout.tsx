@@ -99,7 +99,7 @@ export default function RootLayout({
 
   function renderNavBar() {
     return (
-      <nav className="flex items-center justify-between">
+      <nav className="flex flex-row items-center justify-between">
         <div className="flex flex-row items-center gap-3">
           <Image
             src="/icons/license-plate-outlined-50.png"
@@ -162,9 +162,9 @@ export default function RootLayout({
               </header>
 
               <main className={`flex flex-col flex-grow mt-4 rounded-lg bg-gradient-to-bl from-10% from-slate-700 to-gray-900 text-gray-300 p-4 transition-all ${isDrawerMenuOpen ? 'blur-sm' : ''}`}>
-                <div className={ needsFetch ? "animate-pulse": ""}>
-                  {needsFetch ? (<p>Fetching Game data...</p>) : (<>{children}</>)}
-                </div>
+                { needsFetch ?
+                  (<div className="animate-pulse flex items-center justify-center m-auto"><p className="text-3xl">Fetching Game Data...</p></div>) :
+                  (<>{children}</>)}
               </main>
             </div>
           </CurrentGameContext.Provider>

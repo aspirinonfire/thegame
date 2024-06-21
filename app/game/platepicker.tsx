@@ -138,14 +138,20 @@ export default function PlatePicker({isShowPicker, setShowPicker, saveNewPlateDa
     )
   }
 
-  function saveNewSpots() {
+  function handelSaveNewSpots() {
     saveNewPlateData(formData);
     setShowPicker(false);
+    setSearchTerm(null);
+  }
+
+  function handleClose() {
+    setShowPicker(false);
+    setSearchTerm(null);
   }
 
   return (
     <>
-      <Modal dismissible show={isShowPicker} onClose={() => setShowPicker(false)} initialFocus={searchInputRef} size="2xl">
+      <Modal dismissible show={isShowPicker} onClose={handleClose} initialFocus={searchInputRef} size="2xl">
         <Modal.Header className="[&>button]:hidden [&>h3]:grow">
           {renderSearch()}
         </Modal.Header>
@@ -158,8 +164,8 @@ export default function PlatePicker({isShowPicker, setShowPicker, saveNewPlateDa
 
         <Modal.Footer>
           <div className="flex flex-row gap-3 grow justify-end">
-            <Button onClick={() => setShowPicker(false)} color="gray" className="border-black">never mind</Button>
-            <Button onClick={() => saveNewSpots()} className="bg-amber-800">Save Changes</Button>
+            <Button onClick={handleClose} color="gray" className="border-black">never mind</Button>
+            <Button onClick={handelSaveNewSpots} className="bg-amber-800">Save Changes</Button>
           </div>
         </Modal.Footer>
 
