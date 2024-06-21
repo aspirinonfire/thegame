@@ -11,7 +11,8 @@ const nextConfig = {
   },
   
   trailingSlash: true,
-  output: 'export'
+  output: 'export',
+  distDir: 'out'
 };
 
 // Configuration object tells the next-pwa plugin
