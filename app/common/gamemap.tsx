@@ -31,20 +31,21 @@ export default function GameMap(mapArguments: ActiveGameData | HistoricalGamesDa
     }
     else {
       // 0 no spots, 100 spotted in every game, 50 spotted half of the games
-      const spotRate = Math.round((mapArguments.spotsByStateLookup[state] ?? 0) / (mapArguments.totalNumberOfGames ?? 1) * 100);
+      const spotRate = Math.round((mapArguments?.spotsByStateLookup[state] ?? 0) / (mapArguments?.totalNumberOfGames ?? 1) * 100);
 
       switch (true) {
         case spotRate == 0: return unspottedState;
-        case (spotRate < 10): return "fill-rose-50";
-        case (spotRate >= 10 && spotRate < 20): return "fill-rose-200";
-        case (spotRate >= 20 && spotRate < 30): return "fill-rose-300";
-        case (spotRate >= 30 && spotRate < 40): return "fill-rose-400";
-        case (spotRate >= 40 && spotRate < 50): return "fill-rose-500";
-        case (spotRate >= 50 && spotRate < 60): return "fill-orange-600";
-        case (spotRate >= 60 && spotRate < 70): return "fill-orange-700";
-        case (spotRate >= 70 && spotRate < 80): return "fill-orange-800";
-        case (spotRate >= 80 && spotRate < 90): return "fill-orange-900";
-        default: return "fill-orange-950";
+        case (spotRate < 10): return "transition-all fill-rose-50";
+        case (spotRate >= 10 && spotRate < 20): return "transition-all fill-rose-200";
+        case (spotRate >= 20 && spotRate < 30): return "transition-all fill-rose-300";
+        case (spotRate >= 30 && spotRate < 40): return "transition-all fill-rose-400";
+        case (spotRate >= 40 && spotRate < 50): return "transition-all fill-rose-500";
+        case (spotRate >= 50 && spotRate < 60): return "transition-all fill-orange-600";
+        case (spotRate >= 60 && spotRate < 70): return "transition-all fill-orange-700";
+        case (spotRate >= 70 && spotRate < 80): return "transition-all fill-orange-800";
+        case (spotRate >= 80 && spotRate < 90): return "transition-all fill-orange-900";
+        case spotRate >= 90: return "transition-all fill-orange-950";
+        default: return unspottedState;
       }
     }
   };

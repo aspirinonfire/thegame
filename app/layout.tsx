@@ -10,6 +10,7 @@ import UserAccount from "./common/accounts";
 import { Game } from "./common/gameCore/gameModels";
 import Image from 'next/image'
 import { Drawer, Spinner } from "flowbite-react";
+import { HiOutlineMap, HiOutlineClock, HiOutlineInformationCircle } from "react-icons/hi";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -89,10 +90,20 @@ export default function RootLayout({
   function renderNavLinks() {
     return (
       <>
-        <Link href="/game" className={`link ${pathname === '/game' ? 'font-extrabold' : ''}`}>Game</Link>
-        <Link href="/history" className={`link ${pathname === '/history' ? 'font-extrabold' : ''}`}>History</Link>
-        <Link href="/about" className={`link ${pathname === '/about' ? 'font-extrabold' : ''}`}>About</Link>
-        <a href="#" className="block">Share App</a>
+        <div className={`flex flex-row gap-1 items-center ${pathname === '/game' ? 'font-bold underline' : 'opacity-80'}`}>
+          <HiOutlineMap />
+          <Link href="/game" className="link">Game</Link>
+        </div>
+
+        <div className={`flex flex-row gap-1 items-center ${pathname === '/history' ? 'font-bold underline' : 'opacity-80'}`}>
+          <HiOutlineClock />
+          <Link href="/history" className="link">History</Link>
+        </div>
+
+        <div className={`flex flex-row gap-1 items-center ${pathname === '/about' ? 'font-bold underline' : 'opacity-80'}`}>
+          <HiOutlineInformationCircle />
+          <Link href="/about" className="link">About</Link>
+        </div>
       </>
     );
   }
