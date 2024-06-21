@@ -107,7 +107,7 @@ export default function RootLayout({
             width={50}
             height={50}
           />
-          <span className="text-2xl">License Plate Game</span>
+          <span className="text-2xl text-gray-100">License Plate Game</span>
         </div>
         <button type="button"
           className="inline-flex items-center p-2 w-10 h-10 justify-center md:hidden text-sm hover:bg-gray-700 focus:ring-gray-600" aria-controls="navbar-default"
@@ -120,7 +120,7 @@ export default function RootLayout({
         <div className="hidden md:flex grow gap-5 justify-end text-lg">
           {renderNavLinks()}
         </div>
-        <Drawer className="flex flex-col gap-10 md:hidden bg-gradient-to-r from-blue-900 from-10% to-gray-900"
+        <Drawer className="flex flex-col gap-10 md:hidden bg-gray-700"
           open={isDrawerMenuOpen}
           onClose={() => setIsDrawerMenuOpen(false)}
           position="right"
@@ -157,11 +157,11 @@ export default function RootLayout({
           }}>
 
             <div className="flex flex-col min-h-screen">
-              <header className="flex-row rounded-lg bg-gradient-to-r from-gray-800 to-blue-600 p-4">
+              <header className="flex-row rounded-lg bg-gradient-to-r from-gray-700 to-gray-900 p-4">
                 { renderNavBar() }
               </header>
 
-              <main className="flex flex-col flex-grow mt-4 rounded-lg bg-gradient-to-bl from-10% from-gray-700 to-gray-900 text-gray-300 p-4">
+              <main className={`flex flex-col flex-grow mt-4 rounded-lg bg-gradient-to-bl from-10% from-gray-700 to-gray-900 text-gray-300 p-4 transition-all ${isDrawerMenuOpen ? 'blur-sm' : ''}`}>
                 <div className={ needsFetch ? "animate-pulse": ""}>
                   {needsFetch ? (<p>Fetching Game data...</p>) : (<>{children}</>)}
                 </div>
