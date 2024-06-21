@@ -107,7 +107,7 @@ export default function RootLayout({
             width={50}
             height={50}
           />
-          <span className="text-2xl text-gray-100">License Plate Game</span>
+          <span className="text-lg text-gray-100 uppercase">License Plate Game</span>
         </div>
         <button type="button"
           className="inline-flex items-center p-2 w-10 h-10 justify-center md:hidden text-sm hover:bg-gray-700 focus:ring-gray-600" aria-controls="navbar-default"
@@ -157,11 +157,11 @@ export default function RootLayout({
           }}>
 
             <div className="flex flex-col min-h-screen">
-              <header className="flex-row rounded-lg bg-gradient-to-r from-gray-700 to-gray-900 p-4">
+              <header className="flex-row rounded-lg bg-gradient-to-r from-gray-900 to-slate-700 p-4">
                 { renderNavBar() }
               </header>
 
-              <main className={`flex flex-col flex-grow mt-4 rounded-lg bg-gradient-to-bl from-10% from-gray-700 to-gray-900 text-gray-300 p-4 transition-all ${isDrawerMenuOpen ? 'blur-sm' : ''}`}>
+              <main className={`flex flex-col flex-grow mt-4 rounded-lg bg-gradient-to-bl from-10% from-slate-700 to-gray-900 text-gray-300 p-4 transition-all ${isDrawerMenuOpen ? 'blur-sm' : ''}`}>
                 <div className={ needsFetch ? "animate-pulse": ""}>
                   {needsFetch ? (<p>Fetching Game data...</p>) : (<>{children}</>)}
                 </div>

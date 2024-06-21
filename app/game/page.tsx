@@ -58,7 +58,7 @@ export default function Game() {
   function renderCurrentGameContents() {
     return (
       <>
-        <div className="flex flex-col gap-5">
+        <div className={`flex flex-col gap-5 transition-all ${showPicker ? "blur-sm": ""}`}>
           <div className="flex">
             <h1 className="text-3xl">::Game:: Score: {currentGame?.score.totalScore} </h1>
           </div>
@@ -72,13 +72,13 @@ export default function Game() {
               ...game
             </p>
           </div>
+        </div>
 
-          <div className={`flex justify-end items-end fixed bottom-0 right-5 ${showPicker ? 'hidden' : ''}`}>
-            <button type="button" className="text-white bg-amber-950 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 m-4 dark:bg-gray-800 dark:hover:bg-gray-700"
-              onClick={tryEndGame}>
-              We have arrived!
-            </button>
-          </div>
+        <div className={`flex justify-end items-end fixed bottom-0 right-5 ${showPicker ? 'hidden' : ''}`}>
+          <button type="button" className="text-white bg-amber-950 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 m-4 dark:bg-gray-800 dark:hover:bg-gray-700"
+            onClick={tryEndGame}>
+            We have arrived!
+          </button>
         </div>
 
         <PlatePicker
