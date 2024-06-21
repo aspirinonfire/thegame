@@ -13,8 +13,6 @@ export default function Game() {
   const [currentPlateSpots, setCurrentPlateSpots] = useState(currentGame?.licensePlates ?? {});
   const [showPicker, setShowPicker] = useState(false);
 
-  console.log("rendering game page");
-
   async function tryStartNewGame() {
     const newGameResult = await CreateNewGame(new Date().toISOString(),
       userAccount?.name ?? "N/A");
@@ -40,9 +38,9 @@ export default function Game() {
   }
 
   const renderStartNewGameContents = () =>
-    <div className="text-black">
+    <div className="flex flex-col gap-5">
       <h1 className="text-3xl">Get ready for a roadtip!</h1>
-      <button type="button" className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 m-4 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700"
+      <button type="button" className="text-white bg-amber-900 hover:bg-amber-950 focus:outline-none focus:ring-4 focus:ring-gray-700 font-medium rounded-lg text-sm px-5 py-2.5 me-2 m-4"
         onClick={tryStartNewGame}>
         Let&apos;s Go!
       </button>
@@ -60,33 +58,34 @@ export default function Game() {
   function renderCurrentGameContents() {
     return (
       <>
-        <div className="flex">
-          <h1 className="text-3xl">::Game:: Score: {currentGame?.score.totalScore} </h1>
-        </div>
-        
-        <div className="flex py-5">
-          <UsMap argType="activeGame" plateSpots={currentPlateSpots} onMapClick={() => setShowPicker(true)} />
-        </div>
-        
-        <div className="flex py-5">
-          <p className="text-xl text-gray-200 md:text-3xl md:leading-normal">
-            ...game
-          </p>
-        </div>
-        
-        <div className="flex justify-end items-end fixed bottom-0 right-5">
-          <button type="button" className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 m-4 dark:bg-gray-800 dark:hover:bg-gray-700"
-            onClick={tryEndGame}>
-            We have arrived!
-          </button>
+        <div className="flex flex-col gap-5">
+          <div className="flex">
+            <h1 className="text-3xl">::Game:: Score: {currentGame?.score.totalScore} </h1>
+          </div>
+          
+          <div className="flex py-5">
+            <UsMap argType="activeGame" plateSpots={currentPlateSpots} onMapClick={() => setShowPicker(true)} />
+          </div>
+          
+          <div className="flex py-5">
+            <p className="text-xl text-gray-200 md:text-3xl md:leading-normal">
+              ...game
+            </p>
+          </div>
+
+          <div className={`flex justify-end items-end fixed bottom-0 right-5 ${showPicker ? 'hidden' : ''}`}>
+            <button type="button" className="text-white bg-amber-950 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 m-4 dark:bg-gray-800 dark:hover:bg-gray-700"
+              onClick={tryEndGame}>
+              We have arrived!
+            </button>
+          </div>
         </div>
 
-        {showPicker ? (
-          <PlatePicker
-            setShowPicker={(isShown: boolean) => setShowPicker(isShown)}
-            plateData={currentPlateSpots}
-            saveNewPlateData={tryUpdateGame} />
-        ) : null}
+        <PlatePicker
+          isShowPicker={showPicker}
+          setShowPicker={(isShown: boolean) => setShowPicker(isShown)}
+          plateData={currentPlateSpots}
+          saveNewPlateData={tryUpdateGame} />
       </>);
   }
 

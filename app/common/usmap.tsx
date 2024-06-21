@@ -12,7 +12,7 @@ interface HistoricalGamesData {
   spotsByStateLookup: { [key: string]: number }
 }
 
-const unspottedState = "fill-blue-200";
+const unspottedState = "transition-all fill-blue-200";
 
 export default function UsMap(mapArguments: ActiveGameData | HistoricalGamesData) {
   if (!mapArguments) {
@@ -24,28 +24,25 @@ export default function UsMap(mapArguments: ActiveGameData | HistoricalGamesData
       const isSpotted = mapArguments.plateSpots[`us_${state}`];
 
       // if plate has a spot date, then mark it as spotted
-      return !!isSpotted && !!isSpotted.dateSpotted ? "fill-fuchsia-700" : unspottedState;
+      return !!isSpotted && !!isSpotted.dateSpotted ? "transition-all fill-amber-700" : unspottedState;
     }
     else
     {
       // 0 no spots, 100 spotted in every game, 50 spotted half of the games
       const spotRate = Math.round((mapArguments.spotsByStateLookup[`us_${state}`] ?? 0) / (mapArguments.totalNumberOfGames ?? 1) * 100);
-
-      if (spotRate == 0) {
-        return unspottedState;
-      }
-
+      
       switch(true) {
-        case (spotRate < 10): return `fill-indigo-50`;
-        case (spotRate >= 10 && spotRate < 20): return `fill-indigo-200`;
-        case (spotRate >= 20 && spotRate < 30): return `fill-indigo-300`;
-        case (spotRate >= 30 && spotRate < 40): return `fill-indigo-400`;
-        case (spotRate >= 40 && spotRate < 50): return `fill-indigo-500`;
-        case (spotRate >= 50 && spotRate < 60): return `fill-blue-600`;
-        case (spotRate >= 60 && spotRate < 70): return `fill-blue-700`;
-        case (spotRate >= 70 && spotRate < 80): return `fill-blue-800`;
-        case (spotRate >= 80 && spotRate < 90): return `fill-blue-900`;
-        default: return `fill-blue-950`;
+        case spotRate == 0: return unspottedState;
+        case (spotRate < 10): return `fill-rose-50`;
+        case (spotRate >= 10 && spotRate < 20): return `fill-rose-200`;
+        case (spotRate >= 20 && spotRate < 30): return `fill-rose-300`;
+        case (spotRate >= 30 && spotRate < 40): return `fill-rose-400`;
+        case (spotRate >= 40 && spotRate < 50): return `fill-rose-500`;
+        case (spotRate >= 50 && spotRate < 60): return `fill-orange-600`;
+        case (spotRate >= 60 && spotRate < 70): return `fill-orange-700`;
+        case (spotRate >= 70 && spotRate < 80): return `fill-orange-800`;
+        case (spotRate >= 80 && spotRate < 90): return `fill-orange-900`;
+        default: return `fill-orange-950`;
       }
     }
   };

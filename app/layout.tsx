@@ -86,20 +86,6 @@ export default function RootLayout({
   // register autorefresh on new version
   useEffect(() => refreshOnNewVersion());
 
-  function showFetchedContent() {
-    return (
-      <div className="px-4 py-4">
-        {children}
-      </div>);
-  }
-
-  function showIsFetching() {
-    return (
-      <div className="px-4 py-4 text-gray-800">
-        ...Fetching Data
-      </div>);
-  }
-
   function renderNavLinks() {
     return (
       <>
@@ -134,13 +120,15 @@ export default function RootLayout({
         <div className="hidden md:flex grow gap-5 justify-end text-lg">
           {renderNavLinks()}
         </div>
-        <Drawer className="md:hidden bg-blue-500"
+        <Drawer className="flex flex-col gap-10 md:hidden bg-gradient-to-r from-blue-900 from-10% to-gray-900"
           open={isDrawerMenuOpen}
           onClose={() => setIsDrawerMenuOpen(false)}
           position="right"
           backdrop={true}>
-          <Drawer.Items>
-            <div className="flex h-full flex-col justify-between gap-6 text-2xl pl-5 pt-5" onClick={() => setIsDrawerMenuOpen(false)}>
+          <h2 className="text-lg text-gray-300">Where to?</h2>
+          <hr />
+          <Drawer.Items className="pl-3">
+            <div className="flex h-full flex-col justify-between gap-6 text-2xl" onClick={() => setIsDrawerMenuOpen(false)}>
               {renderNavLinks()}
             </div>
           </Drawer.Items>
@@ -169,12 +157,14 @@ export default function RootLayout({
           }}>
 
             <div className="flex flex-col min-h-screen">
-              <header className="flex-row rounded-lg bg-blue-500 p-4">
+              <header className="flex-row rounded-lg bg-gradient-to-r from-gray-800 to-blue-600 p-4">
                 { renderNavBar() }
               </header>
 
-              <main className="flex flex-col flex-grow mt-4 rounded-lg bg-gray-700 text-gray-300">
-                {needsFetch ? showIsFetching() : showFetchedContent()}
+              <main className="flex flex-col flex-grow mt-4 rounded-lg bg-gradient-to-bl from-10% from-gray-700 to-gray-900 text-gray-300 p-4">
+                <div className={ needsFetch ? "animate-pulse": ""}>
+                  {needsFetch ? (<p>Fetching Game data...</p>) : (<>{children}</>)}
+                </div>
               </main>
             </div>
           </CurrentGameContext.Provider>
