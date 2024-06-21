@@ -12,7 +12,12 @@ const nextConfig = {
   
   trailingSlash: true,
   output: 'export',
-  distDir: 'out'
+  distDir: 'out',
+  // define custom image loader that will work with static files
+  images: {
+    loader: "custom",
+    loaderFile: "./staticImgLoader.ts"
+  }
 };
 
 // Configuration object tells the next-pwa plugin

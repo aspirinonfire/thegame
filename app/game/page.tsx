@@ -29,7 +29,6 @@ export default function Game() {
     if (typeof newGameResult === 'string') {
       console.error("Bad new game:", newGameResult);
     } else {
-      console.info("game started...");
       setNewCurrentGame(newGameResult);
       setCurrentPlateSpots(newGameResult.licensePlates);
       setCurrentScore(newGameResult.score);
@@ -43,10 +42,9 @@ export default function Game() {
     if (typeof finishResult === 'string') {
       console.error("Could not finish the game:", finishResult);
     } else {
-      console.info("game started...");
+      router.push("/history");
       setNewCurrentGame(null);
       setCurrentScore(null);
-      router.push("/history");
     }
   }
 
