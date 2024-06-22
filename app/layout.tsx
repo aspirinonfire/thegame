@@ -92,17 +92,17 @@ export default function RootLayout({
       <>
         <div className={`flex flex-row gap-1 items-center ${pathname === '/game' ? 'font-bold underline' : 'opacity-80'}`}>
           <HiOutlineMap />
-          <Link href="/game" className="link">Game</Link>
+          <Link href="/game" replace prefetch={false} className="link">Game</Link>
         </div>
 
         <div className={`flex flex-row gap-1 items-center ${pathname === '/history' ? 'font-bold underline' : 'opacity-80'}`}>
           <HiOutlineClock />
-          <Link href="/history" className="link">History</Link>
+          <Link href="/history" replace prefetch={false} className="link">History</Link>
         </div>
 
         <div className={`flex flex-row gap-1 items-center ${pathname === '/about' ? 'font-bold underline' : 'opacity-80'}`}>
           <HiOutlineInformationCircle />
-          <Link href="/about" className="link">About</Link>
+          <Link href="/about" replace prefetch={false} className="link">About</Link>
         </div>
       </>
     );

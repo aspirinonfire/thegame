@@ -33,8 +33,6 @@ const withPWA = withPWAInit({
   cacheOnFrontEndNav: false,
   aggressiveFrontEndNavCaching: false,
   runtimeCaching: [],
-  publicExcludes: ['!**/*'],
-  buildExcludes: [() => true],
   fallbacks: false,
   cacheStartUrl: false,
   extendDefaultRuntimeCaching: false
