@@ -28,7 +28,8 @@ const withPWA = withPWAInit({
   reloadOnOnline: false,
   workboxOptions: {
     skipWaiting: true,
-    clientsClaim: true
+    clientsClaim: true,
+    cleanupOutdatedCaches: true
   }
 });
 
