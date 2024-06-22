@@ -29,13 +29,7 @@ const withPWA = withPWAInit({
   workboxOptions: {
     skipWaiting: true,
     clientsClaim: true
-  },
-  cacheOnFrontEndNav: false,
-  aggressiveFrontEndNavCaching: false,
-  runtimeCaching: [],
-  fallbacks: false,
-  cacheStartUrl: false,
-  extendDefaultRuntimeCaching: false
+  }
 });
 
 // Export the combined configuration for Next.js with PWA support

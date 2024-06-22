@@ -1,28 +1,37 @@
 "use client"
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import PlatePicker from './platepicker';
 import GameMap from '../common/gamemap';
-import { CurrentGameContext, CurrentUserAccountContext } from '../common/gameCore/gameContext';
-import { CreateNewGame, FinishActiveGame, UpdateCurrentGameWithNewSpots } from '../common/gameCore/gameRepository';
-import { LicensePlateSpot, ScoreData } from '../common/gameCore/gameModels';
+import { CurrentUserAccountContext } from '../common/gameCore/gameContext';
+import { CreateNewGame, FinishActiveGame, GetCurrentGame, UpdateCurrentGameWithNewSpots } from '../common/gameCore/gameRepository';
+import { Game, LicensePlateSpot, ScoreData } from '../common/gameCore/gameModels';
 import { Button, Modal } from "flowbite-react";
 import { useRouter } from "next/navigation";
 import { HiOutlineChevronRight } from "react-icons/hi";
 
-export default function Game() {
-  const { currentGame, setNewCurrentGame } = useContext(CurrentGameContext);
+export default function GamePage() {
   const userAccount = useContext(CurrentUserAccountContext);
 
-  const [currentPlateSpots, setCurrentPlateSpots] = useState(currentGame?.licensePlates ?? {});
-  const [currentScore, setCurrentScore] = useState<ScoreData | null>(currentGame?.score ?? null);
+  const [activeGame, setCurrentGame] = useState<Game | null>(null);
+  const [fetchingData, setFetchingData] = useState(true);
   const [showPicker, setShowPicker] = useState(false);
   const [showEndGame, setShowEndGame] = useState(false);
 
   const router = useRouter();
-  router.refresh();
-  
-  const dateStartedFriendly = currentGame?.dateCreated.toString();
-  
+
+  useEffect(() => {
+    async function FetchData() {
+      const thisGame = await GetCurrentGame();
+      setCurrentGame(thisGame);
+      setFetchingData(false);
+    }
+    if (fetchingData) {
+      FetchData();
+    }
+  });
+
+  const dateStartedFriendly = activeGame?.dateCreated.toString();
+    
   async function tryStartNewGame() {
     const newGameResult = await CreateNewGame(new Date().toISOString(),
       userAccount?.name ?? "N/A");
@@ -30,9 +39,7 @@ export default function Game() {
     if (typeof newGameResult === 'string') {
       console.error("Bad new game:", newGameResult);
     } else {
-      setNewCurrentGame(newGameResult);
-      setCurrentPlateSpots(newGameResult.licensePlates);
-      setCurrentScore(newGameResult.score);
+      setCurrentGame(newGameResult);
     }
   }
 
@@ -44,8 +51,7 @@ export default function Game() {
       console.error("Could not finish the game:", finishResult);
     } else {
       router.push("/history");
-      setNewCurrentGame(null);
-      setCurrentScore(null);
+      setCurrentGame(null);
     }
   }
 
@@ -54,8 +60,7 @@ export default function Game() {
     if (typeof updatedGameResult === 'string') {
       console.error("Failed to save game:", updatedGameResult)
     } else {
-      setCurrentPlateSpots(updatedGameResult.licensePlates);
-      setCurrentScore(updatedGameResult.score);
+      setCurrentGame(updatedGameResult);
     }
   }
 
@@ -75,13 +80,13 @@ export default function Game() {
       <>
         <div className={`flex flex-col gap-5 transition-all ${showPicker ? "blur-sm": ""}`}>
           <div className="flex flex-row items-center justify-between sm:justify-start gap-5">
-            <h1 className="text-xl sm:text-2xl">Score: {currentScore?.totalScore} </h1>
+            <h1 className="text-xl sm:text-2xl">Score: {activeGame?.score?.totalScore} </h1>
             <div className="flex flex-row justify-center gap-3 animate-pulse text-sm text-amber-500" style={{ fontSize: ".7rem"}}>
-              { (currentScore?.milestones ?? []).map(ms =>(<div key={ms}>{ms}</div>)) }
+              { (activeGame?.score?.milestones ?? []).map(ms =>(<div key={ms}>{ms}</div>)) }
             </div>
           </div>
           
-          <GameMap argType="activeGame" plateSpots={currentPlateSpots} onMapClick={() => setShowPicker(true)} />
+          <GameMap argType="activeGame" plateSpots={activeGame?.licensePlates ?? {}} onMapClick={() => setShowPicker(true)} />
         </div>
 
         <div className={`flex flex-row grow justify-end items-baseline fixed bottom-0 right-5 ${showPicker ? 'hidden' : ''}`}>
@@ -95,7 +100,7 @@ export default function Game() {
         <PlatePicker
           isShowPicker={showPicker}
           setShowPicker={(isShown: boolean) => setShowPicker(isShown)}
-          plateData={currentPlateSpots}
+          plateData={activeGame?.licensePlates ?? {}}
           saveNewPlateData={tryUpdateGame} />
 
         <Modal show={showEndGame} size="sm" onClose={() => setShowEndGame(false)} popup>
@@ -119,5 +124,5 @@ export default function Game() {
       </>);
   }
 
-  return (currentGame == null ? renderStartNewGameContents() : renderCurrentGameContents());
+  return (activeGame == null && !fetchingData ? renderStartNewGameContents() : renderCurrentGameContents());
 }

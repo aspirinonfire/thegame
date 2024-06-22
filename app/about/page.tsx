@@ -2,14 +2,10 @@
 import { HiOutlineShare, HiOutlineTrash, HiOutlineExclamationCircle } from "react-icons/hi";
 import { Button, Modal } from "flowbite-react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 export default function About() {
   const [isShowShareConfirmation, setIsShowShareConfirmation] = useState(false);
   const [isShowDeleteConfirmation, setIsShowDeleteConfirmation] = useState(false);
-
-  const router = useRouter();
-  router.refresh();
 
   function handleDeleteGameData() {
     setIsShowDeleteConfirmation(false);

@@ -3,14 +3,10 @@ import { useEffect, useState } from "react";
 import { Game } from "../common/gameCore/gameModels";
 import { GetPastGames } from "../common/gameCore/gameRepository";
 import GameMap from "../common/gamemap";
-import { useRouter } from "next/navigation";
 
 export default function History() {
   const [pastGames, setPastGames] = useState<Game[]>([]);
   const [isFetchingPastGames, setIsFetchingPastGames] = useState(true);
-
-  const router = useRouter();
-  router.refresh();
 
   useEffect(() => {
     async function FetchPastGames() {
@@ -38,7 +34,7 @@ export default function History() {
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-3xl">Total Games Played: {pastGames.length}</h1>
+      <h1 className="text-xl sm:text-2xl">Total Games Played: {pastGames.length}</h1>
       <GameMap argType="historicData"
         totalNumberOfGames={ isFetchingPastGames ? 0 : pastGames.length}
         spotsByStateLookup={ isFetchingPastGames ? {} : numberOfSpotsByPlateLkp} />

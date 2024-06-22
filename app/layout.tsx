@@ -4,13 +4,12 @@ import "./globals.css";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from "react";
-import { GetAccount, GetCurrentGame } from "./common/gameCore/gameRepository";
-import { CurrentGameContext, CurrentUserAccountContext } from "./common/gameCore/gameContext";
+import { GetAccount } from "./common/gameCore/gameRepository";
+import { CurrentUserAccountContext } from "./common/gameCore/gameContext";
 import UserAccount from "./common/accounts";
-import { Game } from "./common/gameCore/gameModels";
 import Image from 'next/image'
 import { Drawer, Spinner } from "flowbite-react";
-import { HiOutlineMap, HiOutlineClock, HiOutlineInformationCircle } from "react-icons/hi";
+import { HiOutlineMap, HiOutlineClock, HiOutlineInformationCircle, HiOutlineArrowCircleRight } from "react-icons/hi";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -57,7 +56,6 @@ export default function RootLayout({
   // presence of a current game will redirect index to game route.
   // current game will also be used directly on the game page.
   const [userAccount, setUserAccount] = useState<UserAccount | null>(null);
-  const [currentGame, setCurrentGame] = useState<Game | null>(null);
 
   // track is fetching
   const [needsFetch, setNeedsFetch] = useState(true);
@@ -71,13 +69,10 @@ export default function RootLayout({
       if (!needsFetch) {
         return;
       }
-      const [fetchedUserAccount, fetchedCurrentGame] = await Promise.all([
-        GetAccount(),
-        GetCurrentGame()
-      ]);
 
-      setUserAccount(fetchedUserAccount);
-      setCurrentGame(fetchedCurrentGame);
+      const userAccount = await GetAccount();
+
+      setUserAccount(userAccount);
       setNeedsFetch(false);
     }
 
@@ -90,17 +85,17 @@ export default function RootLayout({
   function renderNavLinks() {
     return (
       <>
-        <div className={`flex flex-row gap-1 items-center ${pathname === '/game' ? 'font-bold underline' : 'opacity-80'}`}>
+        <div className={`flex flex-row gap-1 items-center ${pathname === '/game/' ? 'underline' : 'opacity-80'}`}>
           <HiOutlineMap />
           <Link href="/game" replace prefetch={false} className="link">Game</Link>
         </div>
 
-        <div className={`flex flex-row gap-1 items-center ${pathname === '/history' ? 'font-bold underline' : 'opacity-80'}`}>
+        <div className={`flex flex-row gap-1 items-center ${pathname === '/history/' ? 'underline' : 'opacity-80'}`}>
           <HiOutlineClock />
           <Link href="/history" replace prefetch={false} className="link">History</Link>
         </div>
 
-        <div className={`flex flex-row gap-1 items-center ${pathname === '/about' ? 'font-bold underline' : 'opacity-80'}`}>
+        <div className={`flex flex-row gap-1 items-center ${pathname === '/about/' ? 'underline' : 'opacity-80'}`}>
           <HiOutlineInformationCircle />
           <Link href="/about" replace prefetch={false} className="link">About</Link>
         </div>
@@ -131,15 +126,20 @@ export default function RootLayout({
         <div className="hidden md:flex grow gap-5 justify-end text-lg">
           {renderNavLinks()}
         </div>
-        <Drawer className="flex flex-col gap-10 md:hidden bg-gray-700"
+        <Drawer className="flex flex-col gap-10 md:hidden bg-gradient-to-t from-gray-800 to-gray-900"
           open={isDrawerMenuOpen}
           onClose={() => setIsDrawerMenuOpen(false)}
-          position="right"
+          position="top"
           backdrop={true}>
-          <h2 className="text-lg text-gray-300">Where to?</h2>
+          
+          <div className="flex flex-row justify-start items-center gap-3">
+            <HiOutlineArrowCircleRight className="w-7 h-7" />
+            <h2 className="text-lg text-gray-300">Where to?</h2>
+          </div>
+
           <hr />
           <Drawer.Items className="pl-3">
-            <div className="flex h-full flex-col justify-between gap-6 text-2xl" onClick={() => setIsDrawerMenuOpen(false)}>
+            <div className="flex h-full flex-row grow justify-center gap-8 text-2xl pb-5" onClick={() => setIsDrawerMenuOpen(false)}>
               {renderNavLinks()}
             </div>
           </Drawer.Items>
@@ -160,25 +160,17 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <CurrentUserAccountContext.Provider value={userAccount}>
-          <CurrentGameContext.Provider value={{
-            currentGame,
-            setNewCurrentGame: (newCurrentGame) => {
-              setCurrentGame(newCurrentGame);
-            }
-          }}>
+          <div className="flex flex-col min-h-screen">
+            <header className="flex-row rounded-lg bg-gradient-to-r from-gray-900 to-slate-700 p-4">
+              { renderNavBar() }
+            </header>
 
-            <div className="flex flex-col min-h-screen">
-              <header className="flex-row rounded-lg bg-gradient-to-r from-gray-900 to-slate-700 p-4">
-                { renderNavBar() }
-              </header>
-
-              <main className={`flex flex-col flex-grow mt-4 rounded-lg bg-gradient-to-bl from-10% from-slate-700 to-gray-900 text-gray-300 p-4 transition-all ${isDrawerMenuOpen ? 'blur-sm' : ''}`}>
-                { needsFetch ?
-                  (<div className="flex items-center justify-center m-auto"><Spinner color="info" className="h-20 w-20"/></div>) :
-                  (<>{children}</>)}
-              </main>
-            </div>
-          </CurrentGameContext.Provider>
+            <main className={`flex flex-col flex-grow mt-4 rounded-lg bg-gradient-to-bl from-10% from-slate-700 to-gray-900 text-gray-300 p-4 transition-all ${isDrawerMenuOpen ? 'blur-sm' : ''}`}>
+              { needsFetch ?
+                (<div className="flex items-center justify-center m-auto"><Spinner color="info" className="h-20 w-20"/></div>) :
+                (<>{children}</>)}
+            </main>
+          </div>
         </CurrentUserAccountContext.Provider>
       </body>
     </html> );
