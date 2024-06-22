@@ -97,11 +97,11 @@ export default function GamePage() {
           </button>
         </div>
 
-        <PlatePicker
+        { !!activeGame ? (<PlatePicker
           isShowPicker={showPicker}
           setShowPicker={(isShown: boolean) => setShowPicker(isShown)}
-          plateData={activeGame?.licensePlates ?? {}}
-          saveNewPlateData={tryUpdateGame} />
+          plateData={activeGame.licensePlates}
+          saveNewPlateData={tryUpdateGame} />) : null }
 
         <Modal show={showEndGame} size="sm" onClose={() => setShowEndGame(false)} popup>
           <Modal.Header />
