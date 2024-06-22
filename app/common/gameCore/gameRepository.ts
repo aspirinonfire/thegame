@@ -34,14 +34,10 @@ function SetLocalStorage(key: string, value: any): void {
 }
 
 export async function GetCurrentGame() : Promise<Game | null> {
-  await mockDataAccessDelay();
-  
   return GetFromLocalStorage(currentGameKey);
 }
 
 export async function GetPastGames(): Promise<Game[]> {
-  await mockDataAccessDelay();
-  
   return GetFromLocalStorage(pastGamesKey) ?? [];
 }
 

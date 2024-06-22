@@ -34,7 +34,7 @@ export default function History() {
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-3xl">Total Games Played: {pastGames.length}</h1>
+      <h1 className="text-xl sm:text-2xl">Total Games Played: {pastGames.length}</h1>
       <GameMap argType="historicData"
         totalNumberOfGames={ isFetchingPastGames ? 0 : pastGames.length}
         spotsByStateLookup={ isFetchingPastGames ? {} : numberOfSpotsByPlateLkp} />

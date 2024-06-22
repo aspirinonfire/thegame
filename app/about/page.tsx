@@ -19,6 +19,20 @@ export default function About() {
     setIsShowShareConfirmation(true);
   }
 
+  async function restartApp() {
+    try {
+      const keys = await window.caches.keys();
+      await Promise.all(keys.map(key => caches.delete(key)));
+    } catch (err) {
+      console.log('deleteCache err: ', err);
+    }
+
+    const workers = await navigator.serviceWorker.getRegistrations();
+    workers.forEach(worker => worker.unregister());
+
+    window.location.reload();
+  }
+
   return (
     <>
       <div className="flex flex-col gap-7 m-5">
@@ -27,7 +41,6 @@ export default function About() {
           <p className="text-lg">
             by Alex Chernyak &copy; 2024
           </p>
-          <a href="https://www.linkedin.com/in/alexander-chernyak-5633ab92/" target="_blank" className="text-sm mt-3 underline">Visit my LinkedIn</a>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" className="bg-amber-700 animate-pulse" onClick={handleShareApp}>
@@ -43,6 +56,10 @@ export default function About() {
       </div>
 
       <div>
+        <Button size="xs" color="gray" className="fixed bottom-0 left 0 m-5 opacity-50" onClick={restartApp} >
+          Reload App
+        </Button>
+
         <Button size="xs" color="failure" className="fixed bottom-0 right-0 m-5 opacity-50" onClick={() => setIsShowDeleteConfirmation(true)}>
           <HiOutlineTrash className="mr-1 h-4 w-4"/>
           Delete All Game Data
@@ -58,10 +75,10 @@ export default function About() {
               Are you sure you want to delete all game data?
             </h3>
             <div className="flex justify-center gap-4">
-              <Button color="gray" onClick={handleDeleteGameData}>
+              <Button color="failure" onClick={handleDeleteGameData}>
                 {"Yes, I'm sure"}
               </Button>
-              <Button color="failure" onClick={() => setIsShowDeleteConfirmation(false)}>
+              <Button color="gray" onClick={() => setIsShowDeleteConfirmation(false)}>
                 No, cancel
               </Button>
             </div>
