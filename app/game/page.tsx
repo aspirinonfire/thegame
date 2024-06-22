@@ -19,6 +19,7 @@ export default function Game() {
   const [showEndGame, setShowEndGame] = useState(false);
 
   const router = useRouter();
+  router.refresh();
   
   const dateStartedFriendly = currentGame?.dateCreated.toString();
   

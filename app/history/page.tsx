@@ -3,10 +3,14 @@ import { useEffect, useState } from "react";
 import { Game } from "../common/gameCore/gameModels";
 import { GetPastGames } from "../common/gameCore/gameRepository";
 import GameMap from "../common/gamemap";
+import { useRouter } from "next/navigation";
 
 export default function History() {
   const [pastGames, setPastGames] = useState<Game[]>([]);
   const [isFetchingPastGames, setIsFetchingPastGames] = useState(true);
+
+  const router = useRouter();
+  router.refresh();
 
   useEffect(() => {
     async function FetchPastGames() {

@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 export default function Home() {
   const { currentGame } = useContext(CurrentGameContext);
   const router = useRouter();
+  router.refresh();
 
   useEffect(() => {
     const redirectPage = !currentGame ? "/history" : "/game";
