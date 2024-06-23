@@ -26,6 +26,8 @@ const withPWA = withPWAInit({
   dest: "public",
   register: true,
   reloadOnOnline: false,
+  cacheStartUrl: true,
+  dynamicStartUrl: true,
   workboxOptions: {
     skipWaiting: true,
     clientsClaim: true,
