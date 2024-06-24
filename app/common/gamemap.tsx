@@ -22,7 +22,6 @@ export default function GameMap(mapArguments: ActiveGameData | HistoricalGamesDa
   }
 
   function getWeightClass(lkpKey: string, isSvg: boolean = true): string {
-
     if (mapArguments.argType == "activeGame") {
       const isSpotted = mapArguments.plateSpots[lkpKey];
 
@@ -56,11 +55,11 @@ export default function GameMap(mapArguments: ActiveGameData | HistoricalGamesDa
     }
   }
 
-  function isChecked(province: string) {
+  function isChecked(stateOrProvince: string) {
     if (mapArguments.argType == "activeGame") {
-      return !!mapArguments.plateSpots[province]?.dateSpotted
+      return !!mapArguments.plateSpots[stateOrProvince]?.dateSpotted
     } else {
-      return !!mapArguments.spotsByStateLookup[province]
+      return !!mapArguments.spotsByStateLookup[stateOrProvince] ?? 0 > 0
     }
   }
 
@@ -247,7 +246,59 @@ export default function GameMap(mapArguments: ActiveGameData | HistoricalGamesDa
             <circle id="DC2" stroke="#FFFFFF" strokeWidth="1.5" cx="801.3" cy="251.8" r="5" opacity="1" />
           </g>
         </g>
-        <path id="frames" fill="none" stroke="#A9A9A9" strokeWidth="2" d="M215 493v55l36 45M0 425h147l68 68h85l54 54v46" />
+        <g id="TEXTS">
+          <text transform="matrix(1 0 0 1 100 55)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>WA</text>
+          <text transform="matrix(1 0 0 1 81 128)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>OR</text>
+          <text transform="matrix(1 0 0 1 170 146)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>ID</text>
+          <text transform="matrix(1 0 0 1 60 290)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>CA</text>
+          <text transform="matrix(1 0 0 1 120 240)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>NV</text>
+          <text transform="matrix(1 0 0 1 210 255)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>UT</text>
+          <text transform="matrix(1 0 0 1 190 360)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>AZ</text>
+          <text transform="matrix(1 0 0 1 290 380)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>NM</text>
+          <text transform="matrix(1 0 0 1 410 460)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>TX</text>
+          <text transform="matrix(1 0 0 1 270 560)" style={{fill:'#DDD', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>HI</text>
+          <text transform="matrix(1 0 0 1 100 500)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>AK</text>
+          <text transform="matrix(1 0 0 1 535 450)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>LA</text>
+          <text transform="matrix(1 0 0 1 585 420)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>MS</text>
+          <text transform="matrix(1 0 0 1 640 420)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>AL</text>
+          <text transform="matrix(1 0 0 1 702 415)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>GA</text>
+          <text transform="matrix(1 0 0 1 750 380)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>SC</text>
+          <text transform="matrix(1 0 0 1 777 338)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>NC</text>
+          <text transform="matrix(1 0 0 1 640 350)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>TN</text>
+          <text transform="matrix(1 0 0 1 665 305)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>KY</text>
+          <text transform="matrix(1 0 0 1 590 260)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>IL</text>
+          <text transform="matrix(1 0 0 1 639 255)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>IN</text>
+          <text transform="matrix(1 0 0 1 690 245)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>OH</text>
+          <text transform="matrix(1 0 0 1 770 215)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>PA</text>
+          <text transform="matrix(1 0 0 1 805 160)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>NY</text>
+          <text transform="matrix(1 0 0 1 837 120)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'.7rem'}}>VT</text>
+          <text transform="matrix(1 0 0 1 859 140)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'.7rem'}}>NH</text>
+          <text transform="matrix(1 0 0 1 883 90)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>ME</text>
+          <text transform="matrix(1 0 0 1 722 280)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>WV</text>
+          <text transform="matrix(1 0 0 1 777 287)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>VA</text>
+          <text transform="matrix(1 0 0 1 840 265)" style={{fill:'#DDD', fontFamily:'Montserrat-Medium', fontSize:'.7rem'}}>MD</text>
+          <text transform="matrix(1 0 0 1 842 253)" style={{fill:'#DDD', fontFamily:'Montserrat-Medium', fontSize:'.7rem'}}>DE</text>
+          <text transform="matrix(1 0 0 1 850 225)" style={{fill:'#DDD', fontFamily:'Montserrat-Medium', fontSize:'.7rem'}}>NJ</text>
+          <text transform="matrix(1 0 0 1 852 180)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'.7rem'}}>CT</text>
+          <text transform="matrix(1 0 0 1 878 187)" style={{fill:'#DDD', fontFamily:'Montserrat-Medium', fontSize:'.7rem'}}>RI</text>        
+          <text transform="matrix(1 0 0 1 854 162)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'.7rem'}}>MA</text>
+          <text transform="matrix(1 0 0 1 760 520)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>FL</text>
+          <text transform="matrix(1 0 0 1 535 380)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>AR</text>
+          <text transform="matrix(1 0 0 1 530 305)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>MO</text>
+          <text transform="matrix(1 0 0 1 453 365)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>OK</text>
+          <text transform="matrix(1 0 0 1 435 295)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>KS</text>
+          <text transform="matrix(1 0 0 1 285 185)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>WY</text>
+          <text transform="matrix(1 0 0 1 310 280)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>CO</text>
+          <text transform="matrix(1 0 0 1 270 90)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>MT</text>
+          <text transform="matrix(1 0 0 1 400 100)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>ND</text>
+          <text transform="matrix(1 0 0 1 400 165)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>SD</text>
+          <text transform="matrix(1 0 0 1 495 120)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>MN</text>
+          <text transform="matrix(1 0 0 1 570 160)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>WI</text>
+          <text transform="matrix(1 0 0 1 653 185)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>MI</text>
+          <text transform="matrix(1 0 0 1 415 230)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>IA</text>
+          <text transform="matrix(1 0 0 1 510 215)" style={{fill: 'black', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>NE</text>
+        </g>
+        <path id="frames" fill="none" stroke="#777" strokeWidth="2" d="M215 493v55l36 45M0 425h147l68 68h85l54 54v46" />
       </svg>
       <div className="flex flex-row justify-center flex-wrap gap-2 mt-3">
         { renderCanadaBadge("Alberta", "AB") }
