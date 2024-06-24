@@ -129,7 +129,7 @@ export default function RootLayout({
         <div className="hidden md:flex grow gap-5 justify-end text-lg">
           {renderNavLinks()}
         </div>
-        <Drawer className="flex flex-col gap-10 md:hidden bg-gradient-to-t from-gray-800 to-gray-900"
+        <Drawer className="flex flex-col gap-10 md:hidden bg-gradient-to-t from-gray-800 to-gray-900 drop-shadow-lg"
           open={isDrawerMenuOpen}
           onClose={() => setIsDrawerMenuOpen(false)}
           position="top"
@@ -142,7 +142,7 @@ export default function RootLayout({
 
           <hr />
           <Drawer.Items className="pl-3">
-            <div className="flex h-full flex-row grow justify-center gap-8 text-2xl pb-5" onClick={() => setIsDrawerMenuOpen(false)}>
+            <div className="flex h-full flex-col sm:flex-row grow justify-center gap-8 text-xl pb-5" onClick={() => setIsDrawerMenuOpen(false)}>
               {renderNavLinks()}
             </div>
           </Drawer.Items>
