@@ -1,34 +1,22 @@
 "use client"
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useState } from 'react';
 import PlatePicker from './platepicker';
 import GameMap from '../common/gamemap';
-import { CurrentUserAccountContext } from '../common/gameCore/gameContext';
-import { CreateNewGame, FinishActiveGame, GetCurrentGame, UpdateCurrentGameWithNewSpots } from '../common/gameCore/gameRepository';
-import { Game, LicensePlateSpot, ScoreData } from '../common/gameCore/gameModels';
+import { CurrentGameContext, CurrentUserAccountContext } from '../common/gameCore/gameContext';
+import { CreateNewGame, FinishActiveGame, UpdateCurrentGameWithNewSpots } from '../common/gameCore/gameRepository';
+import { LicensePlateSpot } from '../common/gameCore/gameModels';
 import { Button, Modal } from "flowbite-react";
 import { useRouter } from "next/navigation";
 import { HiOutlineChevronRight } from "react-icons/hi";
 
 export default function GamePage() {
   const userAccount = useContext(CurrentUserAccountContext);
+  const {activeGame, setActiveGame} = useContext(CurrentGameContext);
 
-  const [activeGame, setCurrentGame] = useState<Game | null>(null);
-  const [fetchingData, setFetchingData] = useState(true);
   const [showPicker, setShowPicker] = useState(false);
   const [showEndGame, setShowEndGame] = useState(false);
 
   const router = useRouter();
-
-  useEffect(() => {
-    async function FetchData() {
-      const thisGame = await GetCurrentGame();
-      setCurrentGame(thisGame);
-      setFetchingData(false);
-    }
-    if (fetchingData) {
-      FetchData();
-    }
-  });
 
   const dateStartedFriendly = activeGame?.dateCreated.toString();
     
@@ -39,7 +27,7 @@ export default function GamePage() {
     if (typeof newGameResult === 'string') {
       console.error("Bad new game:", newGameResult);
     } else {
-      setCurrentGame(newGameResult);
+      setActiveGame(newGameResult);
     }
   }
 
@@ -51,7 +39,7 @@ export default function GamePage() {
       console.error("Could not finish the game:", finishResult);
     } else {
       router.push("/history");
-      setCurrentGame(null);
+      setActiveGame(null);
     }
   }
 
@@ -60,7 +48,7 @@ export default function GamePage() {
     if (typeof updatedGameResult === 'string') {
       console.error("Failed to save game:", updatedGameResult)
     } else {
-      setCurrentGame(updatedGameResult);
+      setActiveGame(updatedGameResult);
     }
   }
 
@@ -80,9 +68,9 @@ export default function GamePage() {
       <>
         <div className={`flex flex-col gap-5 transition-all ${showPicker ? "blur-sm": ""}`}>
           <div className="flex flex-row items-center justify-between sm:justify-start gap-5">
-            <h1 className="text-xl sm:text-2xl">Score: {activeGame?.score?.totalScore} </h1>
+            <h1 className="text-xl sm:text-2xl">Score: {activeGame?.score.totalScore} </h1>
             <div className="flex flex-row justify-center gap-3 animate-pulse text-sm text-amber-500" style={{ fontSize: ".7rem"}}>
-              { (activeGame?.score?.milestones ?? []).map(ms =>(<div key={ms}>{ms}</div>)) }
+              { (activeGame?.score.milestones ?? []).map(ms =>(<div key={ms}>{ms}</div>)) }
             </div>
           </div>
           
@@ -100,7 +88,7 @@ export default function GamePage() {
         { !!activeGame ? (<PlatePicker
           isShowPicker={showPicker}
           setShowPicker={(isShown: boolean) => setShowPicker(isShown)}
-          plateData={activeGame.licensePlates}
+          plateData={activeGame?.licensePlates ?? {}}
           saveNewPlateData={tryUpdateGame} />) : null }
 
         <Modal show={showEndGame} size="sm" onClose={() => setShowEndGame(false)} popup>
@@ -124,5 +112,5 @@ export default function GamePage() {
       </>);
   }
 
-  return (activeGame == null && !fetchingData ? renderStartNewGameContents() : renderCurrentGameContents());
+  return (activeGame == null ? renderStartNewGameContents() : renderCurrentGameContents());
 }
