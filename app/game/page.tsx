@@ -79,7 +79,7 @@ export default function GamePage() {
 
         <div className={`flex flex-row grow justify-end items-center fixed bottom-0 right-5 ${showPicker ? 'hidden' : ''}`}>
           <small className="text-xs opacity-50 ml-5">Game started on <br /> {dateStartedFriendly}</small>
-          <button type="button" className="text-white bg-amber-950 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-3 sm:px-5 py-2.5 m-4 dark:bg-gray-800 dark:hover:bg-gray-700"
+          <button type="button" className="text-white bg-amber-950 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-3 sm:px-5 py-2.5 m-4"
             onClick={() => setShowEndGame(true)}>
             We have arrived!
           </button>

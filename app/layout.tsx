@@ -115,6 +115,7 @@ export default function RootLayout({
             alt="Game Logo"
             width={50}
             height={50}
+            style={{ filter: "none !important"}}
           />
           <span className="text-lg text-gray-100 uppercase">License Plate Game</span>
         </div>
@@ -142,7 +143,7 @@ export default function RootLayout({
 
           <hr />
           <Drawer.Items className="pl-3">
-            <div className="flex h-full flex-col sm:flex-row grow justify-center gap-8 text-xl pb-5" onClick={() => setIsDrawerMenuOpen(false)}>
+            <div className="flex h-full flex-col sm:flex-row grow justify-center gap-8 text-lg pb-5" onClick={() => setIsDrawerMenuOpen(false)}>
               {renderNavLinks()}
             </div>
           </Drawer.Items>
@@ -160,6 +161,7 @@ export default function RootLayout({
         <link rel="manifest" href="manifest.json" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta charSet="utf-8" />
+        <meta name="color-scheme" content="light only" />
       </head>
       <body className={inter.className}>
         <CurrentUserAccountContext.Provider value={userAccount}>
