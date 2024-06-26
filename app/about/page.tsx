@@ -2,10 +2,13 @@
 import { HiOutlineShare, HiOutlineTrash, HiOutlineExclamationCircle } from "react-icons/hi";
 import { Button, Modal } from "flowbite-react";
 import { useState } from "react";
+import { deployDate, sha } from "@/public/version.json";
 
 export default function About() {
   const [isShowShareConfirmation, setIsShowShareConfirmation] = useState(false);
   const [isShowDeleteConfirmation, setIsShowDeleteConfirmation] = useState(false);
+
+  const versionString = !!deployDate && !!sha ? `App deploy date: ${new Date(deployDate).toISOString()} commit: ${sha}` : null;
 
   function handleDeleteGameData() {
     setIsShowDeleteConfirmation(false);
@@ -48,10 +51,11 @@ export default function About() {
             Share the game
           </Button>
         </div>
-        <div className="leading-relaxed">
-          <p className="mt-5 text-xs">
+        <div className="leading-relaxed mt-5 text-xs">
+          <p>
             Made with Next.JS, Tailwind, Flowbite, coffee, ducktape, and WD-40
           </p>
+          {versionString ? (<p className="text-gray-500">{versionString}</p>) : null}
         </div>
       </div>
 
