@@ -8,8 +8,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Protocols.Configuration;
 using Microsoft.OpenApi.Models;
 using System;
 using TheGame.Api.Auth;
@@ -33,7 +35,7 @@ namespace TheGame.Api
       var connString =  Configuration.GetConnectionString(GameDbContext.ConnectionStringName);
       if (string.IsNullOrEmpty(connString))
       {
-        throw new ApplicationException($"{GameDbContext.ConnectionStringName} connection string is not found! Aborting...");
+        throw new InvalidConfigurationException($"{GameDbContext.ConnectionStringName} connection string is not found! Aborting...");
       }
       // TODO env check
       var isDevelopment = true;
@@ -48,21 +50,16 @@ namespace TheGame.Api
       AddAppIdentityServices(services,
         Configuration["Auth:Google:ClientId"],
         Configuration["Auth:Google:ClientSecret"]);
+
+      services.AddHealthChecks()
+        .AddCheck<ApiInfraHealthCheck>(nameof(ApiInfraHealthCheck));
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
     public void Configure(IApplicationBuilder app,
       IWebHostEnvironment env,
-      ILogger<Startup> logger,
-      GameDbContext dbContext)
+      ILogger<Startup> logger)
     {
-      //if (!dbContext.Database.CanConnect())
-      //{
-      //  const string msg = "Could not connect to database! Aborting...";
-      //  logger.LogCritical(msg);
-      //  throw new ApplicationException(msg);
-      //}
-
       if (env.IsDevelopment())
       {
         app.UseDeveloperExceptionPage();
@@ -95,6 +92,8 @@ namespace TheGame.Api
         endpoints
           .MapControllers()
           .RequireAuthorization();
+
+        endpoints.MapHealthChecks("/health");
       });
     }
 

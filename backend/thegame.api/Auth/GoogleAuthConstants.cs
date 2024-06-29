@@ -4,5 +4,6 @@ namespace TheGame.Api.Auth
   {
     public const string RefreshTokenName = "refresh_token";
     public const string AccessTokenName = "access_token";
+    public const string ClaimsIssuer = "Google";
   }
 }

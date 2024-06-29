@@ -49,8 +49,6 @@ namespace TheGame.Api.Auth
         return MissingAuthClaimsError;
       }
 
-      var claims = new List<Claim>();
-
       // uniquely identifies current user
       var authId = string.Empty;
       if (claimsLookup.TryGetValue(ClaimTypes.NameIdentifier, out var nameIdentifierClaim))
@@ -76,23 +74,28 @@ namespace TheGame.Api.Auth
       // TODO Populate Player Id claim
       var playerId = Guid.Empty.ToString();
 
-      claims.Add(new Claim(PlayerIdClaimType, playerId, "string"));
+      var claims = new List<Claim>
+      {
+        new(PlayerIdClaimType, playerId, "string"),
+        new(ClaimTypes.NameIdentifier, authId, "string")
+      };
 
-      claims.Add(new Claim(ClaimTypes.NameIdentifier,
-        authId,
-        "string"));
+      if (claimsLookup.TryGetValue(ClaimTypes.Name, out var playerNameClaim) && playerNameClaim != null)
+      {
+        claims.Add(playerNameClaim);
+      }
 
-      // TODO move to persistence
+      // TODO move to persistence rather than identity claim!
       var refreshToken = externalAuthResult.Properties.GetTokenValue(GoogleAuthConstants.RefreshTokenName);
       if (!string.IsNullOrEmpty(refreshToken))
       {
-        claims.Add(new Claim(GoogleAuthConstants.RefreshTokenName, refreshToken, "string"));
+        claims.Add(new Claim(GoogleAuthConstants.RefreshTokenName, refreshToken, "string", GoogleAuthConstants.ClaimsIssuer));
       }
 
       var accessToken = externalAuthResult.Properties.GetTokenValue(GoogleAuthConstants.AccessTokenName);
       if (!string.IsNullOrEmpty(accessToken))
       {
-        claims.Add(new Claim(GoogleAuthConstants.AccessTokenName, accessToken, "string"));
+        claims.Add(new Claim(GoogleAuthConstants.AccessTokenName, accessToken, "string", GoogleAuthConstants.ClaimsIssuer));
       }
 
       var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

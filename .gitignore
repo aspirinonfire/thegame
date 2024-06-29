@@ -59,5 +59,8 @@ testsettings.override.json
 *.csproj.user
 
 node_modules
-appsettings.json
 testsettings.json
+
+# Docker volumes
+/backend/mssql_volume
+.env

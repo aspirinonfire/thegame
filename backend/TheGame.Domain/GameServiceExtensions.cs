@@ -17,6 +17,7 @@ namespace TheGame.Domain
 {
   public static class GameServiceExtensions
   {
+    // TODO use options or config to pass conn string and such
     public static IServiceCollection AddGameServices(this IServiceCollection services,
       string connectionString,
       bool isDevelopment)
