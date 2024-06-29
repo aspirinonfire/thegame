@@ -12,6 +12,7 @@ using TheGame.Api.Auth;
 namespace TheGame.Api.Controllers
 {
   [ApiController]
+  [Route("/account")]
   public class AccountController : ControllerBase
   {
     private readonly GameAuthService _gameAuthService;
@@ -22,7 +23,7 @@ namespace TheGame.Api.Controllers
     }
 
     [HttpGet]
-    [Route("account/google-login")]
+    [Route("google-login")]
     [AllowAnonymous]
     public IActionResult GoogleLogin()
     {
@@ -35,7 +36,7 @@ namespace TheGame.Api.Controllers
     }
 
     [HttpGet]
-    [Route("account/signingoogle")]
+    [Route("signingoogle")]
     [AllowAnonymous]
     public async Task<IActionResult> SignInGoogle()
     {
@@ -70,7 +71,7 @@ namespace TheGame.Api.Controllers
     }
 
     [HttpGet]
-    [Route("account/info")]
+    [Route("info")]
     public IActionResult Info()
     {
       var claimsInfo = HttpContext.User.Claims
