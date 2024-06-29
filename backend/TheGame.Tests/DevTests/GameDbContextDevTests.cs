@@ -12,19 +12,12 @@ using TheGame.Tests.TestUtils;
 namespace TheGame.Tests.DevTests
 {
   [Trait(XunitTestProvider.Category, XunitTestProvider.DevTest)]
-  public class GameDbContextDevTests: IClassFixture<DevTestFixture>
+  public class GameDbContextDevTests(MsSqlFixture msSqlFixture) : IClassFixture<MsSqlFixture>
   {
-    private readonly DevTestFixture _fixture;
-
-    public GameDbContextDevTests(DevTestFixture fixture)
-    {
-      _fixture = fixture;
-    }
-
     [Fact]
     public async Task CanQueryLicensePlates()
     {
-      var services = _fixture.GetGameServicesWithTestDevDb();
+      var services = DevTestFixture.GetGameServicesWithTestDevDb(msSqlFixture.GetConnectionString());
 
       var diOpts = new ServiceProviderOptions
       {
@@ -42,7 +35,7 @@ namespace TheGame.Tests.DevTests
     [Fact]
     public async Task CreateTeamPlayerGameAndAddSpot()
     {
-      var services = _fixture.GetGameServicesWithTestDevDb();
+      var services = DevTestFixture.GetGameServicesWithTestDevDb(msSqlFixture.GetConnectionString());
 
       var diOpts = new ServiceProviderOptions
       {
@@ -76,12 +69,12 @@ namespace TheGame.Tests.DevTests
       var sysService = scope.ServiceProvider.GetRequiredService<ISystemService>();
       var spotResult = gameResult.Value!.AddLicensePlateSpot(lpFac,
         sysService,
-        new[]
-        {
+        [
           (Country.US, StateOrProvince.CA),
           (Country.US, StateOrProvince.OR),
-        },
+        ],
         playerResult.Value!);
+
       Assert.True(spotResult.IsSuccess);
 
       await db.SaveChangesAsync();
