@@ -1,5 +1,3 @@
-using Moq;
-using System;
 using TheGame.Domain.Utils;
 
 namespace TheGame.Tests.TestUtils
@@ -12,16 +10,18 @@ namespace TheGame.Tests.TestUtils
     {
       var currentTimestamp = dateTimeOffset.GetValueOrDefault(DefaultDate);
 
-      var dtOffsetSvc = new Mock<IDateTimeOffsetService>();
-      dtOffsetSvc.Setup(svc => svc.UtcNow).Returns(currentTimestamp);
-      dtOffsetSvc.Setup(svc => svc.Now).Returns(currentTimestamp);
-      var dtSvc = new Mock<IDateTimeService>();
-      dtSvc.Setup(svc => svc.Now).Returns(currentTimestamp.DateTime);
+      var dtOffsetSvc = Substitute.For<IDateTimeOffsetService>();
+      dtOffsetSvc.UtcNow.Returns(currentTimestamp);
+      dtOffsetSvc.Now.Returns(currentTimestamp);
 
-      var sysSvc = new Mock<ISystemService>();
-      sysSvc.Setup(svc => svc.DateTimeOffset).Returns(dtOffsetSvc.Object);
-      sysSvc.Setup(svc => svc.DateTime).Returns(dtSvc.Object);
-      return sysSvc.Object;
+      var dtSvc = Substitute.For<IDateTimeService>();
+      dtSvc.Now.Returns(currentTimestamp.DateTime);
+
+      var sysSvc = Substitute.For<ISystemService>();
+      sysSvc.DateTimeOffset.Returns(dtOffsetSvc);
+      sysSvc.DateTime.Returns(dtSvc);
+
+      return sysSvc;
     }
   }
 }

@@ -1,7 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
-using System.Threading.Tasks;
 using TheGame.Domain.DAL;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
@@ -10,7 +8,6 @@ using TheGame.Domain.DomainModels.Teams;
 using TheGame.Domain.Utils;
 using TheGame.Tests.Fixtures;
 using TheGame.Tests.TestUtils;
-using Xunit;
 
 namespace TheGame.Tests.DevTests
 {

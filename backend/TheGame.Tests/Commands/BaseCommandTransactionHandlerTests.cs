@@ -1,16 +1,8 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore.Storage;
-using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using TheGame.Domain.Commands;
 using TheGame.Domain.DAL;
 using TheGame.Tests.TestUtils;
-using Xunit;
 
 namespace TheGame.Tests.Commands
 {
@@ -18,11 +10,11 @@ namespace TheGame.Tests.Commands
   public class BaseCommandTransactionHandlerTests
   {
     [Fact]
-    public async Task CanCommitTransactionOnCommandSuccess()
+    public async Task WillCommitTransactionOnCommandSuccess()
     {
-      var trx = new Mock<IDbContextTransaction>();
-      var uow = new Mock<IGameUoW>();
-      uow.Setup(svc => svc.BeginTransactionAsync()).ReturnsAsync(trx.Object);
+      var transaction = Substitute.For<IDbContextTransaction>();
+      var gameUow = Substitute.For<IGameUoW>();
+      gameUow.BeginTransactionAsync().Returns(transaction);
 
       using var cTokenRegistration = new CancellationTokenRegistration();
       var ctoken = cTokenRegistration.Token;
@@ -30,22 +22,23 @@ namespace TheGame.Tests.Commands
       var cmdInput = new TestCommand();
       var expectedCmdResult = CommandResult.Success(new TestCommandResult());
 
-      var uut = new TestCommandHandler(uow.Object,
+      var uut = new TestCommandHandler(gameUow,
         (cmd) => Task.FromResult(expectedCmdResult));
 
       var actual = await uut.Handle(cmdInput, ctoken);
 
       Assert.Equal(expectedCmdResult, actual);
-      trx.Verify(trx => trx.RollbackAsync(ctoken), Times.Never);
-      trx.Verify(trx => trx.CommitAsync(ctoken), Times.Once);
+
+      await transaction.Received(0).RollbackAsync(ctoken);
+      await transaction.Received(1).CommitAsync(ctoken);
     }
 
     [Fact]
-    public async Task CanRollbackTransactionOnCommandError()
+    public async Task WillRollbackTransactionOnCommandError()
     {
-      var trx = new Mock<IDbContextTransaction>();
-      var uow = new Mock<IGameUoW>();
-      uow.Setup(svc => svc.BeginTransactionAsync()).ReturnsAsync(trx.Object);
+      var transaction = Substitute.For<IDbContextTransaction>();
+      var gameUow = Substitute.For<IGameUoW>();
+      gameUow.BeginTransactionAsync().Returns(transaction);
 
       using var cTokenRegistration = new CancellationTokenRegistration();
       var ctoken = cTokenRegistration.Token;
@@ -53,14 +46,15 @@ namespace TheGame.Tests.Commands
       var cmdInput = new TestCommand();
       var expectedCmdResult = CommandResult.Error<TestCommandResult>("test error");
 
-      var uut = new TestCommandHandler(uow.Object,
+      var uut = new TestCommandHandler(gameUow,
         (cmd) => Task.FromResult(expectedCmdResult));
 
       var actual = await uut.Handle(cmdInput, ctoken);
 
       Assert.Equal(expectedCmdResult, actual);
-      trx.Verify(trx => trx.RollbackAsync(ctoken), Times.Once);
-      trx.Verify(trx => trx.CommitAsync(ctoken), Times.Never);
+
+      await transaction.Received(1).RollbackAsync(ctoken);
+      await transaction.Received(0).CommitAsync(ctoken);
     }
   }
 

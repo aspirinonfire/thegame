@@ -1,16 +1,11 @@
-using TheGame.Tests.TestUtils;
-using Xunit;
-using TheGame.Domain.DomainModels.Games;
-using TheGame.Domain.DomainModels.Teams;
-using Moq;
-using TheGame.Tests.Domain.Players;
-using System.Linq;
 using TheGame.Domain.DomainModels.Common;
-using TheGame.Tests.Domain.Games;
-using TheGame.Domain.DomainModels.LicensePlates;
-using System;
+using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.Games.Events;
-using TheGame.Domain.Utils;
+using TheGame.Domain.DomainModels.LicensePlates;
+using TheGame.Domain.DomainModels.Teams;
+using TheGame.Tests.Domain.Games;
+using TheGame.Tests.Domain.Players;
+using TheGame.Tests.TestUtils;
 
 namespace TheGame.Tests.Domain.Teams
 {
@@ -18,23 +13,23 @@ namespace TheGame.Tests.Domain.Teams
   public class TeamTests
   {
     [Fact]
-    public void CanStartFirstNewGameSuccessfully()
+    public void WillStartFirstNewGameSuccessfully()
     {
       var player = new MockPlayer(null, 1, "test player");
       var gameName = "test game";
 
-      var expectedNewGame = new Mock<Game>().Object;
+      var expectedNewGame = Substitute.For<Game>();
 
-      var uut = new MockTeam(new [] { player },
-        Enumerable.Empty<Game>(),
+      var uut = new MockTeam([player],
+        [],
         name: "Test Team");
 
-      var gameFactory = new Mock<IGameFactory>();
+      var gameFactory = Substitute.For<IGameFactory>();
       gameFactory
-        .Setup(fac => fac.CreateNewGame(gameName))
+        .CreateNewGame(gameName)
         .Returns(DomainResult.Success(expectedNewGame));
 
-      var actual = uut.StartNewGame(gameFactory.Object, gameName, player);
+      var actual = uut.StartNewGame(gameFactory, gameName, player);
 
       Assert.True(actual.IsSuccess);
       Assert.NotNull(actual.Value);
@@ -46,7 +41,7 @@ namespace TheGame.Tests.Domain.Teams
     }
 
     [Fact]
-    public void CanStartNewGameSuccessfullyWithFinishedGames()
+    public void WillStartNewGameSuccessfullyWithFinishedGames()
     {
       var player = new MockPlayer(null, 1, "test player");
       var gameName = "test game";
@@ -56,18 +51,18 @@ namespace TheGame.Tests.Domain.Teams
         null,
         gameName);
 
-      var expectedNewGame = new Mock<Game>().Object;
+      var expectedNewGame = Substitute.For<Game>();
 
-      var uut = new MockTeam(new[] { player },
-        new [] { existingFinishedGame },
+      var uut = new MockTeam([player],
+        [existingFinishedGame],
         name: "Test Team");
 
-      var gameFactory = new Mock<IGameFactory>();
+      var gameFactory = Substitute.For<IGameFactory>();
       gameFactory
-        .Setup(fac => fac.CreateNewGame(gameName))
+        .CreateNewGame(gameName)
         .Returns(DomainResult.Success(expectedNewGame));
 
-      var actual = uut.StartNewGame(gameFactory.Object, gameName, player);
+      var actual = uut.StartNewGame(gameFactory, gameName, player);
 
       Assert.True(actual.IsSuccess);
       Assert.NotNull(actual.Value);
@@ -80,7 +75,7 @@ namespace TheGame.Tests.Domain.Teams
     }
 
     [Fact]
-    public void CanValidateExistingActiveGame()
+    public void WillReturnGameAlreadyExistsErrorWhenCreatingNewGame()
     {
       var player = new MockPlayer(null, 1, "test player");
       var gameName = "test game";
@@ -90,21 +85,22 @@ namespace TheGame.Tests.Domain.Teams
         null,
         gameName);
 
-      var uut = new MockTeam(new[] { player },
-        new [] { existingActiveGame },
+      var uut = new MockTeam([player],
+        [existingActiveGame],
         name: "Test Team");
 
-      var gameFactory = new Mock<IGameFactory>();
+      var gameFactory = Substitute.For<IGameFactory>();
 
-      var actual = uut.StartNewGame(gameFactory.Object, gameName, player);
+      var actual = uut.StartNewGame(gameFactory, gameName, player);
 
       Assert.False(actual.IsSuccess);
       Assert.Null(actual.Value);
       Assert.Equal(Team.ErrorMessages.ActiveGameAlreadyExistsError, actual.ErrorMessage);
+
       var actualGame = Assert.Single(uut.Games);
       Assert.Equal(existingActiveGame, actualGame);
-      gameFactory
-        .Verify(fac => fac.CreateNewGame(It.IsAny<string>()), Times.Never);
+
+      gameFactory.Received(0).CreateNewGame(Arg.Any<string>());
       Assert.Empty(uut.DomainEvents);
     }
 
@@ -113,21 +109,21 @@ namespace TheGame.Tests.Domain.Teams
     {
       var player = new MockPlayer(null, 1, "test player");
 
-      var existingActiveGame = new Mock<MockGame>(Enumerable.Empty<GameLicensePlate>(),
+      var existingActiveGame = Substitute.For<MockGame>(Enumerable.Empty<GameLicensePlate>(),
         true,
         null,
         "Active game");
 
       existingActiveGame
-        .Setup(game => game.FinishGame(It.IsAny<DateTimeOffset>()))
-        .Callback<DateTimeOffset>(_ =>
+        .FinishGame(Arg.Any<DateTimeOffset>())
+        .Returns(DomainResult.Success<Game>(existingActiveGame))
+        .AndDoes(_ =>
         {
-          existingActiveGame.Object.SetActiveFlag(false);
-        })
-        .Returns(DomainResult.Success<Game>(existingActiveGame.Object));
+          existingActiveGame.SetActiveFlag(false);
+        });
 
-      var uut = new MockTeam(new[] { player },
-        new[] { existingActiveGame.Object },
+      var uut = new MockTeam([player],
+        [existingActiveGame],
         name: "Test Team");
 
       var actual = uut.FinishActiveGame(CommonMockedServices.GetSystemService(), player);
@@ -135,9 +131,11 @@ namespace TheGame.Tests.Domain.Teams
       Assert.True(actual.IsSuccess);
       Assert.NotNull(actual.Value);
       Assert.Null(actual.ErrorMessage);
+
       var actualGame = Assert.Single(uut.Games);
-      Assert.Equal(existingActiveGame.Object, actualGame);
+      Assert.Equal(existingActiveGame, actualGame);
       Assert.False(actualGame.IsActive);
+
       var actualEvent = Assert.Single(uut.DomainEvents);
       Assert.IsType<ExistingGameFinishedEvent>(actualEvent);
     }

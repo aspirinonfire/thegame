@@ -69,6 +69,10 @@ namespace TheGame.Api
         app.UseSwagger();
         app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "thegame.api v1"));
       }
+      else
+      {
+        app.UseHsts();
+      }
 
       app.UseHttpsRedirection();
 

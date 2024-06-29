@@ -4,6 +4,9 @@ using System.Threading.Tasks;
 
 namespace TheGame.Domain.DAL
 {
+  /// <summary>
+  /// The Game context Unit of Work
+  /// </summary>
   public interface IGameUoW
   {
     IDbContextTransaction BeginTransaction();

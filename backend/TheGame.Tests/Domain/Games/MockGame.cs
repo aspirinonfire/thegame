@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
-using TheGame.Domain.DomainModels.Teams;
 
 namespace TheGame.Tests.Domain.Games
 {
