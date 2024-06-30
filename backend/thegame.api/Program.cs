@@ -5,72 +5,68 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using TheGame.Api.Auth;
 using TheGame.Domain;
 using TheGame.Domain.DAL;
 
-namespace TheGame.Api
+namespace TheGame.Api;
+
+public class Program
 {
-  public class Program
+  public static void Main(string[] args)
   {
-    public static void Main(string[] args)
-    {
-      var builder = WebApplication.CreateBuilder(args);
+    var builder = WebApplication.CreateBuilder(args);
 
-      // Add services to the container.
-      builder.Services.AddControllers();
-
-      // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-      builder.Services.AddEndpointsApiExplorer();
-      builder.Services.AddSwaggerGen(cfg =>
+    // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+    builder.Services
+      .AddEndpointsApiExplorer()
+      .AddSwaggerGen(cfg =>
       {
         cfg.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo() { Title = "Game API", Version = "1" });
       });
 
-      var connString = builder.Configuration.GetConnectionString(GameDbContext.ConnectionStringName) ?? string.Empty;
+    builder.Services.AddHealthChecks()
+      .AddCheck<ApiInfraHealthCheck>(nameof(ApiInfraHealthCheck));
 
-      builder.Services.AddGameServices(connString, builder.Environment.IsDevelopment());
+    var connString = builder.Configuration.GetConnectionString(GameDbContext.ConnectionStringName) ?? string.Empty;
 
-      builder.Services.AddHealthChecks()
-        .AddCheck<ApiInfraHealthCheck>(nameof(ApiInfraHealthCheck));
+    builder.Services
+      .AddGameServices(connString, builder.Environment.IsDevelopment())
+      .AddGameAuthenticationServices(builder.Configuration);
 
-      builder.Services.AddGameAuthenticationServices(builder.Configuration);
+    var app = builder.Build();
 
-      var app = builder.Build();
-
-      // Configure the HTTP request pipeline.
-      if (app.Environment.IsDevelopment())
-      {
-        app.UseDeveloperExceptionPage();
-        app.UseSwagger();
-        app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1"));
-      }
-
-      app.UseHsts();
-      app.UseHttpsRedirection();
-
-      app.UseHealthChecks("/health");
-
-      var cookiePolicyOptions = new CookiePolicyOptions
-      {
-        MinimumSameSitePolicy = SameSiteMode.Lax,
-        HttpOnly = HttpOnlyPolicy.Always,
-        Secure = CookieSecurePolicy.Always
-      };
-      app.UseCookiePolicy(cookiePolicyOptions);
-
-      app.UseRouting();
-
-      app.UseAuthentication();
-      app.UseAuthorization();
-
-#pragma warning disable ASP0014 // Suggest using top level route registrations
-      app.UseEndpoints(endpoints =>
-      {
-        endpoints.MapControllers().RequireAuthorization();
-      });
-#pragma warning restore ASP0014 // Suggest using top level route registrations
-
-      app.Run();
+    // Configure the HTTP request pipeline.
+    if (app.Environment.IsDevelopment())
+    {
+      app.UseDeveloperExceptionPage();
+      app.UseSwagger();
+      app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1"));
     }
+
+    app.UseHsts();
+    app.UseHttpsRedirection();
+
+    app.UseHealthChecks("/health");
+
+    var cookiePolicyOptions = new CookiePolicyOptions
+    {
+      MinimumSameSitePolicy = SameSiteMode.Lax,
+      HttpOnly = HttpOnlyPolicy.Always,
+      Secure = CookieSecurePolicy.Always
+    };
+    app.UseCookiePolicy(cookiePolicyOptions);
+
+    app.UseRouting();
+
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    app.MapGroup("")
+      .RequireAuthorization()
+      .AddGameAuthRoutes()
+      .AddGameApiRoutes();
+
+    app.Run();
   }
 }

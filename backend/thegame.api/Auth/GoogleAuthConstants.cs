@@ -1,9 +1,7 @@
-namespace TheGame.Api.Auth
+namespace TheGame.Api.Auth;
+public static class GoogleAuthConstants
 {
-  public static class GoogleAuthConstants
-  {
-    public const string RefreshTokenName = "refresh_token";
-    public const string AccessTokenName = "access_token";
-    public const string ClaimsIssuer = "Google";
-  }
+  public const string RefreshTokenName = "refresh_token";
+  public const string AccessTokenName = "access_token";
+  public const string ClaimsIssuer = "Google";
 }
