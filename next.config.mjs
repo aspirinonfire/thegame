@@ -39,7 +39,6 @@ const withPWA = withPWAInit({
         handler: "CacheFirst",
         options: {
           cacheName: "http-cache",
-          networkTimeoutSeconds: 15,
           expiration: {
             maxEntries: 999,
             maxAgeSeconds: 7 * 24 * 60 * 60 // 7days
