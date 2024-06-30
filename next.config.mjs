@@ -28,6 +28,9 @@ const withPWA = withPWAInit({
   reloadOnOnline: false,
   cacheStartUrl: true,
   dynamicStartUrl: true,
+  // cache frotend nav to ensure better offline ux
+  // https://github.com/shadowwalker/next-pwa/blob/master/examples/cache-on-front-end-nav/README.md
+  cacheOnFrontEndNav: true,
   workboxOptions: {
     skipWaiting: true,
     clientsClaim: true,
