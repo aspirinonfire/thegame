@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
@@ -24,9 +25,10 @@ public class LicensePlate : BaseModel, IEquatable<LicensePlate>
     new LicensePlate() { Id = 6, Country = Country.US, StateOrProvince = StateOrProvince.WA },
   };
 
-  private static readonly IReadOnlyDictionary<(Country, StateOrProvince), LicensePlate> _licensePlateMap =
+  private static readonly ReadOnlyDictionary<(Country, StateOrProvince), LicensePlate> _licensePlateMap =
     AvailableLicensePlates
-      .ToDictionary(lp => (lp.Country, lp.StateOrProvince));
+      .ToDictionary(lp => (lp.Country, lp.StateOrProvince))
+      .AsReadOnly();
 
   public long Id { get; protected set; }
 
@@ -34,22 +36,12 @@ public class LicensePlate : BaseModel, IEquatable<LicensePlate>
 
   public Country Country { get; protected set; }
 
-  /// <summary>
-  /// Do not use this navigation. Use GameLicensePlates instead.
-  /// LicensePlate navigation property is required for EF Core 6 configuration
-  /// </summary>
-  [Obsolete("Use for EF config only! Might be removed in future EF 7+")]
-  public virtual ICollection<Game> Games { get; protected set; }
+  public virtual ICollection<Game> Games { get; protected set; } = default!;
 
-
-  protected HashSet<GameLicensePlate> _gameLicensePlates = new();
+  protected HashSet<GameLicensePlate> _gameLicensePlates = [];
   public virtual ICollection<GameLicensePlate> GameLicensePlates => _gameLicensePlates;
 
-  public LicensePlate()
-  {
-    // Autopopulatd by EF
-    Games = null!;
-  }
+  public LicensePlate() { }
 
   public static DomainResult<LicensePlate> GetLicensePlate(Country country, StateOrProvince stateOrProvince)
   {

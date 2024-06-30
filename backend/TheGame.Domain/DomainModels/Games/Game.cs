@@ -18,18 +18,12 @@ public partial class Game : BaseModel, IAuditedRecord
     public const string InvalidEndedOnDate = "invalid_ended_on_date";
   }
 
-  /// <summary>
-  /// Do not use this navigation. Use GameLicensePlates instead.
-  /// LicensePlate navigation property is required for EF Core 6 configuration
-  /// </summary>
-  [Obsolete("Use for EF config only! Might be removed in future EF 7+")]
-  public virtual ICollection<LicensePlate> LicensePlates { get; private set; }
-
-  protected HashSet<GameLicensePlate> _gameLicensePlates = new();
+  public virtual ICollection<LicensePlate> LicensePlates { get; private set; } = default!;
+  protected HashSet<GameLicensePlate> _gameLicensePlates = [];
   public virtual ICollection<GameLicensePlate> GameLicensePlates => _gameLicensePlates;
 
   public long Id { get; }
-  public string Name { get; protected set; }
+  public string Name { get; protected set; } = default!;
   public bool IsActive { get; protected set; }
   public DateTimeOffset? EndedOn { get; protected set; }
 
@@ -37,12 +31,7 @@ public partial class Game : BaseModel, IAuditedRecord
 
   public DateTimeOffset? DateModified { get; }
 
-  public Game()
-  {
-    // Autopopulated by EF
-    Name = null!;
-    LicensePlates = null!;
-  }
+  public Game() { }
 
   public virtual DomainResult<Game> AddLicensePlateSpot(IGameLicensePlateFactory licensePlateSpotFactory,
     ISystemService systemService,
