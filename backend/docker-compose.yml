@@ -4,6 +4,7 @@ services:
   mssql:
     image: mcr.microsoft.com/mssql/server:2022-latest
     # must run as root to access volume mounts
+    # see https://github.com/microsoft/mssql-docker/issues/13#issuecomment-641904197
     user: root
     ports:
       - "1433:1433"
@@ -28,7 +29,6 @@ services:
       - Auth__Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443
-      - ASPNETCORE_HTTPS_PORTS=8080
       # Generate dev certs using `dotnet dev-certs https --export-path <path> --password <password>` `trust`. Do `clean` if already present
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/myCert.pfx
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERT_PASSWORD}

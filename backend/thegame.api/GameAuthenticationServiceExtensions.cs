@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Threading.Tasks;
 using TheGame.Api.Auth;
 
 namespace TheGame.Api
@@ -62,6 +63,22 @@ namespace TheGame.Api
             {
               var validator = ctx.HttpContext.RequestServices.GetRequiredService<GameAuthService>();
               await validator.RefreshCookie(ctx);
+            };
+
+            cookieOpts.Events.OnRedirectToLogin = ctx =>
+            {
+              // return 401 on non-account requests or redirect to login
+              if (!ctx.Request.Path.Value?.StartsWith("/account", StringComparison.OrdinalIgnoreCase) ?? true)
+              {
+                ctx.Response.Clear();
+                ctx.Response.StatusCode = 401;
+              }
+              else
+              {
+                ctx.Response.Redirect(ctx.RedirectUri);
+              }
+
+              return Task.CompletedTask;
             };
 
             cookieOpts.Validate();
