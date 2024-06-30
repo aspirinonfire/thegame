@@ -28,7 +28,6 @@ const withPWA = withPWAInit({
   reloadOnOnline: false,
   cacheStartUrl: true,
   dynamicStartUrl: true,
-  skipWaiting: true,
   workboxOptions: {
     skipWaiting: true,
     clientsClaim: true,
@@ -36,7 +35,7 @@ const withPWA = withPWAInit({
     runtimeCaching: [
       {
         urlPattern: /^https?.*/,
-        handler: "CacheFirst",
+        handler: "StaleWhileRevalidate",
         options: {
           cacheName: "http-cache",
           expiration: {
