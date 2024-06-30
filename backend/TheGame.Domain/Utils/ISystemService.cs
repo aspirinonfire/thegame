@@ -1,11 +1,10 @@
-namespace TheGame.Domain.Utils
+namespace TheGame.Domain.Utils;
+
+/// <summary>
+/// DateTime wrapper
+/// </summary>
+public interface ISystemService
 {
-  /// <summary>
-  /// DateTime wrapper
-  /// </summary>
-  public interface ISystemService
-  {
-    IDateTimeService DateTime { get; }
-    IDateTimeOffsetService DateTimeOffset { get; }
-  }
+  IDateTimeService DateTime { get; }
+  IDateTimeOffsetService DateTimeOffset { get; }
 }

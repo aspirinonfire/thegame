@@ -1,6 +1,6 @@
 namespace TheGame.Domain.DomainModels.Common
 {
-
+  // TODO replace with OneOf
   public record DomainResult
   {
     public string? ErrorMessage { get; init; }

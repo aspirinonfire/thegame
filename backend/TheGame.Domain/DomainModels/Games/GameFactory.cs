@@ -1,27 +1,31 @@
 using System;
 using TheGame.Domain.DomainModels.Common;
 
-namespace TheGame.Domain.DomainModels.Games
+namespace TheGame.Domain.DomainModels.Games;
+
+public interface IGameFactory
 {
-  public partial class Game
+  DomainResult<Game> CreateNewGame(string name);
+}
+
+public partial class Game
+{
+  public class GameFactory : IGameFactory
   {
-    public class GameFactory : IGameFactory
+    public GameFactory()
+    { }
+
+    public DomainResult<Game> CreateNewGame(string name)
     {
-      public GameFactory()
-      { }
-
-      public DomainResult<Game> CreateNewGame(string name)
+      var newGame = new Game
       {
-        var newGame = new Game
-        {
-          IsActive = true,
-          Name = string.IsNullOrWhiteSpace(name) ?
-            DateTimeOffset.UtcNow.ToString("o") :
-            name
-        };
+        IsActive = true,
+        Name = string.IsNullOrWhiteSpace(name) ?
+          DateTimeOffset.UtcNow.ToString("o") :
+          name
+      };
 
-        return DomainResult.Success(newGame);
-      }
+      return DomainResult.Success(newGame);
     }
   }
 }

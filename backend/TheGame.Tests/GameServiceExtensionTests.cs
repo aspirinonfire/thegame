@@ -2,7 +2,6 @@ using Microsoft.Extensions.DependencyInjection;
 using TheGame.Domain;
 using TheGame.Domain.DAL;
 using TheGame.Tests.TestUtils;
-using Xunit;
 
 namespace TheGame.Tests
 {

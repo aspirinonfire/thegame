@@ -1,45 +1,32 @@
-using System;
 using System.Collections.Generic;
 
-namespace TheGame.Domain.DomainModels.Common
+namespace TheGame.Domain.DomainModels.Common;
+
+public class BaseModel : IDomainModel
 {
-  public class BaseModel : IDomainModel
+  private readonly HashSet<IDomainEvent> _domainEvents = [];
+  public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents;
+
+  /// <summary>
+  /// Add an event to be handled by this microservice
+  /// </summary>
+  /// <param name="domainEvent"></param>
+  protected void AddDomainEvent(IDomainEvent domainEvent)
   {
-    private readonly HashSet<IDomainEvent> _domainEvents = new();
-    private readonly HashSet<IIntegrationEvent> _integrationEvents = new();
-    public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents;
-    public IReadOnlyCollection<IIntegrationEvent> IntegrationEvents => _integrationEvents;
+    _domainEvents.Add(domainEvent);
+  }
 
-    /// <summary>
-    /// Add an event to be handled by this microservice
-    /// </summary>
-    /// <param name="domainEvent"></param>
-    protected void AddDomainEvent(IDomainEvent domainEvent)
+  protected static HashSet<T> GetWriteableCollection<T>(IEnumerable<T> navCollection) where T: BaseModel
+  {
+    if (navCollection == null)
     {
-      _domainEvents.Add(domainEvent);
+      return new HashSet<T>();
     }
 
-    /// <summary>
-    /// Add an event to be handled by external system. E.g. SendGrid, SignalR, ServiceBus
-    /// </summary>
-    /// <param name="domainEvent"></param>
-    protected void AddIntegrationEvent(IIntegrationEvent domainEvent)
+    if (navCollection is HashSet<T> writeable)
     {
-      _integrationEvents.Add(domainEvent);
+      return writeable;
     }
-
-    protected static HashSet<T> GetWriteableCollection<T>(IEnumerable<T> navCollection) where T: BaseModel
-    {
-      if (navCollection == null)
-      {
-        return new HashSet<T>();
-      }
-
-      if (navCollection is HashSet<T> writeable)
-      {
-        return writeable;
-      }
-      return new HashSet<T>(navCollection);
-    }
+    return new HashSet<T>(navCollection);
   }
 }

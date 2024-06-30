@@ -1,10 +1,9 @@
 using System;
 
-namespace TheGame.Domain.Utils
+namespace TheGame.Domain.Utils;
+
+public interface IDateTimeOffsetService
 {
-  public interface IDateTimeOffsetService
-  {
-    DateTimeOffset Now { get; }
-    DateTimeOffset UtcNow { get; }
-  }
+  DateTimeOffset Now { get; }
+  DateTimeOffset UtcNow { get; }
 }

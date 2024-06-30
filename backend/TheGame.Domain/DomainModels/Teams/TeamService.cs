@@ -1,42 +1,39 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TheGame.Domain.DAL;
 using TheGame.Domain.DomainModels.Common;
-using TheGame.Domain.DomainModels.Games;
-using TheGame.Domain.DomainModels.Players;
 
-namespace TheGame.Domain.DomainModels.Teams
+namespace TheGame.Domain.DomainModels.Teams;
+
+public interface ITeamService
 {
-  public partial class Team
+  DomainResult<Team> CreateNewTeam(string name);
+}
+
+public partial class Team
+{
+  public class TeamService : ITeamService
   {
-    public class TeamService : ITeamService
+    public const string InvalidTeamNameError = "invalid_team_name";
+    private readonly IGameDbContext _dbContext;
+
+    public TeamService(IGameDbContext dbContext)
     {
-      public const string InvalidTeamNameError = "invalid_team_name";
-      private readonly IGameDbContext _dbContext;
+      _dbContext = dbContext;
+    }
 
-      public TeamService(IGameDbContext dbContext)
+    public DomainResult<Team> CreateNewTeam(string name)
+    {
+      if (string.IsNullOrEmpty(name))
       {
-        _dbContext = dbContext;
+        return DomainResult.Error<Team>(InvalidTeamNameError);
       }
 
-      public DomainResult<Team> CreateNewTeam(string name)
+      var newTeam = new Team
       {
-        if (string.IsNullOrEmpty(name))
-        {
-          return DomainResult.Error<Team>(InvalidTeamNameError);
-        }
+        Name = name
+      };
+      _dbContext.Teams.Add(newTeam);
 
-        var newTeam = new Team
-        {
-          Name = name
-        };
-        _dbContext.Teams.Add(newTeam);
-
-        return DomainResult.Success(newTeam);
-      }
+      return DomainResult.Success(newTeam);
     }
   }
 }

@@ -1,14 +1,12 @@
-using System;
+using MediatR;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace TheGame.Domain.DomainModels.Common
+namespace TheGame.Domain.DomainModels.Common;
+
+public interface IDomainEvent : INotification
+{ }
+
+public interface IDomainModel
 {
-  public interface IDomainModel
-  {
-    IReadOnlyCollection<IDomainEvent> DomainEvents { get; }
-    IReadOnlyCollection<IIntegrationEvent> IntegrationEvents { get; }
-  }
+  IReadOnlyCollection<IDomainEvent> DomainEvents { get; }
 }

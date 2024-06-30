@@ -4,120 +4,119 @@ using System.Linq;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 
-namespace TheGame.Domain.DomainModels.LicensePlates
+namespace TheGame.Domain.DomainModels.LicensePlates;
+
+public class LicensePlate : BaseModel, IEquatable<LicensePlate>
 {
-  public class LicensePlate : BaseModel, IEquatable<LicensePlate>
+  public static class ErrorMessages
   {
-    public static class ErrorMessages
+    public const string LicensePlateNotFoundError = "license_plate_not_found";
+  }
+
+  public static readonly IReadOnlyCollection<LicensePlate> AvailableLicensePlates = new List<LicensePlate>()
+  {
+    // TODO populate the rest
+    new LicensePlate() { Id = 1, Country = Country.CA, StateOrProvince = StateOrProvince.BC },
+    new LicensePlate() { Id = 2, Country = Country.US, StateOrProvince = StateOrProvince.AK },
+    new LicensePlate() { Id = 3, Country = Country.US, StateOrProvince = StateOrProvince.CA },
+    new LicensePlate() { Id = 4, Country = Country.US, StateOrProvince = StateOrProvince.NV },
+    new LicensePlate() { Id = 5, Country = Country.US, StateOrProvince = StateOrProvince.OR },
+    new LicensePlate() { Id = 6, Country = Country.US, StateOrProvince = StateOrProvince.WA },
+  };
+
+  private static readonly IReadOnlyDictionary<(Country, StateOrProvince), LicensePlate> _licensePlateMap =
+    AvailableLicensePlates
+      .ToDictionary(lp => (lp.Country, lp.StateOrProvince));
+
+  public long Id { get; protected set; }
+
+  public StateOrProvince StateOrProvince { get; protected set; }
+
+  public Country Country { get; protected set; }
+
+  /// <summary>
+  /// Do not use this navigation. Use GameLicensePlates instead.
+  /// LicensePlate navigation property is required for EF Core 6 configuration
+  /// </summary>
+  [Obsolete("Use for EF config only! Might be removed in future EF 7+")]
+  public virtual ICollection<Game> Games { get; protected set; }
+
+
+  protected HashSet<GameLicensePlate> _gameLicensePlates = new();
+  public virtual ICollection<GameLicensePlate> GameLicensePlates => _gameLicensePlates;
+
+  public LicensePlate()
+  {
+    // Autopopulatd by EF
+    Games = null!;
+  }
+
+  public static DomainResult<LicensePlate> GetLicensePlate(Country country, StateOrProvince stateOrProvince)
+  {
+    if (_licensePlateMap.TryGetValue((country, stateOrProvince), out var licensePlateModel))
     {
-      public const string LicensePlateNotFoundError = "license_plate_not_found";
+      return DomainResult.Success(licensePlateModel);
     }
+    return DomainResult.Error<LicensePlate>(ErrorMessages.LicensePlateNotFoundError);
+  }
 
-    public static readonly IReadOnlyCollection<LicensePlate> AvailableLicensePlates = new List<LicensePlate>()
-    {
-      // TODO populate the rest
-      new LicensePlate() { Id = 1, Country = Country.CA, StateOrProvince = StateOrProvince.BC },
-      new LicensePlate() { Id = 2, Country = Country.US, StateOrProvince = StateOrProvince.AK },
-      new LicensePlate() { Id = 3, Country = Country.US, StateOrProvince = StateOrProvince.CA },
-      new LicensePlate() { Id = 4, Country = Country.US, StateOrProvince = StateOrProvince.NV },
-      new LicensePlate() { Id = 5, Country = Country.US, StateOrProvince = StateOrProvince.OR },
-      new LicensePlate() { Id = 6, Country = Country.US, StateOrProvince = StateOrProvince.WA },
-    };
+  public override string ToString() => $"{Id}_{Country}_{StateOrProvince}";
 
-    private static readonly IReadOnlyDictionary<(Country, StateOrProvince), LicensePlate> _licensePlateMap =
-      AvailableLicensePlates
-        .ToDictionary(lp => (lp.Country, lp.StateOrProvince));
-
-    public long Id { get; protected set; }
-
-    public StateOrProvince StateOrProvince { get; protected set; }
-
-    public Country Country { get; protected set; }
-
-    /// <summary>
-    /// Do not use this navigation. Use GameLicensePlates instead.
-    /// LicensePlate navigation property is required for EF Core 6 configuration
-    /// </summary>
-    [Obsolete("Use for EF config only! Might be removed in future EF 7+")]
-    public virtual ICollection<Game> Games { get; protected set; }
-
-
-    protected HashSet<GameLicensePlate> _gameLicensePlates = new();
-    public virtual ICollection<GameLicensePlate> GameLicensePlates => _gameLicensePlates;
-
-    public LicensePlate()
-    {
-      // Autopopulatd by EF
-      Games = null!;
-    }
-
-    public static DomainResult<LicensePlate> GetLicensePlate(Country country, StateOrProvince stateOrProvince)
-    {
-      if (_licensePlateMap.TryGetValue((country, stateOrProvince), out var licensePlateModel))
-      {
-        return DomainResult.Success(licensePlateModel);
-      }
-      return DomainResult.Error<LicensePlate>(ErrorMessages.LicensePlateNotFoundError);
-    }
-
-    public override string ToString() => $"{Id}_{Country}_{StateOrProvince}";
-
-    public override int GetHashCode() => $"{Country}_{StateOrProvince}".GetHashCode();
+  public override int GetHashCode() => $"{Country}_{StateOrProvince}".GetHashCode();
 
 #pragma warning disable CS8765 // Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes).
-    public override bool Equals(object obj) => Equals(obj as LicensePlate);
+  public override bool Equals(object obj) => Equals(obj as LicensePlate);
 #pragma warning restore CS8765 // Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes).
 
-    public bool Equals(LicensePlate? other)
+  public bool Equals(LicensePlate? other)
+  {
+    if (other is null)
     {
-      if (other is null)
-      {
-        return false;
-      }
-
-      return Country == other.Country &&
-        StateOrProvince == other.StateOrProvince;
+      return false;
     }
 
-    public static bool operator ==(LicensePlate lhs, LicensePlate rhs)
+    return Country == other.Country &&
+      StateOrProvince == other.StateOrProvince;
+  }
+
+  public static bool operator ==(LicensePlate lhs, LicensePlate rhs)
+  {
+    if (lhs is null)
     {
-      if (lhs is null)
+      if (rhs is null)
       {
-        if (rhs is null)
-        {
-          return true;
-        }
-
-        // Only the left side is null.
-        return false;
+        return true;
       }
-      // Equals handles case of null on right side.
-      return lhs.Equals(rhs);
+
+      // Only the left side is null.
+      return false;
     }
-
-    public static bool operator !=(LicensePlate lhs, LicensePlate rhs) => !(lhs == rhs);
+    // Equals handles case of null on right side.
+    return lhs.Equals(rhs);
   }
 
-  //TODO Populate
-  public enum StateOrProvince
-  {
-    // US
-    AK,
-    CA,
-    NV,
-    OR,
-    WA,
+  public static bool operator !=(LicensePlate lhs, LicensePlate rhs) => !(lhs == rhs);
+}
 
-    // Canada
-    BC
+//TODO Populate
+public enum StateOrProvince
+{
+  // US
+  AK,
+  CA,
+  NV,
+  OR,
+  WA,
 
-    // Mexico
-  }
+  // Canada
+  BC
 
-  public enum Country
-  {
-    US,
-    CA,
-    MX
-  }
+  // Mexico
+}
+
+public enum Country
+{
+  US,
+  CA,
+  MX
 }

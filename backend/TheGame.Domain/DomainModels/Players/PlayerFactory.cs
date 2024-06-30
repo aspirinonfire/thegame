@@ -1,31 +1,30 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TheGame.Domain.DomainModels.Common;
 
-namespace TheGame.Domain.DomainModels.Players
+namespace TheGame.Domain.DomainModels.Players;
+
+public interface IPlayerFactory
 {
-  public partial class Player
+  DomainResult<Player> CreateNewPlayer(long userId, string name);
+}
+
+public partial class Player
+{
+  public class PlayerFactory : IPlayerFactory
   {
-    public class PlayerFactory : IPlayerFactory
+    public PlayerFactory()
     {
-      public PlayerFactory()
+
+    }
+
+    public DomainResult<Player> CreateNewPlayer(long userId, string name)
+    {
+      // Add player validations here
+
+      return DomainResult.Success<Player>(new Player
       {
-
-      }
-
-      public DomainResult<Player> CreateNewPlayer(long userId, string name)
-      {
-        // Add player validations here
-
-        return DomainResult.Success<Player>(new Player
-        {
-          UserId = userId,
-          Name = name
-        });
-      }
+        UserId = userId,
+        Name = name
+      });
     }
   }
 }

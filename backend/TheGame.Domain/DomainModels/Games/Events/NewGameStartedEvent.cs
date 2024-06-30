@@ -1,8 +1,7 @@
 using TheGame.Domain.DomainModels.Common;
 
-namespace TheGame.Domain.DomainModels.Games.Events
+namespace TheGame.Domain.DomainModels.Games.Events;
+
+public class NewGameStartedEvent : IDomainEvent
 {
-  public class NewGameStartedEvent : IDomainEvent
-  {
-  }
 }

@@ -7,8 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="DomainModels\Teams\Events\**" />
     <Compile Remove="Repositories\**" />
+    <EmbeddedResource Remove="DomainModels\Teams\Events\**" />
     <EmbeddedResource Remove="Repositories\**" />
+    <None Remove="DomainModels\Teams\Events\**" />
     <None Remove="Repositories\**" />
   </ItemGroup>
 
@@ -26,10 +29,6 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
     <PackageReference Include="OneOf" Version="3.0.271" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="DomainModels\Teams\Events\" />
   </ItemGroup>
 
 </Project>

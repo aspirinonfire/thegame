@@ -1,9 +1,8 @@
 using System;
 
-namespace TheGame.Domain.Utils
+namespace TheGame.Domain.Utils;
+
+public interface IDateTimeService
 {
-  public interface IDateTimeService
-  {
-    DateTime Now { get; }
-  }
+  DateTime Now { get; }
 }
