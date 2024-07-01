@@ -1,3 +1,4 @@
+using FluentValidation;
 using System.Collections.Generic;
 using System.Linq;
 using TheGame.Domain.DomainModels.Common;
@@ -30,9 +31,18 @@ public partial class Team : BaseModel
 
   public virtual OneOf<Player, Failure> AddNewPlayer(IPlayerFactory playerFactory, long userId, string playerName)
   {
-    if (Players.Any(player => player.UserId == userId))
+    var inlineValidator = new InlineValidator<Team>();
+
+    inlineValidator
+      .RuleForEach(team => team.Players)
+        .Must(player => player.UserId != userId)
+        .WithMessage(ErrorMessages.PlayerAlreadyExistError);
+
+    var validationResult = inlineValidator.Validate(this);
+
+    if (!validationResult.IsValid)
     {
-      return new Failure(ErrorMessages.PlayerAlreadyExistError);
+      return Failure.CreateFromValidationErrors(validationResult.Errors);
     }
 
     var playerResult = playerFactory.CreateNewPlayer(userId, playerName);
@@ -47,9 +57,16 @@ public partial class Team : BaseModel
 
   public virtual OneOf<Player, Failure> AddExistingPlayer(Player player)
   {
-    if (Players.Contains(player))
+    var inlineValidator = new InlineValidator<Team>();
+    inlineValidator
+      .RuleForEach(team => team.Players)
+      .Must(teamPlayer => teamPlayer != player)
+      .WithMessage(ErrorMessages.PlayerAlreadyExistError);
+
+    var validationResult = inlineValidator.Validate(this);
+    if (!validationResult.IsValid)
     {
-      return new Failure(ErrorMessages.PlayerAlreadyExistError);
+      return Failure.CreateFromValidationErrors(validationResult.Errors);
     }
 
     GetWriteableCollection(Players).Add(player);
@@ -60,14 +77,16 @@ public partial class Team : BaseModel
     string name,
     Player actingPlayer)
   {
-    if (!Players.Contains(actingPlayer))
-    {
-      return new Failure(ErrorMessages.InvalidPlayerError);
-    }
+    var inlineValidator = new InlineValidator<Team>();
+    inlineValidator
+      .RuleForEach(team => team.Games)
+        .Must(game => !game.IsActive)
+        .WithMessage(ErrorMessages.ActiveGameAlreadyExistsError);
 
-    if (Games.Any(game => game.IsActive))
+    var validationResult = inlineValidator.Validate(this);
+    if (!validationResult.IsValid)
     {
-      return new Failure(ErrorMessages.ActiveGameAlreadyExistsError);
+      return Failure.CreateFromValidationErrors(validationResult.Errors);
     }
 
     var newGameResult = gameFactory.CreateNewGame(name);

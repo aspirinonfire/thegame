@@ -1,4 +1,7 @@
+using FluentValidation.Results;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace TheGame.Domain.Utils
 {
@@ -8,6 +11,13 @@ namespace TheGame.Domain.Utils
   /// <param name="Error"></param>
   public class Failure(string Error)
   {
+    public static Failure CreateFromValidationErrors(IEnumerable<ValidationFailure> validationFailures)
+    {
+      var validationErrors = string.Join("\n", validationFailures.Select(err => $"{err.PropertyName}: {err.ErrorMessage}"));
+
+      return new Failure(validationErrors);
+    }
+
     public virtual string ErrorMessage => Error;
     public virtual Exception GetException() => new(Error);
   }

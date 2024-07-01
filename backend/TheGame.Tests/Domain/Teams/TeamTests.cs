@@ -93,7 +93,7 @@ namespace TheGame.Tests.Domain.Teams
 
       actualNewGameResult.AssertIsFailure(failureResult =>
       {
-        Assert.Equal(Team.ErrorMessages.ActiveGameAlreadyExistsError, failureResult.ErrorMessage);
+        Assert.Contains(Team.ErrorMessages.ActiveGameAlreadyExistsError, failureResult.ErrorMessage);
       });
 
       var actualGame = Assert.Single(uut.Games);
