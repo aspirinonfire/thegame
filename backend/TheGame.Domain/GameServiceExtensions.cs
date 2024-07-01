@@ -9,6 +9,7 @@ using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.Players;
+using TheGame.Domain.DomainModels.Users;
 
 namespace TheGame.Domain;
 
@@ -44,6 +45,7 @@ public static class GameServiceExtensions
         cfg.RegisterServicesFromAssembly(typeof(GameServiceExtensions).Assembly);
       })
       // Game domain services
+      .AddScoped<IPlayerIdentityFactory, PlayerIdentity.PlayerIdentityFactory>()
       .AddScoped<IPlayerFactory, Player.PlayerFactory>()
       .AddScoped<IGameFactory, Game.GameFactory>()
       .AddScoped<IGamePlayerFactory, GamePlayer.GamePlayerFactory>()

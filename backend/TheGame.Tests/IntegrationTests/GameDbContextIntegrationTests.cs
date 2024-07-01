@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
-using TheGame.Domain.DomainModels.Players;
+using TheGame.Domain.DomainModels.Users;
 using TheGame.Tests.Fixtures;
 using TheGame.Tests.TestUtils;
 
@@ -45,20 +45,25 @@ namespace TheGame.Tests.IntegrationTests
       using var scope = sp.CreateScope();
 
       var db = scope.ServiceProvider.GetRequiredService<IGameDbContext>();
-      var playerFac = scope.ServiceProvider.GetRequiredService<IPlayerFactory>();
+      var playerIdentFac = scope.ServiceProvider.GetRequiredService<IPlayerIdentityFactory>();
+      
       var gameFac = scope.ServiceProvider.GetRequiredService<IGameFactory>();
       var lpFac = scope.ServiceProvider.GetRequiredService<IGameLicensePlateFactory>();
       var sysService = scope.ServiceProvider.GetRequiredService<ISystemService>();
 
       using var trx = await db.BeginTransactionAsync();
 
-      var newPlayerResult = playerFac.CreateNewPlayer(22, "Test Player");
-      newPlayerResult.AssertIsSucceessful(out var actualNewPlayer);
+      var newPlayerIdentityResult = playerIdentFac.CreatePlayerIdentity(new NewPlayerIdentityRequest("test_provider", "test_id", "refresh_token", "Test Player"));
+      newPlayerIdentityResult.AssertIsSucceessful(out var actualNewPlayerIdentity,
+        identity =>
+        {
+          Assert.NotNull(identity.Player);
+        });
 
       await db.SaveChangesAsync();
 
       // create game
-      var gameResult = gameFac.CreateNewGame("Test Game", actualNewPlayer);
+      var gameResult = gameFac.CreateNewGame("Test Game", actualNewPlayerIdentity.Player!);
       gameResult.AssertIsSucceessful(out var actualNewGame);
 
       await db.SaveChangesAsync();
@@ -70,13 +75,13 @@ namespace TheGame.Tests.IntegrationTests
           (Country.US, StateOrProvince.CA),
           (Country.US, StateOrProvince.OR),
         ],
-        actualNewPlayer);
+        actualNewPlayerIdentity.Player!);
 
       spotResult.AssertIsSucceessful(actualGame =>
       {
         Assert.Equal(2, actualNewGame.GameLicensePlates.Count);
         Assert.All(actualGame.GameLicensePlates,
-          plate => Assert.Equal(actualNewPlayer, plate.SpottedBy));
+          plate => Assert.Equal(actualNewPlayerIdentity.Player, plate.SpottedBy));
       });
 
       await db.SaveChangesAsync();

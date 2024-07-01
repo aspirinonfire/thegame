@@ -12,6 +12,7 @@ using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.Players;
+using TheGame.Domain.DomainModels.Users;
 
 namespace TheGame.Domain.DomainModels;
 
@@ -26,6 +27,7 @@ public class GameDbContext : DbContext, IGameDbContext
   public DbSet<LicensePlate> LicensePlates { get; set; } = default!;
   public DbSet<Game> Games { get; set; } = default!;
   public DbSet<Player> Players { get; set; } = default!;
+  public DbSet<PlayerIdentity> PlayerIdentities { get; set; } = default!;
 
   // Should not be accessed directly
   // accessed from Player.Teams[].Games.Where

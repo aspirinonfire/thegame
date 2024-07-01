@@ -5,13 +5,18 @@ using System.Threading.Tasks;
 using System.Threading;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.Players;
+using TheGame.Domain.DomainModels.Games;
+using TheGame.Domain.DomainModels.Users;
 
 namespace TheGame.Domain.DomainModels;
 
 public interface IGameDbContext
 {
-  DbSet<LicensePlate> LicensePlates { get; set; }
-  DbSet<Player> Players { get; set; }
+  DbSet<LicensePlate> LicensePlates { get; }
+  DbSet<Player> Players { get; }
+  DbSet<Game> Games { get; }
+  DbSet<PlayerIdentity> PlayerIdentities { get; }
+
   EntityEntry<T> Entry<T>(T entity) where T : class;
   EntityEntry Add(object entity);
 

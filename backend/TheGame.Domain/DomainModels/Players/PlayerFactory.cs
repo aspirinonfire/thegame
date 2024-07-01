@@ -2,27 +2,23 @@ namespace TheGame.Domain.DomainModels.Players;
 
 public interface IPlayerFactory
 {
-  OneOf<Player, Failure> CreateNewPlayer(long userId, string name);
+  OneOf<Player, Failure> CreateNewPlayer(string name);
 }
 
 public partial class Player
 {
   public class PlayerFactory : IPlayerFactory
   {
-    public PlayerFactory()
+    public OneOf<Player, Failure> CreateNewPlayer(string name)
     {
+      // TODO Add player validations here
 
-    }
-
-    public OneOf<Player, Failure> CreateNewPlayer(long userId, string name)
-    {
-      // Add player validations here
-
-      return new Player
+      var newPlayer = new Player
       {
-        Id = userId,
-        Name = name
+        Name = name,
       };
+
+      return newPlayer;
     }
   }
 }
