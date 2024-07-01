@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace TheGame.Domain.DomainModels.Users
+namespace TheGame.Domain.DomainModels.PlayerIdentities
 {
   class PlayerIdentityEfConfig : IEntityTypeConfiguration<PlayerIdentity>
   {

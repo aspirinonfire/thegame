@@ -7,7 +7,7 @@ public interface IPlayerFactory
 
 public partial class Player
 {
-  public class PlayerFactory : IPlayerFactory
+  public class PlayerFactory() : IPlayerFactory
   {
     public OneOf<Player, Failure> CreateNewPlayer(string name)
     {

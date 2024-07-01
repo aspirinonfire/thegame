@@ -12,7 +12,7 @@ using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.Players;
-using TheGame.Domain.DomainModels.Users;
+using TheGame.Domain.DomainModels.PlayerIdentities;
 
 namespace TheGame.Domain.DomainModels;
 

@@ -3,20 +3,24 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Logging;
 using OneOf;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using TheGame.Domain.Commands.CreateNewPlayer;
+using TheGame.Domain.DomainModels.PlayerIdentities;
+using TheGame.Domain.Utils;
 
 namespace TheGame.Api.Auth;
 
 public class GameAuthService
 {
+  public const string PlayerIdentityIdClaimType = "game_player_identity_id";
   public const string PlayerIdClaimType = "game_player_id";
 
   public const string UnsuccessfulExternalAuthError = "External auth result was not successful!";
   public const string MissingAuthClaimsError = "Failed to retrieve claims from external auth result!";
   public const string MissingAuthNameIdClaimError = "Failed to retrieve NameId claim from external auth result!";
+  public const string MissingIdentityNameClaimError = "Failed to retrieve Player Name from external auth result!";
 
   // TODO read from config
   public const int MinutesBetweenRefresh = 10;
@@ -28,12 +32,12 @@ public class GameAuthService
     _logger = logger;
   }
 
-  public virtual async Task<OneOf<ClaimsPrincipal, string>> CreateClaimsIdentity(AuthenticateResult externalAuthResult)
+  public virtual OneOf<GetOrCreateNewPlayerCommand, Failure> GenerateGetOrCreateNewPlayerCommand(AuthenticateResult externalAuthResult)
   {
     if (!externalAuthResult.Succeeded)
     {
       _logger.LogError(UnsuccessfulExternalAuthError);
-      return UnsuccessfulExternalAuthError;
+      return new Failure(UnsuccessfulExternalAuthError);
     }
 
     var claimsLookup = externalAuthResult
@@ -46,61 +50,32 @@ public class GameAuthService
     if (claimsLookup == null || !claimsLookup.Any())
     {
       _logger.LogError(MissingAuthClaimsError);
-      return MissingAuthClaimsError;
+      return new Failure(MissingAuthClaimsError);
     }
 
-    // uniquely identifies current user
-    var authId = string.Empty;
-    if (claimsLookup.TryGetValue(ClaimTypes.NameIdentifier, out var nameIdentifierClaim))
-    {
-      authId = $"{externalAuthResult.Principal!.Identity!.AuthenticationType}_{nameIdentifierClaim.Value}";
-    }
-    else
+    if (!claimsLookup.TryGetValue(ClaimTypes.NameIdentifier, out var nameIdentifierClaim) || string.IsNullOrEmpty(nameIdentifierClaim.Value))
     {
       _logger.LogError(MissingAuthNameIdClaimError);
-      return MissingAuthNameIdClaimError;
+      return new Failure(MissingAuthNameIdClaimError);
     }
 
-    // TODO handle auth persistance
-
-    // CREATE
-    // 1. Player
-    // 2. Team
-    // 3. Auth Record + Refresh Token
-
-    // UPDATE
-    // 1. Auth Record Refresh token
-
-    // TODO Populate Player Id claim
-    var playerId = Guid.Empty.ToString();
-
-    var claims = new List<Claim>
-    {
-      new(PlayerIdClaimType, playerId, "string"),
-      new(ClaimTypes.NameIdentifier, authId, "string")
-    };
-
-    if (claimsLookup.TryGetValue(ClaimTypes.Name, out var playerNameClaim) && playerNameClaim != null)
-    {
-      claims.Add(playerNameClaim);
-    }
-
-    // TODO move to persistence rather than identity claim!
     var refreshToken = externalAuthResult.Properties.GetTokenValue(GoogleAuthConstants.RefreshTokenName);
-    if (!string.IsNullOrEmpty(refreshToken))
+    if (string.IsNullOrEmpty(refreshToken))
     {
-      claims.Add(new Claim(GoogleAuthConstants.RefreshTokenName, refreshToken, "string", GoogleAuthConstants.ClaimsIssuer));
+      _logger.LogWarning("Refresh Token is missing for {providerIdentityId}", nameIdentifierClaim.Value);
     }
 
-    var accessToken = externalAuthResult.Properties.GetTokenValue(GoogleAuthConstants.AccessTokenName);
-    if (!string.IsNullOrEmpty(accessToken))
+    if (!claimsLookup.TryGetValue(ClaimTypes.Name, out var playerNameClaim) || string.IsNullOrEmpty(playerNameClaim.Value))
     {
-      claims.Add(new Claim(GoogleAuthConstants.AccessTokenName, accessToken, "string", GoogleAuthConstants.ClaimsIssuer));
+      return new Failure(MissingIdentityNameClaimError);
     }
 
-    var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+    var request = new NewPlayerIdentityRequest(externalAuthResult.Principal!.Identity!.AuthenticationType ?? "unknown",
+      nameIdentifierClaim.Value,
+      refreshToken ?? string.Empty,
+      playerNameClaim.Value);
 
-    return new ClaimsPrincipal(claimsIdentity);
+    return new GetOrCreateNewPlayerCommand(request);
   }
 
   public virtual async Task RefreshCookie(CookieValidatePrincipalContext ctx)

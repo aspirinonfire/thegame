@@ -1,3 +1,4 @@
+using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -5,6 +6,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using System;
+using System.Collections.Generic;
+using System.Security.Claims;
+using TheGame.Domain.Utils;
 
 namespace TheGame.Api.Auth;
 
@@ -31,7 +35,7 @@ public static class AuthRoutes
       .AllowAnonymous();
 
     accountRoute
-      .MapGet($"/{_googleSigninRoute}", async (HttpContext ctx, GameAuthService gameAuthService) =>
+      .MapGet($"/{_googleSigninRoute}", async (HttpContext ctx, GameAuthService gameAuthService, IMediator mediator) =>
       {
         var googleAuthResult = await ctx.AuthenticateAsync(OpenIdConnectDefaults.AuthenticationScheme);
         if (googleAuthResult == null)
@@ -39,12 +43,28 @@ public static class AuthRoutes
           return Results.BadRequest("Unable to authenticate google auth result");
         }
 
-        // Parse auth results
-        var claimsPrincipalResult = await gameAuthService.CreateClaimsIdentity(googleAuthResult);
-        if (!claimsPrincipalResult.TryPickT0(out var claimsPrincipal, out var principalError))
+        var commandGenerationResult = gameAuthService.GenerateGetOrCreateNewPlayerCommand(googleAuthResult);
+        if (!commandGenerationResult.TryGetSuccessful(out var playerIdentityCommand, out var generateCommandFailures))
         {
-          return Results.BadRequest(principalError);
+          return Results.BadRequest(generateCommandFailures.ErrorMessage);
         }
+
+        var getOrCreatePlayerResult = await mediator.Send(playerIdentityCommand);
+        if (!getOrCreatePlayerResult.TryGetSuccessful(out var playerIdentity, out var playerIdentityFailure))
+        {
+          return Results.BadRequest(playerIdentityFailure.ErrorMessage);
+        }
+
+        // Create claims principal
+        var claims = new List<Claim>
+        {
+          new(GameAuthService.PlayerIdClaimType, $"{playerIdentity.PlayerId}", ClaimValueTypes.String),
+          new(GameAuthService.PlayerIdentityIdClaimType, $"{playerIdentity.PlayerIdentityId}", ClaimValueTypes.String),
+        };
+
+        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+        var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
         // create auth cookie
         var authProperties = new AuthenticationProperties
@@ -64,7 +84,7 @@ public static class AuthRoutes
           authProperties);
 
         // TODO redirect to UI landing page
-        return Results.Ok(new { claimsPrincipal.Identity?.Name });
+        return Results.LocalRedirect("/api/user");
       })
       .AllowAnonymous();
 

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
-using TheGame.Domain.DomainModels.Users;
+using TheGame.Domain.DomainModels.PlayerIdentities;
 
 namespace TheGame.Domain.DomainModels.Players;
 

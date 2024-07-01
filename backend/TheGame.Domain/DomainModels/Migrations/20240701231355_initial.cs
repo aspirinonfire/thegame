@@ -13,6 +13,9 @@ namespace TheGame.Domain.DomainModels.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateSequence(
+                name: "PlayerSequence");
+
             migrationBuilder.CreateTable(
                 name: "LicensePlates",
                 columns: table => new
@@ -28,15 +31,39 @@ namespace TheGame.Domain.DomainModels.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "PlayerIdentities",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProviderName = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ProviderIdentityId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    RefreshToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PlayerIdentities", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Players",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "bigint", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false, defaultValueSql: "NEXT VALUE FOR [PlayerSequence]"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PlayerIdentityId = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Players", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Players_PlayerIdentities_PlayerIdentityId",
+                        column: x => x.PlayerIdentityId,
+                        principalTable: "PlayerIdentities",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -158,6 +185,18 @@ namespace TheGame.Domain.DomainModels.Migrations
                 table: "LicensePlates",
                 columns: new[] { "Country", "StateOrProvince" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlayerIdentities_ProviderName_ProviderIdentityId",
+                table: "PlayerIdentities",
+                columns: new[] { "ProviderName", "ProviderIdentityId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Players_PlayerIdentityId",
+                table: "Players",
+                column: "PlayerIdentityId",
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -177,6 +216,12 @@ namespace TheGame.Domain.DomainModels.Migrations
 
             migrationBuilder.DropTable(
                 name: "Players");
+
+            migrationBuilder.DropTable(
+                name: "PlayerIdentities");
+
+            migrationBuilder.DropSequence(
+                name: "PlayerSequence");
         }
     }
 }

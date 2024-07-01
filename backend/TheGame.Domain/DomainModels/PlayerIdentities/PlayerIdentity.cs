@@ -2,7 +2,7 @@ using System;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Players;
 
-namespace TheGame.Domain.DomainModels.Users;
+namespace TheGame.Domain.DomainModels.PlayerIdentities;
 
 /// <summary>
 /// Player identity record.

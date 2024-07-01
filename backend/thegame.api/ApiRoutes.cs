@@ -1,7 +1,11 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Linq;
+using TheGame.Api.Auth;
+using TheGame.Domain.DomainModels;
 
 namespace TheGame.Api;
 
@@ -11,18 +15,31 @@ public static class ApiRoutes
   {
     var apiRoute = endpoints.MapGroup("api");
 
-    apiRoute.MapGet("user", (HttpContext ctx) =>
+    apiRoute.MapGet("user", async (HttpContext ctx, IGameDbContext dbContext) =>
     {
-      var claimsInfo = ctx.User.Claims
-        .Select(claim => new
-        {
-          claim.Type,
-          claim.Value,
-          claim.Issuer
-        })
-        .ToList();
+      // TODO create helper service to generate 
 
-      return Results.Ok(claimsInfo);
+      var playerId = ctx.User.Claims
+        .Where(claim => claim.Type == GameAuthService.PlayerIdClaimType)
+        .Select(claim => Convert.ToInt64(claim.Value))
+        .FirstOrDefault();
+
+      if (playerId < 1)
+      {
+        return Results.BadRequest("Invalid Player Id claim");
+      }
+
+      var player = await dbContext.Players
+        .AsNoTracking()
+        .Where(player => player.Id == playerId)
+        .Select(player => new
+        {
+          PlayerName = player.Name,
+          PlayerId = player.Id
+        })
+        .FirstOrDefaultAsync();
+
+      return Results.Ok(player);
     });
 
     return endpoints;

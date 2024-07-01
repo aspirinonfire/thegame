@@ -1,15 +1,13 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using TheGame.Domain.Commands;
-using TheGame.Domain.Commands.CreateTeamAndPlayer;
 using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.Players;
-using TheGame.Domain.DomainModels.Users;
+using TheGame.Domain.DomainModels.PlayerIdentities;
 
 namespace TheGame.Domain;
 
@@ -33,6 +31,7 @@ public static class GameServiceExtensions
         if (isDevelopment)
         {
           options.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddConsole()));
+          options.EnableSensitiveDataLogging(true);
         }
         options.UseLazyLoadingProxies(true);
         options.UseSqlServer(connectionString);
@@ -40,6 +39,7 @@ public static class GameServiceExtensions
       .AddScoped<IGameDbContext>(isp => isp.GetRequiredService<GameDbContext>())
       // Utils
       .AddSingleton<ISystemService, SystemService>()
+      .AddScoped<ITransactionExecutionWrapper, TransactionExecutionWrapper>()
       .AddMediatR(cfg =>
       {
         cfg.RegisterServicesFromAssembly(typeof(GameServiceExtensions).Assembly);
@@ -49,9 +49,7 @@ public static class GameServiceExtensions
       .AddScoped<IPlayerFactory, Player.PlayerFactory>()
       .AddScoped<IGameFactory, Game.GameFactory>()
       .AddScoped<IGamePlayerFactory, GamePlayer.GamePlayerFactory>()
-      .AddScoped<IGameLicensePlateFactory, GameLicensePlate.LicensePlateSpotFactory>()
-      // Commands
-      .AddScoped<IRequestHandler<CreateTeamAndPlayerCommand, CommandResult<CreateTeamAndPlayerResult>>, CreateTeamAndPlayerCommandHandler>();
+      .AddScoped<IGameLicensePlateFactory, GameLicensePlate.LicensePlateSpotFactory>();
 
     return services;
   }

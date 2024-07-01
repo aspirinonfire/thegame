@@ -7,12 +7,10 @@ class PlayerEfConfig : IEntityTypeConfiguration<Player>
 {
   public void Configure(EntityTypeBuilder<Player> builder)
   {
-    builder
-      .HasKey(player => player.Id);
+    builder.ToTable("Players");
 
-    builder
-      .Property(player => player.Id)
-      .ValueGeneratedNever();
+    builder.HasKey(player => player.Id);
+    builder.Property(player => player.Id).UseSequence();
 
     builder
       .Property(player => player.Name)

@@ -1,6 +1,6 @@
 using TheGame.Domain.DomainModels.Players;
 
-namespace TheGame.Domain.DomainModels.Users;
+namespace TheGame.Domain.DomainModels.PlayerIdentities;
 
 public interface IPlayerIdentityFactory
 {
