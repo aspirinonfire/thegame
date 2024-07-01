@@ -1,4 +1,3 @@
-using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.Games.Events;
 using TheGame.Domain.DomainModels.LicensePlates;
@@ -27,15 +26,14 @@ namespace TheGame.Tests.Domain.Teams
       var gameFactory = Substitute.For<IGameFactory>();
       gameFactory
         .CreateNewGame(gameName)
-        .Returns(DomainResult.Success(expectedNewGame));
+        .Returns(expectedNewGame);
 
-      var actual = uut.StartNewGame(gameFactory, gameName, player);
+      var actualNewGameResult = uut.StartNewGame(gameFactory, gameName, player);
 
-      Assert.True(actual.IsSuccess);
-      Assert.NotNull(actual.Value);
-      Assert.Null(actual.ErrorMessage);
-      var actualGame = Assert.Single(uut.Games);
-      Assert.Equal(expectedNewGame, actualGame);
+      actualNewGameResult.AssertIsSucceessful();
+
+      var actualTeamGame = Assert.Single(uut.Games);
+      Assert.Equal(expectedNewGame, actualTeamGame);
       var actualEvent = Assert.Single(uut.DomainEvents);
       Assert.IsType<NewGameStartedEvent>(actualEvent);
     }
@@ -60,16 +58,16 @@ namespace TheGame.Tests.Domain.Teams
       var gameFactory = Substitute.For<IGameFactory>();
       gameFactory
         .CreateNewGame(gameName)
-        .Returns(DomainResult.Success(expectedNewGame));
+        .Returns(expectedNewGame);
 
-      var actual = uut.StartNewGame(gameFactory, gameName, player);
+      var actualNewGameResult = uut.StartNewGame(gameFactory, gameName, player);
 
-      Assert.True(actual.IsSuccess);
-      Assert.NotNull(actual.Value);
-      Assert.Null(actual.ErrorMessage);
-      Assert.Equal(2, uut.Games.Count());
-      Assert.Equal(existingFinishedGame, uut.Games.First());
-      Assert.Equal(expectedNewGame, uut.Games.Last());
+      actualNewGameResult.AssertIsSucceessful();
+
+      Assert.Equal(2, uut.Games.Count);
+      Assert.Contains(existingFinishedGame, uut.Games);
+      Assert.Contains(expectedNewGame, uut.Games);
+
       var actualEvent = Assert.Single(uut.DomainEvents);
       Assert.IsType<NewGameStartedEvent>(actualEvent);
     }
@@ -91,11 +89,12 @@ namespace TheGame.Tests.Domain.Teams
 
       var gameFactory = Substitute.For<IGameFactory>();
 
-      var actual = uut.StartNewGame(gameFactory, gameName, player);
+      var actualNewGameResult = uut.StartNewGame(gameFactory, gameName, player);
 
-      Assert.False(actual.IsSuccess);
-      Assert.Null(actual.Value);
-      Assert.Equal(Team.ErrorMessages.ActiveGameAlreadyExistsError, actual.ErrorMessage);
+      actualNewGameResult.AssertIsFailure(failureResult =>
+      {
+        Assert.Equal(Team.ErrorMessages.ActiveGameAlreadyExistsError, failureResult.ErrorMessage);
+      });
 
       var actualGame = Assert.Single(uut.Games);
       Assert.Equal(existingActiveGame, actualGame);
@@ -116,7 +115,7 @@ namespace TheGame.Tests.Domain.Teams
 
       existingActiveGame
         .FinishGame(Arg.Any<DateTimeOffset>())
-        .Returns(DomainResult.Success<Game>(existingActiveGame))
+        .Returns(existingActiveGame)
         .AndDoes(_ =>
         {
           existingActiveGame.SetActiveFlag(false);
@@ -126,11 +125,9 @@ namespace TheGame.Tests.Domain.Teams
         [existingActiveGame],
         name: "Test Team");
 
-      var actual = uut.FinishActiveGame(CommonMockedServices.GetSystemService(), player);
+      var actualFinishGameResult = uut.FinishActiveGame(CommonMockedServices.GetSystemService(), player);
 
-      Assert.True(actual.IsSuccess);
-      Assert.NotNull(actual.Value);
-      Assert.Null(actual.ErrorMessage);
+      actualFinishGameResult.AssertIsSucceessful();
 
       var actualGame = Assert.Single(uut.Games);
       Assert.Equal(existingActiveGame, actualGame);

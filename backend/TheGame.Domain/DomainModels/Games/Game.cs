@@ -5,7 +5,6 @@ using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games.Events;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.Players;
-using TheGame.Domain.Utils;
 
 namespace TheGame.Domain.DomainModels.Games;
 
@@ -33,14 +32,14 @@ public partial class Game : BaseModel, IAuditedRecord
 
   public Game() { }
 
-  public virtual DomainResult<Game> AddLicensePlateSpot(IGameLicensePlateFactory licensePlateSpotFactory,
+  public virtual OneOf<Game, Failure> AddLicensePlateSpot(IGameLicensePlateFactory licensePlateSpotFactory,
     ISystemService systemService,
     IEnumerable<(Country country, StateOrProvince stateOrProvince)> licensePlateSpots,
     Player spottedBy)
   {
     if (!IsActive)
     {
-      return DomainResult.Error<Game>(ErrorMessages.InactiveGameError);
+      return new Failure(ErrorMessages.InactiveGameError);
     }
 
     var existingSpots = GameLicensePlates
@@ -58,31 +57,31 @@ public partial class Game : BaseModel, IAuditedRecord
         spottedBy,
         systemService.DateTimeOffset.UtcNow);
 
-      if (!licensePlateSpotResult.IsSuccess || licensePlateSpotResult.HasNoValue)
+      if (!licensePlateSpotResult.TryGetSuccessful(out var successfulSpot, out var spotFailure))
       {
-        return DomainResult.Error<Game>(ErrorMessages.FailedToAddSpotError);
+        return spotFailure;
       }
 
-      newSpottedPlates.Add(licensePlateSpotResult.Value!);
+      newSpottedPlates.Add(successfulSpot);
       GetWriteableCollection(GameLicensePlates)
-        .Add(licensePlateSpotResult.Value!);
+        .Add(successfulSpot);
     }
 
-    if (newSpottedPlates.Any())
+    if (newSpottedPlates.Count != 0)
     {
       AddDomainEvent(new LicensePlateSpottedEvent(newSpottedPlates.AsReadOnly()));
     }
 
-    return DomainResult.Success(this);
+    return this;
   }
 
-  public virtual DomainResult<Game> RemoveLicensePlateSpot(
+  public virtual OneOf<Game, Failure> RemoveLicensePlateSpot(
     IEnumerable<(Country country, StateOrProvince stateOrProvince)> licensePlatesToRemove,
     Player spottedBy)
   {
     if (!IsActive)
     {
-      return DomainResult.Error<Game>(ErrorMessages.InactiveGameError);
+      return new Failure(ErrorMessages.InactiveGameError);
     }
 
     var toRemove = new HashSet<(Country country, StateOrProvince stateOrProvince)>(licensePlatesToRemove);
@@ -91,19 +90,19 @@ public partial class Game : BaseModel, IAuditedRecord
 
     AddDomainEvent(new LicensePlateSpotRemovedEvent(licensePlatesToRemove));
 
-    return DomainResult.Success(this);
+    return this;
   }
 
-  public virtual DomainResult<Game> FinishGame(DateTimeOffset endedOn)
+  public virtual OneOf<Game, Failure> FinishGame(DateTimeOffset endedOn)
   {
     if (!IsActive)
     {
-      return DomainResult.Error<Game>(ErrorMessages.InactiveGameError);
+      return new Failure(ErrorMessages.InactiveGameError);
     }
 
     if (endedOn < DateCreated)
     {
-      return DomainResult.Error<Game>(ErrorMessages.InvalidEndedOnDate);
+      return new Failure(ErrorMessages.InvalidEndedOnDate);
     }
 
     IsActive = false;
@@ -111,6 +110,6 @@ public partial class Game : BaseModel, IAuditedRecord
 
     AddDomainEvent(new ExistingGameFinishedEvent());
 
-    return DomainResult.Success(this);
+    return this;
   }
 }

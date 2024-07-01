@@ -17,12 +17,12 @@ public class LicensePlate : BaseModel, IEquatable<LicensePlate>
   public static readonly IReadOnlyCollection<LicensePlate> AvailableLicensePlates = new List<LicensePlate>()
   {
     // TODO populate the rest
-    new LicensePlate() { Id = 1, Country = Country.CA, StateOrProvince = StateOrProvince.BC },
-    new LicensePlate() { Id = 2, Country = Country.US, StateOrProvince = StateOrProvince.AK },
-    new LicensePlate() { Id = 3, Country = Country.US, StateOrProvince = StateOrProvince.CA },
-    new LicensePlate() { Id = 4, Country = Country.US, StateOrProvince = StateOrProvince.NV },
-    new LicensePlate() { Id = 5, Country = Country.US, StateOrProvince = StateOrProvince.OR },
-    new LicensePlate() { Id = 6, Country = Country.US, StateOrProvince = StateOrProvince.WA },
+    new() { Id = 1, Country = Country.CA, StateOrProvince = StateOrProvince.BC },
+    new() { Id = 2, Country = Country.US, StateOrProvince = StateOrProvince.AK },
+    new() { Id = 3, Country = Country.US, StateOrProvince = StateOrProvince.CA },
+    new() { Id = 4, Country = Country.US, StateOrProvince = StateOrProvince.NV },
+    new() { Id = 5, Country = Country.US, StateOrProvince = StateOrProvince.OR },
+    new() { Id = 6, Country = Country.US, StateOrProvince = StateOrProvince.WA },
   };
 
   private static readonly ReadOnlyDictionary<(Country, StateOrProvince), LicensePlate> _licensePlateMap =
@@ -43,22 +43,21 @@ public class LicensePlate : BaseModel, IEquatable<LicensePlate>
 
   public LicensePlate() { }
 
-  public static DomainResult<LicensePlate> GetLicensePlate(Country country, StateOrProvince stateOrProvince)
+  public static OneOf<LicensePlate, Failure> GetLicensePlate(Country country, StateOrProvince stateOrProvince)
   {
     if (_licensePlateMap.TryGetValue((country, stateOrProvince), out var licensePlateModel))
     {
-      return DomainResult.Success(licensePlateModel);
+      return licensePlateModel;
     }
-    return DomainResult.Error<LicensePlate>(ErrorMessages.LicensePlateNotFoundError);
+
+    return new Failure(ErrorMessages.LicensePlateNotFoundError);
   }
 
   public override string ToString() => $"{Id}_{Country}_{StateOrProvince}";
 
   public override int GetHashCode() => $"{Country}_{StateOrProvince}".GetHashCode();
 
-#pragma warning disable CS8765 // Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes).
-  public override bool Equals(object obj) => Equals(obj as LicensePlate);
-#pragma warning restore CS8765 // Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes).
+  public override bool Equals(object? obj) => Equals(obj as LicensePlate);
 
   public bool Equals(LicensePlate? other)
   {

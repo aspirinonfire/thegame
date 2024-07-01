@@ -1,11 +1,10 @@
 using TheGame.Domain.DAL;
-using TheGame.Domain.DomainModels.Common;
 
 namespace TheGame.Domain.DomainModels.Teams;
 
 public interface ITeamService
 {
-  DomainResult<Team> CreateNewTeam(string name);
+  OneOf<Team, Failure> CreateNewTeam(string name);
 }
 
 public partial class Team
@@ -20,11 +19,11 @@ public partial class Team
       _dbContext = dbContext;
     }
 
-    public DomainResult<Team> CreateNewTeam(string name)
+    public OneOf<Team, Failure> CreateNewTeam(string name)
     {
       if (string.IsNullOrEmpty(name))
       {
-        return DomainResult.Error<Team>(InvalidTeamNameError);
+        return new Failure(InvalidTeamNameError);
       }
 
       var newTeam = new Team
@@ -33,7 +32,7 @@ public partial class Team
       };
       _dbContext.Teams.Add(newTeam);
 
-      return DomainResult.Success(newTeam);
+      return newTeam;
     }
   }
 }

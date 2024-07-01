@@ -20,7 +20,7 @@ public class BaseModel : IDomainModel
   {
     if (navCollection == null)
     {
-      return new HashSet<T>();
+      return [];
     }
 
     if (navCollection is HashSet<T> writeable)

@@ -1,4 +1,3 @@
-using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.Games.Events;
 using TheGame.Domain.DomainModels.LicensePlates;
@@ -24,16 +23,16 @@ namespace TheGame.Tests.Domain.Games
       var licensePlateFactory = Substitute.For<IGameLicensePlateFactory>();
       licensePlateFactory
         .CreateLicensePlateSpot(Country.US, StateOrProvince.CA, spottedBy, CommonMockedServices.DefaultDate)
-        .Returns(DomainResult.Success<GameLicensePlate>(lpSpot));
+        .Returns(lpSpot);
 
       var uut = new MockGame(null, true, null);
 
-      var actual = uut.AddLicensePlateSpot(licensePlateFactory,
+      var actualSpotResult = uut.AddLicensePlateSpot(licensePlateFactory,
         CommonMockedServices.GetSystemService(),
         [toSpot],
         spottedBy);
 
-      Assert.True(actual.IsSuccess);
+      actualSpotResult.AssertIsSucceessful();
 
       var actualLicensePlateSpot = Assert.Single(uut.GameLicensePlates);
       Assert.Equal(lpSpot, actualLicensePlateSpot);
@@ -54,12 +53,13 @@ namespace TheGame.Tests.Domain.Games
         new MockLicensePlate(Country.US, StateOrProvince.CA),
         existingSpottedBy);
 
-      var uut = new MockGame(new[] { existingSpot }, true, null);
+      var uut = new MockGame([existingSpot], true, null);
 
-      var actual = uut.RemoveLicensePlateSpot(new[] { toRemove },
+      var actualSpotResult = uut.RemoveLicensePlateSpot([toRemove],
         existingSpottedBy);
 
-      Assert.True(actual.IsSuccess);
+      actualSpotResult.AssertIsSucceessful();
+
       Assert.Empty(uut.GameLicensePlates);
       var actualEvent = Assert.Single(uut.DomainEvents);
       var actualRemovedEvent = Assert.IsType<LicensePlateSpotRemovedEvent>(actualEvent);
@@ -86,16 +86,17 @@ namespace TheGame.Tests.Domain.Games
       var licensePlateFactory = Substitute.For<IGameLicensePlateFactory>();
       licensePlateFactory
         .CreateLicensePlateSpot(Country.US, StateOrProvince.CA, spottedBy, CommonMockedServices.DefaultDate)
-        .Returns(DomainResult.Success<GameLicensePlate>(newSpot));
+        .Returns(newSpot);
 
       var uut = new MockGame([existingSpot], true, null);
 
-      var actual = uut.AddLicensePlateSpot(licensePlateFactory,
+      var actualSpotResult = uut.AddLicensePlateSpot(licensePlateFactory,
         CommonMockedServices.GetSystemService(),
         [toSpot],
         spottedBy);
 
-      Assert.True(actual.IsSuccess);
+      actualSpotResult.AssertIsSucceessful();
+
       var actualLicensePlateSpot = Assert.Single(uut.GameLicensePlates);
       Assert.Equal(existingSpot, actualLicensePlateSpot);
       Assert.Equal(existingSpottedBy, actualLicensePlateSpot.SpottedBy);
@@ -115,17 +116,17 @@ namespace TheGame.Tests.Domain.Games
       var licensePlateFactory = Substitute.For<IGameLicensePlateFactory>();
       licensePlateFactory
         .CreateLicensePlateSpot(Country.US, StateOrProvince.CA, spottedBy, CommonMockedServices.DefaultDate)
-        .Returns(DomainResult.Success<GameLicensePlate>(lpSpot));
+        .Returns(lpSpot);
 
       var uut = new MockGame(null, false, null);
 
-      var actual = uut.AddLicensePlateSpot(licensePlateFactory,
+      var actualSpotResult = uut.AddLicensePlateSpot(licensePlateFactory,
         CommonMockedServices.GetSystemService(),
         [toSpot],
         spottedBy);
 
-      Assert.False(actual.IsSuccess);
-      Assert.Equal(Game.ErrorMessages.InactiveGameError, actual.ErrorMessage);
+      actualSpotResult.AssertIsFailure(actualFailure => Assert.Equal(Game.ErrorMessages.InactiveGameError, actualFailure.ErrorMessage));
+
       Assert.Empty(uut.GameLicensePlates);
       Assert.Empty(uut.DomainEvents);
     }

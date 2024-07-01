@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.MsSql;
 using TheGame.Domain.DAL;
+using TheGame.Tests.TestUtils;
 
 namespace TheGame.Tests.Fixtures
 {
@@ -24,7 +25,7 @@ namespace TheGame.Tests.Fixtures
     {
       await _msSqlContainer.StartAsync();
 
-      var services = DevTestFixture.GetGameServicesWithTestDevDb(GetConnectionString());
+      var services = CommonMockedServices.GetGameServicesWithTestDevDb(GetConnectionString());
       await using var sp = services.BuildServiceProvider();
       var dbContext = sp.GetRequiredService<GameDbContext>();
       await dbContext.Database.MigrateAsync();

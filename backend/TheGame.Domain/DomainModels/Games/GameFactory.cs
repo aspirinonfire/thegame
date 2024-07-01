@@ -1,11 +1,10 @@
 using System;
-using TheGame.Domain.DomainModels.Common;
 
 namespace TheGame.Domain.DomainModels.Games;
 
 public interface IGameFactory
 {
-  DomainResult<Game> CreateNewGame(string name);
+  OneOf<Game, Failure> CreateNewGame(string name);
 }
 
 public partial class Game
@@ -15,7 +14,7 @@ public partial class Game
     public GameFactory()
     { }
 
-    public DomainResult<Game> CreateNewGame(string name)
+    public OneOf<Game, Failure> CreateNewGame(string name)
     {
       var newGame = new Game
       {
@@ -25,7 +24,7 @@ public partial class Game
           name
       };
 
-      return DomainResult.Success(newGame);
+      return newGame;
     }
   }
 }
