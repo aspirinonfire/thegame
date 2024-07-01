@@ -20,7 +20,7 @@ public partial class Player
 
       return new Player
       {
-        UserId = userId,
+        Id = userId,
         Name = name
       };
     }

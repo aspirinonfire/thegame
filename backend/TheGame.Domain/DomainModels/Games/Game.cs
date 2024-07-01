@@ -1,3 +1,4 @@
+using FluentValidation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,16 +15,31 @@ public partial class Game : BaseModel, IAuditedRecord
   {
     public const string InactiveGameError = "inactive_game";
     public const string FailedToAddSpotError = "failed_to_add_spot";
-    public const string InvalidEndedOnDate = "invalid_ended_on_date";
+    public const string InvalidEndedOnDateError = "invalid_ended_on_date";
+    public const string UninvitedPlayerError = "invalid_player";
   }
 
-  public virtual ICollection<LicensePlate> LicensePlates { get; private set; } = default!;
+  public virtual ICollection<LicensePlate> LicensePlates { get; private set; } = [];
   protected HashSet<GameLicensePlate> _gameLicensePlates = [];
   public virtual ICollection<GameLicensePlate> GameLicensePlates => _gameLicensePlates;
 
+  public virtual ICollection<Player> InvitedPlayers { get; private set; } = [];
+  protected HashSet<GamePlayer> _gamePlayerInvites = [];
+  public virtual ICollection<GamePlayer> GamePlayerInvites => _gamePlayerInvites;
+
   public long Id { get; }
+
   public string Name { get; protected set; } = default!;
+
   public bool IsActive { get; protected set; }
+
+  protected Player _createdBy = default!;
+  public virtual Player CreatedBy
+  {
+    get => _createdBy;
+    protected set => _createdBy = value;
+  }
+
   public DateTimeOffset? EndedOn { get; protected set; }
 
   public DateTimeOffset DateCreated { get; }
@@ -31,6 +47,26 @@ public partial class Game : BaseModel, IAuditedRecord
   public DateTimeOffset? DateModified { get; }
 
   public Game() { }
+
+  public virtual HashSet<Player> GetActiveGamePlayers()
+  {
+    return GamePlayerInvites
+      .Where(gp => gp.InviteStatus == GamePlayerInviteStatus.Accepted)
+      .Select(gp => gp.Player)
+      .Concat([CreatedBy])
+      .ToHashSet();
+  }
+
+  public virtual OneOf<GamePlayer, Failure> InvitePlayer(IGamePlayerFactory gamePlayerFactory, Player playerToInvite)
+  {
+    var newGamePlayerResult = gamePlayerFactory.AddPlayer(playerToInvite, this);
+    if (!newGamePlayerResult.TryGetSuccessful(out var successfulInvite, out var inviteFailure))
+    {
+      return inviteFailure;
+    }
+
+    return successfulInvite;
+  }
 
   public virtual OneOf<Game, Failure> AddLicensePlateSpot(IGameLicensePlateFactory licensePlateSpotFactory,
     ISystemService systemService,
@@ -40,6 +76,11 @@ public partial class Game : BaseModel, IAuditedRecord
     if (!IsActive)
     {
       return new Failure(ErrorMessages.InactiveGameError);
+    }
+
+    if (!GetActiveGamePlayers().Contains(spottedBy))
+    {
+      return new Failure(ErrorMessages.UninvitedPlayerError);
     }
 
     var existingSpots = GameLicensePlates
@@ -84,6 +125,11 @@ public partial class Game : BaseModel, IAuditedRecord
       return new Failure(ErrorMessages.InactiveGameError);
     }
 
+    if (!GetActiveGamePlayers().Contains(spottedBy))
+    {
+      return new Failure(ErrorMessages.UninvitedPlayerError);
+    }
+
     var toRemove = new HashSet<(Country country, StateOrProvince stateOrProvince)>(licensePlatesToRemove);
     GetWriteableCollection(GameLicensePlates)
       .RemoveWhere(spot => toRemove.Contains((spot.LicensePlate.Country, spot.LicensePlate.StateOrProvince)));
@@ -102,7 +148,7 @@ public partial class Game : BaseModel, IAuditedRecord
 
     if (endedOn < DateCreated)
     {
-      return new Failure(ErrorMessages.InvalidEndedOnDate);
+      return new Failure(ErrorMessages.InvalidEndedOnDateError);
     }
 
     IsActive = false;

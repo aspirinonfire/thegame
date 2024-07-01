@@ -1,34 +1,26 @@
 using System;
 using System.Collections.Generic;
 using TheGame.Domain.DomainModels.Common;
-using TheGame.Domain.DomainModels.Teams;
+using TheGame.Domain.DomainModels.Games;
 
 namespace TheGame.Domain.DomainModels.Players;
 
 public partial class Player : BaseModel, IEquatable<Player>
 {
-  protected HashSet<Team> _teams = [];
+  public virtual ICollection<Game> InvitedGames { get; private set; } = [];
 
-  public virtual ICollection<Team> Teams => _teams;
+  protected HashSet<GamePlayer> _invitedGamePlayers = [];
+  public virtual ICollection<GamePlayer> InvatedGamePlayers => _invitedGamePlayers;
 
-  public long UserId { get; protected set; }
+  public long Id { get; protected set; }
+
   public string Name { get; protected set; } = default!;
 
-  public Player() { }
-
-  public override int GetHashCode() => UserId.GetHashCode();
+  public override int GetHashCode() => Id.GetHashCode();
 
   public override bool Equals(object? obj) => Equals(obj as Player);
 
-  public bool Equals(Player? other)
-  {
-    if (other is null)
-    {
-      return false;
-    }
-
-    return UserId == other.UserId;
-  }
+  public bool Equals(Player? other) => Id == other?.Id;
 
   public static bool operator ==(Player lhs, Player rhs)
   {

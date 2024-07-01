@@ -1,28 +1,30 @@
 using System;
+using TheGame.Domain.DAL;
+using TheGame.Domain.DomainModels.Players;
 
 namespace TheGame.Domain.DomainModels.Games;
 
 public interface IGameFactory
 {
-  OneOf<Game, Failure> CreateNewGame(string name);
+  OneOf<Game, Failure> CreateNewGame(string name, Player gameOwner);
 }
 
 public partial class Game
 {
-  public class GameFactory : IGameFactory
+  public class GameFactory(GameDbContext gameDbContext) : IGameFactory
   {
-    public GameFactory()
-    { }
-
-    public OneOf<Game, Failure> CreateNewGame(string name)
+    public OneOf<Game, Failure> CreateNewGame(string name, Player gameOwner)
     {
       var newGame = new Game
       {
         IsActive = true,
         Name = string.IsNullOrWhiteSpace(name) ?
           DateTimeOffset.UtcNow.ToString("o") :
-          name
+          name,
+        CreatedBy = gameOwner,
       };
+
+      gameDbContext.Games.Add(newGame);
 
       return newGame;
     }

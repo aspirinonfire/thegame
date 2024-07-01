@@ -7,11 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="DomainModels\Teams\Events\**" />
     <Compile Remove="Repositories\**" />
-    <EmbeddedResource Remove="DomainModels\Teams\Events\**" />
     <EmbeddedResource Remove="Repositories\**" />
-    <None Remove="DomainModels\Teams\Events\**" />
     <None Remove="Repositories\**" />
   </ItemGroup>
 

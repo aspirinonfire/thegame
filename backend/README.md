@@ -30,13 +30,10 @@
 
 
 ## EF Migrations:
-> Make sure to set `appsettings.Development.json` `GameDB` connection string before running migrations!
+> Make sure to set `appsettings.Development.json` `GameDB` connection string before running migrations! For best experience, cd to `TheGame.Domain` project first before running migrations.
 
--- Create initial DB migration script --
-`dotnet ef migrations add initial --verbose -s ..\TheGame.Api\ --output-dir DAL\Migrations`
+#### Add new migration
+`dotnet ef migrations add <MigrationName> --verbose --startup-project "../TheGame.Api" --project "." --output-dir "DAL\Migrations"`
 
--- Add new migration --
-`dotnet ef migrations add <MigrationName> --verbose`
-
--- Run migration --
-`dotnet ef database update -s "TheGame.Api" -p "TheGame.Api"`
+### Run migration
+`dotnet ef database update --startup-project "../TheGame.Api" --project "../TheGame.Api"`

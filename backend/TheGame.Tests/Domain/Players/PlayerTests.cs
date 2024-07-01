@@ -10,8 +10,8 @@ namespace TheGame.Tests.Domain.Players
     [InlineData(1, 2, false)]
     public void CanCompareTwoPlayers(long playerOneUserId, long playerTwoUserId, bool expectEqual)
     {
-      var playerOne = new MockPlayer(null, playerOneUserId, "player one");
-      var playerTwo = new MockPlayer(null, playerTwoUserId, "player two");
+      var playerOne = new MockPlayer(playerOneUserId, "player one");
+      var playerTwo = new MockPlayer(playerTwoUserId, "player two");
 
       Assert.Equal(expectEqual, playerOne == playerTwo);
       Assert.Equal(expectEqual, playerOne.GetHashCode() == playerTwo.GetHashCode());

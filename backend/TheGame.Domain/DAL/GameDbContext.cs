@@ -9,10 +9,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TheGame.Domain.DomainModels.Common;
+using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.Players;
-using TheGame.Domain.DomainModels.Teams;
-using TheGame.Domain.Utils;
 
 namespace TheGame.Domain.DAL;
 
@@ -25,7 +24,7 @@ public class GameDbContext : DbContext, IGameDbContext
   private readonly ISystemService _systemService;
 
   public DbSet<LicensePlate> LicensePlates { get; set; } = default!;
-  public DbSet<Team> Teams { get; set; } = default!;
+  public DbSet<Game> Games { get; set; } = default!;
   public DbSet<Player> Players { get; set; } = default!;
 
   // Should not be accessed directly

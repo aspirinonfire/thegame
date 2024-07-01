@@ -9,7 +9,6 @@ using TheGame.Domain.DAL;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.Players;
-using TheGame.Domain.DomainModels.Teams;
 
 namespace TheGame.Domain;
 
@@ -47,9 +46,9 @@ public static class GameServiceExtensions
         cfg.RegisterServicesFromAssembly(typeof(GameServiceExtensions).Assembly);
       })
       // Game domain services
-      .AddScoped<ITeamService, Team.TeamService>()
       .AddScoped<IPlayerFactory, Player.PlayerFactory>()
       .AddScoped<IGameFactory, Game.GameFactory>()
+      .AddScoped<IGamePlayerFactory, GamePlayer.GamePlayerFactory>()
       .AddScoped<IGameLicensePlateFactory, GameLicensePlate.LicensePlateSpotFactory>()
       // Commands
       .AddScoped<IRequestHandler<CreateTeamAndPlayerCommand, CommandResult<CreateTeamAndPlayerResult>>, CreateTeamAndPlayerCommandHandler>();

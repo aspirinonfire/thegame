@@ -12,17 +12,21 @@ using TheGame.Domain.DAL;
 namespace TheGame.Domain.DAL.Migrations
 {
     [DbContext(typeof(GameDbContext))]
-    [Migration("20211230211809_GameRelasCleanup")]
-    partial class GameRelasCleanup
+    [Migration("20240701194536_initial")]
+    partial class initial
     {
+        /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.1")
+                .HasAnnotation("ProductVersion", "8.0.6")
+                .HasAnnotation("Proxies:ChangeTracking", false)
+                .HasAnnotation("Proxies:CheckEquality", false)
+                .HasAnnotation("Proxies:LazyLoading", true)
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("GameLicensePlates", b =>
                 {
@@ -35,31 +39,16 @@ namespace TheGame.Domain.DAL.Migrations
                     b.Property<DateTimeOffset>("DateCreated")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<long>("SpottedByUserId")
+                    b.Property<long>("SpottedByPlayerId")
                         .HasColumnType("bigint");
 
                     b.HasKey("GameId", "LicensePlateId");
 
                     b.HasIndex("LicensePlateId");
 
-                    b.HasIndex("SpottedByUserId");
+                    b.HasIndex("SpottedByPlayerId");
 
                     b.ToTable("GameLicensePlates");
-                });
-
-            modelBuilder.Entity("PlayerTeam", b =>
-                {
-                    b.Property<long>("PlayersUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("TeamsId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("PlayersUserId", "TeamsId");
-
-                    b.HasIndex("TeamsId");
-
-                    b.ToTable("TeamPlayers", (string)null);
                 });
 
             modelBuilder.Entity("TheGame.Domain.DomainModels.Games.Game", b =>
@@ -68,7 +57,10 @@ namespace TheGame.Domain.DAL.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("CreatedByPlayerId")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTimeOffset>("DateCreated")
                         .HasColumnType("datetimeoffset");
@@ -83,16 +75,36 @@ namespace TheGame.Domain.DAL.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<long>("TeamId")
-                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TeamId");
+                    b.HasIndex("CreatedByPlayerId");
 
                     b.ToTable("Games", (string)null);
+                });
+
+            modelBuilder.Entity("TheGame.Domain.DomainModels.Games.GamePlayer", b =>
+                {
+                    b.Property<long>("GameId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("PlayerId")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("InvitationToken")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("InviteStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("GameId", "PlayerId");
+
+                    b.HasIndex("PlayerId");
+
+                    b.ToTable("GamePlayer");
                 });
 
             modelBuilder.Entity("TheGame.Domain.DomainModels.LicensePlates.LicensePlate", b =>
@@ -101,7 +113,7 @@ namespace TheGame.Domain.DAL.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Country")
                         .IsRequired()
@@ -159,25 +171,8 @@ namespace TheGame.Domain.DAL.Migrations
 
             modelBuilder.Entity("TheGame.Domain.DomainModels.Players.Player", b =>
                 {
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("UserId");
-
-                    b.ToTable("Players");
-                });
-
-            modelBuilder.Entity("TheGame.Domain.DomainModels.Teams.Team", b =>
-                {
                     b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -185,7 +180,7 @@ namespace TheGame.Domain.DAL.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Teams");
+                    b.ToTable("Players");
                 });
 
             modelBuilder.Entity("GameLicensePlates", b =>
@@ -204,8 +199,8 @@ namespace TheGame.Domain.DAL.Migrations
 
                     b.HasOne("TheGame.Domain.DomainModels.Players.Player", "SpottedBy")
                         .WithMany()
-                        .HasForeignKey("SpottedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("SpottedByPlayerId")
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Game");
@@ -215,33 +210,41 @@ namespace TheGame.Domain.DAL.Migrations
                     b.Navigation("SpottedBy");
                 });
 
-            modelBuilder.Entity("PlayerTeam", b =>
-                {
-                    b.HasOne("TheGame.Domain.DomainModels.Players.Player", null)
-                        .WithMany()
-                        .HasForeignKey("PlayersUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TheGame.Domain.DomainModels.Teams.Team", null)
-                        .WithMany()
-                        .HasForeignKey("TeamsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("TheGame.Domain.DomainModels.Games.Game", b =>
                 {
-                    b.HasOne("TheGame.Domain.DomainModels.Teams.Team", null)
-                        .WithMany("Games")
-                        .HasForeignKey("TeamId")
+                    b.HasOne("TheGame.Domain.DomainModels.Players.Player", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedByPlayerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("CreatedBy");
+                });
+
+            modelBuilder.Entity("TheGame.Domain.DomainModels.Games.GamePlayer", b =>
+                {
+                    b.HasOne("TheGame.Domain.DomainModels.Games.Game", "Game")
+                        .WithMany("GamePlayerInvites")
+                        .HasForeignKey("GameId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TheGame.Domain.DomainModels.Players.Player", "Player")
+                        .WithMany("InvatedGamePlayers")
+                        .HasForeignKey("PlayerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Game");
+
+                    b.Navigation("Player");
                 });
 
             modelBuilder.Entity("TheGame.Domain.DomainModels.Games.Game", b =>
                 {
                     b.Navigation("GameLicensePlates");
+
+                    b.Navigation("GamePlayerInvites");
                 });
 
             modelBuilder.Entity("TheGame.Domain.DomainModels.LicensePlates.LicensePlate", b =>
@@ -249,9 +252,9 @@ namespace TheGame.Domain.DAL.Migrations
                     b.Navigation("GameLicensePlates");
                 });
 
-            modelBuilder.Entity("TheGame.Domain.DomainModels.Teams.Team", b =>
+            modelBuilder.Entity("TheGame.Domain.DomainModels.Players.Player", b =>
                 {
-                    b.Navigation("Games");
+                    b.Navigation("InvatedGamePlayers");
                 });
 #pragma warning restore 612, 618
         }

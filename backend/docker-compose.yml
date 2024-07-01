@@ -24,7 +24,7 @@ services:
       context: .
       dockerfile: thegame.api/Dockerfile
     environment:
-      - ConnectionStrings__GameDB=Server=mssql; User Id=sa; Password=${SQL_PASSWORD}; Trust Server Certificate=True;
+      - ConnectionStrings__GameDB=Server=mssql; Initial Catalog=${DB_NAME}; User Id=sa; Password=${SQL_PASSWORD}; Trust Server Certificate=True;
       - Auth__Google__ClientId=${GOOGLE_CLIENT_ID}
       - Auth__Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
       - ASPNETCORE_ENVIRONMENT=Development

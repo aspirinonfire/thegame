@@ -9,10 +9,10 @@ class PlayerEfConfig : IEntityTypeConfiguration<Player>
   public void Configure(EntityTypeBuilder<Player> builder)
   {
     builder
-      .HasKey(player => player.UserId);
+      .HasKey(player => player.Id);
 
     builder
-      .Property(player => player.UserId)
+      .Property(player => player.Id)
       .ValueGeneratedNever();
 
     builder
@@ -20,8 +20,8 @@ class PlayerEfConfig : IEntityTypeConfiguration<Player>
       .IsRequired();
 
     builder
-      .Navigation(player => player.Teams)
+      .Navigation(player => player.InvatedGamePlayers)
       .UsePropertyAccessMode(PropertyAccessMode.Field)
-      .HasField("_teams");
+      .HasField("_invitedGamePlayers");
   }
 }

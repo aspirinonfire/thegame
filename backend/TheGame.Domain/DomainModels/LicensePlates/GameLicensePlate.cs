@@ -9,21 +9,13 @@ public partial class GameLicensePlate : BaseModel
 {
   // required for N:M EF Config
   public long LicensePlateId { get; protected set; }
-  public virtual LicensePlate LicensePlate  { get; protected set; }
+  public virtual LicensePlate LicensePlate { get; protected set; } = default!;
 
   // required for N:M EF Config
   public long GameId { get; protected set; }
-  public virtual Game Game { get; protected set; }
+  public virtual Game Game { get; protected set; } = default!;
 
-  public virtual Player SpottedBy { get; protected set; }
+  public virtual Player SpottedBy { get; protected set; } = default!;
 
-  public DateTimeOffset DateCreated { get; protected set; }
-
-  public GameLicensePlate()
-  {
-    // Autopopulated by EF
-    LicensePlate = null!;
-    Game = null!;
-    SpottedBy = null!;
-  }
+  public DateTimeOffset DateCreated { get; protected set; } = default!;
 }
