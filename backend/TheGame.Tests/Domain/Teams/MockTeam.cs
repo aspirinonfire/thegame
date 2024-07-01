@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.Players;
 using TheGame.Domain.DomainModels.Teams;
@@ -10,9 +11,13 @@ namespace TheGame.Tests.Domain.Teams
       IEnumerable<Game>? games,
       string name)
     {
-      _players = players != null ? new HashSet<Player>(players) : [];
+      _players = players != null ?
+        new HashSet<Player>(players) :
+        new ();
 
-      _games = games != null ? new HashSet<Game>(games) : [];
+      _games = games != null ?
+        new HashSet<Game>(games) :
+        new ();
 
       Name = name;
     }

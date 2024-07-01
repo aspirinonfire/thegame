@@ -7,14 +7,18 @@ namespace TheGame.Domain.DomainModels.Players;
 
 public partial class Player : BaseModel, IEquatable<Player>
 {
-  protected HashSet<Team> _teams = [];
+  protected HashSet<Team> _teams = new();
 
   public virtual ICollection<Team> Teams => _teams;
 
   public long UserId { get; protected set; }
-  public string Name { get; protected set; } = default!;
+  public string Name { get; protected set; }
 
-  public Player() { }
+  public Player()
+  {
+    // Autopopulated by EF
+    Name = null!;
+  }
 
   public override int GetHashCode() => UserId.GetHashCode();
 

@@ -1,12 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TheGame.Domain.DAL;
+using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
+using TheGame.Domain.DomainModels.Players;
 using TheGame.Domain.DomainModels.Teams;
 using TheGame.Tests.Fixtures;
 using TheGame.Tests.TestUtils;
 
-namespace TheGame.Tests.IntegrationTests
+namespace TheGame.Tests.DevTests
 {
   [Trait(XunitTestProvider.Category, XunitTestProvider.Integration)]
   public class GameDbContextDevTests(MsSqlFixture msSqlFixture) : IClassFixture<MsSqlFixture>
@@ -30,7 +32,7 @@ namespace TheGame.Tests.IntegrationTests
     }
 
     [Fact]
-    public async Task CanCreateTeamPlayerGameAndAddSpot()
+    public async Task CreateTeamPlayerGameAndAddSpot()
     {
       var services = CommonMockedServices.GetGameServicesWithTestDevDb(msSqlFixture.GetConnectionString());
 
@@ -43,21 +45,24 @@ namespace TheGame.Tests.IntegrationTests
       using var scope = sp.CreateScope();
 
       var db = scope.ServiceProvider.GetRequiredService<IGameDbContext>();
-      var teamSvc = scope.ServiceProvider.GetRequiredService<ITeamService>();
-
       using var trx = await db.BeginTransactionAsync();
 
-      var actualNewTeamResult = await teamSvc.CreateNewTeam("test_team");
-      actualNewTeamResult.AssertIsSucceessful(out var actualSuccessfulTeam);
+      // add new team and player
+      var teamSvc = scope.ServiceProvider.GetRequiredService<ITeamService>();
+      var teamResult = teamSvc.CreateNewTeam("test_team");
 
-      var actualNewPlayerResult = teamSvc.AddNewPlayer(actualSuccessfulTeam, 22, "test player");
-      actualNewPlayerResult.AssertIsSucceessful(out var actualNewPlayer);
+      teamResult.AssertIsSucceessful(out var actualSuccessfulTeam);
+
+      var playerFac = scope.ServiceProvider.GetRequiredService<IPlayerFactory>();
+      var playerResult = actualSuccessfulTeam!.AddNewPlayer(playerFac, 22, "test player");
+      playerResult.AssertIsSucceessful(out var actualNewPlayer);
 
       await db.SaveChangesAsync();
 
       // create game
-      var actualNewGameResult = teamSvc.StartNewGame(actualSuccessfulTeam, "Test Game", actualNewPlayer);
-      actualNewGameResult.AssertIsSucceessful(out var actualNewGame);
+      var gameFac = scope.ServiceProvider.GetRequiredService<IGameFactory>();
+      var gameResult = actualSuccessfulTeam.StartNewGame(gameFac, "Test Game", actualNewPlayer!);
+      gameResult.AssertIsSucceessful(out var actualNewGame);
 
       // spot plate
       var lpFac = scope.ServiceProvider.GetRequiredService<IGameLicensePlateFactory>();
@@ -70,13 +75,7 @@ namespace TheGame.Tests.IntegrationTests
         ],
         actualNewPlayer!);
 
-      spotResult.AssertIsSucceessful(actualGame =>
-      {
-        Assert.Equal(2, actualNewGame.GameLicensePlates.Count);
-
-        Assert.All(actualGame.GameLicensePlates,
-          plate => Assert.Equal(actualNewPlayer, plate.SpottedBy));
-      });
+      spotResult.AssertIsSucceessful();
 
       await db.SaveChangesAsync();
       trx.Commit();

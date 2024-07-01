@@ -1,4 +1,5 @@
 using TheGame.Tests.TestUtils;
+using Xunit;
 
 namespace TheGame.Tests.Domain.Players
 {

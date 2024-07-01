@@ -21,10 +21,7 @@ namespace TheGame.Tests
       };
       using var sp = services.BuildServiceProvider(diOpts);
       using var scope = sp.CreateScope();
-
-      var actualException = Record.Exception(scope.ServiceProvider.GetRequiredService<IGameDbContext>);
-
-      Assert.Null(actualException);
+      var db = scope.ServiceProvider.GetRequiredService<IGameDbContext>();
     }
   }
 }

@@ -16,11 +16,6 @@ public class Program
   public static void Main(string[] args)
   {
     var builder = WebApplication.CreateBuilder(args);
-    builder.WebHost.UseDefaultServiceProvider(diOpts =>
-    {
-      diOpts.ValidateOnBuild = true;
-      diOpts.ValidateScopes = true;
-    });
 
     // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
     builder.Services
