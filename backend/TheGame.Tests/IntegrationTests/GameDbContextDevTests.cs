@@ -8,7 +8,7 @@ using TheGame.Domain.DomainModels.Teams;
 using TheGame.Tests.Fixtures;
 using TheGame.Tests.TestUtils;
 
-namespace TheGame.Tests.DevTests
+namespace TheGame.Tests.IntegrationTests
 {
   [Trait(XunitTestProvider.Category, XunitTestProvider.Integration)]
   public class GameDbContextDevTests(MsSqlFixture msSqlFixture) : IClassFixture<MsSqlFixture>
@@ -32,7 +32,7 @@ namespace TheGame.Tests.DevTests
     }
 
     [Fact]
-    public async Task CreateTeamPlayerGameAndAddSpot()
+    public async Task CanCreateTeamPlayerGameAndAddSpot()
     {
       var services = CommonMockedServices.GetGameServicesWithTestDevDb(msSqlFixture.GetConnectionString());
 
@@ -54,14 +54,14 @@ namespace TheGame.Tests.DevTests
       teamResult.AssertIsSucceessful(out var actualSuccessfulTeam);
 
       var playerFac = scope.ServiceProvider.GetRequiredService<IPlayerFactory>();
-      var playerResult = actualSuccessfulTeam!.AddNewPlayer(playerFac, 22, "test player");
+      var playerResult = actualSuccessfulTeam.AddNewPlayer(playerFac, 22, "test player");
       playerResult.AssertIsSucceessful(out var actualNewPlayer);
 
       await db.SaveChangesAsync();
 
       // create game
       var gameFac = scope.ServiceProvider.GetRequiredService<IGameFactory>();
-      var gameResult = actualSuccessfulTeam.StartNewGame(gameFac, "Test Game", actualNewPlayer!);
+      var gameResult = actualSuccessfulTeam.StartNewGame(gameFac, "Test Game", actualNewPlayer);
       gameResult.AssertIsSucceessful(out var actualNewGame);
 
       // spot plate
@@ -73,9 +73,14 @@ namespace TheGame.Tests.DevTests
           (Country.US, StateOrProvince.CA),
           (Country.US, StateOrProvince.OR),
         ],
-        actualNewPlayer!);
+        actualNewPlayer);
 
-      spotResult.AssertIsSucceessful();
+      spotResult.AssertIsSucceessful(actualGame =>
+      {
+        Assert.Equal(2, actualNewGame.GameLicensePlates.Count);
+        Assert.All(actualGame.GameLicensePlates,
+          plate => Assert.Equal(actualNewPlayer, plate.SpottedBy));
+      });
 
       await db.SaveChangesAsync();
       trx.Commit();

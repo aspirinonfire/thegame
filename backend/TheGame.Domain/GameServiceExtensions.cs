@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Reflection;
 using TheGame.Domain.Commands;
 using TheGame.Domain.Commands.CreateTeamAndPlayer;
 using TheGame.Domain.DAL;
@@ -11,7 +10,6 @@ using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.Players;
 using TheGame.Domain.DomainModels.Teams;
-using TheGame.Domain.Utils;
 
 namespace TheGame.Domain;
 
@@ -46,7 +44,7 @@ public static class GameServiceExtensions
       .AddSingleton<ISystemService, SystemService>()
       .AddMediatR(cfg =>
       {
-        cfg.RegisterServicesFromAssembly(typeof(GameServiceExtensions).GetTypeInfo().Assembly);
+        cfg.RegisterServicesFromAssembly(typeof(GameServiceExtensions).Assembly);
       })
       // Game domain services
       .AddScoped<ITeamService, Team.TeamService>()

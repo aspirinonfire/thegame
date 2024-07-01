@@ -11,13 +11,9 @@ namespace TheGame.Tests.Domain.Teams
       IEnumerable<Game>? games,
       string name)
     {
-      _players = players != null ?
-        new HashSet<Player>(players) :
-        new ();
+      _players = players != null ? new HashSet<Player>(players) : [];
 
-      _games = games != null ?
-        new HashSet<Game>(games) :
-        new ();
+      _games = games != null ? new HashSet<Game>(games) : [];
 
       Name = name;
     }
