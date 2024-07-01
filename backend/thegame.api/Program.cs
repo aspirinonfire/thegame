@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using TheGame.Api.Auth;
 using TheGame.Domain;
-using TheGame.Domain.DAL;
+using TheGame.Domain.DomainModels;
 
 namespace TheGame.Api;
 

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using TheGame.Domain.Commands;
 using TheGame.Domain.Commands.CreateTeamAndPlayer;
-using TheGame.Domain.DAL;
+using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.Players;
@@ -34,11 +34,9 @@ public static class GameServiceExtensions
           options.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddConsole()));
         }
         options.UseLazyLoadingProxies(true);
-        // TODO configure SQL connection params
         options.UseSqlServer(connectionString);
       })
       .AddScoped<IGameDbContext>(isp => isp.GetRequiredService<GameDbContext>())
-      .AddScoped<IGameUoW>(isp => isp.GetRequiredService<GameDbContext>())
       // Utils
       .AddSingleton<ISystemService, SystemService>()
       .AddMediatR(cfg =>

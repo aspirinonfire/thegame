@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.Threading;
 using System.Threading.Tasks;
-using TheGame.Domain.DAL;
+using TheGame.Domain.DomainModels;
 
 namespace TheGame.Api;
 

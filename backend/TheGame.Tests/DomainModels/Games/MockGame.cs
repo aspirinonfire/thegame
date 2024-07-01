@@ -2,7 +2,7 @@ using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.Players;
 
-namespace TheGame.Tests.Domain.Games
+namespace TheGame.Tests.DomainModels.Games
 {
   public class MockGame : Game
   {

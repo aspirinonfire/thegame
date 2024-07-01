@@ -1,6 +1,6 @@
 using TheGame.Domain.DomainModels.LicensePlates;
 
-namespace TheGame.Tests.Domain.LicensePlates
+namespace TheGame.Tests.DomainModels.LicensePlates
 {
   internal class MockLicensePlate : LicensePlate
   {

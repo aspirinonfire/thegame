@@ -3,20 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using TheGame.Domain.DAL;
+using TheGame.Domain.DomainModels;
 
 #nullable disable
 
-namespace TheGame.Domain.DAL.Migrations
+namespace TheGame.Domain.DomainModels.Migrations
 {
     [DbContext(typeof(GameDbContext))]
-    [Migration("20240701194536_initial")]
-    partial class initial
+    partial class GameDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

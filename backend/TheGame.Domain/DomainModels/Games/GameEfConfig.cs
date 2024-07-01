@@ -1,9 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 
-namespace TheGame.Domain.DAL.ModelConfigs;
+namespace TheGame.Domain.DomainModels.Games;
 
 class GameEfConfig : IEntityTypeConfiguration<Game>
 {

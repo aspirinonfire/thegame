@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace TheGame.Domain.DAL.Migrations
+namespace TheGame.Domain.DomainModels.Migrations
 {
     /// <inheritdoc />
     public partial class initial : Migration

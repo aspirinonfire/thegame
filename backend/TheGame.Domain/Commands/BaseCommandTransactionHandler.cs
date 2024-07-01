@@ -1,24 +1,17 @@
 using MediatR;
 using System.Threading;
 using System.Threading.Tasks;
-using TheGame.Domain.DAL;
+using TheGame.Domain.DomainModels;
 
 namespace TheGame.Domain.Commands
 {
-  public abstract class BaseCommandTransactionHandler<TCommand, TResult> : IRequestHandler<TCommand, CommandResult<TResult>>
+  public abstract class BaseCommandTransactionHandler<TCommand, TResult>(IGameDbContext gameDb) : IRequestHandler<TCommand, CommandResult<TResult>>
     where TCommand : IRequest<CommandResult<TResult>>
     where TResult : ICommandResult
   {
-    private readonly IGameUoW _gameUoW;
-
-    protected BaseCommandTransactionHandler(IGameUoW gameUoW)
-    {
-      _gameUoW = gameUoW;
-    }
-
     public async Task<CommandResult<TResult>> Handle(TCommand request, CancellationToken cancellationToken)
     {
-      using var trx = await _gameUoW.BeginTransactionAsync();
+      using var trx = await gameDb.BeginTransactionAsync();
       var commandResult = await ExecuteCommand(request, cancellationToken);
       if (commandResult.IsSuccess)
       {

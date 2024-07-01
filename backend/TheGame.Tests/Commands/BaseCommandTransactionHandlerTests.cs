@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore.Storage;
 using TheGame.Domain.Commands;
-using TheGame.Domain.DAL;
+using TheGame.Domain.DomainModels;
 using TheGame.Tests.TestUtils;
 
 namespace TheGame.Tests.Commands
@@ -13,7 +13,7 @@ namespace TheGame.Tests.Commands
     public async Task WillCommitTransactionOnCommandSuccess()
     {
       var transaction = Substitute.For<IDbContextTransaction>();
-      var gameUow = Substitute.For<IGameUoW>();
+      var gameUow = Substitute.For<IGameDbContext>();
       gameUow.BeginTransactionAsync().Returns(transaction);
 
       using var cTokenRegistration = new CancellationTokenRegistration();
@@ -37,7 +37,7 @@ namespace TheGame.Tests.Commands
     public async Task WillRollbackTransactionOnCommandError()
     {
       var transaction = Substitute.For<IDbContextTransaction>();
-      var gameUow = Substitute.For<IGameUoW>();
+      var gameUow = Substitute.For<IGameDbContext>();
       gameUow.BeginTransactionAsync().Returns(transaction);
 
       using var cTokenRegistration = new CancellationTokenRegistration();
@@ -64,17 +64,10 @@ namespace TheGame.Tests.Commands
   public class TestCommand : IRequest<CommandResult<TestCommandResult>>
   { }
 
-  public class TestCommandHandler : BaseCommandTransactionHandler<TestCommand, TestCommandResult>
+  public class TestCommandHandler(IGameDbContext gameDb, Func<TestCommand, Task<CommandResult<TestCommandResult>>> cmdRunner)
+    : BaseCommandTransactionHandler<TestCommand, TestCommandResult>(gameDb)
   {
-    private readonly Func<TestCommand, Task<CommandResult<TestCommandResult>>> _handler;
-
-    public TestCommandHandler(IGameUoW gameUoW, Func<TestCommand, Task<CommandResult<TestCommandResult>>> cmdRunner) :
-      base(gameUoW)
-    {
-      _handler = cmdRunner;
-    }
-
     protected override Task<CommandResult<TestCommandResult>> ExecuteCommand(TestCommand command, CancellationToken cancellationToken) =>
-      _handler(command);
+      cmdRunner(command);
   }
 }

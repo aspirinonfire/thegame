@@ -1,6 +1,6 @@
 using TheGame.Domain.DomainModels.Players;
 
-namespace TheGame.Tests.Domain.Players
+namespace TheGame.Tests.DomainModels.Players
 {
   public class MockPlayer : Player
   {

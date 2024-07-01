@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.MsSql;
-using TheGame.Domain.DAL;
+using TheGame.Domain.DomainModels;
 using TheGame.Tests.TestUtils;
 
 namespace TheGame.Tests.Fixtures

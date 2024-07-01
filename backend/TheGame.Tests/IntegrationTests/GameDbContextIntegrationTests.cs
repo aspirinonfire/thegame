@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using TheGame.Domain.DAL;
+using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.Players;

@@ -1,7 +1,7 @@
 using TheGame.Domain.DomainModels.LicensePlates;
-using TheGame.Tests.Domain.Players;
+using TheGame.Tests.DomainModels.Players;
 
-namespace TheGame.Tests.Domain.LicensePlates
+namespace TheGame.Tests.DomainModels.LicensePlates
 {
   internal class MockGameLicensePlate : GameLicensePlate
   {

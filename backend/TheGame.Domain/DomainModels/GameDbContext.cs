@@ -13,7 +13,7 @@ using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.Players;
 
-namespace TheGame.Domain.DAL;
+namespace TheGame.Domain.DomainModels;
 
 public class GameDbContext : DbContext, IGameDbContext
 {

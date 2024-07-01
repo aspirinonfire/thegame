@@ -1,11 +1,11 @@
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.Games.Events;
 using TheGame.Domain.DomainModels.LicensePlates;
-using TheGame.Tests.Domain.LicensePlates;
-using TheGame.Tests.Domain.Players;
+using TheGame.Tests.DomainModels.LicensePlates;
+using TheGame.Tests.DomainModels.Players;
 using TheGame.Tests.TestUtils;
 
-namespace TheGame.Tests.Domain.Games
+namespace TheGame.Tests.DomainModels.Games
 {
   [Trait(XunitTestProvider.Category, XunitTestProvider.Unit)]
   public class GameTests
