@@ -1,4 +1,5 @@
 name: Azure Static Web Apps CI/CD
+# https://learn.microsoft.com/en-us/azure/static-web-apps/build-configuration?tabs=github-actions#custom-build-commands
 
 on:
   push:
@@ -15,22 +16,35 @@ jobs:
     runs-on: ubuntu-latest
     name: Build and Deploy Job
     steps:
-      - uses: actions/checkout@v2
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      
+      - name: Checkout
+        uses: actions/checkout@v2
         with:
           submodules: true
-      - name: Build And Deploy
-        id: builddeploy
-        uses: Azure/static-web-apps-deploy@v0.0.1-preview
+
+      - name: Set version file
+        id: vars
+        run: |
+          calculateSha=$(git rev-parse --short ${{ github.sha }})
+          deployDate=$(date --iso-8601=seconds)
+          echo "{\"deployDate\":\"$deployDate\",\"sha\":\"$calculateSha\"}" > ./ui/public/version.json
+      
+      - name: Build And Deploy UI
+        id: swa
+        uses: azure/static-web-apps-deploy@latest
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_ASHY_SMOKE_0BF195F1E }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
+          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for GitHub integrations (i.e. PR comments)
           action: "upload"
-          ###### Repository/Build Configurations - These values can be configured to match you app requirements. ######
-          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-          app_location: "/" # App source code path
-          api_location: "api" # Api source code path - optional
-          app_artifact_location: "dist/thegameui" # Built app content directory - optional
-          ###### End of Repository/Build Configurations ######
+          app_location: "/ui" # App source code path
+          api_location: "" # Api source code path - optional
+          output_location: "/ui/out" # Built app content directory - optional
+        env: # Add environment variables here
+          IS_STATIC_EXPORT: true
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
