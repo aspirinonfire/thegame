@@ -31,18 +31,18 @@ jobs:
         run: |
           calculateSha=$(git rev-parse --short ${{ github.sha }})
           deployDate=$(date --iso-8601=seconds)
-          echo "{\"deployDate\":\"$deployDate\",\"sha\":\"$calculateSha\"}" > ./public/version.json
+          echo "{\"deployDate\":\"$deployDate\",\"sha\":\"$calculateSha\"}" > ./ui/public/version.json
       
-      - name: Build And Deploy
+      - name: Build And Deploy UI
         id: swa
         uses: azure/static-web-apps-deploy@latest
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_ASHY_SMOKE_0BF195F1E }}
           repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for GitHub integrations (i.e. PR comments)
           action: "upload"
-          app_location: "/" # App source code path
+          app_location: "/ui" # App source code path
           api_location: "" # Api source code path - optional
-          output_location: "out" # Built app content directory - optional
+          output_location: "/next_out" # Built app content directory - optional
         env: # Add environment variables here
           IS_STATIC_EXPORT: true
 

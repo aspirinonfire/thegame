@@ -2,13 +2,15 @@
 import { HiOutlineShare, HiOutlineTrash, HiOutlineExclamationCircle } from "react-icons/hi";
 import { Button, Modal } from "flowbite-react";
 import { useState } from "react";
-import { deployDate, sha } from "@/public/version.json";
+import versionInfo from "@/public/version.json";
 
 export default function About() {
   const [isShowShareConfirmation, setIsShowShareConfirmation] = useState(false);
   const [isShowDeleteConfirmation, setIsShowDeleteConfirmation] = useState(false);
 
-  const versionString = !!deployDate && !!sha ? `App deploy date: ${new Date(deployDate).toISOString()} commit: ${sha}` : null;
+  const versionString = !!versionInfo.deployDate && !!versionInfo.sha ?
+    `App deploy date: ${new Date(versionInfo.deployDate).toISOString()} commit: ${versionInfo.sha}` :
+    null;
 
   function handleDeleteGameData() {
     setIsShowDeleteConfirmation(false);

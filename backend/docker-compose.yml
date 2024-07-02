@@ -1,0 +1,38 @@
+version: '3.4'
+
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    # must run as root to access volume mounts
+    # see https://github.com/microsoft/mssql-docker/issues/13#issuecomment-641904197
+    user: root
+    ports:
+      - "1433:1433"
+    volumes:
+      - ./mssql_volume/data:/var/opt/mssql/data
+      - ./mssql_volume/log:/var/opt/mssql/log
+      - ./mssql_volume/secrets:/var/opt/mssql/secrets
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${SQL_PASSWORD}
+
+  thegame.api:
+    image: ${DOCKER_REGISTRY-}thegameapi
+    ports:
+      - "8080:443"
+    build:
+      context: .
+      dockerfile: thegame.api/Dockerfile
+    environment:
+      - ConnectionStrings__GameDB=Server=mssql; Initial Catalog=${DB_NAME}; User Id=sa; Password=${SQL_PASSWORD}; Trust Server Certificate=True;
+      - Auth__Google__ClientId=${GOOGLE_CLIENT_ID}
+      - Auth__Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443
+      # Generate dev certs using `dotnet dev-certs https --export-path <path> --password <password>` `trust`. Do `clean` if already present
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/myCert.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERT_PASSWORD}
+    volumes:
+      - ${USERPROFILE}/.aspnet/https:/https:ro  # Mount the ASP.NET Core development certificate
+    depends_on:
+    - mssql

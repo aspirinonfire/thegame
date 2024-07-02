@@ -12,7 +12,7 @@ const nextConfig = {
   
   trailingSlash: true,
   output: 'export',
-  distDir: 'out',
+  distDir: 'next_out',
   // define custom image loader that will work with static files
   images: {
     loader: "custom",

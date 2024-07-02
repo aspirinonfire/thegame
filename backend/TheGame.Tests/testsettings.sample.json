@@ -1,0 +1,5 @@
+{
+  "ConnectionStrings": {
+    "GameDB": "<conn-string-here>"
+  }
+}
