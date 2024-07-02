@@ -35,7 +35,7 @@ public static class GameAuthenticationServiceExtensions
 
         googleAuthOpts.SaveTokens = true;
         googleAuthOpts.AccessType = "offline";            // retrieve refresh tokens
-        googleAuthOpts.CallbackPath = "/signin-google";   // special callback URL. This route will be handled by Google middleware.
+        googleAuthOpts.CallbackPath = "/account/signin-google";   // special callback URL. This route will be handled by Google middleware.
       })
       // OpenId cookie config
       .AddCookie(OpenIdConnectDefaults.AuthenticationScheme)

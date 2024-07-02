@@ -29,7 +29,10 @@ services:
       - Auth__Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443
-      # Generate dev certs using `dotnet dev-certs https --export-path <path> --password <password>` `trust`. Do `clean` if already present
+      # Generate dev certs using "dotnet dev-certs https" commands:
+      # dotnet dev-certs https --export-path "$env:USERPROFILE/.aspnet/https/myCert.pfx" --password <SSL_CERT_PASSWORD>
+      # dotnet dev-certs https --trust
+      # if cert is already present: "dotnet dev-certs https --clean"
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/myCert.pfx
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERT_PASSWORD}
     volumes:

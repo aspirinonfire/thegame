@@ -14,7 +14,7 @@ namespace TheGame.Api.Auth;
 
 public static class AuthRoutes
 {
-  private const string _googleSigninRoute = "signingoogle";
+  private const string _googleSigninRoute = "signingoogleidentity";
 
   public static IEndpointRouteBuilder AddGameAuthRoutes(this IEndpointRouteBuilder endpoints)
   {

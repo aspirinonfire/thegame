@@ -39,6 +39,11 @@ public class Program
       .AddGameServices(connString, builder.Environment.IsDevelopment())
       .AddGameAuthenticationServices(builder.Configuration);
 
+    //builder.Services.AddSpaStaticFiles(options =>
+    //{
+    //  options.RootPath = "../../ui/next_out";
+    //});
+
     var app = builder.Build();
 
     // Configure the HTTP request pipeline.
@@ -47,6 +52,10 @@ public class Program
       app.UseDeveloperExceptionPage();
       app.UseSwagger();
       app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1"));
+    }
+    else
+    {
+      app.UseSpaStaticFiles();
     }
 
     app.UseHsts();
@@ -71,6 +80,20 @@ public class Program
       .RequireAuthorization()
       .AddGameAuthRoutes()
       .AddGameApiRoutes();
+
+    //app.UseSpa(spa =>
+    //{
+    //  // TODO set correct path!
+    //  //spa.Options.DefaultPageStaticFileOptions = new StaticFileOptions()
+    //  //{
+    //  //  RequestPath = "/app"
+    //  //};
+      
+    //  if (app.Environment.IsDevelopment())
+    //  {
+    //    spa.UseProxyToSpaDevelopmentServer("http://host.docker.internal:3000/");
+    //  }
+    //});
 
     app.Run();
   }
