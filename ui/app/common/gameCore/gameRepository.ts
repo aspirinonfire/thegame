@@ -132,12 +132,13 @@ export async function GetAccount() : Promise<UserAccount | null> {
   // TODO handle offline, 401, 400, 500 separately!
   const userDataResponse = await fetch("/api/user", { cache: "no-store"});
 
-  if (userDataResponse.status == 401){
+  if (userDataResponse.status == 200) {
+      return await userDataResponse.json() as UserAccount;
+  } else if (userDataResponse.status == 401) {
     console.error("Got 401 API status code. Need to re-login");
     return null;
   }
 
-  const account = await userDataResponse.json() as UserAccount;
-
-  return account;
+  console.error("Failed to retrieve user account.");
+  return null;
 }
