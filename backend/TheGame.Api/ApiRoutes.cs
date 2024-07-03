@@ -4,10 +4,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
-using OneOf;
-using System.Collections.Generic;
+using System;
 using System.Linq;
-using System.Security.Claims;
 using TheGame.Api.Auth;
 using TheGame.Domain.CommandHandlers;
 using TheGame.Domain.DomainModels.Games;
@@ -20,20 +18,32 @@ public sealed record StartNewGameRequest(string NewGameName);
 
 public static class ApiRoutes
 {
+  public const string PlayerIdItemKey = "PlayerId";
   public const string InvalidPlayerIdClaimError = "invalid_player_id_claim";
 
   public static IEndpointRouteBuilder AddGameApiRoutes(this IEndpointRouteBuilder endpoints)
   {
-    var apiRoute = endpoints.MapGroup("api")
-      .WithDisplayName("Game API Routes");
+    var apiRoute = endpoints
+      .MapGroup("api")
+      .AddEndpointFilter(async (invocationContext, next) =>
+      {
+        var playerIdClaim = invocationContext.HttpContext.User.Claims
+          .FirstOrDefault(claim => claim.Type == GameAuthService.PlayerIdClaimType);
+
+        if (playerIdClaim?.Value == null || !long.TryParse(playerIdClaim.Value, out var playerId))
+        {
+          return Results.BadRequest(InvalidPlayerIdClaimError);
+        }
+
+        invocationContext.HttpContext.Items[PlayerIdItemKey] = playerId;
+
+        return await next(invocationContext);
+      });
 
     
     apiRoute.MapGet("user", async (HttpContext ctx, IPlayerQueryProvider playerQueryProvider) =>
-    { 
-      if (!GetPlayerIdFromUserClaims(ctx.User.Claims).TryGetSuccessful(out var playerId, out var claimFailure))
-      {
-        return Results.BadRequest(claimFailure.ErrorMessage);
-      }
+    {
+      var playerId = GetPlayerIdFromHttpContext(ctx);
 
       var player = await playerQueryProvider.GetPlayerInfoQuery(playerId).FirstOrDefaultAsync();
 
@@ -43,11 +53,8 @@ public static class ApiRoutes
     
     apiRoute.MapGet("game", async (HttpContext ctx, IGameQueryProvider gameQueryProvider) =>
     {
-      if (!GetPlayerIdFromUserClaims(ctx.User.Claims).TryGetSuccessful(out var playerId, out var claimFailure))
-      {
-        return Results.BadRequest(claimFailure.ErrorMessage);
-      }
-      
+      var playerId = GetPlayerIdFromHttpContext(ctx);
+
       var allGames = await gameQueryProvider.GetOwnedAndInvitedGamesQuery(playerId).ToListAsync();
       
       return Results.Ok(allGames);
@@ -56,11 +63,8 @@ public static class ApiRoutes
     
     apiRoute.MapPost("game", async (HttpContext ctx, IMediator mediator, [FromBody] StartNewGameRequest newGameRequest) =>
     {
-      if (!GetPlayerIdFromUserClaims(ctx.User.Claims).TryGetSuccessful(out var playerId, out var claimFailure))
-      {
-        return Results.BadRequest(claimFailure.ErrorMessage);
-      }
-
+      var playerId = GetPlayerIdFromHttpContext(ctx);
+      
       var newGameResult = await mediator.Send(new StartNewGameCommand(newGameRequest.NewGameName, playerId));
       if (!newGameResult.TryGetSuccessful(out var newGame, out var newGameFailure))
       {
@@ -74,10 +78,16 @@ public static class ApiRoutes
     return endpoints;
   }
 
-  public static OneOf<long, Failure> GetPlayerIdFromUserClaims(IEnumerable<Claim> claims)
+  private static long GetPlayerIdFromHttpContext(HttpContext httpContext)
   {
-    var playerIdClaim = claims.FirstOrDefault(claim => claim.Type == GameAuthService.PlayerIdClaimType);
+    var playerIdValue = httpContext.Items[PlayerIdItemKey];
 
-    return long.TryParse(playerIdClaim?.Value, out var playerId) ? playerId : new Failure(InvalidPlayerIdClaimError);
+    if (playerIdValue is long playerId)
+    {
+      return playerId;
+    }
+
+    throw new InvalidOperationException("PlayerId stored in http context is not a number!");
+
   }
 }
