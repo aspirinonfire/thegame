@@ -13,7 +13,7 @@ public interface IGameFactory
 
 public partial class Game
 {
-  public const string HasActiveGameError = "one_active_game_allowed";
+  public const string HasActiveGameError = "only_one_active_game_allowed";
 
   public class GameFactory(GameDbContext gameDbContext) : IGameFactory
   {
@@ -37,7 +37,7 @@ public partial class Game
 
       gameDbContext.Games.Add(newGame);
 
-      newGame.AddDomainEvent(new NewGameStartedEvent(newGame));
+      newGame.AddDomainEvent(new NewGameStartedEvent(newGame.Name, newGame.CreatedBy.Id));
 
       return newGame;
     }

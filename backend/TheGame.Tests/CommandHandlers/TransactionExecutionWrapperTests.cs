@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Logging.Abstractions;
 using TheGame.Domain.CommandHandlers;
 using TheGame.Domain.DomainModels;
 using TheGame.Tests.TestUtils;
@@ -22,7 +23,10 @@ namespace TheGame.Tests.CommandHandlers
 
       var uutWrapper = new TransactionExecutionWrapper(gameDb);
 
-      var actualResult = await uutWrapper.ExecuteInTransaction(handlerWithSuccess, ctoken);
+      var actualResult = await uutWrapper.ExecuteInTransaction(handlerWithSuccess,
+        "test command",
+        NullLogger.Instance,
+        ctoken);
 
       actualResult.AssertIsSucceessful();
 
@@ -44,7 +48,10 @@ namespace TheGame.Tests.CommandHandlers
 
       var uutWrapper = new TransactionExecutionWrapper(gameDb);
 
-      var actualResult = await uutWrapper.ExecuteInTransaction(handlerWithSuccess, ctoken);
+      var actualResult = await uutWrapper.ExecuteInTransaction(handlerWithSuccess,
+        "test command",
+        NullLogger.Instance,
+        ctoken);
 
       actualResult.AssertIsFailure();
 

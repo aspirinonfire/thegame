@@ -1,5 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using TheGame.Domain.Utils;
+using Microsoft.Extensions.Logging;
 using TheGame.Domain;
 
 namespace TheGame.Tests.TestUtils
@@ -28,6 +28,7 @@ namespace TheGame.Tests.TestUtils
 
     public static IServiceCollection GetGameServicesWithTestDevDb(string connString) =>
       new ServiceCollection()
-        .AddGameServices(connString, true);
+        .AddGameServices(connString, true)
+        .AddLogging(builder => builder.AddDebug());
   }
 }

@@ -4,15 +4,14 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
-using TheGame.Domain.DomainModels.Players;
 using TheGame.Domain.DomainModels.PlayerIdentities;
+using TheGame.Domain.DomainModels.Players;
 
 namespace TheGame.Domain.DomainModels;
 
@@ -71,12 +70,30 @@ public class GameDbContext : DbContext, IGameDbContext
   public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess,
     CancellationToken cancellationToken = default)
   {
+    _logger.LogInformation("Saving changes.");
+
     var saveTime = _systemService.DateTimeOffset.Now;
     HandleAuditedRecords(saveTime);
 
+    // this query must be ran before calling base.SaveChangesAsync() to make sure we are querying the correct state.
+    var domainEvents = ChangeTracker
+      .Entries()
+      .Where(e => e.Entity is IDomainModel &&
+        (e.State == EntityState.Added || e.State == EntityState.Modified))
+      // TODO implement domain event generators to support publishing newly created ids 
+      .SelectMany(e => ((IDomainModel)e.Entity).DomainEvents)
+      .ToList()
+      .AsReadOnly();
+
     var writes = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
 
-    await HandleDomainEvents();
+    _logger.LogInformation("Changes saved. Will now publish {numOfDomainMessages} domain event(s).", domainEvents.Count);
+
+    // TODO make events are only published if a) there's no transaction or b) transaction has been committed
+    foreach (var e in domainEvents)
+    {
+      await _mediator.Publish(e, cancellationToken);
+    }
 
     return writes;
   }
@@ -90,41 +107,6 @@ public class GameDbContext : DbContext, IGameDbContext
   public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
     await SaveChangesAsync(true, cancellationToken);
 
-  /// <summary>
-  /// Handle domain events in the current request transaction.
-  /// Domain event handlers are fired before integration event handlers.
-  /// </summary>
-  /// <returns></returns>
-  private async Task HandleDomainEvents()
-  {
-    var events = GetDomainEvents();
-    var processedEvents = new HashSet<IDomainEvent>();
-
-    while (events.Any())
-    {
-      foreach (IDomainEvent e in events)
-      {
-        // Failed domain event handlers will rollback transaction
-        await _mediator.Publish(e);
-        processedEvents.Add(e);
-      }
-      events = GetDomainEvents()
-        .Where(e => !processedEvents.Contains(e))
-        .ToList()
-        .AsReadOnly();
-    }
-
-    IReadOnlyCollection<IDomainEvent> GetDomainEvents()
-    {
-      return ChangeTracker
-        .Entries()
-        .Where(e => e.Entity is IDomainModel &&
-          (e.State == EntityState.Added || e.State == EntityState.Modified))
-        .SelectMany(e => ((IDomainModel)e.Entity).DomainEvents)
-        .ToList()
-        .AsReadOnly();
-    }
-  }
   #endregion
 
   #region Record Auditing

@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,7 +13,7 @@ public sealed record GetOrCreateNewPlayerCommand(NewPlayerIdentityRequest NewPla
 
 public sealed record GetOrCreatePlayerResult(long PlayerIdentityId, long PlayerId);
 
-public class GetOrCreateNewPlayerCommandHandler(IGameDbContext gameDb, IPlayerIdentityFactory playerIdentityFactory, ITransactionExecutionWrapper transactionWrapper)
+public class GetOrCreateNewPlayerCommandHandler(IGameDbContext gameDb, IPlayerIdentityFactory playerIdentityFactory, ITransactionExecutionWrapper transactionWrapper, ILogger<GetOrCreateNewPlayerCommand> logger)
   : IRequestHandler<GetOrCreateNewPlayerCommand, OneOf<GetOrCreatePlayerResult, Failure>>
 {
     public async Task<OneOf<GetOrCreatePlayerResult, Failure>> Handle(GetOrCreateNewPlayerCommand request, CancellationToken cancellationToken) =>
@@ -29,19 +30,26 @@ public class GetOrCreateNewPlayerCommandHandler(IGameDbContext gameDb, IPlayerId
 
             if (existingPlayer != null)
             {
+              logger.LogInformation("Found an existing player with identity. Returning...");
               return new GetOrCreatePlayerResult(existingPlayer.Id, existingPlayer.Player?.Id ?? -1);
             }
 
+            logger.LogInformation("Attempting to create new player with identity.");
+
             var newIdentityResult = playerIdentityFactory.CreatePlayerIdentity(request.NewPlayerIdentityRequest);
-            if (newIdentityResult.TryGetSuccessful(out var success, out var failure))
+            if (!newIdentityResult.TryGetSuccessful(out var success, out var failure))
             {
-              await gameDb.SaveChangesAsync();
-              return new GetOrCreatePlayerResult(success.Id, success.Player?.Id ?? -1);
-            }
-            else
-            {
+              logger.LogError(failure.GetException(), "New player cannot be created.");
               return failure;
             }
+            
+            await gameDb.SaveChangesAsync();
+            
+            logger.LogInformation("New player with identity was created successfully.");
+            
+            return new GetOrCreatePlayerResult(success.Id, success.Player?.Id ?? -1);
           },
+          nameof(GetOrCreateNewPlayerCommand),
+          logger,
           cancellationToken);
 }
