@@ -11,7 +11,7 @@ async function mockDataAccessDelay() : Promise<void> {
     setTimeout(() => {
       resolve();
     }, 200);
-  })s
+  })
 }
 
 function GetFromLocalStorage<T>(key: string) : T | null {
