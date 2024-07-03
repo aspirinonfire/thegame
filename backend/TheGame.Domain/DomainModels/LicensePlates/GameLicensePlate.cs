@@ -15,6 +15,7 @@ public partial class GameLicensePlate : BaseModel
   public long GameId { get; protected set; }
   public virtual Game Game { get; protected set; } = default!;
 
+  public long SpottedByPlayerId { get; protected set; }
   public virtual Player SpottedBy { get; protected set; } = default!;
 
   public DateTimeOffset DateCreated { get; protected set; } = default!;

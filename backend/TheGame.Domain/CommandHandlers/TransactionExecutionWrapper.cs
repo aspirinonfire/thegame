@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TheGame.Domain.DomainModels;
 
-namespace TheGame.Domain.Commands
+namespace TheGame.Domain.CommandHandlers
 {
   public interface ITransactionExecutionWrapper
   {

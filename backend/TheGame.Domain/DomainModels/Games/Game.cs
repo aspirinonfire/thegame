@@ -33,6 +33,7 @@ public partial class Game : BaseModel, IAuditedRecord
 
   public bool IsActive { get; protected set; }
 
+  public long CreatedByPlayerId { get; protected set; }
   protected Player _createdBy = default!;
   public virtual Player CreatedBy
   {

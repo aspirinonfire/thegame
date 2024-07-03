@@ -1,8 +1,9 @@
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using TheGame.Domain.CommandHandlers;
 using TheGame.Domain.DomainModels;
-using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.PlayerIdentities;
 using TheGame.Tests.Fixtures;
@@ -64,7 +65,7 @@ namespace TheGame.Tests.IntegrationTests
     }
 
     [Fact]
-    public async Task CanCreateTeamPlayerGameAndAddSpot()
+    public async Task CanCreatePlayerStartNewGameAndSpotPlates()
     {
       var services = CommonMockedServices.GetGameServicesWithTestDevDb(msSqlFixture.GetConnectionString());
 
@@ -76,25 +77,25 @@ namespace TheGame.Tests.IntegrationTests
       using var sp = services.BuildServiceProvider(diOpts);
       using var scope = sp.CreateScope();
 
-      var db = scope.ServiceProvider.GetRequiredService<IGameDbContext>();
-      var playerIdentFac = scope.ServiceProvider.GetRequiredService<IPlayerIdentityFactory>();
-      
-      var gameFac = scope.ServiceProvider.GetRequiredService<IGameFactory>();
+      var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+
+      // create new player with identity
+      var newPlayerRequest = new NewPlayerIdentityRequest("test_provider_1", "test_id_1", "refresh_token", "Test Player");
+      var newPlayerIdentityCommandResult = await mediator.Send(new GetOrCreateNewPlayerCommand(newPlayerRequest));
+      newPlayerIdentityCommandResult.AssertIsSucceessful(out var actualNewPlayerIdentity);
+
+      // start new game
+      var startNewGameCommandResult = await mediator.Send(new StartNewGameCommand("Test Game", actualNewPlayerIdentity.PlayerId));
+      startNewGameCommandResult.AssertIsSucceessful(out var newGame);
+
+      // TODO replace with commands
       var lpFac = scope.ServiceProvider.GetRequiredService<IGameLicensePlateFactory>();
       var sysService = scope.ServiceProvider.GetRequiredService<ISystemService>();
-
+      var db = scope.ServiceProvider.GetRequiredService<IGameDbContext>();
       using var trx = await db.BeginTransactionAsync();
 
-      var newPlayerIdentityResult = playerIdentFac.CreatePlayerIdentity(new NewPlayerIdentityRequest("test_provider_1", "test_id_1", "refresh_token", "Test Player"));
-      newPlayerIdentityResult.AssertIsSucceessful(out var actualNewPlayerIdentity);
-
-      await db.SaveChangesAsync();
-
-      // create game
-      var gameResult = gameFac.CreateNewGame("Test Game", actualNewPlayerIdentity.Player!);
-      gameResult.AssertIsSucceessful(out var actualNewGame);
-
-      await db.SaveChangesAsync();
+      var actualNewGame = await db.Games.FindAsync(newGame.GameId);
+      Assert.NotNull(actualNewGame);
 
       // spot plate
       var spotResult = actualNewGame.AddLicensePlateSpot(lpFac,
@@ -103,13 +104,13 @@ namespace TheGame.Tests.IntegrationTests
           (Country.US, StateOrProvince.CA),
           (Country.US, StateOrProvince.OR),
         ],
-        actualNewPlayerIdentity.Player!);
+        actualNewGame.CreatedBy);
 
       spotResult.AssertIsSucceessful(actualGame =>
       {
         Assert.Equal(2, actualNewGame.GameLicensePlates.Count);
         Assert.All(actualGame.GameLicensePlates,
-          plate => Assert.Equal(actualNewPlayerIdentity.Player, plate.SpottedBy));
+          plate => Assert.Equal(actualNewGame.CreatedBy, plate.SpottedBy));
       });
 
       await db.SaveChangesAsync();

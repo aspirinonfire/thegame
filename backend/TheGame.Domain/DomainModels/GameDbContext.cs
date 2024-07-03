@@ -71,12 +71,12 @@ public class GameDbContext : DbContext, IGameDbContext
   public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess,
     CancellationToken cancellationToken = default)
   {
-    await HandleDomainEvents();
-
     var saveTime = _systemService.DateTimeOffset.Now;
     HandleAuditedRecords(saveTime);
 
     var writes = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+
+    await HandleDomainEvents();
 
     return writes;
   }

@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore.Storage;
-using TheGame.Domain.Commands;
+using TheGame.Domain.CommandHandlers;
 using TheGame.Domain.DomainModels;
 using TheGame.Tests.TestUtils;
 
-namespace TheGame.Tests.Commands
+namespace TheGame.Tests.CommandHandlers
 {
   [Trait(XunitTestProvider.Category, XunitTestProvider.Unit)]
   public class TransactionExecutionWrapperTests

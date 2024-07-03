@@ -6,7 +6,7 @@ using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using TheGame.Domain.Commands.CreateNewPlayer;
+using TheGame.Domain.CommandHandlers;
 using TheGame.Domain.DomainModels.PlayerIdentities;
 using TheGame.Domain.Utils;
 

@@ -29,7 +29,7 @@ class GameEfConfig : IEntityTypeConfiguration<Game>
       .HasOne(game => game.CreatedBy)
       .WithMany()
       .IsRequired()
-      .HasForeignKey("CreatedByPlayerId")
+      .HasForeignKey(game => game.CreatedByPlayerId)
       .OnDelete(DeleteBehavior.Cascade);
 
     builder
@@ -56,7 +56,7 @@ class GameEfConfig : IEntityTypeConfiguration<Game>
           joinEntity
             .HasOne(glp => glp.SpottedBy)
             .WithMany()
-            .HasForeignKey("SpottedByPlayerId")
+            .HasForeignKey(glp => glp.SpottedByPlayerId)
             .OnDelete(DeleteBehavior.NoAction);
 
           joinEntity

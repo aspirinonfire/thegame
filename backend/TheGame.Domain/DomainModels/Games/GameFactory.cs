@@ -1,19 +1,31 @@
+using Microsoft.EntityFrameworkCore;
 using System;
+using System.Threading.Tasks;
+using TheGame.Domain.DomainModels.Games.Events;
 using TheGame.Domain.DomainModels.Players;
 
 namespace TheGame.Domain.DomainModels.Games;
 
 public interface IGameFactory
 {
-  OneOf<Game, Failure> CreateNewGame(string name, Player gameOwner);
+  Task<OneOf<Game, Failure>> StartNewGame(string name, Player gameOwner);
 }
 
 public partial class Game
 {
+  public const string HasActiveGameError = "one_active_game_allowed";
+
   public class GameFactory(GameDbContext gameDbContext) : IGameFactory
   {
-    public OneOf<Game, Failure> CreateNewGame(string name, Player gameOwner)
+    public async Task<OneOf<Game, Failure>> StartNewGame(string name, Player gameOwner)
     {
+      var hasActiveGame = await gameDbContext.Games
+        .AnyAsync(game => game.IsActive && game.CreatedBy.Id == gameOwner.Id);
+      if (hasActiveGame)
+      {
+        return new Failure(HasActiveGameError);
+      }
+
       var newGame = new Game
       {
         IsActive = true,
@@ -24,6 +36,8 @@ public partial class Game
       };
 
       gameDbContext.Games.Add(newGame);
+
+      newGame.AddDomainEvent(new NewGameStartedEvent(newGame));
 
       return newGame;
     }
