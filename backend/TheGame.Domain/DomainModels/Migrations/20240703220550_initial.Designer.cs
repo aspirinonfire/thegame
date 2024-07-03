@@ -12,7 +12,7 @@ using TheGame.Domain.DomainModels;
 namespace TheGame.Domain.DomainModels.Migrations
 {
     [DbContext(typeof(GameDbContext))]
-    [Migration("20240701231355_initial")]
+    [Migration("20240703220550_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -27,8 +27,6 @@ namespace TheGame.Domain.DomainModels.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.HasSequence("PlayerSequence");
 
             modelBuilder.Entity("GameLicensePlates", b =>
                 {
@@ -208,10 +206,9 @@ namespace TheGame.Domain.DomainModels.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasDefaultValueSql("NEXT VALUE FOR [PlayerSequence]");
+                        .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseSequence(b.Property<long>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Name")
                         .IsRequired()

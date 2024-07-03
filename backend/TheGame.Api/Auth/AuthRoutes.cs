@@ -18,7 +18,8 @@ public static class AuthRoutes
 
   public static IEndpointRouteBuilder AddGameAuthRoutes(this IEndpointRouteBuilder endpoints)
   {
-    var accountRoute = endpoints.MapGroup("account");
+    var accountRoute = endpoints.MapGroup("account")
+      .WithDisplayName("Game User Account Routes");
 
     accountRoute
       .MapGet("/login", (HttpContext ctx) =>

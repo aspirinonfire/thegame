@@ -10,8 +10,8 @@ using System.Linq;
 using System.Security.Claims;
 using TheGame.Api.Auth;
 using TheGame.Domain.CommandHandlers;
-using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Games;
+using TheGame.Domain.DomainModels.Players;
 using TheGame.Domain.Utils;
 
 namespace TheGame.Api;
@@ -24,73 +24,36 @@ public static class ApiRoutes
 
   public static IEndpointRouteBuilder AddGameApiRoutes(this IEndpointRouteBuilder endpoints)
   {
-    var apiRoute = endpoints.MapGroup("api");
+    var apiRoute = endpoints.MapGroup("api")
+      .WithDisplayName("Game API Routes");
 
-    apiRoute.MapGet("user", async (HttpContext ctx, IGameDbContext dbContext) =>
+    
+    apiRoute.MapGet("user", async (HttpContext ctx, IPlayerQueryProvider playerQueryProvider) =>
     { 
       if (!GetPlayerIdFromUserClaims(ctx.User.Claims).TryGetSuccessful(out var playerId, out var claimFailure))
       {
         return Results.BadRequest(claimFailure.ErrorMessage);
       }
 
-      // TODO refactor to use dedicated query service
-      var player = await dbContext.Players
-        .AsNoTracking()
-        .Where(player => player.Id == playerId)
-        .Select(player => new
-        {
-          PlayerName = player.Name,
-          PlayerId = player.Id
-        })
-        .FirstOrDefaultAsync();
+      var player = await playerQueryProvider.GetPlayerInfoQuery(playerId).FirstOrDefaultAsync();
 
       return Results.Ok(player);
     });
 
-    apiRoute.MapGet("game", async (HttpContext ctx, IGameDbContext gameDbContext) =>
+    
+    apiRoute.MapGet("game", async (HttpContext ctx, IGameQueryProvider gameQueryProvider) =>
     {
       if (!GetPlayerIdFromUserClaims(ctx.User.Claims).TryGetSuccessful(out var playerId, out var claimFailure))
       {
         return Results.BadRequest(claimFailure.ErrorMessage);
       }
-
-      // TODO refactor to use dedicated query service
-      var ownedGames = gameDbContext
-        .Games
-        .AsNoTracking()
-        .Where(game => game.CreatedBy.Id == playerId)
-        .Select(game => new
-        {
-          Owner = true,
-          game.Id,
-          game.Name,
-          game.DateCreated,
-          game.DateModified,
-          game.EndedOn,
-          NumberOfSpottedPlates = game.GameLicensePlates.Count()
-        });
-
-      var invitedGames = gameDbContext
-        .Games
-        .AsNoTracking()
-        .SelectMany(game => game.GamePlayerInvites)
-        .Where(gameInvite => gameInvite.Player.Id == playerId)
-        .Select(gameInvite => new
-        {
-          Owner = false,
-          gameInvite.Game.Id,
-          gameInvite.Game.Name,
-          gameInvite.Game.DateCreated,
-          gameInvite.Game.DateModified,
-          gameInvite.Game.EndedOn,
-          NumberOfSpottedPlates = gameInvite.Game.GameLicensePlates.Count()
-        });
-
-      var allGames = await ownedGames.Concat(invitedGames).ToListAsync();
+      
+      var allGames = await gameQueryProvider.GetOwnedAndInvitedGamesQuery(playerId).ToListAsync();
       
       return Results.Ok(allGames);
     });
 
+    
     apiRoute.MapPost("game", async (HttpContext ctx, IMediator mediator, [FromBody] StartNewGameRequest newGameRequest) =>
     {
       if (!GetPlayerIdFromUserClaims(ctx.User.Claims).TryGetSuccessful(out var playerId, out var claimFailure))

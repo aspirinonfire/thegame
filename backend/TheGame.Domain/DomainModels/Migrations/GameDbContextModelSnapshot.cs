@@ -25,8 +25,6 @@ namespace TheGame.Domain.DomainModels.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.HasSequence("PlayerSequence");
-
             modelBuilder.Entity("GameLicensePlates", b =>
                 {
                     b.Property<long>("GameId")
@@ -205,10 +203,9 @@ namespace TheGame.Domain.DomainModels.Migrations
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasDefaultValueSql("NEXT VALUE FOR [PlayerSequence]");
+                        .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseSequence(b.Property<long>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Name")
                         .IsRequired()
