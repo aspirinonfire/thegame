@@ -21,7 +21,7 @@ public interface IGameDbContext
   EntityEntry Add(object entity);
 
   IDbContextTransaction BeginTransaction();
-  Task<IDbContextTransaction> BeginTransactionAsync();
+  Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
   int SaveChanges();
   int SaveChanges(bool acceptAllChangesOnSuccess);
   Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

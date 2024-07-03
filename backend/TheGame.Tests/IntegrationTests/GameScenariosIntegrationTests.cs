@@ -12,7 +12,7 @@ using TheGame.Tests.TestUtils;
 namespace TheGame.Tests.IntegrationTests
 {
   [Trait(XunitTestProvider.Category, XunitTestProvider.Integration)]
-  public class GameDbContextIntegrationTests(MsSqlFixture msSqlFixture) : IClassFixture<MsSqlFixture>
+  public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFixture<MsSqlFixture>
   {
     [Fact]
     public async Task CanQueryLicensePlates()

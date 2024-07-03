@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,35 +16,19 @@ using TheGame.Domain.DomainModels.Players;
 
 namespace TheGame.Domain.DomainModels;
 
-public class GameDbContext : DbContext, IGameDbContext
+public class GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
+  IMediator mediator,
+  ILogger<GameDbContext> logger,
+  ISystemService systemService) : DbContext(dbContextOptions), IGameDbContext
 {
   public const string ConnectionStringName = "GameDB";
-
-  private readonly IMediator _mediator;
-  private readonly ILogger<GameDbContext> _logger;
-  private readonly ISystemService _systemService;
 
   public DbSet<LicensePlate> LicensePlates { get; set; } = default!;
   public DbSet<Game> Games { get; set; } = default!;
   public DbSet<Player> Players { get; set; } = default!;
   public DbSet<PlayerIdentity> PlayerIdentities { get; set; } = default!;
 
-  // Should not be accessed directly
-  // accessed from Player.Teams[].Games.Where
-  //public DbSet<Game> Games { get; set; }
-  // accessed from Game.LincensePlates
-  //public DbSet<LicensePlateSpot> LicensePlateSpots { get; set; }
-
-  public GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
-    IMediator mediator,
-    ILogger<GameDbContext> logger,
-    ISystemService systemService)
-    : base(dbContextOptions)
-  {
-    _mediator = mediator;
-    _logger = logger;
-    _systemService = systemService;
-  }
+  private readonly Queue<IDomainEvent> _domainEventsToPublish = [];
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -52,10 +37,14 @@ public class GameDbContext : DbContext, IGameDbContext
     ConfigureAuditedRecords(modelBuilder.Model);
   }
 
-  #region UoW and Domain Events
+  #region Transaction Handlers
   public IDbContextTransaction BeginTransaction() => BeginTransactionAsync().GetAwaiter().GetResult();
 
-  public async Task<IDbContextTransaction> BeginTransactionAsync() => await Database.BeginTransactionAsync();
+  public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+  {
+    var underlyingTransaction = await Database.BeginTransactionAsync(cancellationToken);
+    return new GameDbTransactionWrapper(underlyingTransaction, PublishDomainEvents);
+  }
 
   /// <summary>
   /// Save tracked changes
@@ -70,9 +59,7 @@ public class GameDbContext : DbContext, IGameDbContext
   public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess,
     CancellationToken cancellationToken = default)
   {
-    _logger.LogInformation("Saving changes.");
-
-    var saveTime = _systemService.DateTimeOffset.Now;
+    var saveTime = systemService.DateTimeOffset.Now;
     HandleAuditedRecords(saveTime);
 
     // this query must be ran before calling base.SaveChangesAsync() to make sure we are querying the correct state.
@@ -87,26 +74,35 @@ public class GameDbContext : DbContext, IGameDbContext
 
     var writes = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
 
-    _logger.LogInformation("Changes saved. Will now publish {numOfDomainMessages} domain event(s).", domainEvents.Count);
-
-    // TODO make events are only published if a) there's no transaction or b) transaction has been committed
-    foreach (var e in domainEvents)
+    foreach (var domainEvent in domainEvents)
     {
-      await _mediator.Publish(e, cancellationToken);
+      _domainEventsToPublish.Enqueue(domainEvent);
+    }
+
+    if (Database.CurrentTransaction == null)
+    {
+      await PublishDomainEvents(cancellationToken);
     }
 
     return writes;
   }
 
-  public override int SaveChanges() =>
-    SaveChangesAsync().GetAwaiter().GetResult();
+  public override int SaveChanges() => SaveChangesAsync().GetAwaiter().GetResult();
 
-  public override int SaveChanges(bool acceptAllChangesOnSuccess) =>
-    SaveChangesAsync(acceptAllChangesOnSuccess).GetAwaiter().GetResult();
+  public override int SaveChanges(bool acceptAllChangesOnSuccess) => SaveChangesAsync(acceptAllChangesOnSuccess).GetAwaiter().GetResult();
 
-  public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
-    await SaveChangesAsync(true, cancellationToken);
+  public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) => await SaveChangesAsync(true, cancellationToken);
 
+  private async Task PublishDomainEvents(CancellationToken cancellationToken)
+  {
+    logger.LogInformation("Changes saved. Will now publish {numOfEvents} domain event(s).", _domainEventsToPublish.Count);
+
+    while (_domainEventsToPublish.Count > 0)
+    {
+      var domainEvent = _domainEventsToPublish.Dequeue();
+      await mediator.Publish(domainEvent, cancellationToken);
+    }
+  }
   #endregion
 
   #region Record Auditing
@@ -120,7 +116,6 @@ public class GameDbContext : DbContext, IGameDbContext
       {
         entity.AddProperty(nameof(IAuditedRecord.DateCreated), typeof(DateTimeOffset));
         entity.AddProperty(nameof(IAuditedRecord.DateModified), typeof(DateTimeOffset?));
-        // TODO add modified and created by fields
       }
     }
   }
@@ -134,7 +129,7 @@ public class GameDbContext : DbContext, IGameDbContext
 
     foreach (var rec in datedRecords)
     {
-      // TODO add created and modified by values
+      // using Reflection because these properties are not writable otherwise
 
       rec.Property(nameof(IAuditedRecord.DateModified)).CurrentValue = saveTime;
 
@@ -145,4 +140,27 @@ public class GameDbContext : DbContext, IGameDbContext
     }
   }
   #endregion
+
+  private sealed class GameDbTransactionWrapper(IDbContextTransaction underlyingTransaction, Func<CancellationToken, Task> onCommit) : IDbContextTransaction
+  {
+    public readonly List<IDomainEvent> ToPublish = [];
+
+    public Guid TransactionId => underlyingTransaction.TransactionId;
+
+    public void Commit() => CommitAsync().GetAwaiter().GetResult();
+
+    public async Task CommitAsync(CancellationToken cancellationToken = default)
+    {
+      await underlyingTransaction.CommitAsync(cancellationToken);
+      await onCommit(cancellationToken);
+    }
+
+    public void Dispose() => underlyingTransaction.Dispose();
+
+    public ValueTask DisposeAsync() => underlyingTransaction.DisposeAsync();
+
+    public void Rollback() => underlyingTransaction.Rollback();
+
+    public Task RollbackAsync(CancellationToken cancellationToken = default) => underlyingTransaction.RollbackAsync(cancellationToken);
+  }
 }
