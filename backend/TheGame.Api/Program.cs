@@ -39,10 +39,11 @@ public class Program
       .AddGameServices(connString, builder.Environment.IsDevelopment())
       .AddGameAuthenticationServices(builder.Configuration);
 
-    //builder.Services.AddSpaStaticFiles(options =>
-    //{
-    //  options.RootPath = "../../ui/next_out";
-    //});
+    builder.Services.AddSpaStaticFiles(options =>
+    {
+      // TODO configure root path correctly!
+      options.RootPath = "../../ui/next_out";
+    });
 
     var app = builder.Build();
 
@@ -81,19 +82,18 @@ public class Program
       .AddGameAuthRoutes()
       .AddGameApiRoutes();
 
-    //app.UseSpa(spa =>
-    //{
-    //  // TODO set correct path!
-    //  //spa.Options.DefaultPageStaticFileOptions = new StaticFileOptions()
-    //  //{
-    //  //  RequestPath = "/app"
-    //  //};
-      
-    //  if (app.Environment.IsDevelopment())
-    //  {
-    //    spa.UseProxyToSpaDevelopmentServer("http://host.docker.internal:3000/");
-    //  }
-    //});
+    // this line is required to ensure minimal api routes are executed before hitting SPA
+    // see https://exploding-kitten.com/2024/08-usespa-minimal-api
+    app.UseEndpoints(_ => { });
+
+    app.UseSpa(spa =>
+    { 
+      if (app.Environment.IsDevelopment())
+      {
+        // redirect spa requests to local nextjs dev server
+        spa.UseProxyToSpaDevelopmentServer("http://host.docker.internal:3000/");
+      }
+    });
 
     app.Run();
   }

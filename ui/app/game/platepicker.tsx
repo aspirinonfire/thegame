@@ -65,7 +65,7 @@ export default function PlatePicker({ isShowPicker, setShowPicker, saveNewPlateD
         stateOrProvince: territory.shortName,
 
         dateSpotted: new Date(),
-        spottedBy: mockAccount.name
+        spottedBy: mockAccount.playerName
       } as LicensePlateSpot;
     }
     

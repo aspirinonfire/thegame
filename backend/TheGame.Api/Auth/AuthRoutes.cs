@@ -83,8 +83,7 @@ public static class AuthRoutes
           claimsPrincipal,
           authProperties);
 
-        // TODO redirect to UI landing page
-        return Results.LocalRedirect("/api/user");
+        return Results.LocalRedirect("/");
       })
       .AllowAnonymous();
 

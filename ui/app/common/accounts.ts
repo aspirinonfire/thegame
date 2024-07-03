@@ -1,3 +1,4 @@
 export default interface UserAccount {
-  name: string,
+  playerName: string,
+  playerId: number
 }
