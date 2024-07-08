@@ -1,4 +1,4 @@
-import withPWAInit from '@ducanh2912/next-pwa'
+import withSerwistInit from "@serwist/next";
 
 /** @type {import('next').NextConfig} */
 // Configuration options for Next.js
@@ -20,39 +20,20 @@ const nextConfig = {
   }
 };
 
-// Configuration object tells the next-pwa plugin
-// https://javascript.plainenglish.io/building-a-progressive-web-app-pwa-in-next-js-with-serwist-next-pwa-successor-94e05cb418d7
-const withPWA = withPWAInit({
-  dest: "public",
-  register: true,
+const withSerwist = withSerwistInit({
+  swSrc: "app/sw.ts", // add the path where you create sw.ts
+  swDest: "public/sw.js",
+  disable: process.env.NODE_ENV === "development", // to disable pwa in development
+
   reloadOnOnline: false,
-  cacheStartUrl: true,
-  dynamicStartUrl: true,
-  // cache frotend nav to ensure better offline ux
-  // https://github.com/shadowwalker/next-pwa/blob/master/examples/cache-on-front-end-nav/README.md
-  cacheOnFrontEndNav: true,
-  workboxOptions: {
-    skipWaiting: true,
-    clientsClaim: true,
-    cleanupOutdatedCaches: true,
-    runtimeCaching: [
-      {
-        urlPattern: /^https?.*/,
-        handler: "StaleWhileRevalidate",
-        options: {
-          cacheName: "http-cache",
-          expiration: {
-            maxEntries: 999,
-            maxAgeSeconds: 7 * 24 * 60 * 60 // 7days
-          },
-          cacheableResponse: {
-            statuses: [0, 200],
-          },
-        }
-      }
-    ]
-  }
+  cacheOnNavigation: true,
+  exclude: [
+    ({ url }) => url.pathname.startsWith('/api') || url.pathname.startsWith('/account')
+  ],
+  include: [
+    ({ url }) => !url.pathname.startsWith('/api') && !url.pathname.startsWith('/account'),
+  ]
 });
 
 // Export the combined configuration for Next.js with PWA support
-export default withPWA(nextConfig);
+export default withSerwist(nextConfig);
