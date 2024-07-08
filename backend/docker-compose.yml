@@ -22,7 +22,9 @@ services:
       - "8080:443"
     build:
       context: .
-      dockerfile: thegame.api/Dockerfile
+      dockerfile: TheGame.Api/Dockerfile
+      args:
+        BUILD_CONFIGURATION: Debug
     environment:
       - ConnectionStrings__GameDB=Server=mssql; Initial Catalog=${DB_NAME}; User Id=sa; Password=${SQL_PASSWORD}; Trust Server Certificate=True;
       - Auth__Google__ClientId=${GOOGLE_CLIENT_ID}

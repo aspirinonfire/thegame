@@ -9,11 +9,11 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["thegame.api/TheGame.Api.csproj", "thegame.api/"]
-COPY ["thegame.domain/TheGame.Domain.csproj", "thegame.domain/"]
-RUN dotnet restore "./thegame.api/TheGame.Api.csproj"
+COPY ["TheGame.Api/TheGame.Api.csproj", "TheGame.Api/"]
+COPY ["TheGame.Domain/TheGame.Domain.csproj", "TheGame.Domain/"]
+RUN dotnet restore "./TheGame.Api/TheGame.Api.csproj"
 COPY . .
-WORKDIR "/src/thegame.api"
+WORKDIR "/src/TheGame.Api"
 RUN dotnet build "./TheGame.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
