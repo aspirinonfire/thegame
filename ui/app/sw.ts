@@ -1,5 +1,5 @@
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { Serwist, CacheFirst, enableNavigationPreload } from "serwist";
+import { Serwist, CacheFirst } from "serwist";
 
 // This declares the value of `injectionPoint` to TypeScript.
 // `injectionPoint` is the string that will be replaced by the
@@ -13,7 +13,16 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
-enableNavigationPreload();
+self.addEventListener("fetch", async (event) => {
+  // Ignore caching for API requests
+  if (event.request.url.includes("/api/") || event.request.url.includes("/account/")) {
+    // Let the request be handled by other fetch listeners
+    return;
+  }
+
+  const cachedResponse  = await caches.match(event.request);
+  event.respondWith(cachedResponse || fetch(event.request));
+})
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
