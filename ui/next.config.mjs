@@ -23,8 +23,9 @@ const nextConfig = {
 const withSerwist = withSerwistInit({
   swSrc: "app/sw.ts", // add the path where you create sw.ts
   swDest: "public/sw.js",
+  injectionPoint: "__SW_MANIFEST",
   disable: process.env.NODE_ENV === "development", // to disable pwa in development
-
+  register: true,
   reloadOnOnline: false,
   cacheOnNavigation: true,
   exclude: [
