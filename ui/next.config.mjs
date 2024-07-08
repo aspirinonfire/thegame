@@ -27,13 +27,7 @@ const withSerwist = withSerwistInit({
   disable: process.env.NODE_ENV === "development", // to disable pwa in development
   register: true,
   reloadOnOnline: false,
-  cacheOnNavigation: true,
-  exclude: [
-    ({ url }) => url.pathname.startsWith('/api') || url.pathname.startsWith('/account')
-  ],
-  include: [
-    ({ url }) => !url.pathname.startsWith('/api') && !url.pathname.startsWith('/account'),
-  ]
+  cacheOnNavigation: true
 });
 
 // Export the combined configuration for Next.js with PWA support

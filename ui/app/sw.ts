@@ -21,11 +21,13 @@ const serwist = new Serwist({
   clientsClaim: true,
   navigationPreload: true,
   runtimeCaching: [
+    // non-api and non-account GET requests
     {
-      matcher: /.*/,
+      matcher: ({ sameOrigin, url: { pathname } }) => sameOrigin && !pathname.startsWith("/api/") && !pathname.startsWith("/account/"),
       handler: new CacheFirst({
         cacheName: "non-api-assets"
-      })
+      }),
+      method: "GET"
     }
   ],
 });
