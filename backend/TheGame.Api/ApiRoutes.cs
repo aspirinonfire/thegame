@@ -72,7 +72,18 @@ public static class ApiRoutes
       }
 
       return Results.Ok(newGame);
+    });
 
+    apiRoute.MapPost("game/{gameId:long}", async (HttpContext ctx, IMediator mediator, [FromRoute]long gameId) =>
+    {
+      var playerId = GetPlayerIdFromHttpContext(ctx);
+      var endGameResult = await mediator.Send(new EndGameCommand(gameId, playerId));
+      if (!endGameResult.TryGetSuccessful(out _, out var endGameFailure))
+      {
+        return Results.BadRequest(endGameFailure.ErrorMessage);
+      }
+
+      return Results.NoContent();
     });
 
     return endpoints;

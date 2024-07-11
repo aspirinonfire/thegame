@@ -140,7 +140,7 @@ public partial class Game : BaseModel, IAuditedRecord
     return this;
   }
 
-  public virtual OneOf<Game, Failure> FinishGame(DateTimeOffset endedOn)
+  public virtual OneOf<Game, Failure> EndGame(DateTimeOffset endedOn)
   {
     if (!IsActive)
     {
