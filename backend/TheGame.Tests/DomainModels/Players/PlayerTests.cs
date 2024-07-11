@@ -1,5 +1,3 @@
-using TheGame.Tests.TestUtils;
-
 namespace TheGame.Tests.DomainModels.Players
 {
   [Trait(XunitTestProvider.Category, XunitTestProvider.Unit)]

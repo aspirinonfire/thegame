@@ -3,7 +3,6 @@ using TheGame.Domain.DomainModels.Games.Events;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Tests.DomainModels.LicensePlates;
 using TheGame.Tests.DomainModels.Players;
-using TheGame.Tests.TestUtils;
 
 namespace TheGame.Tests.DomainModels.Games
 {

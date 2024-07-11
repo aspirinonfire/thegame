@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Tests.Fixtures;
-using TheGame.Tests.TestUtils;
 
 namespace TheGame.Tests.IntegrationTests
 {

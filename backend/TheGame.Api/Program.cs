@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Threading.Tasks;
 using TheGame.Api.Auth;
 using TheGame.Domain;
 using TheGame.Domain.DomainModels;
@@ -13,7 +14,7 @@ namespace TheGame.Api;
 
 public class Program
 {
-  public static void Main(string[] args)
+  public static async Task Main(string[] args)
   {
     var builder = WebApplication.CreateBuilder(args);
     builder.WebHost.UseDefaultServiceProvider(diOpts =>
@@ -95,6 +96,6 @@ public class Program
       }
     });
 
-    app.Run();
+    await app.RunAsync();
   }
 }
