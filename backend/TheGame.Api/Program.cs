@@ -30,6 +30,7 @@ public class Program
       .AddSwaggerGen(cfg =>
       {
         cfg.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo() { Title = "Game API", Version = "1" });
+        cfg.OperationFilter<SwaggerCsrfTokenOperationFilter>();
       });
 
     builder.Services.AddHealthChecks()
