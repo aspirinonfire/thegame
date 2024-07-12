@@ -15,7 +15,7 @@ public class LicensePlate : IEquatable<LicensePlate>
 
   public static readonly IReadOnlyCollection<LicensePlate> AvailableLicensePlates =
   [
-    new LicensePlate{ Id = 1, StateOrProvince = StateOrProvince.AL, Country = Country.US },
+    new LicensePlate { Id = 1, StateOrProvince = StateOrProvince.AL, Country = Country.US },
     new LicensePlate { Id = 2, StateOrProvince = StateOrProvince.AK, Country = Country.US },
     new LicensePlate { Id = 3, StateOrProvince = StateOrProvince.AZ, Country = Country.US },
     new LicensePlate { Id = 4, StateOrProvince = StateOrProvince.AR, Country = Country.US },
@@ -82,7 +82,7 @@ public class LicensePlate : IEquatable<LicensePlate>
     new LicensePlate { Id = 64, StateOrProvince = StateOrProvince.YT,  Country = Country.CA }
   ];
 
-  private static readonly ReadOnlyDictionary<(Country, StateOrProvince), LicensePlate> _licensePlateMap =
+  public static readonly ReadOnlyDictionary<(Country, StateOrProvince), LicensePlate> LicensePlatesByCountryAndProvinceLookup =
     AvailableLicensePlates
       .ToDictionary(lp => (lp.Country, lp.StateOrProvince))
       .AsReadOnly();
@@ -102,7 +102,7 @@ public class LicensePlate : IEquatable<LicensePlate>
 
   public static OneOf<LicensePlate, Failure> GetLicensePlate(Country country, StateOrProvince stateOrProvince)
   {
-    if (_licensePlateMap.TryGetValue((country, stateOrProvince), out var licensePlateModel))
+    if (LicensePlatesByCountryAndProvinceLookup.TryGetValue((country, stateOrProvince), out var licensePlateModel))
     {
       return licensePlateModel;
     }
@@ -146,7 +146,6 @@ public class LicensePlate : IEquatable<LicensePlate>
   public static bool operator !=(LicensePlate lhs, LicensePlate rhs) => !(lhs == rhs);
 }
 
-//TODO Populate
 public enum StateOrProvince
 {
   // US

@@ -51,7 +51,8 @@ public static class GameServiceExtensions
       .AddScoped<IGameFactory, Game.GameFactory>()
       .AddScoped<IGameQueryProvider,  GameQueryProvider>()
       .AddScoped<IGamePlayerFactory, GamePlayer.GamePlayerFactory>()
-      .AddScoped<IGameLicensePlateFactory, GameLicensePlate.LicensePlateSpotFactory>();
+      .AddScoped<IGameLicensePlateFactory, GameLicensePlate.LicensePlateSpotFactory>()
+      .AddScoped<IGameScoreCalculator, GameScoreCalculator>();
 
     return services;
   }
