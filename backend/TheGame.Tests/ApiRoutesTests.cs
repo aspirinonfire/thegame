@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using MediatR;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -6,11 +7,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MockQueryable.NSubstitute;
+using OneOf.Types;
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using TheGame.Api;
 using TheGame.Api.Auth;
+using TheGame.Domain.CommandHandlers;
 using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Players;
 
@@ -71,7 +74,82 @@ public class ApiRoutesTests
 
     var actualPlayerInfo = await actualApiResponse.Content.ReadFromJsonAsync<PlayerInfo>();
     Assert.Equal(expectedTestPlayerInfo, actualPlayerInfo);
-}
+  }
+
+  [Fact]
+  public async Task WillStopApiExecutionWhenMissingXsrfToken()
+  {
+    await using var uutApiApp = GetApiFactory(services =>
+    {
+      services.AddSingleton(sp =>
+      {
+        var mockedMediatr = Substitute.For<IMediator>();
+
+        mockedMediatr
+          .Send(Arg.Any<EndGameCommand>())
+          .Returns(new Success());
+
+        return mockedMediatr;
+      });
+    });
+
+    var client = CreateAuthenticatedClient(uutApiApp, 123);
+
+    var actualApiResponse = await client.PostAsync("/api/game/1/endgame", null);
+
+    Assert.Equal(HttpStatusCode.BadRequest, actualApiResponse.StatusCode);
+  }
+
+  [Fact]
+  public async Task WillStopApiExecutionWhenXsrfTokenIsInvalid()
+  {
+    await using var uutApiApp = GetApiFactory(services =>
+    {
+      services.AddSingleton(sp =>
+      {
+        var mockedMediatr = Substitute.For<IMediator>();
+
+        mockedMediatr
+          .Send(Arg.Any<EndGameCommand>())
+          .Returns(new Success());
+
+        return mockedMediatr;
+      });
+    });
+
+    var client = CreateAuthenticatedClient(uutApiApp, 123);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("X-XSRF-TOKEN", "invalid_token");
+
+    var actualApiResponse = await client.PostAsync("/api/game/1/endgame", null);
+
+    Assert.Equal(HttpStatusCode.BadRequest, actualApiResponse.StatusCode);
+  }
+
+  [Fact]
+  public async Task WillSuccessfullyExecuteApiRequestWithValidXsrfToken()
+  {
+    await using var uutApiApp = GetApiFactory(services =>
+    {
+      services.AddSingleton(sp =>
+      {
+        var mockedMediatr = Substitute.For<IMediator>();
+
+        mockedMediatr
+          .Send(Arg.Any<EndGameCommand>())
+          .Returns(new Success());
+
+        return mockedMediatr;
+      });
+    });
+
+    var client = CreateAuthenticatedClient(uutApiApp, 123);
+    
+    await AddXsrfTokenAndCookie(client);
+
+    var actualApiResponse = await client.PostAsync("/api/game/1/endgame", null);
+
+    Assert.Equal(HttpStatusCode.OK, actualApiResponse.StatusCode);
+  }
 
   private WebApplicationFactory<Program> GetApiFactory(Action<IServiceCollection>? registerServices = null) => new WebApplicationFactory<Program>()
     .WithWebHostBuilder(builder =>
@@ -100,7 +178,7 @@ public class ApiRoutesTests
       builder.UseSetting("ConnectionStrings:GameDB", "test connection string");
     });
 
-  private HttpClient CreateAuthenticatedClient(WebApplicationFactory<Program> apiAppFactory, long playerId)
+  private static HttpClient CreateAuthenticatedClient(WebApplicationFactory<Program> apiAppFactory, long playerId)
   {
     // Create claims and claims principal
     var claims = new List<Claim>
@@ -138,5 +216,26 @@ public class ApiRoutesTests
     httpClient.DefaultRequestHeaders.Add("Cookie", $"{GameAuthenticationServiceExtensions.AuthCookieName}={cookieValue}");
 
     return httpClient;
+  }
+
+  private static async Task AddXsrfTokenAndCookie(HttpClient authenticatedHttpClient)
+  {
+    // get XSRF token from API
+    var xsrfTokenResponse = await authenticatedHttpClient.GetAsync("/api/xsrftoken", HttpCompletionOption.ResponseHeadersRead);
+    Assert.Equal(HttpStatusCode.OK, xsrfTokenResponse.StatusCode);
+
+    var xsrfTokenLkp = await xsrfTokenResponse.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+
+    Assert.NotNull(xsrfTokenLkp);
+    var actualToken = Assert.Contains("token", xsrfTokenLkp);
+
+    // attach all response cookies to a next request. this step is required for Anti-Forgery to function properly
+    var responseCookies = xsrfTokenResponse.Headers.GetValues("Set-Cookie")
+      .Select(cookieString => cookieString.Split(";").First())
+      .ToList()
+      .AsReadOnly();
+
+    authenticatedHttpClient.DefaultRequestHeaders.TryAddWithoutValidation("X-XSRF-TOKEN", actualToken);
+    authenticatedHttpClient.DefaultRequestHeaders.TryAddWithoutValidation("Cookie", responseCookies);
   }
 }

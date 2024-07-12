@@ -35,10 +35,11 @@ public class Program
     builder.Services.AddHealthChecks()
       .AddCheck<ApiInfraHealthCheck>(nameof(ApiInfraHealthCheck));
 
+    var isDevEnvironment = builder.Environment.IsDevelopment();
     var connString = builder.Configuration.GetConnectionString(GameDbContext.ConnectionStringName) ?? string.Empty;
 
     builder.Services
-      .AddGameServices(connString, builder.Environment.IsDevelopment())
+      .AddGameServices(connString, isDevEnvironment)
       .AddGameAuthenticationServices(builder.Configuration);
 
     builder.Services.AddSpaStaticFiles(options =>
@@ -56,14 +57,23 @@ public class Program
       options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
+    builder.Services.AddAntiforgery(csrfOpts =>
+    {
+      csrfOpts.HeaderName = "X-XSRF-TOKEN";
+      csrfOpts.SuppressXFrameOptionsHeader = false;
+    });
+
     var app = builder.Build();
 
     // Configure the HTTP request pipeline.
-    if (app.Environment.IsDevelopment())
+    if (isDevEnvironment)
     {
       app.UseDeveloperExceptionPage();
       app.UseSwagger();
-      app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1"));
+      app.UseSwaggerUI(swaggerOpts =>
+      {
+        swaggerOpts.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1");
+      });
     }
     else
     {
@@ -88,9 +98,12 @@ public class Program
     app.UseAuthentication();
     app.UseAuthorization();
 
+    // the middleware must be placed AFTER UseRouting, UseAuth..., and be before UseEndpoints
+    app.UseAntiforgery();
+
     app.MapGroup("")
       .RequireAuthorization()
-      .AddGameAuthRoutes()
+      .AddGameAuthRoutes(isDevEnvironment)
       .AddGameApiRoutes();
 
     // this line is required to ensure minimal api routes are executed before hitting SPA
