@@ -16,7 +16,7 @@ using TheGame.Domain.DomainModels.Players;
 
 namespace TheGame.Tests;
 
-[Trait(XunitTestProvider.Category, XunitTestProvider.Unit)]
+[Trait(XunitTestProvider.Category, XunitTestProvider.Integration)]
 public class ApiRoutesTests
 {
   [Fact]

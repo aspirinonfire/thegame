@@ -1,11 +1,10 @@
 using System;
-using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.Players;
 
 namespace TheGame.Domain.DomainModels.LicensePlates;
 
-public partial class GameLicensePlate : BaseModel
+public partial class GameLicensePlate
 {
   // required for N:M EF Config
   public long LicensePlateId { get; protected set; }
@@ -18,5 +17,5 @@ public partial class GameLicensePlate : BaseModel
   public long SpottedByPlayerId { get; protected set; }
   public virtual Player SpottedBy { get; protected set; } = default!;
 
-  public DateTimeOffset DateCreated { get; protected set; } = default!;
+  public DateTimeOffset DateCreated { get; protected set;  }
 }

@@ -9,7 +9,7 @@ using TheGame.Domain.DomainModels.Players;
 
 namespace TheGame.Domain.DomainModels.Games;
 
-public partial class Game : BaseModel, IAuditedRecord
+public partial class Game : RootModel, IAuditedRecord
 {
   public static class ErrorMessages
   {
@@ -83,7 +83,7 @@ public partial class Game : BaseModel, IAuditedRecord
       return new Failure(ErrorMessages.UninvitedPlayerError);
     }
 
-    var writeableGameSpots = GetWriteableCollection(GameLicensePlates);
+    var writeableGameSpots = GameLicensePlates.GetWriteableCollection();
 
     var existingSpotsLookup = this.GameLicensePlates
       .ToDictionary(spot => (spot.LicensePlate.Country, spot.LicensePlate.StateOrProvince));
@@ -122,7 +122,7 @@ public partial class Game : BaseModel, IAuditedRecord
     // notify players if spots were updated
     if (newSpots.Count != 0 || spotsToRemove.Count != 0)
     {
-      AddDomainEvent(new LicensePlateSpottedEvent(GameLicensePlates.ToList().AsReadOnly()));
+      AddDomainEvent(new LicensePlateSpottedEvent(this));
     }
 
     return this;
@@ -143,7 +143,7 @@ public partial class Game : BaseModel, IAuditedRecord
     IsActive = false;
     EndedOn = endedOn;
 
-    AddDomainEvent(new ExistingGameFinishedEvent());
+    AddDomainEvent(new ExistingGameFinishedEvent(this));
 
     return this;
   }

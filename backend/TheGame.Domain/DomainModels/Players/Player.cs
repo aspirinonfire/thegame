@@ -6,7 +6,7 @@ using TheGame.Domain.DomainModels.PlayerIdentities;
 
 namespace TheGame.Domain.DomainModels.Players;
 
-public partial class Player : BaseModel, IEquatable<Player>
+public partial class Player : RootModel, IEquatable<Player>
 {
   public virtual ICollection<Game> InvitedGames { get; private set; } = [];
 

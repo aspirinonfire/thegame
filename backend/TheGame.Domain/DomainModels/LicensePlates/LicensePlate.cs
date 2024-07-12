@@ -2,12 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 
 namespace TheGame.Domain.DomainModels.LicensePlates;
 
-public class LicensePlate : BaseModel, IEquatable<LicensePlate>
+public class LicensePlate : IEquatable<LicensePlate>
 {
   public static class ErrorMessages
   {

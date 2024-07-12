@@ -37,7 +37,7 @@ public partial class Game
 
       gameDbContext.Games.Add(newGame);
 
-      newGame.AddDomainEvent(new NewGameStartedEvent(newGame.Name, newGame.CreatedBy.Id));
+      newGame.AddDomainEvent(new NewGameStartedEvent(newGame));
 
       return newGame;
     }

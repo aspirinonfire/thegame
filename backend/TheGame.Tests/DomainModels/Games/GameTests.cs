@@ -50,7 +50,7 @@ namespace TheGame.Tests.DomainModels.Games
 
       var actualDomainEvent = Assert.Single(uut.DomainEvents);
       var actualSpottedEvent = Assert.IsType<LicensePlateSpottedEvent>(actualDomainEvent);
-      var actualSpotFromEvent = Assert.Single(actualSpottedEvent.LicensePlateSpotModels);
+      var actualSpotFromEvent = Assert.Single(actualSpottedEvent.Game.GameLicensePlates);
       Assert.Equal(actualLicensePlateSpot, actualSpotFromEvent);
     }
 
@@ -80,7 +80,7 @@ namespace TheGame.Tests.DomainModels.Games
       Assert.Empty(uut.GameLicensePlates);
       var actualEvent = Assert.Single(uut.DomainEvents);
       var actualSpottedEvent = Assert.IsType<LicensePlateSpottedEvent>(actualEvent);
-      Assert.Empty(actualSpottedEvent.LicensePlateSpotModels);
+      Assert.Empty(actualSpottedEvent.Game.GameLicensePlates);
     }
 
     [Fact]

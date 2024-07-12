@@ -4,7 +4,7 @@ using TheGame.Domain.DomainModels.Players;
 
 namespace TheGame.Domain.DomainModels.Games;
 
-public partial class GamePlayer : BaseModel
+public partial class GamePlayer : IAuditedRecord
 {
   public long PlayerId { get; protected set; }
   public virtual Player Player { get; protected set; } = default!;
@@ -14,6 +14,10 @@ public partial class GamePlayer : BaseModel
 
   public Guid InvitationToken { get; protected set; } = default!;
   public GamePlayerInviteStatus InviteStatus { get; protected set; } = GamePlayerInviteStatus.Created;
+
+  public DateTimeOffset DateCreated { get; }
+
+  public DateTimeOffset? DateModified { get; }
 }
 
 public enum GamePlayerInviteStatus
