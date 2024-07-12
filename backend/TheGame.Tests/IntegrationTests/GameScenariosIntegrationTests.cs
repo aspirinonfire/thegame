@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TheGame.Domain.CommandHandlers;
 using TheGame.Domain.DomainModels;
+using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.PlayerIdentities;
 using TheGame.Tests.Fixtures;
@@ -97,13 +98,17 @@ namespace TheGame.Tests.IntegrationTests
       Assert.NotNull(actualNewGame);
 
       // spot plate
-      var spotResult = actualNewGame.AddLicensePlateSpot(lpFac,
-        sysService,
+      var newSpots = new GameLicensePlateSpots(
         [
           (Country.US, StateOrProvince.CA),
           (Country.US, StateOrProvince.OR),
         ],
+        DateTimeOffset.UtcNow,
         actualNewGame.CreatedBy);
+
+      var spotResult = actualNewGame.UpdateLicensePlateSpots(lpFac,
+        sysService,
+        newSpots);
 
       spotResult.AssertIsSucceessful(actualGame =>
       {

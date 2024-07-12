@@ -14,8 +14,8 @@ public class LicensePlate : BaseModel, IEquatable<LicensePlate>
     public const string LicensePlateNotFoundError = "license_plate_not_found";
   }
 
-  public static readonly IReadOnlyCollection<LicensePlate> AvailableLicensePlates = new List<LicensePlate>()
-  {
+  public static readonly IReadOnlyCollection<LicensePlate> AvailableLicensePlates =
+  [
     // TODO populate the rest
     new() { Id = 1, Country = Country.CA, StateOrProvince = StateOrProvince.BC },
     new() { Id = 2, Country = Country.US, StateOrProvince = StateOrProvince.AK },
@@ -23,7 +23,7 @@ public class LicensePlate : BaseModel, IEquatable<LicensePlate>
     new() { Id = 4, Country = Country.US, StateOrProvince = StateOrProvince.NV },
     new() { Id = 5, Country = Country.US, StateOrProvince = StateOrProvince.OR },
     new() { Id = 6, Country = Country.US, StateOrProvince = StateOrProvince.WA },
-  };
+  ];
 
   private static readonly ReadOnlyDictionary<(Country, StateOrProvince), LicensePlate> _licensePlateMap =
     AvailableLicensePlates

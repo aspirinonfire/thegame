@@ -69,73 +69,61 @@ public partial class Game : BaseModel, IAuditedRecord
     return successfulInvite;
   }
 
-  public virtual OneOf<Game, Failure> AddLicensePlateSpot(IGameLicensePlateFactory licensePlateSpotFactory,
+  public virtual OneOf<Game, Failure> UpdateLicensePlateSpots(IGameLicensePlateFactory licensePlateSpotFactory,
     ISystemService systemService,
-    IEnumerable<(Country country, StateOrProvince stateOrProvince)> licensePlateSpots,
-    Player spottedBy)
+    GameLicensePlateSpots licensePlateSpots)
   {
     if (!IsActive)
     {
       return new Failure(ErrorMessages.InactiveGameError);
     }
 
-    if (!GetActiveGamePlayers().Contains(spottedBy))
+    if (!GetActiveGamePlayers().Contains(licensePlateSpots.SpottedBy))
     {
       return new Failure(ErrorMessages.UninvitedPlayerError);
     }
 
-    var existingSpots = GameLicensePlates
-      .Select(spot => (spot.LicensePlate.Country, spot.LicensePlate.StateOrProvince))
-      .ToHashSet();
+    var writeableGameSpots = GetWriteableCollection(GameLicensePlates);
 
-    var newSpots = licensePlateSpots
-      .Where(spot => !existingSpots.Contains(spot));
+    var existingSpotsLookup = this.GameLicensePlates
+      .ToDictionary(spot => (spot.LicensePlate.Country, spot.LicensePlate.StateOrProvince));
 
-    var newSpottedPlates = new List<GameLicensePlate>();
-    foreach ((Country country, StateOrProvince stateOrProvince) in newSpots)
+    // add new spots
+    var newSpots = licensePlateSpots.Spots
+      .Where(spot => !existingSpotsLookup.ContainsKey(spot))
+      .ToList()
+      .AsReadOnly();
+
+    foreach (var (country, stateOrProvince) in newSpots)
     {
-      var licensePlateSpotResult = licensePlateSpotFactory.CreateLicensePlateSpot(country,
-        stateOrProvince,
-        spottedBy,
-        systemService.DateTimeOffset.UtcNow);
-
-      if (!licensePlateSpotResult.TryGetSuccessful(out var successfulSpot, out var spotFailure))
+      var newSpotResult = licensePlateSpotFactory.CreateLicensePlateSpot(country, stateOrProvince, licensePlateSpots.SpottedBy, licensePlateSpots.SpottedOn);
+      if (!newSpotResult.TryGetSuccessful(out var newSpot, out var spotFailure))
       {
         return spotFailure;
       }
-
-      newSpottedPlates.Add(successfulSpot);
-      GetWriteableCollection(GameLicensePlates)
-        .Add(successfulSpot);
+      writeableGameSpots.Add(newSpot);
     }
 
-    if (newSpottedPlates.Count != 0)
+    // remove any existing spots
+    var updatedSpotsLookup = licensePlateSpots.Spots
+      .ToHashSet();
+
+    var spotsToRemove = existingSpotsLookup
+      .Values
+      .Where(existingSpot => !updatedSpotsLookup.Contains((existingSpot.LicensePlate.Country, existingSpot.LicensePlate.StateOrProvince)))
+      .ToList()
+      .AsReadOnly();
+    
+    foreach (var toRemove in spotsToRemove)
     {
-      AddDomainEvent(new LicensePlateSpottedEvent(newSpottedPlates.AsReadOnly()));
+      writeableGameSpots.Remove(toRemove);
     }
 
-    return this;
-  }
-
-  public virtual OneOf<Game, Failure> RemoveLicensePlateSpot(
-    IEnumerable<(Country country, StateOrProvince stateOrProvince)> licensePlatesToRemove,
-    Player spottedBy)
-  {
-    if (!IsActive)
+    // notify players if spots were updated
+    if (newSpots.Count != 0 || spotsToRemove.Count != 0)
     {
-      return new Failure(ErrorMessages.InactiveGameError);
+      AddDomainEvent(new LicensePlateSpottedEvent(GameLicensePlates.ToList().AsReadOnly()));
     }
-
-    if (!GetActiveGamePlayers().Contains(spottedBy))
-    {
-      return new Failure(ErrorMessages.UninvitedPlayerError);
-    }
-
-    var toRemove = new HashSet<(Country country, StateOrProvince stateOrProvince)>(licensePlatesToRemove);
-    GetWriteableCollection(GameLicensePlates)
-      .RemoveWhere(spot => toRemove.Contains((spot.LicensePlate.Country, spot.LicensePlate.StateOrProvince)));
-
-    AddDomainEvent(new LicensePlateSpotRemovedEvent(licensePlatesToRemove));
 
     return this;
   }

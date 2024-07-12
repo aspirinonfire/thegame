@@ -1,15 +1,17 @@
 using TheGame.Domain.DomainModels.LicensePlates;
-using TheGame.Tests.DomainModels.Players;
+using TheGame.Domain.DomainModels.Players;
 
 namespace TheGame.Tests.DomainModels.LicensePlates
 {
   internal class MockGameLicensePlate : GameLicensePlate
   {
-    public MockGameLicensePlate(MockLicensePlate licensePlateModel,
-      MockPlayer spottedBy)
+    public MockGameLicensePlate(LicensePlate licensePlateModel,
+      Player spottedBy,
+      DateTimeOffset? spottedOn = null)
     {
       LicensePlate = licensePlateModel;
       SpottedBy = spottedBy;
+      DateCreated = spottedOn.GetValueOrDefault(CommonMockedServices.DefaultTestDate);
     }
   }
 }
