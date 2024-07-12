@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using TheGame.Api.Auth;
 using TheGame.Domain.CommandHandlers;
@@ -74,7 +75,7 @@ public static class ApiRoutes
       return Results.Ok(newGame);
     });
 
-    apiRoute.MapPost("game/{gameId:long}", async (HttpContext ctx, IMediator mediator, [FromRoute]long gameId) =>
+    apiRoute.MapPost("game/{gameId:long}/endgame", async (HttpContext ctx, IMediator mediator, [FromRoute]long gameId) =>
     {
       var playerId = GetPlayerIdFromHttpContext(ctx);
       var endGameResult = await mediator.Send(new EndGameCommand(gameId, playerId));
@@ -83,7 +84,20 @@ public static class ApiRoutes
         return Results.BadRequest(endGameFailure.ErrorMessage);
       }
 
-      return Results.NoContent();
+      return Results.Ok();
+    });
+
+    apiRoute.MapPost("game/{gameId:long}/spotplates", async (HttpContext ctx, IMediator mediator, [FromRoute] long gameId, [FromBody] IReadOnlyCollection<SpottedPlate> spottedPlates) =>
+    {
+      var playerId = GetPlayerIdFromHttpContext(ctx);
+
+      var endGameResult = await mediator.Send(new SpotLicensePlatesCommand(spottedPlates, gameId, playerId));
+      if (!endGameResult.TryGetSuccessful(out _, out var endGameFailure))
+      {
+        return Results.BadRequest(endGameFailure.ErrorMessage);
+      }
+
+      return Results.Ok();
     });
 
     return endpoints;

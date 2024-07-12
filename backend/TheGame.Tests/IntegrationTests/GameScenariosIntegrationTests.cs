@@ -78,6 +78,7 @@ namespace TheGame.Tests.IntegrationTests
       using var scope = sp.CreateScope();
 
       var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+      var gameQryProvider = scope.ServiceProvider.GetRequiredService<IGameQueryProvider>();
 
       // create new player with identity
       var newPlayerRequest = new NewPlayerIdentityRequest("test_provider_1", "test_id_1", "refresh_token", "Test Player");
@@ -86,39 +87,23 @@ namespace TheGame.Tests.IntegrationTests
 
       // start new game
       var startNewGameCommandResult = await mediator.Send(new StartNewGameCommand("Test Game", actualNewPlayerIdentity.PlayerId));
-      startNewGameCommandResult.AssertIsSucceessful(out var newGame);
+      startNewGameCommandResult.AssertIsSucceessful(out var actualNewGame);
 
-      // TODO replace with commands
-      var lpFac = scope.ServiceProvider.GetRequiredService<IGameLicensePlateFactory>();
-      var sysService = scope.ServiceProvider.GetRequiredService<ISystemService>();
-      var db = scope.ServiceProvider.GetRequiredService<IGameDbContext>();
-      using var trx = await db.BeginTransactionAsync();
-
-      var actualNewGame = await db.Games.FindAsync(newGame.GameId);
-      Assert.NotNull(actualNewGame);
-
-      // spot plate
-      var newSpots = new GameLicensePlateSpots(
-        [
-          (Country.US, StateOrProvince.CA),
-          (Country.US, StateOrProvince.OR),
+      // spot plates
+      var spotPlatesResult = await mediator.Send(new SpotLicensePlatesCommand([
+        new Domain.CommandHandlers.SpottedPlate(Country.US, StateOrProvince.CA),
+        new Domain.CommandHandlers.SpottedPlate(Country.US, StateOrProvince.OR),
+        new Domain.CommandHandlers.SpottedPlate(Country.CA, StateOrProvince.BC)
         ],
-        DateTimeOffset.UtcNow,
-        actualNewGame.CreatedBy);
+        actualNewGame.GameId,
+        actualNewPlayerIdentity.PlayerId));
 
-      var spotResult = actualNewGame.UpdateLicensePlateSpots(lpFac,
-        sysService,
-        newSpots);
+      spotPlatesResult.AssertIsSucceessful();
 
-      spotResult.AssertIsSucceessful(actualGame =>
-      {
-        Assert.Equal(2, actualNewGame.GameLicensePlates.Count);
-        Assert.All(actualGame.GameLicensePlates,
-          plate => Assert.Equal(actualNewGame.CreatedBy, plate.SpottedBy));
-      });
+      var actualGames = await gameQryProvider.GetOwnedAndInvitedGamesQuery(actualNewPlayerIdentity.PlayerId).ToListAsync();
+      var actualGame = Assert.Single(actualGames);
 
-      await db.SaveChangesAsync();
-      trx.Commit();
+      Assert.Equal(3, actualGame.SpottedPlates.Count);
     }
   }
 }

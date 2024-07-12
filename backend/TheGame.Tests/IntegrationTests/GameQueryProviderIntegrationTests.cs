@@ -49,18 +49,21 @@ namespace TheGame.Tests.IntegrationTests
 
       var actualGame = Assert.Single(actualGames);
 
-      Assert.Equal(
-        new OwnedAndInvitedGames
-        {
-          IsOwner = true,
-          GameId = 1,
-          GameName = "Test Game",
-          DateCreated = new DateTimeOffset(2024, 1, 2, 0, 0, 0, 0, TimeSpan.Zero),
-          DateModified = null,
-          EndedOn = null,
-          NumberOfSpottedPlates = 1
-        },
-        actualGame);
+      Assert.Equal(1, actualGame.GameId);
+      Assert.Equal("Test Game", actualGame.GameName);
+      Assert.Equal(new DateTimeOffset(2024, 1, 2, 0, 0, 0, 0, TimeSpan.Zero), actualGame.DateCreated);
+      Assert.True(actualGame.IsOwner);
+      
+      var actualSpottedPlate = Assert.Single(actualGame.SpottedPlates);
+      Assert.Equal(new SpottedGamePlate
+      {
+        Country = Domain.DomainModels.LicensePlates.Country.CA,
+        StateOrProvince = Domain.DomainModels.LicensePlates.StateOrProvince.BC,
+        SpottedByPlayerId = 1,
+        SpottedByPlayerName = "Test Player",
+        SpottedOn = new DateTimeOffset(2024, 1, 3, 0, 0, 0, TimeSpan.Zero)
+      },
+      actualSpottedPlate);
     }
   }
 }

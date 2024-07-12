@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using TheGame.Api.Auth;
 using TheGame.Domain;
@@ -44,6 +45,15 @@ public class Program
     {
       // TODO configure root path correctly!
       options.RootPath = "../../ui/next_out";
+    });
+
+    builder.Services.ConfigureHttpJsonOptions(options =>
+    {
+      options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+    builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
+    {
+      options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
     var app = builder.Build();

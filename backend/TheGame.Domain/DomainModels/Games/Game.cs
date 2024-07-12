@@ -96,11 +96,16 @@ public partial class Game : RootModel, IAuditedRecord
 
     foreach (var (country, stateOrProvince) in newSpots)
     {
-      var newSpotResult = licensePlateSpotFactory.CreateLicensePlateSpot(country, stateOrProvince, licensePlateSpots.SpottedBy, licensePlateSpots.SpottedOn);
+      var newSpotResult = licensePlateSpotFactory.CreateLicensePlateSpot(country,
+        stateOrProvince,
+        licensePlateSpots.SpottedBy,
+        systemService.DateTimeOffset.UtcNow);
+      
       if (!newSpotResult.TryGetSuccessful(out var newSpot, out var spotFailure))
       {
         return spotFailure;
       }
+      
       writeableGameSpots.Add(newSpot);
     }
 
@@ -148,3 +153,5 @@ public partial class Game : RootModel, IAuditedRecord
     return this;
   }
 }
+
+public sealed record GameLicensePlateSpots(IReadOnlyCollection<(Country country, StateOrProvince stateOrProvince)> Spots, Player SpottedBy);

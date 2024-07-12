@@ -15,9 +15,7 @@ namespace TheGame.Tests.DomainModels.Games
     {
       var spottedBy = new MockPlayer(1, "test");
 
-      var gameLpSpots = new GameLicensePlateSpots([(Country.US, StateOrProvince.CA)],
-        CommonMockedServices.DefaultTestDate,
-        spottedBy);
+      var gameLpSpots = new GameLicensePlateSpots([(Country.US, StateOrProvince.CA)], spottedBy);
 
       var lpSpot = new MockGameLicensePlate(
         new MockLicensePlate(Country.US, StateOrProvince.CA),
@@ -59,9 +57,7 @@ namespace TheGame.Tests.DomainModels.Games
     {
       var spottedBy = new MockPlayer(2, "existing");
 
-      var gameLpSpots = new GameLicensePlateSpots([],
-        CommonMockedServices.DefaultTestDate,
-        spottedBy);
+      var gameLpSpots = new GameLicensePlateSpots([], spottedBy);
 
       var existingSpot = new MockGameLicensePlate(
         new MockLicensePlate(Country.US, StateOrProvince.CA),
@@ -93,7 +89,6 @@ namespace TheGame.Tests.DomainModels.Games
 
       var spottedBy = new MockPlayer(1, "test");
       var gameLpSpots = new GameLicensePlateSpots([(Country.US, StateOrProvince.CA)],
-        new DateTimeOffset(2024, 7, 11, 16, 0, 0, TimeSpan.Zero),
         spottedBy);
 
       var newSpot = new MockGameLicensePlate(
@@ -127,9 +122,7 @@ namespace TheGame.Tests.DomainModels.Games
     public void WillReturnInactiveGameErrorOnSpottingPlateForHistoricGameRecord()
     {
       var spottedBy = new MockPlayer(1, "test");
-      var gameLpSpots = new GameLicensePlateSpots([(Country.US, StateOrProvince.CA)],
-        new DateTimeOffset(2024, 7, 11, 16, 0, 0, TimeSpan.Zero),
-        spottedBy);
+      var gameLpSpots = new GameLicensePlateSpots([(Country.US, StateOrProvince.CA)], spottedBy);
 
       var lpSpot = new MockGameLicensePlate(
         new MockLicensePlate(Country.US, StateOrProvince.CA),
