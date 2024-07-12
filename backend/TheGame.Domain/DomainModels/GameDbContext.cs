@@ -67,7 +67,6 @@ public class GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
       .Entries()
       .Where(e => e.Entity is IDomainModel &&
         (e.State == EntityState.Added || e.State == EntityState.Modified))
-      // TODO implement domain event generators to support publishing newly created ids 
       .SelectMany(e => ((IDomainModel)e.Entity).DomainEvents)
       .ToList()
       .AsReadOnly();
