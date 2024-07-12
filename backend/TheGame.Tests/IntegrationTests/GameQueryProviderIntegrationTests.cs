@@ -57,8 +57,8 @@ namespace TheGame.Tests.IntegrationTests
       var actualSpottedPlate = Assert.Single(actualGame.SpottedPlates);
       Assert.Equal(new SpottedGamePlate
       {
-        Country = Domain.DomainModels.LicensePlates.Country.CA,
-        StateOrProvince = Domain.DomainModels.LicensePlates.StateOrProvince.BC,
+        Country = Domain.DomainModels.LicensePlates.Country.US,
+        StateOrProvince = Domain.DomainModels.LicensePlates.StateOrProvince.AL,
         SpottedByPlayerId = 1,
         SpottedByPlayerName = "Test Player",
         SpottedOn = new DateTimeOffset(2024, 1, 3, 0, 0, 0, TimeSpan.Zero)
