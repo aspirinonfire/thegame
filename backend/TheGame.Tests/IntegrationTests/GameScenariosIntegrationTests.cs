@@ -91,9 +91,9 @@ namespace TheGame.Tests.IntegrationTests
 
       // spot plates
       var spotPlatesResult = await mediator.Send(new SpotLicensePlatesCommand([
-        new Domain.CommandHandlers.SpottedPlate(Country.US, StateOrProvince.CA),
-        new Domain.CommandHandlers.SpottedPlate(Country.US, StateOrProvince.OR),
-        new Domain.CommandHandlers.SpottedPlate(Country.CA, StateOrProvince.BC)
+        new SpottedPlate(Country.US, StateOrProvince.CA),
+        new SpottedPlate(Country.US, StateOrProvince.OR),
+        new SpottedPlate(Country.CA, StateOrProvince.BC)
         ],
         actualNewGame.GameId,
         actualNewPlayerIdentity.PlayerId));
@@ -104,6 +104,8 @@ namespace TheGame.Tests.IntegrationTests
       var actualGame = Assert.Single(actualGames);
 
       Assert.Equal(3, actualGame.SpottedPlates.Count);
+      Assert.NotNull(actualGame.GameScore);
+      Assert.NotEqual(0, actualGame.GameScore.TotalScore);
     }
   }
 }

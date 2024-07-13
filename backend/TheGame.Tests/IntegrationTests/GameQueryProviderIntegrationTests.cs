@@ -21,8 +21,8 @@ namespace TheGame.Tests.IntegrationTests
         insert into Players ([Name], PlayerIdentityId)
         values ('Test Player', 1);
 
-        insert into Games([Name], IsActive, CreatedByPlayerId, DateCreated)
-        values ('Test Game', 0, 1, '20240102 00:00:00 +00:00');
+        insert into Games([Name], IsActive, CreatedByPlayerId, DateCreated, GameScore_Achievements, GameScore_TotalScore)
+        values ('Test Game', 0, 1, '20240102 00:00:00 +00:00', 'West Coast;East Coast', 100);
 
         insert into GameLicensePlates(LicensePlateId, GameId, SpottedByPlayerId, DateCreated)
         values(1, 1, 1, '20240103 00:00:00 +00:00');
@@ -53,7 +53,11 @@ namespace TheGame.Tests.IntegrationTests
       Assert.Equal("Test Game", actualGame.GameName);
       Assert.Equal(new DateTimeOffset(2024, 1, 2, 0, 0, 0, 0, TimeSpan.Zero), actualGame.DateCreated);
       Assert.True(actualGame.IsOwner);
-      
+      Assert.Collection(actualGame.GameScore.Achievements,
+        achievement1 => Assert.Equal("West Coast", achievement1),
+        achievement2 => Assert.Equal("East Coast", achievement2));
+      Assert.Equal(100, actualGame.GameScore.TotalScore);
+
       var actualSpottedPlate = Assert.Single(actualGame.SpottedPlates);
       Assert.Equal(new SpottedGamePlate
       {

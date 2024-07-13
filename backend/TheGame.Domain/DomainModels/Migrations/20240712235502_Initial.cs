@@ -75,7 +75,9 @@ namespace TheGame.Domain.DomainModels.Migrations
                     CreatedByPlayerId = table.Column<long>(type: "bigint", nullable: false),
                     EndedOn = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
+                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    GameScore_Achievements = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    GameScore_TotalScore = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {

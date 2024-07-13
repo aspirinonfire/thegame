@@ -20,6 +20,7 @@ public class SpotLicensePlatesCommandHandler(IGameDbContext gameDb,
   ITransactionExecutionWrapper transactionWrapper,
   IGameLicensePlateFactory gameLicensePlateFactory,
   ISystemService systemService,
+  IGameScoreCalculator gameScoreCalculator,
   ILogger<SpotLicensePlatesCommandHandler> logger)
   : IRequestHandler<SpotLicensePlatesCommand, OneOf<Success, Failure>>
 {
@@ -51,7 +52,11 @@ public class SpotLicensePlatesCommandHandler(IGameDbContext gameDb,
       var spots = request.SpottedPlates.Select(plate => (plate.Country, plate.StateOrProvince)).ToList();
       var updatedSpots = new GameLicensePlateSpots(spots, activeGame.Player);
 
-      var updatedSpotsResult = activeGame.Game.UpdateLicensePlateSpots(gameLicensePlateFactory, systemService, updatedSpots);
+      var updatedSpotsResult = activeGame.Game.UpdateLicensePlateSpots(gameLicensePlateFactory,
+        systemService,
+        gameScoreCalculator,
+        updatedSpots);
+      
       if (!updatedSpotsResult.TryGetSuccessful(out _, out var spotFailure))
       {
         logger.LogError(spotFailure.GetException(), "Failed to spot license plates.");

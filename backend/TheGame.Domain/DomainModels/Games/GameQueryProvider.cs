@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using TheGame.Domain.DomainModels.LicensePlates;
 
@@ -15,6 +16,7 @@ public sealed record OwnedAndInvitedGames
   public DateTimeOffset? DateModified { get; init; }
   public DateTimeOffset? EndedOn { get; init; }
   public ICollection<SpottedGamePlate> SpottedPlates { get; init; } = [];
+  public GameScore GameScore { get; init; } = new GameScore(ReadOnlyCollection<string>.Empty, 0);
 }
 
 public sealed record SpottedGamePlate
@@ -53,6 +55,7 @@ public class GameQueryProvider(IGameDbContext gameDbContext) : IGameQueryProvide
         DateCreated = game.DateCreated,
         DateModified = game.DateModified,
         EndedOn = game.EndedOn,
+        GameScore = game.GameScore,
         SpottedPlates = game.GameLicensePlates
           .Select(spot => new SpottedGamePlate
           {

@@ -1,6 +1,7 @@
 using FluentValidation;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games.Events;
@@ -26,6 +27,8 @@ public partial class Game : RootModel, IAuditedRecord
   public virtual ICollection<Player> InvitedPlayers { get; private set; } = [];
   protected HashSet<GamePlayer> _gamePlayerInvites = [];
   public virtual ICollection<GamePlayer> GamePlayerInvites => _gamePlayerInvites;
+
+  public GameScore GameScore { get; protected set; } = new(ReadOnlyCollection<string>.Empty, 0);
 
   public long Id { get; }
 
@@ -71,6 +74,7 @@ public partial class Game : RootModel, IAuditedRecord
 
   public virtual OneOf<Game, Failure> UpdateLicensePlateSpots(IGameLicensePlateFactory licensePlateSpotFactory,
     ISystemService systemService,
+    IGameScoreCalculator scoreCalculator,
     GameLicensePlateSpots licensePlateSpots)
   {
     if (!IsActive)
@@ -124,9 +128,18 @@ public partial class Game : RootModel, IAuditedRecord
       writeableGameSpots.Remove(toRemove);
     }
 
-    // notify players if spots were updated
+    // update score and notify players if spots were updated
     if (newSpots.Count != 0 || spotsToRemove.Count != 0)
     {
+      var allSpottedPlates = GameLicensePlates
+        .Select(glp => (glp.LicensePlate.Country, glp.LicensePlate.StateOrProvince ))
+        .ToList()
+        .AsReadOnly();
+      
+      var newScore = scoreCalculator.CalculateGameScore(allSpottedPlates);
+
+      GameScore = GameScore with { Achievements = newScore.Achievements.ToList().AsReadOnly(), TotalScore = newScore.TotalScore };
+
       AddDomainEvent(new LicensePlateSpottedEvent(this));
     }
 
@@ -155,3 +168,5 @@ public partial class Game : RootModel, IAuditedRecord
 }
 
 public sealed record GameLicensePlateSpots(IReadOnlyCollection<(Country country, StateOrProvince stateOrProvince)> Spots, Player SpottedBy);
+
+public sealed record GameScore(ReadOnlyCollection<string> Achievements, int TotalScore);

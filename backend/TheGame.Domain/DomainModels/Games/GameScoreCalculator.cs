@@ -9,11 +9,11 @@ namespace TheGame.Domain.DomainModels.Games;
 
 public sealed record Achievement(string AchievementName, int ScoreBonus, Func<HashSet<(Country country, StateOrProvince stateOrProvince)>, bool> IsUnlocked);
 
-public sealed record GameScore(int NumberOfSpottedPlates, IReadOnlyCollection<string> Achievements, int TotalScore);
+public sealed record GameScoreResult(int NumberOfSpottedPlates, IReadOnlyCollection<string> Achievements, int TotalScore);
 
 public interface IGameScoreCalculator
 {
-  GameScore CalculateGameScore(IReadOnlyCollection<(Country country, StateOrProvince stateOrProvince)> Spots);
+  GameScoreResult CalculateGameScore(IReadOnlyCollection<(Country country, StateOrProvince stateOrProvince)> Spots);
 }
 
 public class GameScoreCalculator : IGameScoreCalculator
@@ -201,7 +201,7 @@ public class GameScoreCalculator : IGameScoreCalculator
     });
 
 
-  public GameScore CalculateGameScore(IReadOnlyCollection<(Country country, StateOrProvince stateOrProvince)> Spots)
+  public GameScoreResult CalculateGameScore(IReadOnlyCollection<(Country country, StateOrProvince stateOrProvince)> Spots)
   {
     var currentScore = Spots.Count;
     var currentAchievements = new List<string>();
@@ -226,6 +226,6 @@ public class GameScoreCalculator : IGameScoreCalculator
       }
     }
 
-    return new GameScore(Spots.Count, currentAchievements.AsReadOnly(), currentScore);
+    return new GameScoreResult(Spots.Count, currentAchievements.AsReadOnly(), currentScore);
   }
 }
