@@ -39,6 +39,6 @@ services:
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERT_PASSWORD}
     volumes:
       - ${USERPROFILE}/.aspnet/https:/https:ro  # Mount the ASP.NET Core development certificate. Use this line in Windows
-      # - /mnt/c/Users/Bob Yoshi/.aspnet/https:/https:ro  # Mount the ASP.NET Core development certificate. Use this line in Linux (WSL)
+      # - /mnt/c/Users/<your username>/.aspnet/https:/https:ro  # Mount the ASP.NET Core development certificate. Use this line in WSL
     depends_on:
     - mssql
