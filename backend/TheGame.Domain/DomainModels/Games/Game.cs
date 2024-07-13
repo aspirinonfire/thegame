@@ -1,6 +1,7 @@
 using FluentValidation;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games.Events;
@@ -9,7 +10,7 @@ using TheGame.Domain.DomainModels.Players;
 
 namespace TheGame.Domain.DomainModels.Games;
 
-public partial class Game : BaseModel, IAuditedRecord
+public partial class Game : RootModel, IAuditedRecord
 {
   public static class ErrorMessages
   {
@@ -27,12 +28,15 @@ public partial class Game : BaseModel, IAuditedRecord
   protected HashSet<GamePlayer> _gamePlayerInvites = [];
   public virtual ICollection<GamePlayer> GamePlayerInvites => _gamePlayerInvites;
 
+  public GameScore GameScore { get; protected set; } = new(ReadOnlyCollection<string>.Empty, 0);
+
   public long Id { get; }
 
   public string Name { get; protected set; } = default!;
 
   public bool IsActive { get; protected set; }
 
+  public long CreatedByPlayerId { get; protected set; }
   protected Player _createdBy = default!;
   public virtual Player CreatedBy
   {
@@ -68,78 +72,81 @@ public partial class Game : BaseModel, IAuditedRecord
     return successfulInvite;
   }
 
-  public virtual OneOf<Game, Failure> AddLicensePlateSpot(IGameLicensePlateFactory licensePlateSpotFactory,
+  public virtual OneOf<Game, Failure> UpdateLicensePlateSpots(IGameLicensePlateFactory licensePlateSpotFactory,
     ISystemService systemService,
-    IEnumerable<(Country country, StateOrProvince stateOrProvince)> licensePlateSpots,
-    Player spottedBy)
+    IGameScoreCalculator scoreCalculator,
+    GameLicensePlateSpots licensePlateSpots)
   {
     if (!IsActive)
     {
       return new Failure(ErrorMessages.InactiveGameError);
     }
 
-    if (!GetActiveGamePlayers().Contains(spottedBy))
+    if (!GetActiveGamePlayers().Contains(licensePlateSpots.SpottedBy))
     {
       return new Failure(ErrorMessages.UninvitedPlayerError);
     }
 
-    var existingSpots = GameLicensePlates
-      .Select(spot => (spot.LicensePlate.Country, spot.LicensePlate.StateOrProvince))
-      .ToHashSet();
+    var writeableGameSpots = GameLicensePlates.GetWriteableCollection();
 
-    var newSpots = licensePlateSpots
-      .Where(spot => !existingSpots.Contains(spot));
+    var existingSpotsLookup = this.GameLicensePlates
+      .ToDictionary(spot => (spot.LicensePlate.Country, spot.LicensePlate.StateOrProvince));
 
-    var newSpottedPlates = new List<GameLicensePlate>();
-    foreach ((Country country, StateOrProvince stateOrProvince) in newSpots)
+    // add new spots
+    var newSpots = licensePlateSpots.Spots
+      .Where(spot => !existingSpotsLookup.ContainsKey(spot))
+      .ToList()
+      .AsReadOnly();
+
+    foreach (var (country, stateOrProvince) in newSpots)
     {
-      var licensePlateSpotResult = licensePlateSpotFactory.CreateLicensePlateSpot(country,
+      var newSpotResult = licensePlateSpotFactory.CreateLicensePlateSpot(country,
         stateOrProvince,
-        spottedBy,
+        licensePlateSpots.SpottedBy,
         systemService.DateTimeOffset.UtcNow);
-
-      if (!licensePlateSpotResult.TryGetSuccessful(out var successfulSpot, out var spotFailure))
+      
+      if (!newSpotResult.TryGetSuccessful(out var newSpot, out var spotFailure))
       {
         return spotFailure;
       }
-
-      newSpottedPlates.Add(successfulSpot);
-      GetWriteableCollection(GameLicensePlates)
-        .Add(successfulSpot);
+      
+      writeableGameSpots.Add(newSpot);
     }
 
-    if (newSpottedPlates.Count != 0)
+    // remove any existing spots
+    var updatedSpotsLookup = licensePlateSpots.Spots
+      .ToHashSet();
+
+    var spotsToRemove = existingSpotsLookup
+      .Values
+      .Where(existingSpot => !updatedSpotsLookup.Contains((existingSpot.LicensePlate.Country, existingSpot.LicensePlate.StateOrProvince)))
+      .ToList()
+      .AsReadOnly();
+    
+    foreach (var toRemove in spotsToRemove)
     {
-      AddDomainEvent(new LicensePlateSpottedEvent(newSpottedPlates.AsReadOnly()));
+      writeableGameSpots.Remove(toRemove);
+    }
+
+    // update score and notify players if spots were updated
+    if (newSpots.Count != 0 || spotsToRemove.Count != 0)
+    {
+      var allSpottedPlates = GameLicensePlates
+        .Select(glp => (glp.LicensePlate.Country, glp.LicensePlate.StateOrProvince ))
+        .ToList()
+        .AsReadOnly();
+      
+      var newScore = scoreCalculator.CalculateGameScore(allSpottedPlates);
+
+      GameScore = GameScore with { Achievements = newScore.Achievements.ToList().AsReadOnly(), TotalScore = newScore.TotalScore };
+
+      AddDomainEvent(new LicensePlateSpottedEvent(this));
     }
 
     return this;
   }
 
-  public virtual OneOf<Game, Failure> RemoveLicensePlateSpot(
-    IEnumerable<(Country country, StateOrProvince stateOrProvince)> licensePlatesToRemove,
-    Player spottedBy)
-  {
-    if (!IsActive)
-    {
-      return new Failure(ErrorMessages.InactiveGameError);
-    }
-
-    if (!GetActiveGamePlayers().Contains(spottedBy))
-    {
-      return new Failure(ErrorMessages.UninvitedPlayerError);
-    }
-
-    var toRemove = new HashSet<(Country country, StateOrProvince stateOrProvince)>(licensePlatesToRemove);
-    GetWriteableCollection(GameLicensePlates)
-      .RemoveWhere(spot => toRemove.Contains((spot.LicensePlate.Country, spot.LicensePlate.StateOrProvince)));
-
-    AddDomainEvent(new LicensePlateSpotRemovedEvent(licensePlatesToRemove));
-
-    return this;
-  }
-
-  public virtual OneOf<Game, Failure> FinishGame(DateTimeOffset endedOn)
+  public virtual OneOf<Game, Failure> EndGame(DateTimeOffset endedOn)
   {
     if (!IsActive)
     {
@@ -154,8 +161,12 @@ public partial class Game : BaseModel, IAuditedRecord
     IsActive = false;
     EndedOn = endedOn;
 
-    AddDomainEvent(new ExistingGameFinishedEvent());
+    AddDomainEvent(new ExistingGameFinishedEvent(this));
 
     return this;
   }
 }
+
+public sealed record GameLicensePlateSpots(IReadOnlyCollection<(Country country, StateOrProvince stateOrProvince)> Spots, Player SpottedBy);
+
+public sealed record GameScore(ReadOnlyCollection<string> Achievements, int TotalScore);

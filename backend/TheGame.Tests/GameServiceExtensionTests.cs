@@ -1,7 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using TheGame.Domain;
 using TheGame.Domain.DomainModels;
-using TheGame.Tests.TestUtils;
 
 namespace TheGame.Tests
 {

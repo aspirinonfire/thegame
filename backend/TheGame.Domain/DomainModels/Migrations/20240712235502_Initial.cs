@@ -8,14 +8,11 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TheGame.Domain.DomainModels.Migrations
 {
     /// <inheritdoc />
-    public partial class initial : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateSequence(
-                name: "PlayerSequence");
-
             migrationBuilder.CreateTable(
                 name: "LicensePlates",
                 columns: table => new
@@ -51,7 +48,8 @@ namespace TheGame.Domain.DomainModels.Migrations
                 name: "Players",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "bigint", nullable: false, defaultValueSql: "NEXT VALUE FOR [PlayerSequence]"),
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PlayerIdentityId = table.Column<long>(type: "bigint", nullable: false)
                 },
@@ -77,7 +75,9 @@ namespace TheGame.Domain.DomainModels.Migrations
                     CreatedByPlayerId = table.Column<long>(type: "bigint", nullable: false),
                     EndedOn = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
-                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
+                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
+                    GameScore_Achievements = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    GameScore_TotalScore = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -128,7 +128,9 @@ namespace TheGame.Domain.DomainModels.Migrations
                     PlayerId = table.Column<long>(type: "bigint", nullable: false),
                     GameId = table.Column<long>(type: "bigint", nullable: false),
                     InvitationToken = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    InviteStatus = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    InviteStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DateCreated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    DateModified = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -152,12 +154,70 @@ namespace TheGame.Domain.DomainModels.Migrations
                 columns: new[] { "Id", "Country", "StateOrProvince" },
                 values: new object[,]
                 {
-                    { 1L, "CA", "BC" },
+                    { 1L, "US", "AL" },
                     { 2L, "US", "AK" },
-                    { 3L, "US", "CA" },
-                    { 4L, "US", "NV" },
-                    { 5L, "US", "OR" },
-                    { 6L, "US", "WA" }
+                    { 3L, "US", "AZ" },
+                    { 4L, "US", "AR" },
+                    { 5L, "US", "CA" },
+                    { 6L, "US", "CO" },
+                    { 7L, "US", "CT" },
+                    { 8L, "US", "DE" },
+                    { 9L, "US", "DC" },
+                    { 10L, "US", "FL" },
+                    { 11L, "US", "GA" },
+                    { 12L, "US", "HI" },
+                    { 13L, "US", "ID" },
+                    { 14L, "US", "IL" },
+                    { 15L, "US", "IN" },
+                    { 16L, "US", "IA" },
+                    { 17L, "US", "KS" },
+                    { 18L, "US", "KY" },
+                    { 19L, "US", "LA" },
+                    { 20L, "US", "ME" },
+                    { 21L, "US", "MD" },
+                    { 22L, "US", "MA" },
+                    { 23L, "US", "MI" },
+                    { 24L, "US", "MN" },
+                    { 25L, "US", "MS" },
+                    { 26L, "US", "MO" },
+                    { 27L, "US", "MT" },
+                    { 28L, "US", "NE" },
+                    { 29L, "US", "NV" },
+                    { 30L, "US", "NH" },
+                    { 31L, "US", "NJ" },
+                    { 32L, "US", "NM" },
+                    { 33L, "US", "NY" },
+                    { 34L, "US", "NC" },
+                    { 35L, "US", "ND" },
+                    { 36L, "US", "OH" },
+                    { 37L, "US", "OK" },
+                    { 38L, "US", "OR" },
+                    { 39L, "US", "PA" },
+                    { 40L, "US", "RI" },
+                    { 41L, "US", "SC" },
+                    { 42L, "US", "SD" },
+                    { 43L, "US", "TN" },
+                    { 44L, "US", "TX" },
+                    { 45L, "US", "UT" },
+                    { 46L, "US", "VT" },
+                    { 47L, "US", "VA" },
+                    { 48L, "US", "WA" },
+                    { 49L, "US", "WV" },
+                    { 50L, "US", "WI" },
+                    { 51L, "US", "WY" },
+                    { 52L, "CA", "AB" },
+                    { 53L, "CA", "BC" },
+                    { 54L, "CA", "MB" },
+                    { 55L, "CA", "NB" },
+                    { 56L, "CA", "NL" },
+                    { 57L, "CA", "NT" },
+                    { 58L, "CA", "NS" },
+                    { 59L, "CA", "NU" },
+                    { 60L, "CA", "ON" },
+                    { 61L, "CA", "PE" },
+                    { 62L, "CA", "QC" },
+                    { 63L, "CA", "SK" },
+                    { 64L, "CA", "YT" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -219,9 +279,6 @@ namespace TheGame.Domain.DomainModels.Migrations
 
             migrationBuilder.DropTable(
                 name: "PlayerIdentities");
-
-            migrationBuilder.DropSequence(
-                name: "PlayerSequence");
         }
     }
 }

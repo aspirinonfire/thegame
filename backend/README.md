@@ -10,13 +10,12 @@
 This project uses code-first EF migrations.
 
 > Make sure to set `GameDB` connection string in `appsettings.Development.json` first before running migrations!
-For best experience, cd to `TheGame.Domain` project first before running migrations.
 
 #### Add new migration
-`dotnet ef migrations add <MigrationName> --verbose --startup-project "../TheGame.Api" --project "." --output-dir "DomainModels/Migrations"`
+`dotnet ef migrations add <migration_name> --verbose --startup-project "TheGame.Api" --project "TheGame.Domain" --output-dir "DomainModels/Migrations"`
 
 ### Run migration
-`dotnet ef database update --startup-project "../TheGame.Api" --project "../TheGame.Api"`
+`dotnet ef database update --startup-project "TheGame.Api" --project "TheGame.Api"`
 
 
 ## Game ERD

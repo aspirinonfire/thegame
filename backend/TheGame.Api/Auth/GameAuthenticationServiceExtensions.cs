@@ -11,6 +11,8 @@ namespace TheGame.Api.Auth;
 
 public static class GameAuthenticationServiceExtensions
 {
+  public const string AuthCookieName = "GameAPi.Auth.Biscuit";
+
   public static void AddGameAuthenticationServices(this IServiceCollection services, ConfigurationManager configuration)
   {
     // see https://stackoverflow.com/questions/60858985/addopenidconnect-and-refresh-tokens-in-asp-net-core
@@ -35,7 +37,7 @@ public static class GameAuthenticationServiceExtensions
 
         googleAuthOpts.SaveTokens = true;
         googleAuthOpts.AccessType = "offline";            // retrieve refresh tokens
-        googleAuthOpts.CallbackPath = "/signin-google";   // special callback URL. This route will be handled by Google middleware.
+        googleAuthOpts.CallbackPath = "/account/signin-google";   // special callback URL. This route will be handled by Google middleware.
       })
       // OpenId cookie config
       .AddCookie(OpenIdConnectDefaults.AuthenticationScheme)
@@ -45,15 +47,15 @@ public static class GameAuthenticationServiceExtensions
         cookieOpts =>
         {
           cookieOpts.SlidingExpiration = true;
-          cookieOpts.LoginPath = "/account/google-login";
+          cookieOpts.LoginPath = "/account/login";
 
           cookieOpts.ExpireTimeSpan = TimeSpan.FromMinutes(60);     // auth ticket lifespan
-          cookieOpts.Cookie.Name = "GameApi.Auth.Biscuit";
+          cookieOpts.Cookie.Name = AuthCookieName;
           cookieOpts.Cookie.MaxAge = TimeSpan.FromMinutes(60);      // cookie lifespan
           cookieOpts.Cookie.IsEssential = true;
           cookieOpts.Cookie.HttpOnly = true;
           cookieOpts.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-          // TODO revisit. Strict brakes google oauth
+          // TODO revisit. Strict breakes google oauth
           cookieOpts.Cookie.SameSite = SameSiteMode.Lax;
 
           cookieOpts.ClaimsIssuer = "GameApi";

@@ -10,7 +10,6 @@ class PlayerEfConfig : IEntityTypeConfiguration<Player>
     builder.ToTable("Players");
 
     builder.HasKey(player => player.Id);
-    builder.Property(player => player.Id).UseSequence();
 
     builder
       .Property(player => player.Name)

@@ -13,11 +13,8 @@ public interface IGameLicensePlateFactory
 
 public partial class GameLicensePlate
 {
-  public class LicensePlateSpotFactory : IGameLicensePlateFactory
+  public class LicensePlateSpotFactory() : IGameLicensePlateFactory
   {
-    public LicensePlateSpotFactory()
-    { }
-
     public OneOf<GameLicensePlate, Failure> CreateLicensePlateSpot(Country country,
       StateOrProvince stateOrProvince,
       Player spottedBy,
