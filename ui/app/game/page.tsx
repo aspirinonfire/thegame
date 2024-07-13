@@ -22,7 +22,7 @@ export default function GamePage() {
     
   async function tryStartNewGame() {
     const newGameResult = await CreateNewGame(new Date().toISOString(),
-      userAccount?.playerName ?? "N/A");
+      userAccount?.name ?? "N/A");
 
     if (typeof newGameResult === 'string') {
       console.error("Bad new game:", newGameResult);

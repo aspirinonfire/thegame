@@ -1,5 +1,5 @@
 "use client"
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { GetCurrentGame } from "./common/gameCore/gameRepository";
 

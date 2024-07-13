@@ -128,17 +128,10 @@ export async function UpdateCurrentGameWithNewSpots(newPlateSpotsLkp: { [key: st
   return updatedGame;
 }
 
-export async function GetAccount() : Promise<UserAccount | null> {
-  // TODO handle offline, 401, 400, 500 separately!
-  const userDataResponse = await fetch("/api/user", { cache: "no-store"});
+export async function GetAccount() : Promise<UserAccount> {
+  await mockDataAccessDelay();
 
-  if (userDataResponse.status == 200) {
-      return await userDataResponse.json() as UserAccount;
-  } else if (userDataResponse.status == 401) {
-    console.error("Got 401 API status code. Need to re-login");
-    return null;
+  return {
+    name: 'Alex'
   }
-
-  console.error("Failed to retrieve user account.");
-  return null;
 }

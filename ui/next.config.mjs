@@ -23,7 +23,6 @@ const nextConfig = {
 // Configuration object tells the next-pwa plugin
 // https://javascript.plainenglish.io/building-a-progressive-web-app-pwa-in-next-js-with-serwist-next-pwa-successor-94e05cb418d7
 const withPWA = withPWAInit({
-  disable: process.env.NODE_ENV === "development",
   dest: "public",
   register: true,
   reloadOnOnline: false,
