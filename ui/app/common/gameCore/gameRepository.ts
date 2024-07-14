@@ -1,34 +1,11 @@
 import { Game, ScoreData, LicensePlateSpot, Territory } from "./gameModels";
 import CalculateScore from "./GameScoreCalculator";
-import UserAccount from "../accounts";
-import { mockGameData } from "../data/mockGameData";
+import UserAccount from "@/app/common/accounts";
+import { mockGameData } from "@/app/common/data/mockGameData";
+import { GetFromLocalStorage, SendApiRequest, SetLocalStorage } from "@/app/appUtils";
 
 const currentGameKey: string = "currentGame";
 const pastGamesKey: string = "pastGames";
-
-// TODO move out
-export const authTokenKey: string = "auth_token";
-
-// TODO move to a helper
-export function GetFromLocalStorage<T>(key: string) : T | null {
-  const rawValue = localStorage.getItem(key);
-  if (!rawValue) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(rawValue) as T;
-  }
-  catch (jsonException) {
-    console.error(`Failed to retrieve ${key} from local storage:`, jsonException);
-    return null;
-  }
-}
-
-// TODO move to a helper
-export function SetLocalStorage(key: string, value: any): void {
-  localStorage.setItem(key, JSON.stringify(value));
-}
 
 export async function GetCurrentGame() : Promise<Game | null> {
   return GetFromLocalStorage(currentGameKey);
@@ -126,31 +103,5 @@ export async function UpdateCurrentGameWithNewSpots(newPlateSpotsLkp: { [key: st
 }
 
 export async function GetAccount() : Promise<UserAccount | null> {
-  // TODO validate auth token before making api requests
-  const authToken = GetFromLocalStorage<string>(authTokenKey);
-  if (authToken == null) {
-    console.warn("Api auth token is missing. Need to re-login.");
-    return null;
-  }
-
-  // TODO move to helper
-  const userDataResponse = await fetch("/api/user", {
-    cache: "no-store",
-    method: "GET",
-    headers: {
-      "Authorization": `bearer ${authToken}`,
-      "Content-Type": "application/json; charset=utf-8"
-    },
-  });
-
-  // TODO handle offline, 401, 400, 500 separately!
-  if (userDataResponse.status == 200) {
-    return await userDataResponse.json() as UserAccount;
-  } else if (userDataResponse.status == 401) {
-    console.error("Got 401 API status code. Need to re-login");
-    return null;
-  }
-
-  console.error("Failed to retrieve user account.");
-  return null;
+  return await SendApiRequest("/api/user", "GET");
 }

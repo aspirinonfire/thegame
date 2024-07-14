@@ -1,5 +1,5 @@
 import { useGoogleLogin } from "@react-oauth/google";
-import { authTokenKey, SetLocalStorage } from "./common/gameCore/gameRepository";
+import { authTokenKey, SetLocalStorage } from "./appUtils";
 
 interface ApiTokenResponse {
   apiToken: string
