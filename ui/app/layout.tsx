@@ -11,6 +11,8 @@ import Image from 'next/image'
 import { Drawer, Dropdown, Spinner } from "flowbite-react";
 import { HiOutlineMap, HiOutlineClock, HiOutlineInformationCircle, HiOutlineArrowCircleRight, HiUserCircle } from "react-icons/hi";
 import { Game } from "./common/gameCore/gameModels";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import GoogleSignIn from "./googleLogin";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -56,6 +58,7 @@ export default function RootLayout({
   // track user account, and current game.
   // presence of a current game will redirect index to game route.
   // current game will also be used directly on the game page.
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userAccount, setUserAccount] = useState<UserAccount | null>(null);
   const [activeGame, setActiveGame] = useState<Game | null>(null);
 
@@ -75,7 +78,7 @@ export default function RootLayout({
       setNeedsFetch(false);
     }
 
-    if (needsFetch) {
+    if (needsFetch || isAuthenticated) {
       FetchData();
     }
   });
@@ -85,6 +88,7 @@ export default function RootLayout({
 
   const gameContext = { activeGame, setActiveGame } as GameContext;
 
+  // TODO move to standalone component
   function renderNavLinks() {
     return (
       <>
@@ -106,6 +110,7 @@ export default function RootLayout({
     );
   }
 
+  // TODO move to standalone component
   function renderNavBar() {
     return (
       <nav>
@@ -135,12 +140,12 @@ export default function RootLayout({
               </Dropdown.Header>
               <Dropdown.Item className="text-gray-400">Players</Dropdown.Item>
               <Dropdown.Item className="text-gray-400">
-                {!userAccount ?
-                  (<>
-                    <a href="/account/login">Sign-In</a>
-                  </>) :
+                {isAuthenticated ?
                   (<>
                     Sign out
+                  </>) :
+                  (<>
+                    <GoogleSignIn setIsAuthenticated={setIsAuthenticated} />
                   </>)}
               </Dropdown.Item>
             </Dropdown>
@@ -192,21 +197,23 @@ export default function RootLayout({
         <meta name="color-scheme" content="light only" />
       </head>
       <body className={inter.className}>
-        <CurrentUserAccountContext.Provider value={userAccount}>
-          <CurrentGameContext.Provider value={gameContext}>
-            <div className="flex flex-col min-h-screen">
-              <header className="flex-row rounded-lg bg-gradient-to-r from-gray-900 to-slate-700 p-4">
-                {renderNavBar()}
-              </header>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? ''}>
+          <CurrentUserAccountContext.Provider value={userAccount}>
+            <CurrentGameContext.Provider value={gameContext}>
+              <div className="flex flex-col min-h-screen">
+                <header className="flex-row rounded-lg bg-gradient-to-r from-gray-900 to-slate-700 p-4">
+                  {renderNavBar()}
+                </header>
 
-              <main className={`flex flex-col flex-grow mt-4 rounded-lg bg-gradient-to-bl from-10% from-slate-700 to-gray-900 text-gray-300 p-4 transition-all ${isDrawerMenuOpen ? 'blur-sm' : ''}`}>
-                {needsFetch ?
-                  (<div className="flex items-center justify-center m-auto"><Spinner color="info" className="h-20 w-20" /></div>) :
-                  (<>{children}</>)}
-              </main>
-            </div>
-          </CurrentGameContext.Provider>
-        </CurrentUserAccountContext.Provider>
+                <main className={`flex flex-col flex-grow mt-4 rounded-lg bg-gradient-to-bl from-10% from-slate-700 to-gray-900 text-gray-300 p-4 transition-all ${isDrawerMenuOpen ? 'blur-sm' : ''}`}>
+                  {needsFetch ?
+                    (<div className="flex items-center justify-center m-auto"><Spinner color="info" className="h-20 w-20" /></div>) :
+                    (<>{children}</>)}
+                </main>
+              </div>
+            </CurrentGameContext.Provider>
+          </CurrentUserAccountContext.Provider>
+        </GoogleOAuthProvider>
       </body>
     </html>);
 }

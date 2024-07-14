@@ -29,6 +29,8 @@ services:
       - ConnectionStrings__GameDB=Server=mssql; Initial Catalog=${DB_NAME}; User Id=sa; Password=${SQL_PASSWORD}; Trust Server Certificate=True;
       - Auth__Google__ClientId=${GOOGLE_CLIENT_ID}
       - Auth__Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
+      - Auth__Api__JwtSecret=${API_JWT_SECRET}
+      - Auth__Api__JwtAudience=${API_JWT_AUDIENCE}
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443
       # Generate dev certs using "dotnet dev-certs https" commands:
@@ -37,6 +39,8 @@ services:
       # if cert is already present: "dotnet dev-certs https --clean"
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/myCert.pfx
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERT_PASSWORD}
+      - Logging__LogLevel__Default=Warning
+      - Logging__LogLevel__Microsoft=Information
     volumes:
       - ${USERPROFILE}/.aspnet/https:/https:ro  # Mount the ASP.NET Core development certificate. Use this line in Windows
       # - /mnt/c/Users/<your username>/.aspnet/https:/https:ro  # Mount the ASP.NET Core development certificate. Use this line in WSL

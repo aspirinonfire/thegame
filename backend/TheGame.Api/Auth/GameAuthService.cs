@@ -1,95 +1,100 @@
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using OneOf;
 using System;
-using System.Linq;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Security.Claims;
+using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using TheGame.Domain.CommandHandlers;
-using TheGame.Domain.DomainModels.PlayerIdentities;
 using TheGame.Domain.Utils;
 
 namespace TheGame.Api.Auth;
 
-public class GameAuthService
+public class GameAuthService(IHttpClientFactory httpClientFactory, IOptions<GameSettings> gameSettings)
 {
-  public const string PlayerIdentityIdClaimType = "game_player_identity_id";
-  public const string PlayerIdClaimType = "game_player_id";
+  public const string PlayerIdentityAuthority = "iden_authority";
+  public const string PlayerIdentityUserId = "iden_user_id";
+  public const string PlayerIdentityIdClaimType = "player_identiy_id";
+  public const string PlayerIdClaimType = "player_id";
 
   public const string UnsuccessfulExternalAuthError = "External auth result was not successful!";
   public const string MissingAuthClaimsError = "Failed to retrieve claims from external auth result!";
   public const string MissingAuthNameIdClaimError = "Failed to retrieve NameId claim from external auth result!";
   public const string MissingIdentityNameClaimError = "Failed to retrieve Player Name from external auth result!";
 
-  // TODO read from config
-  public const int MinutesBetweenRefresh = 10;
-
-  private readonly ILogger<GameAuthService> _logger;
-
-  public GameAuthService(ILogger<GameAuthService> logger)
+  public virtual async Task<OneOf<GoogleUserInfo, Failure>> GetGoogleIdentity(string accessToken)
   {
-    _logger = logger;
+    if (string.IsNullOrEmpty(accessToken))
+    {
+      return new Failure("Access Token is missing.");
+    }
+
+    var httpClient = httpClientFactory.CreateClient();
+
+    // Validate access token.
+    var tokenInfoResponse = await httpClient.GetAsync($"https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={accessToken}",
+      HttpCompletionOption.ResponseHeadersRead);
+    if (!tokenInfoResponse.IsSuccessStatusCode)
+    {
+      return new Failure("Failed to retrieve token info.");
+    }
+
+    var tokenInfo = await tokenInfoResponse.Content.ReadFromJsonAsync<GoogleTokenInfo>();
+    if (gameSettings.Value.Auth.Google.ClientId != tokenInfo?.Audience)
+    {
+      return new Failure("Invalid Google Access Token audience.");
+    }
+
+    // Retrieve user info
+    var userInfoResponse = await httpClient.GetAsync($"https://www.googleapis.com/oauth2/v3/userinfo?access_token={accessToken}",
+      HttpCompletionOption.ResponseHeadersRead);
+    if (!userInfoResponse.IsSuccessStatusCode)
+    {
+      return new Failure("Failed to retrieve user info.");
+    }
+
+    var userInfo = await userInfoResponse.Content.ReadFromJsonAsync<GoogleUserInfo>();
+
+    if (userInfo == null)
+    {
+      return new Failure("User info payload is empty.");
+    }
+
+    if (userInfo.Subject != tokenInfo.UserId)
+    {
+      return new Failure("Token user_id does not match user profile subject.");
+    }
+
+    return userInfo;
   }
 
-  public virtual OneOf<GetOrCreateNewPlayerCommand, Failure> GenerateGetOrCreateNewPlayerCommand(AuthenticateResult externalAuthResult)
+  public virtual string GenerateJwtToken(GetOrCreatePlayerResult playerIdentity)
   {
-    if (!externalAuthResult.Succeeded)
+    var claims = new List<Claim>
     {
-      _logger.LogError(UnsuccessfulExternalAuthError);
-      return new Failure(UnsuccessfulExternalAuthError);
-    }
+      new(PlayerIdentityAuthority, playerIdentity.ProviderName, ClaimValueTypes.String),
+      new(PlayerIdentityUserId, playerIdentity.ProviderIdentityId, ClaimValueTypes.String),
+      new(PlayerIdClaimType, $"{playerIdentity.PlayerId}", ClaimValueTypes.String),
+      new(PlayerIdentityIdClaimType, $"{playerIdentity.PlayerIdentityId}", ClaimValueTypes.String),
+    };
 
-    var claimsLookup = externalAuthResult
-      .Principal?
-      .Identities?
-      .FirstOrDefault()?
-      .Claims
-      .ToDictionary(claim => claim.Type, claim => claim);
+    var signingKey = Encoding.UTF8.GetBytes(gameSettings.Value.Auth.Api.JwtSecret);
 
-    if (claimsLookup == null || !claimsLookup.Any())
-    {
-      _logger.LogError(MissingAuthClaimsError);
-      return new Failure(MissingAuthClaimsError);
-    }
-
-    if (!claimsLookup.TryGetValue(ClaimTypes.NameIdentifier, out var nameIdentifierClaim) || string.IsNullOrEmpty(nameIdentifierClaim.Value))
-    {
-      _logger.LogError(MissingAuthNameIdClaimError);
-      return new Failure(MissingAuthNameIdClaimError);
-    }
-
-    var refreshToken = externalAuthResult.Properties.GetTokenValue(GoogleAuthConstants.RefreshTokenName);
-    if (string.IsNullOrEmpty(refreshToken))
-    {
-      _logger.LogWarning("Refresh Token is missing for {providerIdentityId}", nameIdentifierClaim.Value);
-    }
-
-    if (!claimsLookup.TryGetValue(ClaimTypes.Name, out var playerNameClaim) || string.IsNullOrEmpty(playerNameClaim.Value))
-    {
-      return new Failure(MissingIdentityNameClaimError);
-    }
-
-    var request = new NewPlayerIdentityRequest(externalAuthResult.Principal!.Identity!.AuthenticationType ?? "unknown",
-      nameIdentifierClaim.Value,
-      refreshToken ?? string.Empty,
-      playerNameClaim.Value);
-
-    return new GetOrCreateNewPlayerCommand(request);
-  }
-
-  public virtual async Task RefreshCookie(CookieValidatePrincipalContext ctx)
-  {
-    // check if principal needs to be re-authed every x minutes
-    var minutesSinceLastRefresh = (DateTimeOffset.UtcNow - ctx.Properties.IssuedUtc.GetValueOrDefault()).TotalMinutes;
-    if (minutesSinceLastRefresh < MinutesBetweenRefresh)
-    {
-      // current principal is considered to be valid.
-      return;
-    }
-
-    _logger.LogInformation("Validating user session...");
-
-    // TODO refresh tokens and renew principal
+    var jwtToken = new JwtSecurityToken(
+      claims: claims,
+      notBefore: DateTime.UtcNow,
+      expires: DateTime.UtcNow.AddMinutes(60),
+      audience: gameSettings.Value.Auth.Api.JwtAudience,
+      signingCredentials: new SigningCredentials(
+        new SymmetricSecurityKey(signingKey),
+        SecurityAlgorithms.HmacSha256Signature)
+      );
+    
+    return new JwtSecurityTokenHandler().WriteToken(jwtToken);
   }
 }

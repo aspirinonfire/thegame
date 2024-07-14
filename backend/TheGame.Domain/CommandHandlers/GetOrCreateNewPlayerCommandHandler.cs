@@ -11,7 +11,7 @@ namespace TheGame.Domain.CommandHandlers;
 
 public sealed record GetOrCreateNewPlayerCommand(NewPlayerIdentityRequest NewPlayerIdentityRequest) : IRequest<OneOf<GetOrCreatePlayerResult, Failure>>;
 
-public sealed record GetOrCreatePlayerResult(long PlayerIdentityId, long PlayerId);
+public sealed record GetOrCreatePlayerResult(long PlayerIdentityId, long PlayerId, string ProviderName, string ProviderIdentityId);
 
 public class GetOrCreateNewPlayerCommandHandler(IGameDbContext gameDb, IPlayerIdentityFactory playerIdentityFactory, ITransactionExecutionWrapper transactionWrapper, ILogger<GetOrCreateNewPlayerCommand> logger)
   : IRequestHandler<GetOrCreateNewPlayerCommand, OneOf<GetOrCreatePlayerResult, Failure>>
@@ -31,13 +31,16 @@ public class GetOrCreateNewPlayerCommandHandler(IGameDbContext gameDb, IPlayerId
             if (existingPlayer != null)
             {
               logger.LogInformation("Found an existing player with identity. Returning...");
-              return new GetOrCreatePlayerResult(existingPlayer.Id, existingPlayer.Player?.Id ?? -1);
+              return new GetOrCreatePlayerResult(existingPlayer.Id,
+                existingPlayer.Player?.Id ?? -1,
+                existingPlayer.ProviderName,
+                existingPlayer.ProviderIdentityId);
             }
 
             logger.LogInformation("Attempting to create new player with identity.");
 
             var newIdentityResult = playerIdentityFactory.CreatePlayerIdentity(request.NewPlayerIdentityRequest);
-            if (!newIdentityResult.TryGetSuccessful(out var success, out var failure))
+            if (!newIdentityResult.TryGetSuccessful(out var newIdentity, out var failure))
             {
               logger.LogError(failure.GetException(), "New player cannot be created.");
               return failure;
@@ -47,7 +50,10 @@ public class GetOrCreateNewPlayerCommandHandler(IGameDbContext gameDb, IPlayerId
             
             logger.LogInformation("New player with identity was created successfully.");
             
-            return new GetOrCreatePlayerResult(success.Id, success.Player?.Id ?? -1);
+            return new GetOrCreatePlayerResult(newIdentity.Id,
+              newIdentity.Player?.Id ?? -1,
+              newIdentity.ProviderName,
+              newIdentity.ProviderIdentityId);
           },
           nameof(GetOrCreateNewPlayerCommand),
           logger,

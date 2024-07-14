@@ -1,105 +1,64 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using System;
-using System.Threading.Tasks;
+using System.Text;
 
 namespace TheGame.Api.Auth;
 
 public static class GameAuthenticationServiceExtensions
 {
-  public const string AuthCookieName = "GameAPi.Auth.Biscuit";
-
   public static void AddGameAuthenticationServices(this IServiceCollection services, ConfigurationManager configuration)
   {
+    var jwtSecret = configuration.GetValue<string>("Auth:Api:JwtSecret");
+    var jwtAudience = configuration.GetValue<string>("Auth:Api:JwtAudience");
+
+    if (string.IsNullOrEmpty(jwtSecret) || string.IsNullOrEmpty(jwtAudience))
+    {
+      throw new InvalidOperationException("Jwt api configuration is invalid! Both secret and audience are required!");
+    }
+
     // see https://stackoverflow.com/questions/60858985/addopenidconnect-and-refresh-tokens-in-asp-net-core
     services
       .AddAuthentication(options =>
       {
-        // using cookie auth because app is web based
-        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
       })
-      // Google Auth
-      .AddGoogle(googleAuthOpts =>
+      .AddJwtBearer(options =>
       {
-        // Use OpenId auth scheme cookie
-        googleAuthOpts.SignInScheme = OpenIdConnectDefaults.AuthenticationScheme;
-
-        // TODO use strongly typed config object
-        // TODO validate google creds (Data annotations and IOptions)
-        // TODO Fix magic strings
-        googleAuthOpts.ClientId = configuration.GetValue<string>("Auth:Google:ClientId") ?? string.Empty;
-        googleAuthOpts.ClientSecret = configuration.GetValue<string>("Auth:Google:ClientSecret") ?? string.Empty;
-
-        googleAuthOpts.SaveTokens = true;
-        googleAuthOpts.AccessType = "offline";            // retrieve refresh tokens
-        googleAuthOpts.CallbackPath = "/account/signin-google";   // special callback URL. This route will be handled by Google middleware.
-      })
-      // OpenId cookie config
-      .AddCookie(OpenIdConnectDefaults.AuthenticationScheme)
-      // Auth cookie config
-      // TODO use JWT instead of cookies
-      .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme,
-        cookieOpts =>
+        options.RequireHttpsMetadata = true;
+        options.SaveToken = false;
+        options.TokenValidationParameters = new TokenValidationParameters()
         {
-          cookieOpts.SlidingExpiration = true;
-          cookieOpts.LoginPath = "/account/login";
+          ValidateIssuer = false,
+          ValidateLifetime = true,
+          ValidateAudience = true,
+          ValidateIssuerSigningKey = true,
+          IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
 
-          cookieOpts.ExpireTimeSpan = TimeSpan.FromMinutes(60);     // auth ticket lifespan
-          cookieOpts.Cookie.Name = AuthCookieName;
-          cookieOpts.Cookie.MaxAge = TimeSpan.FromMinutes(60);      // cookie lifespan
-          cookieOpts.Cookie.IsEssential = true;
-          cookieOpts.Cookie.HttpOnly = true;
-          cookieOpts.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-          // TODO revisit. Strict breakes google oauth
-          cookieOpts.Cookie.SameSite = SameSiteMode.Lax;
-
-          cookieOpts.ClaimsIssuer = "GameApi";
-
-          // validate cookie principal
-          cookieOpts.Events.OnValidatePrincipal = async (ctx) =>
-          {
-            var validator = ctx.HttpContext.RequestServices.GetRequiredService<GameAuthService>();
-            await validator.RefreshCookie(ctx);
-          };
-
-          cookieOpts.Events.OnRedirectToLogin = ctx =>
-          {
-            // return 401 on non-account requests or redirect to login
-            if (!ctx.Request.Path.Value?.StartsWith("/account", StringComparison.OrdinalIgnoreCase) ?? true)
-            {
-              ctx.Response.Clear();
-              ctx.Response.StatusCode = 401;
-            }
-            else
-            {
-              ctx.Response.Redirect(ctx.RedirectUri);
-            }
-
-            return Task.CompletedTask;
-          };
-
-          cookieOpts.Validate();
-        });
+          ValidAudience = jwtAudience,
+        };
+        
+        options.Validate();
+      });
 
     services.AddAuthorization(authZOptions =>
     {
       authZOptions.DefaultPolicy = new AuthorizationPolicyBuilder()
-        // cookie auth only
-        // TODO use JWT
-        .AddAuthenticationSchemes(CookieAuthenticationDefaults.AuthenticationScheme)
-        // must be authenticated
+        // must use jwt bearer token
+        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+        // must be authenticated (valid, and unexpired token)
         .RequireAuthenticatedUser()
-        // required to have player id claim
+        // must have identity user id
+        .RequireClaim(GameAuthService.PlayerIdentityUserId)
+        // must have player id claim
         .RequireClaim(GameAuthService.PlayerIdClaimType)
         .Build();
     });
-
-    // TODO add antiforgery!!!
 
     services.AddSingleton<GameAuthService>();
   }

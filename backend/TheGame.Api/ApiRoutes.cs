@@ -1,11 +1,10 @@
 using MediatR;
-using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,51 +22,21 @@ public static class ApiRoutes
 {
   public const string PlayerIdItemKey = "PlayerId";
   public const string InvalidPlayerIdClaimError = "invalid_player_id_claim";
-  public const string InvalidXsrfToken = "invalid_xsrf_token";
 
   public static IEndpointRouteBuilder AddGameApiRoutes(this IEndpointRouteBuilder endpoints)
   {
     var apiRoute = endpoints
       .MapGroup("api")
-      // require XSRF token check for all api calls. See https://learn.microsoft.com/en-us/aspnet/core/security/anti-request-forgery?view=aspnetcore-8.0
-      .WithMetadata(new AntiforgeryMetadata(true))
-      // validate XSRF token
-      .AddEndpointFilter(async (invocationContext, next) =>
-      {
-        // skip XSRF check for TRACE, OPTIONS, HEAD, and GET
-        if (HttpMethods.IsTrace(invocationContext.HttpContext.Request.Method) ||
-          HttpMethods.IsOptions(invocationContext.HttpContext.Request.Method) ||
-          HttpMethods.IsHead(invocationContext.HttpContext.Request.Method) ||
-          HttpMethods.IsGet(invocationContext.HttpContext.Request.Method))
-        {
-          return await next(invocationContext);
-        }
-
-        // check if XSRF token check is required for current endpoint
-        var endPoint = invocationContext.HttpContext.GetEndpoint()!;
-        var requireValidXsrfToken = endPoint.Metadata.Any(data => data is AntiforgeryMetadata xsrfMeta && xsrfMeta.RequiresValidation);
-        if (!requireValidXsrfToken)
-        {
-          return await next(invocationContext);
-        }
-
-        // validate XSRF token
-        try
-        {
-          var antiforgery = invocationContext.HttpContext.RequestServices.GetRequiredService<IAntiforgery>();
-          await antiforgery.ValidateRequestAsync(invocationContext.HttpContext);
-        }
-        catch (Exception)
-        {
-          return Results.BadRequest(InvalidXsrfToken);
-        }
-
-        // token is valid, continue pipeline execution
-        return await next(invocationContext);
-      })
       // extract Player ID from claims for easy access. If playerId claim is not present, short-circuit with BadRequest
       .AddEndpointFilter(async (invocationContext, next) =>
       {
+        // skip reading player id from claims only for anonymous endpoints
+        var currentEndpoint = invocationContext.HttpContext.GetEndpoint();
+        if (currentEndpoint?.Metadata.Any(mt => mt is IAllowAnonymous) ?? false)
+        {
+          return await next(invocationContext);
+        }
+
         var playerIdClaim = invocationContext.HttpContext.User.Claims
           .FirstOrDefault(claim => claim.Type == GameAuthService.PlayerIdClaimType);
 
@@ -81,17 +50,34 @@ public static class ApiRoutes
         return await next(invocationContext);
       });
 
-    
     apiRoute
-      .MapGet("/xsrftoken", (HttpContext ctx, IAntiforgery antiforgery) =>
+      .MapPost("/user/token", async (HttpContext ctx, GameAuthService authService, IMediator mediatr, [FromBody] string googleAccessToken) =>
       {
+        var googleIdentityResult = await authService.GetGoogleIdentity(googleAccessToken);
+        if (!googleIdentityResult.TryGetSuccessful(out var identity, out var failure))
+        {
+          return Results.BadRequest(failure.ErrorMessage);
+        }
+
+        var getOrCreatePlayerCommand = identity.ToGetOrCreateNewPlayerCommand();
+        var getOrCreatePlayerResult = await mediatr.Send(getOrCreatePlayerCommand);
+        if (!getOrCreatePlayerResult.TryGetSuccessful(out var playerIdentity, out var commandFailure))
+        {
+          return Results.BadRequest(commandFailure.ErrorMessage);
+        }
+
+        var apiToken = authService.GenerateJwtToken(playerIdentity);
+
+        // TODO generate refresh token
+
         return Results.Ok(new
         {
-          token = antiforgery.GetAndStoreTokens(ctx).RequestToken
+          apiToken,
         });
       })
-      .DisableAntiforgery();
-    
+      .WithDescription("Validate Google Access Token and generate API JWT token to be used for authenticating these APIs.")
+      .AllowAnonymous();
+
     
     apiRoute
       .MapGet("user", async (HttpContext ctx, IPlayerQueryProvider playerQueryProvider) =>
@@ -101,9 +87,10 @@ public static class ApiRoutes
         var player = await playerQueryProvider.GetPlayerInfoQuery(playerId).FirstOrDefaultAsync();
 
         return Results.Ok(player);
-      });
+      })
+      .WithDescription("Get user details for authenticated player.");
 
-    
+
     apiRoute
       .MapGet("game", async (HttpContext ctx, IGameQueryProvider gameQueryProvider) =>
       {
@@ -112,7 +99,8 @@ public static class ApiRoutes
         var allGames = await gameQueryProvider.GetOwnedAndInvitedGamesQuery(playerId).ToListAsync();
       
         return Results.Ok(allGames);
-      });
+      })
+      .WithDescription("Retrieve all games for an authenticated player.");
 
     
     apiRoute
@@ -127,7 +115,8 @@ public static class ApiRoutes
         }
 
         return Results.Ok(newGame);
-      });
+      })
+      .WithDescription("Start new game for an authenticated player.");
 
     
     apiRoute
@@ -141,7 +130,8 @@ public static class ApiRoutes
         }
 
         return Results.Ok();
-      });
+      })
+      .WithDescription("End active game for an authenticated player.");
 
     
     apiRoute
@@ -156,7 +146,8 @@ public static class ApiRoutes
         }
 
         return Results.Ok();
-      });
+      })
+      .WithDescription("Updated spotted license plates for an active game.");
 
     return endpoints;
   }
