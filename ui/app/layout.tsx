@@ -67,7 +67,6 @@ export default function RootLayout({
               <div className="flex flex-col min-h-screen">
                 <header className="flex-row rounded-lg bg-gradient-to-r from-gray-900 to-slate-700 p-4">
                   <GameNavBar isAuthenticated={isAuthenticated}
-                     setIsAuthenticated={setIsAuthenticated}
                      isDrawerMenuOpen={isDrawerMenuOpen}
                      setIsDrawerMenuOpen={setIsDrawerMenuOpen} />
                 </header>
