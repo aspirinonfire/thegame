@@ -1,15 +1,14 @@
 import { useGoogleLogin } from "@react-oauth/google";
 import { authTokenKey, SetLocalStorage } from "./appUtils";
+import { useRouter } from "next/navigation";
 
 interface ApiTokenResponse {
   apiToken: string
 }
 
-interface SignInArgs {
-  setIsAuthenticated: (isAuthenticated: boolean) => void
-};
+export default function GoogleSignIn() {
+  const router = useRouter();
 
-export default function GoogleSignIn({ setIsAuthenticated  }: SignInArgs) {
   const googleLogin = useGoogleLogin({
     onSuccess: async tokenResponse => {
       const accessTokenResponse = await fetch("/api/user/token", {
@@ -29,7 +28,7 @@ export default function GoogleSignIn({ setIsAuthenticated  }: SignInArgs) {
       }
 
       SetLocalStorage(authTokenKey, responseBody.apiToken);
-      setIsAuthenticated(true);
+      router.push("/")
     },
     onError: errorResponse => console.log(errorResponse),
     flow: "implicit",
