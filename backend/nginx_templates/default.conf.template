@@ -1,0 +1,75 @@
+# configuration is based on https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-6.0&tabs=linux-ubuntu#configure-nginx
+server {
+    listen 443 ssl;
+    server_name localhost;
+    # Generate dev certs using "dotnet dev-certs https" commands:
+    # cd ssl
+    # dotnet dev-certs https --export-path "thegame.pfx" --password <SSL_CERT_PASSWORD>
+    # dotnet dev-certs https --trust
+    # if cert is already present: "dotnet dev-certs https --clean"
+    # convert pfx to crt and rsa
+    # see https://medium.com/knoldus/nginx-easiest-way-to-setup-ssl-using-pfx-files-f9e1a03eff74
+    
+    ssl_certificate /etc/nginx/ssl/thegame.crt;
+    ssl_certificate_key /etc/nginx/ssl/thegame.rsa;
+    ssl_protocols       TLSv1.2;
+
+    location /dev_page/ {
+        alias /usr/share/nginx/html/;
+        index index.html;
+    }
+
+    location /swagger {
+        proxy_pass ${API_HOST}/swagger;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Port ${NGINX_PROXY_PORT};
+
+        # kill cache
+        proxy_cache off;
+        proxy_request_buffering off;
+        add_header Last-Modified $date_gmt;
+        add_header Cache-Control 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0';
+        if_modified_since off;
+        expires off;
+        etag off;
+    }
+
+    location /api/ {
+        proxy_pass ${API_HOST}/api/; # note the trailing slash!
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Port ${NGINX_PROXY_PORT};
+
+        # kill cache
+        proxy_cache off;
+        proxy_request_buffering off;
+        add_header Last-Modified $date_gmt;
+        add_header Cache-Control 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0';
+        if_modified_since off;
+        expires off;
+        etag off;
+    }
+
+    location / {
+        proxy_pass ${UI_HOST}/; # note the trailing slash!
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Port ${NGINX_PROXY_PORT};
+
+        # kill cache
+        proxy_cache off;
+        proxy_request_buffering off;
+        add_header Last-Modified $date_gmt;
+        add_header Cache-Control 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0';
+        if_modified_since off;
+        expires off;
+        etag off;
+    }
+}
