@@ -34,15 +34,15 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443
       # Generate dev certs using "dotnet dev-certs https" commands:
-      # dotnet dev-certs https --export-path "$env:USERPROFILE/.aspnet/https/myCert.pfx" --password <SSL_CERT_PASSWORD>
+      # cd ssl
+      # dotnet dev-certs https --export-path "thegame.pfx" --password <SSL_CERT_PASSWORD>
       # dotnet dev-certs https --trust
       # if cert is already present: "dotnet dev-certs https --clean"
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/myCert.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/thegame.pfx
       - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERT_PASSWORD}
       - Logging__LogLevel__Default=Warning
       - Logging__LogLevel__Microsoft=Information
     volumes:
-      - ${USERPROFILE}/.aspnet/https:/https:ro  # Mount the ASP.NET Core development certificate. Use this line in Windows
-      # - /mnt/c/Users/<your username>/.aspnet/https:/https:ro  # Mount the ASP.NET Core development certificate. Use this line in WSL
+      - ./ssl:/https:ro
     depends_on:
     - mssql
