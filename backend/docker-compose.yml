@@ -18,8 +18,6 @@ services:
 
   thegame.api:
     image: ${DOCKER_REGISTRY-}thegameapi
-    ports:
-      - "8080:443"
     build:
       context: .
       dockerfile: TheGame.Api/Dockerfile
@@ -32,17 +30,24 @@ services:
       - Auth__Api__JwtSecret=${API_JWT_SECRET}
       - Auth__Api__JwtAudience=${API_JWT_AUDIENCE}
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=https://+:443
-      # Generate dev certs using "dotnet dev-certs https" commands:
-      # dotnet dev-certs https --export-path "$env:USERPROFILE/.aspnet/https/myCert.pfx" --password <SSL_CERT_PASSWORD>
-      # dotnet dev-certs https --trust
-      # if cert is already present: "dotnet dev-certs https --clean"
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/myCert.pfx
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERT_PASSWORD}
+      - ASPNETCORE_URLS=http://+:80
       - Logging__LogLevel__Default=Warning
       - Logging__LogLevel__Microsoft=Information
-    volumes:
-      - ${USERPROFILE}/.aspnet/https:/https:ro  # Mount the ASP.NET Core development certificate. Use this line in Windows
-      # - /mnt/c/Users/<your username>/.aspnet/https:/https:ro  # Mount the ASP.NET Core development certificate. Use this line in WSL
     depends_on:
     - mssql
+  
+  nginx:
+    image: nginx:1.25.3-alpine
+    ports:
+      - "8080:443"
+    environment:
+      - API_HOST=http://thegame.api:80
+      - UI_HOST=http://host.docker.internal:3000
+      - NGINX_PROXY_PORT=8080
+    volumes:
+      - ./nginx_www:/usr/share/nginx/html
+      - ./nginx_templates:/etc/nginx/templates
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - thegame.api
+  

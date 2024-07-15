@@ -3,8 +3,13 @@
     "Docker Compose": {
       "commandName": "DockerCompose",
       "commandVersion": "1.0",
+      "composeLaunchAction": "LaunchBrowser",
+      "composeLaunchServiceName": "thegame.api",
+      "composeLaunchUrl": "https://localhost:8080/dev_page/",
       "serviceActions": {
-        "thegame.api": "StartDebugging"
+        "thegame.api": "StartDebugging",
+        "mssql": "StartWithoutDebugging",
+        "nginx": "StartWithoutDebugging"
       }
     }
   }

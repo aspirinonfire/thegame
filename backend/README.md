@@ -2,8 +2,8 @@
 1. Install WSL2 and Docker.
 1. Set `docker-compose` as a startup project.
 1. Create `.env` file in `docker-compose`. See `.env.sample` for a template. Populate necessary env vars.
-1. Run. Once all images have been pulled, VS should open [Game API Swagger UI](https://localhost:8080/swagger/index.html) automatically.
-1. Check API health by visiting [API Healthcheck endpoint](https://localhost:8080/health)
+1. Run. Once all images have been pulled, VS should open [Game API Swagger UI](https://localhost:8080/dev_page/) automatically. It will contain links to UI and API projects
+1. Check API health by visiting [API Healthcheck endpoint](https://localhost:8080/api/health)
 
 ## EF Migrations
 This project uses code-first EF migrations.

@@ -97,7 +97,7 @@ public class Program
     app.UseHsts();
     app.UseHttpsRedirection();
 
-    app.UseHealthChecks("/health");
+    app.UseHealthChecks("/api/health");
 
     app.UseRouting();
 
@@ -107,21 +107,6 @@ public class Program
     app.MapGroup("")
       .RequireAuthorization()
       .AddGameApiRoutes();
-
-    // this line is required to ensure minimal api routes are executed before hitting SPA
-    // see https://exploding-kitten.com/2024/08-usespa-minimal-api
-    app.UseEndpoints(_ => { });
-
-    if (app.Environment.IsDevelopment())
-    {
-      // redirect spa requests to local nextjs dev server. this helps with cors.
-      // production will use static web apps with ui and backend deployed to separate containers/apps
-
-      app.UseSpa(spa =>
-      {
-        spa.UseProxyToSpaDevelopmentServer("http://host.docker.internal:3000/");
-      });
-    }
 
     await app.RunAsync();
   }

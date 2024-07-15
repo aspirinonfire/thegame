@@ -40,10 +40,10 @@ export default function RootLayout({
       setNeedsFetch(false);
     }
 
-    if (needsFetch || isAuthenticated) {
+    if (needsFetch) {
       FetchData();
     }
-  });
+  }, [needsFetch, isAuthenticated]);
 
   // register autorefresh on new version
   useEffect(() => refreshOnNewVersion());
