@@ -3,42 +3,55 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { useEffect, useState } from "react";
 import { GetAccount, GetCurrentGame } from "./common/gameCore/gameRepository";
-import { CurrentGameContext, CurrentUserAccountContext, GameContext } from "./common/gameCore/gameContext";
-import UserAccount from "./common/accounts";
+import { CurrentGameContext, CurrentUserAccountContext } from "./common/gameCore/gameContext";
 import { Spinner } from "flowbite-react";
 import { Game } from "./common/gameCore/gameModels";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import GameNavBar from "./navbar";
 import refreshOnNewVersion from "./appUtils";
+import { UserDetails } from "./common/accounts";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+function getDefaultUserDetails(): UserDetails {
+  return {
+    isAuthenticated: false,
+    Player: {
+      playerName: "Guest",
+      playerId: -1
+    }
+  };
+}
 
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode; }>) {
   // track user account, and current game.
   // presence of a current game will redirect index to game route.
   // current game will also be used directly on the game page.
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userAccount, setUserAccount] = useState<UserAccount | null>(null);
+  const [needsFetch, setNeedsFetch] = useState(true);
+  const [userDetails, setUserDetails] = useState<UserDetails>(getDefaultUserDetails());
   const [activeGame, setActiveGame] = useState<Game | null>(null);
+
   const [isDrawerMenuOpen, setIsDrawerMenuOpen] = useState(false);
 
-  // track is fetching
-  const [needsFetch, setNeedsFetch] = useState(true);
-
-  // fetch user account, and game data if not tracked
+  // fetch player, and game data
   useEffect(() => {
     async function FetchData() {
-      const [account, game] = await Promise.all([GetAccount(), GetCurrentGame()]);
+      const [player, game] = await Promise.all([GetAccount(), GetCurrentGame()]);
 
-      setUserAccount(account);
+      if (player != null) {
+        setUserDetails({
+          isAuthenticated: true,
+          Player: player
+        });
+      } else {
+        setUserDetails(getDefaultUserDetails());
+      }
+
       setActiveGame(game);
       setNeedsFetch(false);
     }
+
+    setIsDrawerMenuOpen(false);
 
     if (needsFetch) {
       FetchData();
@@ -62,12 +75,11 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? ''}>
-          <CurrentUserAccountContext.Provider value={userAccount}>
+          <CurrentUserAccountContext.Provider value={{userDetails, setUserDetails}}>
             <CurrentGameContext.Provider value={{ activeGame, setActiveGame }}>
               <div className="flex flex-col min-h-screen">
                 <header className="flex-row rounded-lg bg-gradient-to-r from-gray-900 to-slate-700 p-4">
-                  <GameNavBar isAuthenticated={isAuthenticated}
-                     isDrawerMenuOpen={isDrawerMenuOpen}
+                  <GameNavBar isDrawerMenuOpen={isDrawerMenuOpen}
                      setIsDrawerMenuOpen={setIsDrawerMenuOpen} 
                      setNeedsDataRefetch={setNeedsFetch}/>
                 </header>

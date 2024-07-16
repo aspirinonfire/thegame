@@ -51,9 +51,9 @@ public static class ApiRoutes
       });
 
     apiRoute
-      .MapPost("/user/token", async (GameAuthService authService, [FromBody] string googleIdToken) =>
+      .MapPost("/user/google/apitoken", async (HttpContext ctx, GameAuthService authService, [FromBody] string credential) =>
       {
-        var apiTokenResult = await authService.AuthenticateWithGoogleIdTokenAndGenerateApiAuthToken(googleIdToken);
+        var apiTokenResult = await authService.AuthenticateWithGoogleIdTokenAndGenerateApiAuthToken(credential);
         if (!apiTokenResult.TryGetSuccessful(out var apiTokens, out var tokenFailure))
         {
           return Results.BadRequest(tokenFailure.ErrorMessage);

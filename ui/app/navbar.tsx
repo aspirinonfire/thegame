@@ -3,20 +3,19 @@ import Image from 'next/image'
 import { Drawer, Dropdown } from 'flowbite-react';
 import { HiOutlineMap, HiOutlineClock, HiOutlineInformationCircle, HiOutlineArrowCircleRight, HiUserCircle } from "react-icons/hi";
 import { usePathname } from 'next/navigation';
-import GoogleSignIn from './googleLogin';
+import GoogleSignIn from './googleAuth';
 import { useContext, useState } from 'react';
 import { CurrentUserAccountContext } from './common/gameCore/gameContext';
 
 interface GameNavBarArgs {
-  isAuthenticated: boolean
   isDrawerMenuOpen: boolean,
   setIsDrawerMenuOpen: (isDrawerMenuOpen: boolean) => void,
   setNeedsDataRefetch: (needsRefetch: boolean) => void
 }
 
-export default function GameNavBar({ isAuthenticated, isDrawerMenuOpen, setIsDrawerMenuOpen, setNeedsDataRefetch } : GameNavBarArgs) {
+export default function GameNavBar({ isDrawerMenuOpen, setIsDrawerMenuOpen, setNeedsDataRefetch } : GameNavBarArgs) {
   const pathname = usePathname();
-  const userAccount = useContext(CurrentUserAccountContext);
+  const { userDetails } = useContext(CurrentUserAccountContext);
 
   function renderNavLinks() {
     return (
@@ -63,17 +62,11 @@ export default function GameNavBar({ isAuthenticated, isDrawerMenuOpen, setIsDra
             }>
 
             <Dropdown.Header>
-              <span className="block text-sm text-gray-200">Hello, {userAccount?.playerName ?? "Guest"}</span>
+              <span className="block text-sm text-gray-200">Hello, {userDetails.Player.playerName}</span>
             </Dropdown.Header>
             <Dropdown.Item className="text-gray-400">Players</Dropdown.Item>
             <Dropdown.Item className="text-gray-400">
-              {isAuthenticated ?
-                (<>
-                  Sign out
-                </>) :
-                (<>
-                  <GoogleSignIn raiseSignedInEvent={() => setNeedsDataRefetch(true)} />
-                </>)}
+              <GoogleSignIn raiseSignedInEvent={() => setNeedsDataRefetch(true)} />
             </Dropdown.Item>
           </Dropdown>
 

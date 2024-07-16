@@ -1,8 +1,8 @@
 import { Game, ScoreData, LicensePlateSpot, Territory } from "./gameModels";
 import CalculateScore from "./GameScoreCalculator";
-import UserAccount from "@/app/common/accounts";
 import { mockGameData } from "@/app/common/data/mockGameData";
 import { GetFromLocalStorage, SendApiRequest, SetLocalStorage } from "@/app/appUtils";
+import { PlayerInfo } from "../accounts";
 
 const currentGameKey: string = "currentGame";
 const pastGamesKey: string = "pastGames";
@@ -102,6 +102,6 @@ export async function UpdateCurrentGameWithNewSpots(newPlateSpotsLkp: { [key: st
   return updatedGame;
 }
 
-export async function GetAccount() : Promise<UserAccount | null> {
+export async function GetAccount() : Promise<PlayerInfo | null> {
   return await SendApiRequest("/api/user", "GET");
 }

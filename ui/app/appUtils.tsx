@@ -74,6 +74,7 @@ export async function SendApiRequest<T>(url: string, method: string, body?: any)
     return await userDataResponse.json() as T;
   } else if (userDataResponse.status == 401) {
     console.error("Got 401 API status code. Need to re-login");
+    SetLocalStorage(authToken, null);
     return null;
   }
 
