@@ -1,31 +1,25 @@
+export type ScoreMilestone = "Coast-to-Coast" | "West Coast" | "East Coast";
+
 export interface ScoreData {
   totalScore: number,
-  achievements: string[]
+  milestones: ScoreMilestone[]
 }
 
 export interface LicensePlateSpot {
   stateOrProvince: string,
   country: Country,
-  spottedOn: Date | null,
-  spottedByPlayerName: string | null
-  spottedByPlayerId: number | null
-}
-
-export interface NewSpottedPlate {
-  country: Country,
-  // TODO enum
-  stateOrProvince: string
+  dateSpotted: Date | null,
+  spottedBy: string | null
 }
 
 export interface Game {
-  gameId: string,
-  gameName: string,
-  isOwner: boolean,
-  createdByPlayerName: string,
+  id: string,
+  name: string,
+  createdBy: string,
   dateCreated: Date,
-  endedOn?: Date,
-  spottedPlates: LicensePlateSpot[]
-  gameScore: ScoreData
+  dateFinished?: Date,
+  licensePlates: { [K: string]: LicensePlateSpot },
+  score: ScoreData
 }
 
 export type Country = 'US' | 'CA' | 'MX'

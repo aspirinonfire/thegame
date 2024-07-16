@@ -21,8 +21,9 @@ export default function History() {
 
   const numberOfSpotsByPlateLkp = pastGames
     .reduce((lkp, game) => {
-      (game.spottedPlates ?? [])
-        .filter(plate => !!plate.spottedOn)
+      Object.keys(game.licensePlates)
+        .map(key => game.licensePlates[key])
+        .filter(plate => !!plate.dateSpotted)
         .forEach(plate => {
           const plateKey = `${plate.country}-${plate.stateOrProvince}`;
           lkp[plateKey] = (lkp[plateKey] || 0) + 1;

@@ -2,7 +2,7 @@
 import { useContext, useState } from 'react';
 import PlatePicker from './platepicker';
 import GameMap from '../common/gamemap';
-import { CurrentGameContext } from '../common/gameCore/gameContext';
+import { CurrentGameContext, CurrentUserAccountContext } from '../common/gameCore/gameContext';
 import { CreateNewGame, FinishActiveGame, UpdateCurrentGameWithNewSpots } from '../common/gameCore/gameRepository';
 import { LicensePlateSpot } from '../common/gameCore/gameModels';
 import { Button, Modal } from "flowbite-react";
@@ -10,41 +10,28 @@ import { useRouter } from "next/navigation";
 import { HiOutlineChevronRight } from "react-icons/hi";
 
 export default function GamePage() {
+  const userAccount = useContext(CurrentUserAccountContext);
   const {activeGame, setActiveGame} = useContext(CurrentGameContext);
 
   const [showPicker, setShowPicker] = useState(false);
   const [showEndGame, setShowEndGame] = useState(false);
-  const [isWaitingOnApi, setIsWaitingOnApi] = useState(false);
 
   const router = useRouter();
 
   const dateStartedFriendly = activeGame?.dateCreated.toLocaleString();
-
-  const spottedPlatesLookup = (activeGame?.spottedPlates ?? [])
-    .reduce((lkp, plate) => {
-      lkp[`${plate.country}-${plate.stateOrProvince}`] = plate;
-      return lkp;
-    }, {} as {[key: string] : LicensePlateSpot})
-    
     
   async function tryStartNewGame() {
-    setIsWaitingOnApi(true);
-
-    // TODO read from user input
-    const newGameResult = await CreateNewGame(new Date().toISOString());
+    const newGameResult = await CreateNewGame(new Date().toISOString(),
+      userAccount?.name ?? "N/A");
 
     if (typeof newGameResult === 'string') {
       console.error("Bad new game:", newGameResult);
     } else {
       setActiveGame(newGameResult);
     }
-    
-    setIsWaitingOnApi(false);
   }
 
   async function tryEndGame() {
-    setIsWaitingOnApi(true);
-    
     setShowEndGame(false);
     const finishResult = await FinishActiveGame();
 
@@ -54,28 +41,22 @@ export default function GamePage() {
       router.push("/history");
       setActiveGame(null);
     }
-    setIsWaitingOnApi(false);
   }
 
-  async function tryUpdateGame(newSpottedPlates: LicensePlateSpot[]) {
-    setIsWaitingOnApi(true);
-    
-    const updatedGameResult = await UpdateCurrentGameWithNewSpots(newSpottedPlates);
+  async function tryUpdateGame(licensePlatesLkp: { [key: string]: LicensePlateSpot }) {
+    var updatedGameResult = await UpdateCurrentGameWithNewSpots(licensePlatesLkp);
     if (typeof updatedGameResult === 'string') {
       console.error("Failed to save game:", updatedGameResult)
     } else {
       setActiveGame(updatedGameResult);
     }
-
-    setIsWaitingOnApi(false);
   }
 
   function renderStartNewGameContents() {
     return (<div className="flex flex-col justify-center items-center grow gap-5 text-center">
       <h1 className="text-3xl">Get ready for a roadtip!</h1>
       <Button className="bg-amber-700 animate-pulse" size="xl" 
-        onClick={tryStartNewGame}
-        disabled={isWaitingOnApi}>
+        onClick={tryStartNewGame}>
         <HiOutlineChevronRight className="mr-2 h-5 w-5 pt-1" />
         Let&apos;s Go!
       </Button>
@@ -87,13 +68,13 @@ export default function GamePage() {
       <>
         <div className={`flex flex-col gap-5 transition-all ${showPicker ? "blur-sm": ""}`}>
           <div className="flex flex-row items-center justify-between sm:justify-start gap-5">
-            <h1 className="text-xl sm:text-2xl">Score: {activeGame?.gameScore?.totalScore ?? 0} </h1>
+            <h1 className="text-xl sm:text-2xl">Score: {activeGame?.score.totalScore} </h1>
             <div className="flex flex-row justify-center gap-3 animate-pulse text-sm text-amber-500" style={{ fontSize: ".7rem"}}>
-              { (activeGame?.gameScore?.achievements ?? []).map(ms =>(<div key={ms}>{ms}</div>)) }
+              { (activeGame?.score.milestones ?? []).map(ms =>(<div key={ms}>{ms}</div>)) }
             </div>
           </div>
           
-          <GameMap argType="activeGame" plateSpots={spottedPlatesLookup} onMapClick={() => setShowPicker(true)} />
+          <GameMap argType="activeGame" plateSpots={activeGame?.licensePlates ?? {}} onMapClick={() => setShowPicker(true)} />
         </div>
 
         <div className={`flex flex-row grow justify-end items-center fixed bottom-0 right-5 ${showPicker ? 'hidden' : ''}`}>
@@ -107,7 +88,7 @@ export default function GamePage() {
         { !!activeGame ? (<PlatePicker
           isShowPicker={showPicker}
           setShowPicker={(isShown: boolean) => setShowPicker(isShown)}
-          plateData={spottedPlatesLookup}
+          plateData={activeGame?.licensePlates ?? {}}
           saveNewPlateData={tryUpdateGame} />) : null }
 
         <Modal show={showEndGame} size="sm" onClose={() => setShowEndGame(false)} popup>
