@@ -62,6 +62,10 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Port ${NGINX_PROXY_PORT};
 
+        # WebSocket support
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
         # kill cache
         proxy_cache off;
         proxy_request_buffering off;
