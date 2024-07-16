@@ -10,10 +10,11 @@ import { CurrentUserAccountContext } from './common/gameCore/gameContext';
 interface GameNavBarArgs {
   isAuthenticated: boolean
   isDrawerMenuOpen: boolean,
-  setIsDrawerMenuOpen: (isDrawerMenuOpen: boolean) => void
+  setIsDrawerMenuOpen: (isDrawerMenuOpen: boolean) => void,
+  setNeedsDataRefetch: (needsRefetch: boolean) => void
 }
 
-export default function GameNavBar({ isAuthenticated, isDrawerMenuOpen, setIsDrawerMenuOpen } : GameNavBarArgs) {
+export default function GameNavBar({ isAuthenticated, isDrawerMenuOpen, setIsDrawerMenuOpen, setNeedsDataRefetch } : GameNavBarArgs) {
   const pathname = usePathname();
   const userAccount = useContext(CurrentUserAccountContext);
 
@@ -71,7 +72,7 @@ export default function GameNavBar({ isAuthenticated, isDrawerMenuOpen, setIsDra
                   Sign out
                 </>) :
                 (<>
-                  <GoogleSignIn />
+                  <GoogleSignIn raiseSignedInEvent={() => setNeedsDataRefetch(true)} />
                 </>)}
             </Dropdown.Item>
           </Dropdown>

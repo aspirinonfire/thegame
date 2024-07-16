@@ -66,18 +66,19 @@ public class Program
       .AddGameAuthenticationServices(builder.Configuration);
 
     // set json options for API and Swagger
-    builder.Services.ConfigureHttpJsonOptions(options =>
-    {
-      options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
-    builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
-    {
-      options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
+    builder.Services
+      .ConfigureHttpJsonOptions(options =>
+      {
+        options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+      });
+    builder.Services
+      .Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
+      {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+      });
 
-    builder.Services.AddHttpClient();
-
-    builder.Services.AddOptions<GameSettings>()
+    builder.Services
+      .AddOptions<GameSettings>()
       .BindConfiguration("")
       .ValidateDataAnnotations();
 

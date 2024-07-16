@@ -30,7 +30,7 @@ export default function refreshOnNewVersion() {
   });
 }
 
-export const authTokenKey: string = "auth_token";
+export const authTokenKey: string = "authToken";
 
 export function GetFromLocalStorage<T>(key: string) : T | null {
   const rawValue = localStorage.getItem(key);

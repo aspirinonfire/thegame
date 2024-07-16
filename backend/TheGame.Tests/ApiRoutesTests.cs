@@ -26,7 +26,7 @@ public class ApiRoutesTests
     await using var uutApiApp = GetApiFactory();
     var client = uutApiApp.CreateClient();
 
-    var actualApiResponse = await client.GetAsync("/health");
+    var actualApiResponse = await client.GetAsync("/api/health");
 
     Assert.Equal(HttpStatusCode.OK, actualApiResponse.StatusCode);
 
@@ -107,9 +107,11 @@ public class ApiRoutesTests
   {
     var playerIdentity = new GetOrCreatePlayerResult(playerId, playerId, "test provider", "test provider user id");
 
-    var gameAuthService = apiAppFactory.Services.GetRequiredService<GameAuthService>();
+    var scope = apiAppFactory.Services.CreateScope();
 
-    var authToken = gameAuthService.GenerateJwtToken(playerIdentity);
+    var gameAuthService = scope.ServiceProvider.GetRequiredService<GameAuthService>();
+
+    var authToken = gameAuthService.GenerateApiJwtToken(playerIdentity);
 
     var httpClient = apiAppFactory.CreateClient();
     httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", authToken);

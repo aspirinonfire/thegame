@@ -43,7 +43,7 @@ export default function RootLayout({
     if (needsFetch) {
       FetchData();
     }
-  }, [needsFetch, isAuthenticated]);
+  }, [needsFetch]);
 
   // register autorefresh on new version
   useEffect(() => refreshOnNewVersion());
@@ -68,7 +68,8 @@ export default function RootLayout({
                 <header className="flex-row rounded-lg bg-gradient-to-r from-gray-900 to-slate-700 p-4">
                   <GameNavBar isAuthenticated={isAuthenticated}
                      isDrawerMenuOpen={isDrawerMenuOpen}
-                     setIsDrawerMenuOpen={setIsDrawerMenuOpen} />
+                     setIsDrawerMenuOpen={setIsDrawerMenuOpen} 
+                     setNeedsDataRefetch={setNeedsFetch}/>
                 </header>
                 <main className={`flex flex-col flex-grow mt-4 rounded-lg bg-gradient-to-bl from-10% from-slate-700 to-gray-900 text-gray-300 p-4 transition-all ${isDrawerMenuOpen ? 'blur-sm' : ''}`}>
                   {needsFetch ?

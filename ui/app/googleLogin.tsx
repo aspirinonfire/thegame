@@ -1,17 +1,40 @@
-import { useGoogleLogin } from "@react-oauth/google";
+import { CredentialResponse, GoogleLogin, useGoogleLogin } from "@react-oauth/google";
+import { authTokenKey, SetLocalStorage } from "./appUtils";
 
-export default function GoogleSignIn() {
-  const googleLogin = useGoogleLogin({
-    flow: "auth-code",
-    ux_mode: "redirect",
-    redirect_uri: "https://localhost:8080/account/signin-google"
-  });
+interface ApiTokenResponse {
+  accessToken: string
+}
+
+interface GoogleSignInArgs {
+  raiseSignedInEvent: () => void
+}
+
+export default function GoogleSignIn({ raiseSignedInEvent } : GoogleSignInArgs) {
+  async function onLoginSuccess(response: CredentialResponse) {
+    const requestParams : RequestInit = {
+      cache: "no-cache",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+      },
+      body: JSON.stringify(response.credential),
+    };
+
+    const accessTokenResponse = await fetch("/api/user/token", requestParams);
+
+    const responseBody = await accessTokenResponse.json() as ApiTokenResponse;
+
+    if (accessTokenResponse.status == 200) {
+      SetLocalStorage(authTokenKey, responseBody.accessToken);
+      raiseSignedInEvent();
+      return;
+    }
+    
+    console.error(`Failed to retrieve API token ${accessTokenResponse.status}: ${responseBody}`);
+  }
 
   return (
-    // TODO make it prettier
-    <div className="flex flex-row items-center text-gray-200 bg-blue-900 hover:bg-blue-950 p-2" onClick={() => googleLogin()}>
-      Login with Google 🚀
-    </div>
+    <GoogleLogin onSuccess={async (creds) => await onLoginSuccess(creds)} />
   )
 }
 

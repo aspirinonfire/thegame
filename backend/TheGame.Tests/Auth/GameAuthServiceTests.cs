@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Options;
+﻿using MediatR;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using TheGame.Api;
 using TheGame.Api.Auth;
 using TheGame.Domain.CommandHandlers;
@@ -37,9 +39,11 @@ public class GameAuthServiceTests
     var options = Substitute.For<IOptions<GameSettings>>();
     options.Value.Returns(gameSettings);
 
-    var uutAuthService = new GameAuthService(Substitute.For<IHttpClientFactory>(), options);
+    var uutAuthService = new GameAuthService(NullLogger<GameAuthService>.Instance,
+      Substitute.For<IMediator>(),
+      options);
 
-    var actualToken = uutAuthService.GenerateJwtToken(gamePlayer);
+    var actualToken = uutAuthService.GenerateApiJwtToken(gamePlayer);
 
     Assert.NotNull(actualToken);
   }

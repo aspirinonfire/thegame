@@ -51,31 +51,17 @@ public static class ApiRoutes
       });
 
     apiRoute
-      .MapPost("/user/token", async (HttpContext ctx, GameAuthService authService, IMediator mediatr, [FromBody] string googleAccessToken) =>
+      .MapPost("/user/token", async (GameAuthService authService, [FromBody] string googleIdToken) =>
       {
-        var googleIdentityResult = await authService.GetGoogleIdentity(googleAccessToken);
-        if (!googleIdentityResult.TryGetSuccessful(out var identity, out var failure))
+        var apiTokenResult = await authService.AuthenticateWithGoogleIdTokenAndGenerateApiAuthToken(googleIdToken);
+        if (!apiTokenResult.TryGetSuccessful(out var apiTokens, out var tokenFailure))
         {
-          return Results.BadRequest(failure.ErrorMessage);
+          return Results.BadRequest(tokenFailure.ErrorMessage);
         }
 
-        var getOrCreatePlayerCommand = identity.ToGetOrCreateNewPlayerCommand();
-        var getOrCreatePlayerResult = await mediatr.Send(getOrCreatePlayerCommand);
-        if (!getOrCreatePlayerResult.TryGetSuccessful(out var playerIdentity, out var commandFailure))
-        {
-          return Results.BadRequest(commandFailure.ErrorMessage);
-        }
-
-        var apiToken = authService.GenerateJwtToken(playerIdentity);
-
-        // TODO generate refresh token
-
-        return Results.Ok(new
-        {
-          apiToken,
-        });
+        return Results.Ok(apiTokens);
       })
-      .WithDescription("Validate Google Access Token and generate API JWT token to be used for authenticating these APIs.")
+      .WithDescription("Validate Google ID Token and generate API tokens for accessing Game APIs.")
       .AllowAnonymous();
 
     

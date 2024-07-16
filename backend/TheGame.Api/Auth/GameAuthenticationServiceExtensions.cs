@@ -60,6 +60,6 @@ public static class GameAuthenticationServiceExtensions
         .Build();
     });
 
-    services.AddSingleton<GameAuthService>();
+    services.AddScoped<GameAuthService>();
   }
 }

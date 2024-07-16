@@ -1,79 +1,113 @@
+using Google.Apis.Auth;
+using MediatR;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OneOf;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Net.Http;
-using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using TheGame.Domain.CommandHandlers;
+using TheGame.Domain.DomainModels.PlayerIdentities;
 using TheGame.Domain.Utils;
 
 namespace TheGame.Api.Auth;
 
-public class GameAuthService(IHttpClientFactory httpClientFactory, IOptions<GameSettings> gameSettings)
+public sealed record ApiTokens(string AccessToken, string RefreshToken);
+
+public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr, IOptions<GameSettings> gameSettings)
 {
   public const string PlayerIdentityAuthority = "iden_authority";
   public const string PlayerIdentityUserId = "iden_user_id";
   public const string PlayerIdentityIdClaimType = "player_identiy_id";
   public const string PlayerIdClaimType = "player_id";
+  
+  public const string MissingIdTokenError = "missing_id_token";
+  public const string InvalidIdTokenError = "invalid_id_token";
+  public const string GeneralErrorWhileValidatingTokenError = "token_validation_general_error";
 
-  public const string UnsuccessfulExternalAuthError = "External auth result was not successful!";
-  public const string MissingAuthClaimsError = "Failed to retrieve claims from external auth result!";
-  public const string MissingAuthNameIdClaimError = "Failed to retrieve NameId claim from external auth result!";
-  public const string MissingIdentityNameClaimError = "Failed to retrieve Player Name from external auth result!";
-
-  public virtual async Task<OneOf<GoogleUserInfo, Failure>> GetGoogleIdentity(string accessToken)
+  /// <summary>
+  /// Use valid Google ID Token to obtain player identity and generate API auth token.
+  /// </summary>
+  /// <remarks>
+  /// This method expects ID Token since its payload contains everything required to generate valid player identity.
+  /// Currently, no additional user information is required so Access Token is not needed.
+  /// If that requirement changes, UI will need to provide authorization code so auth method can obtain necessary tokens and make appropriate requests.
+  /// </remarks>
+  /// <param name="googleIdToken"></param>
+  /// <returns></returns>
+  public async Task<OneOf<ApiTokens, Failure>> AuthenticateWithGoogleIdTokenAndGenerateApiAuthToken(string googleIdToken)
   {
-    if (string.IsNullOrEmpty(accessToken))
+    var googleIdentityResult = await GetValidatedGoogleIdTokenPayload(googleIdToken);
+    if (!googleIdentityResult.TryGetSuccessful(out var idTokenPayload, out var tokenValidationFailure))
     {
-      return new Failure("Access Token is missing.");
+      return tokenValidationFailure;
     }
 
-    var httpClient = httpClientFactory.CreateClient();
+    var identityRequest = new NewPlayerIdentityRequest("Google",
+      idTokenPayload.Subject,
+      string.Empty,
+      idTokenPayload.Name);
 
-    // Validate access token.
-    var tokenInfoResponse = await httpClient.GetAsync($"https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={accessToken}",
-      HttpCompletionOption.ResponseHeadersRead);
-    if (!tokenInfoResponse.IsSuccessStatusCode)
+    var getOrCreatePlayerCommand = new GetOrCreateNewPlayerCommand(identityRequest);
+
+    var getOrCreatePlayerResult = await mediatr.Send(getOrCreatePlayerCommand);
+    if (!getOrCreatePlayerResult.TryGetSuccessful(out var playerIdentity, out var commandFailure))
     {
-      return new Failure("Failed to retrieve token info.");
+      return commandFailure;
     }
 
-    var tokenInfo = await tokenInfoResponse.Content.ReadFromJsonAsync<GoogleTokenInfo>();
-    if (gameSettings.Value.Auth.Google.ClientId != tokenInfo?.Audience)
-    {
-      return new Failure("Invalid Google Access Token audience.");
-    }
+    var apiToken = GenerateApiJwtToken(playerIdentity);
 
-    // Retrieve user info
-    var userInfoResponse = await httpClient.GetAsync($"https://www.googleapis.com/oauth2/v3/userinfo?access_token={accessToken}",
-      HttpCompletionOption.ResponseHeadersRead);
-    if (!userInfoResponse.IsSuccessStatusCode)
-    {
-      return new Failure("Failed to retrieve user info.");
-    }
-
-    var userInfo = await userInfoResponse.Content.ReadFromJsonAsync<GoogleUserInfo>();
-
-    if (userInfo == null)
-    {
-      return new Failure("User info payload is empty.");
-    }
-
-    if (userInfo.Subject != tokenInfo.UserId)
-    {
-      return new Failure("Token user_id does not match user profile subject.");
-    }
-
-    return userInfo;
+    // TODO generate refresh token
+    return new ApiTokens(apiToken, string.Empty);
   }
 
-  public virtual string GenerateJwtToken(GetOrCreatePlayerResult playerIdentity)
+  /// <summary>
+  /// Validate Google ID Token and return payload claims. For validation rules see <see href="https://developers.google.com/identity/openid-connect/openid-connect#validatinganidtoken"/>
+  /// </summary>
+  /// <remarks>
+
+  /// </remarks>
+  /// <param name="googleIdToken"></param>
+  /// <returns></returns>
+  public virtual async Task<OneOf<GoogleJsonWebSignature.Payload, Failure>> GetValidatedGoogleIdTokenPayload(string googleIdToken)
+  {
+    if (string.IsNullOrEmpty(googleIdToken))
+    {
+      return new Failure(MissingIdTokenError);
+    }
+
+    try
+    {
+      var tokenValidationSettings = new GoogleJsonWebSignature.ValidationSettings()
+      {
+        Audience = [gameSettings.Value.Auth.Google.ClientId]
+      };
+
+      return await GoogleJsonWebSignature.ValidateAsync(googleIdToken, tokenValidationSettings);
+    }
+    catch (InvalidJwtException invalidIdTokenException)
+    {
+      logger.LogError(invalidIdTokenException, "Google ID Token is invalid.");
+      return new Failure(InvalidIdTokenError);
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Encountered error while validating Google ID Token");
+      return new Failure(GeneralErrorWhileValidatingTokenError);
+    }
+  }
+
+  /// <summary>
+  /// Generate API token using JWT format. This token is expected to be used during Game API authentication.
+  /// </summary>
+  /// <param name="playerIdentity"></param>
+  /// <returns></returns>
+  public virtual string GenerateApiJwtToken(GetOrCreatePlayerResult playerIdentity)
   {
     var claims = new List<Claim>
     {
