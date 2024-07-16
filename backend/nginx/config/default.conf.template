@@ -2,12 +2,6 @@
 server {
     listen 443 ssl;
     server_name localhost;
-    # Generate dev certs using "dotnet dev-certs https" commands:
-    # dotnet dev-certs https --export-path "./nginx/ssl/thegame.pfx" --password <SSL_CERT_PASSWORD>
-    # dotnet dev-certs https --trust
-    # if cert is already present: "dotnet dev-certs https --clean"
-    # convert pfx to crt and rsa
-    # see https://medium.com/knoldus/nginx-easiest-way-to-setup-ssl-using-pfx-files-f9e1a03eff74
     
     ssl_certificate /etc/nginx/ssl/thegame.crt;
     ssl_certificate_key /etc/nginx/ssl/thegame.rsa;
