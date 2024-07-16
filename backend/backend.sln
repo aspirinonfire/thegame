@@ -19,8 +19,8 @@ Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-co
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nginx", "nginx", "{53F82690-8814-419C-99B6-B20A1E07923C}"
 	ProjectSection(SolutionItems) = preProject
-		nginx_templates\default.conf.template = nginx_templates\default.conf.template
-		nginx_www\index.html = nginx_www\index.html
+		nginx\config\default.conf.template = nginx\config\default.conf.template
+		nginx\www\index.html = nginx\www\index.html
 	EndProjectSection
 EndProject
 Global

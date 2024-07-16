@@ -57,7 +57,7 @@ Release/
 
 # Docker stuff
 /backend/mssql_volume
-/backend/ssl/
+/backend/nginx/ssl/
 .env
 
 # IDE
