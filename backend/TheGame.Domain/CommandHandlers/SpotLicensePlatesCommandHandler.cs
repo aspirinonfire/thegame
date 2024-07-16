@@ -1,7 +1,6 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using OneOf.Types;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -14,7 +13,7 @@ namespace TheGame.Domain.CommandHandlers;
 
 public sealed record SpottedPlate(Country Country, StateOrProvince StateOrProvince);
 
-public sealed record SpotLicensePlatesCommand(IReadOnlyCollection<SpottedPlate> SpottedPlates, long GameId, long SpottedByPlayerId) : IRequest<OneOf<Success, Failure>>;
+public sealed record SpotLicensePlatesCommand(IReadOnlyCollection<SpottedPlate> SpottedPlates, long GameId, long SpottedByPlayerId) : IRequest<OneOf<OwnedOrInvitedGame, Failure>>;
 
 public class SpotLicensePlatesCommandHandler(IGameDbContext gameDb,
   ITransactionExecutionWrapper transactionWrapper,
@@ -22,12 +21,12 @@ public class SpotLicensePlatesCommandHandler(IGameDbContext gameDb,
   ISystemService systemService,
   IGameScoreCalculator gameScoreCalculator,
   ILogger<SpotLicensePlatesCommandHandler> logger)
-  : IRequestHandler<SpotLicensePlatesCommand, OneOf<Success, Failure>>
+  : IRequestHandler<SpotLicensePlatesCommand, OneOf<OwnedOrInvitedGame, Failure>>
 {
   public const string ActiveGameNotFoundError = "active_game_not_found";
 
-  public async Task<OneOf<Success, Failure>> Handle(SpotLicensePlatesCommand request, CancellationToken cancellationToken) =>
-    await transactionWrapper.ExecuteInTransaction<Success>(async () =>
+  public async Task<OneOf<OwnedOrInvitedGame, Failure>> Handle(SpotLicensePlatesCommand request, CancellationToken cancellationToken) =>
+    await transactionWrapper.ExecuteInTransaction<OwnedOrInvitedGame>(async () =>
     {
       logger.LogInformation("Validating command");
 
@@ -57,7 +56,7 @@ public class SpotLicensePlatesCommandHandler(IGameDbContext gameDb,
         gameScoreCalculator,
         updatedSpots);
       
-      if (!updatedSpotsResult.TryGetSuccessful(out _, out var spotFailure))
+      if (!updatedSpotsResult.TryGetSuccessful(out var updatedGame, out var spotFailure))
       {
         logger.LogError(spotFailure.GetException(), "Failed to spot license plates.");
         return spotFailure;
@@ -67,8 +66,7 @@ public class SpotLicensePlatesCommandHandler(IGameDbContext gameDb,
       
       logger.LogInformation("Successfully spotted license plates.");
 
-      return new Success();
-
+      return OwnedOrInvitedGame.FromGame(updatedGame, request.SpottedByPlayerId);
     },
     nameof(SpotLicensePlatesCommand),
     logger,

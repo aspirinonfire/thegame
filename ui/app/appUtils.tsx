@@ -51,7 +51,7 @@ export function SetLocalStorage(key: string, value: any): void {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-export async function SendApiRequest<T>(url: string, method: string, body?: any) : Promise<T | null> {
+export async function SendAuthenticatedApiRequest<T>(url: string, method: string, body?: any) : Promise<T | null> {
     // TODO validate auth token before making api requests
     const authToken = GetFromLocalStorage<string>(authTokenKey);
     if (authToken == null) {
@@ -59,7 +59,7 @@ export async function SendApiRequest<T>(url: string, method: string, body?: any)
       return null;
     }
   
-  const userDataResponse = await fetch(url, {
+  const userDataResponse = await fetch(`/api/${url}`, {
     cache: "no-store",
     method: method,
     headers: {

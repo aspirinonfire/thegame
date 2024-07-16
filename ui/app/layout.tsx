@@ -2,7 +2,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { useEffect, useState } from "react";
-import { GetAccount, GetCurrentGame } from "./common/gameCore/gameRepository";
+import { GetAccount, RetrieveActiveGame } from "./common/gameCore/gameRepository";
 import { CurrentGameContext, CurrentUserAccountContext } from "./common/gameCore/gameContext";
 import { Spinner } from "flowbite-react";
 import { Game } from "./common/gameCore/gameModels";
@@ -36,7 +36,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   // fetch player, and game data
   useEffect(() => {
     async function FetchData() {
-      const [player, game] = await Promise.all([GetAccount(), GetCurrentGame()]);
+      const [player, game] = await Promise.all([GetAccount(), RetrieveActiveGame()]);
 
       if (player != null) {
         setUserDetails({

@@ -9,7 +9,7 @@ import { CurrentUserAccountContext } from "../common/gameCore/gameContext";
 interface PickerControls {
   isShowPicker: boolean;
   setShowPicker: (isShown: boolean) => void;
-  saveNewPlateData: (plates: { [key: string]: LicensePlateSpot }) => void;
+  saveNewPlateData: (plates: LicensePlateSpot[] ) => void;
   plateData: { [key: string]: LicensePlateSpot };
 }
 
@@ -65,8 +65,8 @@ export default function PlatePicker({ isShowPicker, setShowPicker, saveNewPlateD
         country: territory.country,
         stateOrProvince: territory.shortName,
 
-        dateSpotted: new Date(),
-        spottedBy: userDetails.Player.playerName
+        spottedOn: new Date(),
+        spottedByPlayerName: userDetails.Player.playerName
       } as LicensePlateSpot;
     }
     
@@ -75,7 +75,10 @@ export default function PlatePicker({ isShowPicker, setShowPicker, saveNewPlateD
   }
 
   function handelSaveNewSpots() {
-    saveNewPlateData(formData);
+    const newSpottedPlates = Object.keys(formData)
+      .map(key => formData[key]);
+
+    saveNewPlateData(newSpottedPlates);
     setShowPicker(false);
     setSearchTerm(null);
   }

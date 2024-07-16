@@ -78,11 +78,14 @@ public static class ApiRoutes
 
 
     apiRoute
-      .MapGet("game", async (HttpContext ctx, IGameQueryProvider gameQueryProvider) =>
+      .MapGet("game", async (HttpContext ctx, IGameQueryProvider gameQueryProvider, [FromQuery(Name ="isActive")] bool? isActive) =>
       {
         var playerId = GetPlayerIdFromHttpContext(ctx);
+        var queryForActiveGamesOnly = isActive.GetValueOrDefault();
 
-        var allGames = await gameQueryProvider.GetOwnedAndInvitedGamesQuery(playerId).ToListAsync();
+        var allGames = await gameQueryProvider.GetOwnedAndInvitedGamesQuery(playerId)
+          .Where(game => !queryForActiveGamesOnly || !game.EndedOn.HasValue)
+          .ToListAsync();
       
         return Results.Ok(allGames);
       })
@@ -110,12 +113,12 @@ public static class ApiRoutes
       {
         var playerId = GetPlayerIdFromHttpContext(ctx);
         var endGameResult = await mediator.Send(new EndGameCommand(gameId, playerId));
-        if (!endGameResult.TryGetSuccessful(out _, out var endGameFailure))
+        if (!endGameResult.TryGetSuccessful(out var endedGame, out var endGameFailure))
         {
           return Results.BadRequest(endGameFailure.ErrorMessage);
         }
 
-        return Results.Ok();
+        return Results.Ok(endedGame);
       })
       .WithDescription("End active game for an authenticated player.");
 
@@ -126,12 +129,12 @@ public static class ApiRoutes
         var playerId = GetPlayerIdFromHttpContext(ctx);
 
         var endGameResult = await mediator.Send(new SpotLicensePlatesCommand(spottedPlates, gameId, playerId));
-        if (!endGameResult.TryGetSuccessful(out _, out var endGameFailure))
+        if (!endGameResult.TryGetSuccessful(out var updateGame, out var endGameFailure))
         {
           return Results.BadRequest(endGameFailure.ErrorMessage);
         }
 
-        return Results.Ok();
+        return Results.Ok(updateGame);
       })
       .WithDescription("Updated spotted license plates for an active game.");
 

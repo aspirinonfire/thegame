@@ -18,6 +18,8 @@ services:
 
   thegame.api:
     image: ${DOCKER_REGISTRY-}thegameapi
+    ports:
+        - "9000:80"
     build:
       context: .
       dockerfile: TheGame.Api/Dockerfile

@@ -82,7 +82,7 @@ function AreBordersConnected(startingFromBorder: string[],
 export default function CalculateScore(plateData: LicensePlateSpot[]): ScoreData {
   const scoreData: ScoreData = {
     totalScore: 0,
-    milestones: []
+    achievements: []
   };
 
   if (plateData === null) {
@@ -90,7 +90,7 @@ export default function CalculateScore(plateData: LicensePlateSpot[]): ScoreData
   }
 
   const allSpottedPlates = plateData
-    .filter(plate => !!plate.dateSpotted);
+    .filter(plate => !!plate.spottedOn);
 
   if (allSpottedPlates.length < 1) {
     return scoreData;
@@ -117,7 +117,7 @@ export default function CalculateScore(plateData: LicensePlateSpot[]): ScoreData
 
   if (hasAllWestCoastMarked) {
     scoreData.totalScore += 10;
-    scoreData.milestones.push('West Coast');
+    scoreData.achievements.push('West Coast');
   }
 
   const hasAllEastCoastMarked = [...eastCoastStatesLkp]
@@ -125,7 +125,7 @@ export default function CalculateScore(plateData: LicensePlateSpot[]): ScoreData
 
   if (hasAllEastCoastMarked) {
     scoreData.totalScore += 50;
-    scoreData.milestones.push('East Coast');
+    scoreData.achievements.push('East Coast');
   }
 
   const markedWestCoastStates = markedUsStates
@@ -137,7 +137,7 @@ export default function CalculateScore(plateData: LicensePlateSpot[]): ScoreData
 
   if (hasCoastToCoastConnection) {
     scoreData.totalScore += 100;
-    scoreData.milestones.push('Coast-to-Coast');
+    scoreData.achievements.push('Coast-to-Coast');
   }
 
   return scoreData;

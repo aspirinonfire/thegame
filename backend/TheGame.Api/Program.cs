@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -61,26 +62,32 @@ public class Program
     var isDevEnvironment = builder.Environment.IsDevelopment();
     var connString = builder.Configuration.GetConnectionString(GameDbContext.ConnectionStringName) ?? string.Empty;
 
-    builder.Services
-      .AddGameServices(connString, isDevEnvironment)
-      .AddGameAuthenticationServices(builder.Configuration);
-
-    // set json options for API and Swagger
-    builder.Services
-      .ConfigureHttpJsonOptions(options =>
-      {
-        options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
-      });
-    builder.Services
-      .Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
-      {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-      });
-
+    // register game api services
     builder.Services
       .AddOptions<GameSettings>()
       .BindConfiguration("")
       .ValidateDataAnnotations();
+
+    builder.Services
+      .AddGameServices(connString, isDevEnvironment)
+      .AddGameAuthenticationServices(builder.Configuration);
+
+    // Set json serializer options. Both configs must be set.
+    // see https://stackoverflow.com/questions/76643787/how-to-make-enum-serialization-default-to-string-in-minimal-api-endpoints-and-sw
+
+    // Minimal APIs
+    builder.Services.ConfigureHttpJsonOptions(options =>
+    {
+      options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+      options.SerializerOptions.PropertyNameCaseInsensitive = true;
+    });
+    // Swagger
+    builder.Services
+      .Configure<JsonOptions>(options =>
+      {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+      });
 
     var app = builder.Build();
 

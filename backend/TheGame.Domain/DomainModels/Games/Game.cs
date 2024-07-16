@@ -146,17 +146,18 @@ public partial class Game : RootModel, IAuditedRecord
     return this;
   }
 
-  public virtual OneOf<Game, Failure> EndGame(DateTimeOffset endedOn)
+  public virtual OneOf<Game, Failure> EndGame()
   {
     if (!IsActive)
     {
       return new Failure(ErrorMessages.InactiveGameError);
     }
 
-    if (endedOn < DateCreated)
-    {
-      return new Failure(ErrorMessages.InvalidEndedOnDateError);
-    }
+    var endedOn = GameLicensePlates
+      .Select(glp => glp.DateCreated)
+      .OrderByDescending(dateSpotted => dateSpotted)
+      .FirstOrDefault(DateCreated);
+    
 
     IsActive = false;
     EndedOn = endedOn;

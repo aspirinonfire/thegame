@@ -107,5 +107,41 @@ namespace TheGame.Tests.IntegrationTests
       Assert.NotNull(actualGame.GameScore);
       Assert.NotEqual(0, actualGame.GameScore.TotalScore);
     }
+
+    [Fact]
+    public async Task WillRemoveEmptyGameFromDatabaseWhenEnding()
+    {
+      var services = CommonMockedServices.GetGameServicesWithTestDevDb(msSqlFixture.GetConnectionString());
+
+      var diOpts = new ServiceProviderOptions
+      {
+        ValidateOnBuild = true,
+        ValidateScopes = true,
+      };
+      using var sp = services.BuildServiceProvider(diOpts);
+      using var scope = sp.CreateScope();
+
+      var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+      var gameQryProvider = scope.ServiceProvider.GetRequiredService<IGameQueryProvider>();
+
+      // create new player with identity
+      var newPlayerRequest = new NewPlayerIdentityRequest("test_provider_2", "test_id_2", "refresh_token", "Test Player 2");
+      var newPlayerIdentityCommandResult = await mediator.Send(new GetOrCreateNewPlayerCommand(newPlayerRequest));
+      newPlayerIdentityCommandResult.AssertIsSucceessful(out var actualNewPlayerIdentity);
+
+      // start new game
+      var startNewGameCommandResult = await mediator.Send(new StartNewGameCommand("Empty Game", actualNewPlayerIdentity.PlayerId));
+      startNewGameCommandResult.AssertIsSucceessful(out var actualNewGame);
+
+      // end newly created game
+      var actualEndGameResult = await mediator.Send(new EndGameCommand(actualNewGame.GameId, actualNewPlayerIdentity.PlayerId));
+      actualEndGameResult.AssertIsSucceessful();
+
+      var hasEmptyGame = await gameQryProvider.GetOwnedAndInvitedGamesQuery(actualNewPlayerIdentity.PlayerId)
+        .Where(game => game.GameId == actualNewGame.GameId)
+        .AnyAsync();
+
+      Assert.False(hasEmptyGame);
+    }
   }
 }
