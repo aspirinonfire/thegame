@@ -1,10 +1,14 @@
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using Google.Apis.Auth;
+using MediatR;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using OneOf;
 using System;
-using System.Linq;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 using TheGame.Domain.CommandHandlers;
 using TheGame.Domain.DomainModels.PlayerIdentities;
@@ -12,84 +16,119 @@ using TheGame.Domain.Utils;
 
 namespace TheGame.Api.Auth;
 
-public class GameAuthService
+public sealed record ApiTokens(string AccessToken, string RefreshToken);
+
+public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr, IOptions<GameSettings> gameSettings)
 {
-  public const string PlayerIdentityIdClaimType = "game_player_identity_id";
-  public const string PlayerIdClaimType = "game_player_id";
+  public const string PlayerIdentityAuthority = "iden_authority";
+  public const string PlayerIdentityUserId = "iden_user_id";
+  public const string PlayerIdentityIdClaimType = "player_identiy_id";
+  public const string PlayerIdClaimType = "player_id";
+  
+  public const string MissingIdTokenError = "missing_id_token";
+  public const string InvalidIdTokenError = "invalid_id_token";
+  public const string GeneralErrorWhileValidatingTokenError = "token_validation_general_error";
 
-  public const string UnsuccessfulExternalAuthError = "External auth result was not successful!";
-  public const string MissingAuthClaimsError = "Failed to retrieve claims from external auth result!";
-  public const string MissingAuthNameIdClaimError = "Failed to retrieve NameId claim from external auth result!";
-  public const string MissingIdentityNameClaimError = "Failed to retrieve Player Name from external auth result!";
-
-  // TODO read from config
-  public const int MinutesBetweenRefresh = 10;
-
-  private readonly ILogger<GameAuthService> _logger;
-
-  public GameAuthService(ILogger<GameAuthService> logger)
+  /// <summary>
+  /// Use valid Google ID Token to obtain player identity and generate API auth token.
+  /// </summary>
+  /// <remarks>
+  /// This method expects ID Token since its payload contains everything required to generate valid player identity.
+  /// Currently, no additional user information is required so Access Token is not needed.
+  /// If that requirement changes, UI will need to provide authorization code so auth method can obtain necessary tokens and make appropriate requests.
+  /// </remarks>
+  /// <param name="googleIdToken"></param>
+  /// <returns></returns>
+  public async Task<OneOf<ApiTokens, Failure>> AuthenticateWithGoogleIdTokenAndGenerateApiAuthToken(string googleIdToken)
   {
-    _logger = logger;
+    var googleIdentityResult = await GetValidatedGoogleIdTokenPayload(googleIdToken);
+    if (!googleIdentityResult.TryGetSuccessful(out var idTokenPayload, out var tokenValidationFailure))
+    {
+      return tokenValidationFailure;
+    }
+
+    var identityRequest = new NewPlayerIdentityRequest("Google",
+      idTokenPayload.Subject,
+      string.Empty,
+      idTokenPayload.Name);
+
+    var getOrCreatePlayerCommand = new GetOrCreateNewPlayerCommand(identityRequest);
+
+    var getOrCreatePlayerResult = await mediatr.Send(getOrCreatePlayerCommand);
+    if (!getOrCreatePlayerResult.TryGetSuccessful(out var playerIdentity, out var commandFailure))
+    {
+      return commandFailure;
+    }
+
+    var apiToken = GenerateApiJwtToken(playerIdentity);
+
+    // TODO generate refresh token
+    return new ApiTokens(apiToken, string.Empty);
   }
 
-  public virtual OneOf<GetOrCreateNewPlayerCommand, Failure> GenerateGetOrCreateNewPlayerCommand(AuthenticateResult externalAuthResult)
+  /// <summary>
+  /// Validate Google ID Token and return payload claims. For validation rules see <see href="https://developers.google.com/identity/openid-connect/openid-connect#validatinganidtoken"/>
+  /// </summary>
+  /// <remarks>
+
+  /// </remarks>
+  /// <param name="googleIdToken"></param>
+  /// <returns></returns>
+  public virtual async Task<OneOf<GoogleJsonWebSignature.Payload, Failure>> GetValidatedGoogleIdTokenPayload(string googleIdToken)
   {
-    if (!externalAuthResult.Succeeded)
+    if (string.IsNullOrEmpty(googleIdToken))
     {
-      _logger.LogError(UnsuccessfulExternalAuthError);
-      return new Failure(UnsuccessfulExternalAuthError);
+      return new Failure(MissingIdTokenError);
     }
 
-    var claimsLookup = externalAuthResult
-      .Principal?
-      .Identities?
-      .FirstOrDefault()?
-      .Claims
-      .ToDictionary(claim => claim.Type, claim => claim);
-
-    if (claimsLookup == null || !claimsLookup.Any())
+    try
     {
-      _logger.LogError(MissingAuthClaimsError);
-      return new Failure(MissingAuthClaimsError);
-    }
+      var tokenValidationSettings = new GoogleJsonWebSignature.ValidationSettings()
+      {
+        Audience = [gameSettings.Value.Auth.Google.ClientId]
+      };
 
-    if (!claimsLookup.TryGetValue(ClaimTypes.NameIdentifier, out var nameIdentifierClaim) || string.IsNullOrEmpty(nameIdentifierClaim.Value))
+      return await GoogleJsonWebSignature.ValidateAsync(googleIdToken, tokenValidationSettings);
+    }
+    catch (InvalidJwtException invalidIdTokenException)
     {
-      _logger.LogError(MissingAuthNameIdClaimError);
-      return new Failure(MissingAuthNameIdClaimError);
+      logger.LogError(invalidIdTokenException, "Google ID Token is invalid.");
+      return new Failure(InvalidIdTokenError);
     }
-
-    var refreshToken = externalAuthResult.Properties.GetTokenValue(GoogleAuthConstants.RefreshTokenName);
-    if (string.IsNullOrEmpty(refreshToken))
+    catch (Exception ex)
     {
-      _logger.LogWarning("Refresh Token is missing for {providerIdentityId}", nameIdentifierClaim.Value);
+      logger.LogError(ex, "Encountered error while validating Google ID Token");
+      return new Failure(GeneralErrorWhileValidatingTokenError);
     }
-
-    if (!claimsLookup.TryGetValue(ClaimTypes.Name, out var playerNameClaim) || string.IsNullOrEmpty(playerNameClaim.Value))
-    {
-      return new Failure(MissingIdentityNameClaimError);
-    }
-
-    var request = new NewPlayerIdentityRequest(externalAuthResult.Principal!.Identity!.AuthenticationType ?? "unknown",
-      nameIdentifierClaim.Value,
-      refreshToken ?? string.Empty,
-      playerNameClaim.Value);
-
-    return new GetOrCreateNewPlayerCommand(request);
   }
 
-  public virtual async Task RefreshCookie(CookieValidatePrincipalContext ctx)
+  /// <summary>
+  /// Generate API token using JWT format. This token is expected to be used during Game API authentication.
+  /// </summary>
+  /// <param name="playerIdentity"></param>
+  /// <returns></returns>
+  public virtual string GenerateApiJwtToken(GetOrCreatePlayerResult playerIdentity)
   {
-    // check if principal needs to be re-authed every x minutes
-    var minutesSinceLastRefresh = (DateTimeOffset.UtcNow - ctx.Properties.IssuedUtc.GetValueOrDefault()).TotalMinutes;
-    if (minutesSinceLastRefresh < MinutesBetweenRefresh)
+    var claims = new List<Claim>
     {
-      // current principal is considered to be valid.
-      return;
-    }
+      new(PlayerIdentityAuthority, playerIdentity.ProviderName, ClaimValueTypes.String),
+      new(PlayerIdentityUserId, playerIdentity.ProviderIdentityId, ClaimValueTypes.String),
+      new(PlayerIdClaimType, $"{playerIdentity.PlayerId}", ClaimValueTypes.String),
+      new(PlayerIdentityIdClaimType, $"{playerIdentity.PlayerIdentityId}", ClaimValueTypes.String),
+    };
 
-    _logger.LogInformation("Validating user session...");
+    var signingKey = Encoding.UTF8.GetBytes(gameSettings.Value.Auth.Api.JwtSecret);
 
-    // TODO refresh tokens and renew principal
+    var jwtToken = new JwtSecurityToken(
+      claims: claims,
+      notBefore: DateTime.UtcNow,
+      expires: DateTime.UtcNow.AddMinutes(60),
+      audience: gameSettings.Value.Auth.Api.JwtAudience,
+      signingCredentials: new SigningCredentials(
+        new SymmetricSecurityKey(signingKey),
+        SecurityAlgorithms.HmacSha256Signature)
+      );
+    
+    return new JwtSecurityTokenHandler().WriteToken(jwtToken);
   }
 }

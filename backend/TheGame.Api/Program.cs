@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using TheGame.Api.Auth;
@@ -29,40 +29,65 @@ public class Program
       .AddEndpointsApiExplorer()
       .AddSwaggerGen(cfg =>
       {
-        cfg.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo() { Title = "Game API", Version = "1" });
-        cfg.OperationFilter<SwaggerCsrfTokenOperationFilter>();
+        cfg.SwaggerDoc("v1", new OpenApiInfo() { Title = "Game API", Version = "1" });
+        cfg.AddSecurityDefinition("Bearer", new()
+        {
+          Name = "Authorization",
+          Type = SecuritySchemeType.Http,
+          In = ParameterLocation.Header,
+          Scheme = "bearer",
+          BearerFormat = "JWT",
+          Description = "Game API JWT Bearer token. See /api/user/token"
+        });
+        cfg.AddSecurityRequirement(new()
+        {
+          {
+            new OpenApiSecurityScheme
+            {
+              Reference = new OpenApiReference
+              {
+                Type = ReferenceType.SecurityScheme,
+                Id = "Bearer"
+              }
+            },
+            []
+          }
+        });
       });
 
-    builder.Services.AddHealthChecks()
+    builder.Services
+      .AddHealthChecks()
       .AddCheck<ApiInfraHealthCheck>(nameof(ApiInfraHealthCheck));
 
     var isDevEnvironment = builder.Environment.IsDevelopment();
     var connString = builder.Configuration.GetConnectionString(GameDbContext.ConnectionStringName) ?? string.Empty;
 
+    // register game api services
+    builder.Services
+      .AddOptions<GameSettings>()
+      .BindConfiguration("")
+      .ValidateDataAnnotations();
+
     builder.Services
       .AddGameServices(connString, isDevEnvironment)
       .AddGameAuthenticationServices(builder.Configuration);
 
-    builder.Services.AddSpaStaticFiles(options =>
-    {
-      // TODO configure root path correctly!
-      options.RootPath = "../../ui/next_out";
-    });
+    // Set json serializer options. Both configs must be set.
+    // see https://stackoverflow.com/questions/76643787/how-to-make-enum-serialization-default-to-string-in-minimal-api-endpoints-and-sw
 
+    // Minimal APIs
     builder.Services.ConfigureHttpJsonOptions(options =>
     {
       options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+      options.SerializerOptions.PropertyNameCaseInsensitive = true;
     });
-    builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
-    {
-      options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
-
-    builder.Services.AddAntiforgery(csrfOpts =>
-    {
-      csrfOpts.HeaderName = "X-XSRF-TOKEN";
-      csrfOpts.SuppressXFrameOptionsHeader = false;
-    });
+    // Swagger
+    builder.Services
+      .Configure<JsonOptions>(options =>
+      {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+      });
 
     var app = builder.Build();
 
@@ -76,49 +101,20 @@ public class Program
         swaggerOpts.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1");
       });
     }
-    else
-    {
-      app.UseSpaStaticFiles();
-    }
 
     app.UseHsts();
     app.UseHttpsRedirection();
 
-    app.UseHealthChecks("/health");
-
-    var cookiePolicyOptions = new CookiePolicyOptions
-    {
-      MinimumSameSitePolicy = SameSiteMode.Lax,
-      HttpOnly = HttpOnlyPolicy.Always,
-      Secure = CookieSecurePolicy.Always
-    };
-    app.UseCookiePolicy(cookiePolicyOptions);
+    app.UseHealthChecks("/api/health");
 
     app.UseRouting();
 
     app.UseAuthentication();
     app.UseAuthorization();
 
-    // the middleware must be placed AFTER UseRouting, UseAuth..., and be before UseEndpoints
-    app.UseAntiforgery();
-
     app.MapGroup("")
       .RequireAuthorization()
-      .AddGameAuthRoutes(isDevEnvironment)
       .AddGameApiRoutes();
-
-    // this line is required to ensure minimal api routes are executed before hitting SPA
-    // see https://exploding-kitten.com/2024/08-usespa-minimal-api
-    app.UseEndpoints(_ => { });
-
-    app.UseSpa(spa =>
-    { 
-      if (app.Environment.IsDevelopment())
-      {
-        // redirect spa requests to local nextjs dev server
-        spa.UseProxyToSpaDevelopmentServer("http://host.docker.internal:3000/");
-      }
-    });
 
     await app.RunAsync();
   }

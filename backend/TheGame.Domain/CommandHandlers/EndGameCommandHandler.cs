@@ -1,23 +1,23 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using OneOf.Types;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TheGame.Domain.DomainModels;
+using TheGame.Domain.DomainModels.Games;
 
 namespace TheGame.Domain.CommandHandlers;
 
-public sealed record EndGameCommand(long GameId, long OwnerPlayerId) : IRequest<OneOf<Success, Failure>>;
+public sealed record EndGameCommand(long GameId, long OwnerPlayerId) : IRequest<OneOf<OwnedOrInvitedGame, Failure>>;
 
-public class EndGameCommandHandler(IGameDbContext gameDb, ITransactionExecutionWrapper transactionExecutionWrapper, ISystemService systemService,  ILogger<EndGameCommandHandler> logger)
-  : IRequestHandler<EndGameCommand, OneOf<Success, Failure>>
+public class EndGameCommandHandler(IGameDbContext gameDb, ITransactionExecutionWrapper transactionExecutionWrapper, ILogger<EndGameCommandHandler> logger)
+  : IRequestHandler<EndGameCommand, OneOf<OwnedOrInvitedGame, Failure>>
 {
   public const string ActiveGameNotFoundError = "active_game_not_found";
 
-  public async Task<OneOf<Success, Failure>> Handle(EndGameCommand request, CancellationToken cancellationToken) =>
-    await transactionExecutionWrapper.ExecuteInTransaction<Success>(
+  public async Task<OneOf<OwnedOrInvitedGame, Failure>> Handle(EndGameCommand request, CancellationToken cancellationToken) =>
+    await transactionExecutionWrapper.ExecuteInTransaction<OwnedOrInvitedGame>(
       async () =>
       {
         logger.LogInformation("Validating command");
@@ -32,8 +32,16 @@ public class EndGameCommandHandler(IGameDbContext gameDb, ITransactionExecutionW
           return new Failure(ActiveGameNotFoundError);
         }
 
-        var endGameResult = ownedActiveGame.EndGame(systemService.DateTimeOffset.UtcNow);
-        if (!endGameResult.TryGetSuccessful(out _, out var failure))
+        // if there are no plates, remove the game altogether
+        if (ownedActiveGame.GameLicensePlates.Count == 0)
+        {
+          gameDb.Games.Remove(ownedActiveGame);
+          await gameDb.SaveChangesAsync();
+          return new OwnedOrInvitedGame();
+        }
+
+        var endGameResult = ownedActiveGame.EndGame();
+        if (!endGameResult.TryGetSuccessful(out var endedGame, out var failure))
         {
           logger.LogError(failure.GetException(), "Failed to end game.");
           return failure;
@@ -43,7 +51,7 @@ public class EndGameCommandHandler(IGameDbContext gameDb, ITransactionExecutionW
 
         logger.LogInformation("Game ended successully.");
 
-        return new Success();
+        return OwnedOrInvitedGame.FromGame(endedGame, request.OwnerPlayerId);
       },
       nameof(EndGameCommand),
       logger,

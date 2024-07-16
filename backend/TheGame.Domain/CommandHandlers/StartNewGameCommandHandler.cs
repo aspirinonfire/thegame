@@ -7,17 +7,15 @@ using TheGame.Domain.DomainModels.Games;
 
 namespace TheGame.Domain.CommandHandlers;
 
-public sealed record StartNewGameCommand(string GameName, long OwnerPlayerId) : IRequest<OneOf<StartNewGameResult, Failure>>;
-
-public sealed record StartNewGameResult(long GameId);
+public sealed record StartNewGameCommand(string GameName, long OwnerPlayerId) : IRequest<OneOf<OwnedOrInvitedGame, Failure>>;
 
 public class StartNewGameCommandHandler(IGameDbContext gameDb, IGameFactory gameFactory, ITransactionExecutionWrapper transactionWrapper, ILogger<StartNewGameCommandHandler> logger)
-  : IRequestHandler<StartNewGameCommand, OneOf<StartNewGameResult, Failure>>
+  : IRequestHandler<StartNewGameCommand, OneOf<OwnedOrInvitedGame, Failure>>
 {
   public const string PlayerNotFoundError = "player_not_found";
 
-  public async Task<OneOf<StartNewGameResult, Failure>> Handle(StartNewGameCommand request, CancellationToken cancellationToken) =>
-    await transactionWrapper.ExecuteInTransaction<StartNewGameResult>(
+  public async Task<OneOf<OwnedOrInvitedGame, Failure>> Handle(StartNewGameCommand request, CancellationToken cancellationToken) =>
+    await transactionWrapper.ExecuteInTransaction<OwnedOrInvitedGame>(
       async () =>
       {
         logger.LogInformation("Validating command...");
@@ -44,7 +42,7 @@ public class StartNewGameCommandHandler(IGameDbContext gameDb, IGameFactory game
 
         logger.LogInformation("New game started successully.");
 
-        return new StartNewGameResult(newGame.Id);
+        return OwnedOrInvitedGame.FromGame(newGame, request.OwnerPlayerId);
       },
       nameof(StartNewGameCommand),
       logger,
