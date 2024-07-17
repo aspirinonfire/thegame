@@ -59,6 +59,8 @@ public class GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
   public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess,
     CancellationToken cancellationToken = default)
   {
+    HandleEnumerationEntities();
+
     var saveTime = systemService.DateTimeOffset.Now;
     HandleAuditedRecords(saveTime);
 
@@ -119,18 +121,33 @@ public class GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
     }
   }
 
+  private void HandleEnumerationEntities()
+  {
+    var enumEntires = ChangeTracker
+      .Entries<IEnumeration>()
+      .ToList();
+
+    // Enum entities should never be changed
+    foreach (var enumEntry in enumEntires)
+    {
+      enumEntry.State = EntityState.Unchanged;
+    }
+  }
+
   private void HandleAuditedRecords(DateTimeOffset saveTime)
   {
     var datedRecords = ChangeTracker
-      .Entries()
-      .Where(e => e.Entity is IAuditedRecord &&
-        (e.State == EntityState.Added || e.State == EntityState.Modified));
+      .Entries<IAuditedRecord>()
+      .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified)
+      .ToList();
 
     foreach (var rec in datedRecords)
     {
       // using Reflection because these properties are not writable otherwise
-
-      rec.Property(nameof(IAuditedRecord.DateModified)).CurrentValue = saveTime;
+      if (rec.State == EntityState.Modified)
+      {
+        rec.Property(nameof(IAuditedRecord.DateModified)).CurrentValue = saveTime;
+      }
 
       if (rec.State == EntityState.Added)
       {

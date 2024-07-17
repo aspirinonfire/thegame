@@ -29,13 +29,10 @@ public partial class GamePlayer
 
       var newPlayerInvite = new GamePlayer()
       {
-        Game = currentGame,
         Player = playerToAdd,
         InvitationToken = Guid.NewGuid(),
         InviteStatus = GamePlayerInviteStatus.Created
       };
-
-      currentGame.GamePlayerInvites.Add(newPlayerInvite);
 
       return newPlayerInvite;
     }

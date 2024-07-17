@@ -28,7 +28,9 @@ namespace TheGame.Tests.TestUtils
 
     public static IServiceCollection GetGameServicesWithTestDevDb(string connString) =>
       new ServiceCollection()
-        .AddGameServices(connString, true)
+        .AddGameServices(connString,
+          true,
+          efLogger => efLogger.AddDebug())
         .AddLogging(builder => builder.AddDebug());
   }
 }

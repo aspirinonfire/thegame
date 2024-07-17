@@ -20,13 +20,13 @@ public partial class Game : RootModel, IAuditedRecord
     public const string UninvitedPlayerError = "invalid_player";
   }
 
-  public virtual ICollection<LicensePlate> LicensePlates { get; private set; } = [];
+  public virtual IReadOnlySet<LicensePlate> LicensePlates { get; private set; } = default!;
   protected HashSet<GameLicensePlate> _gameLicensePlates = [];
-  public virtual ICollection<GameLicensePlate> GameLicensePlates => _gameLicensePlates;
+  public virtual IReadOnlySet<GameLicensePlate> GameLicensePlates => _gameLicensePlates;
 
-  public virtual ICollection<Player> InvitedPlayers { get; private set; } = [];
+  public virtual IReadOnlySet<Player> InvitedPlayers { get; private set; } = default!;
   protected HashSet<GamePlayer> _gamePlayerInvites = [];
-  public virtual ICollection<GamePlayer> GamePlayerInvites => _gamePlayerInvites;
+  public virtual IReadOnlySet<GamePlayer> GamePlayerInvites => _gamePlayerInvites;
 
   public GameScore GameScore { get; protected set; } = new(ReadOnlyCollection<string>.Empty, 0);
 
@@ -64,17 +64,20 @@ public partial class Game : RootModel, IAuditedRecord
   public virtual OneOf<GamePlayer, Failure> InvitePlayer(IGamePlayerFactory gamePlayerFactory, Player playerToInvite)
   {
     var newGamePlayerResult = gamePlayerFactory.AddPlayer(playerToInvite, this);
-    if (!newGamePlayerResult.TryGetSuccessful(out var successfulInvite, out var inviteFailure))
+    if (!newGamePlayerResult.TryGetSuccessful(out var newInvite, out var inviteFailure))
     {
       return inviteFailure;
     }
+    
+    _gamePlayerInvites.Add(newInvite);
 
-    return successfulInvite;
+    return newInvite;
   }
 
   public virtual OneOf<Game, Failure> UpdateLicensePlateSpots(IGameLicensePlateFactory licensePlateSpotFactory,
     ISystemService systemService,
     IGameScoreCalculator scoreCalculator,
+    IGameDbContext gameDbContext,
     GameLicensePlateSpots licensePlateSpots)
   {
     if (!IsActive)
@@ -87,10 +90,8 @@ public partial class Game : RootModel, IAuditedRecord
       return new Failure(ErrorMessages.UninvitedPlayerError);
     }
 
-    var writeableGameSpots = GameLicensePlates.GetWriteableCollection();
-
     var existingSpotsLookup = this.GameLicensePlates
-      .ToDictionary(spot => (spot.LicensePlate.Country, spot.LicensePlate.StateOrProvince));
+      .ToDictionary(spot => new LicensePlate.PlateKey(spot.LicensePlate.Country, spot.LicensePlate.StateOrProvince));
 
     // add new spots
     var newSpots = licensePlateSpots.Spots
@@ -98,10 +99,11 @@ public partial class Game : RootModel, IAuditedRecord
       .ToList()
       .AsReadOnly();
 
-    foreach (var (country, stateOrProvince) in newSpots)
+    var gameDbInstance = gameDbContext as GameDbContext;
+
+    foreach (var plateKey in newSpots)
     {
-      var newSpotResult = licensePlateSpotFactory.CreateLicensePlateSpot(country,
-        stateOrProvince,
+      var newSpotResult = licensePlateSpotFactory.CreateLicensePlateSpot(plateKey,
         licensePlateSpots.SpottedBy,
         systemService.DateTimeOffset.UtcNow);
       
@@ -109,8 +111,8 @@ public partial class Game : RootModel, IAuditedRecord
       {
         return spotFailure;
       }
-      
-      writeableGameSpots.Add(newSpot);
+
+      _gameLicensePlates.Add(newSpot);
     }
 
     // remove any existing spots
@@ -118,27 +120,27 @@ public partial class Game : RootModel, IAuditedRecord
       .ToHashSet();
 
     var spotsToRemove = existingSpotsLookup
-      .Values
-      .Where(existingSpot => !updatedSpotsLookup.Contains((existingSpot.LicensePlate.Country, existingSpot.LicensePlate.StateOrProvince)))
-      .ToList()
-      .AsReadOnly();
-    
-    foreach (var toRemove in spotsToRemove)
-    {
-      writeableGameSpots.Remove(toRemove);
-    }
+      .Where(existingSpot => !updatedSpotsLookup.Contains(existingSpot.Key))
+      .Select(existingSpot => existingSpot.Value)
+      .ToHashSet();
+
+    _gameLicensePlates.RemoveWhere(spotsToRemove.Contains);
 
     // update score and notify players if spots were updated
     if (newSpots.Count != 0 || spotsToRemove.Count != 0)
     {
       var allSpottedPlates = GameLicensePlates
-        .Select(glp => (glp.LicensePlate.Country, glp.LicensePlate.StateOrProvince ))
+        .Select(glp => new LicensePlate.PlateKey(glp.LicensePlate.Country, glp.LicensePlate.StateOrProvince ))
         .ToList()
         .AsReadOnly();
       
       var newScore = scoreCalculator.CalculateGameScore(allSpottedPlates);
 
-      GameScore = GameScore with { Achievements = newScore.Achievements.ToList().AsReadOnly(), TotalScore = newScore.TotalScore };
+      GameScore = GameScore with
+      {
+        Achievements = newScore.Achievements.ToList().AsReadOnly(),
+        TotalScore = newScore.TotalScore
+      };
 
       AddDomainEvent(new LicensePlateSpottedEvent(this));
     }
@@ -157,7 +159,6 @@ public partial class Game : RootModel, IAuditedRecord
       .Select(glp => glp.DateCreated)
       .OrderByDescending(dateSpotted => dateSpotted)
       .FirstOrDefault(DateCreated);
-    
 
     IsActive = false;
     EndedOn = endedOn;
@@ -168,6 +169,6 @@ public partial class Game : RootModel, IAuditedRecord
   }
 }
 
-public sealed record GameLicensePlateSpots(IReadOnlyCollection<(Country country, StateOrProvince stateOrProvince)> Spots, Player SpottedBy);
+public sealed record GameLicensePlateSpots(IReadOnlyCollection<LicensePlate.PlateKey> Spots, Player SpottedBy);
 
 public sealed record GameScore(ReadOnlyCollection<string> Achievements, int TotalScore);

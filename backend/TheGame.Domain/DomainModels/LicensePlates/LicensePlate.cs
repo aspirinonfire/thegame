@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using TheGame.Domain.DomainModels.Games;
+using TheGame.Domain.DomainModels.Common;
 
 namespace TheGame.Domain.DomainModels.LicensePlates;
 
-public class LicensePlate : IEquatable<LicensePlate>
+public class LicensePlate : IEnumeration, IEquatable<LicensePlate>
 {
+  public sealed record PlateKey(Country Country, StateOrProvince StateOrProvince);
+
   public static class ErrorMessages
   {
     public const string LicensePlateNotFoundError = "license_plate_not_found";
@@ -82,9 +84,9 @@ public class LicensePlate : IEquatable<LicensePlate>
     new LicensePlate { Id = 64, StateOrProvince = StateOrProvince.YT,  Country = Country.CA }
   ];
 
-  public static readonly ReadOnlyDictionary<(Country, StateOrProvince), LicensePlate> LicensePlatesByCountryAndProvinceLookup =
+  public static readonly ReadOnlyDictionary<PlateKey, LicensePlate> LicensePlatesByCountryAndProvinceLookup =
     AvailableLicensePlates
-      .ToDictionary(lp => (lp.Country, lp.StateOrProvince))
+      .ToDictionary(lp => new PlateKey(lp.Country, lp.StateOrProvince))
       .AsReadOnly();
 
   public long Id { get; protected set; }
@@ -93,16 +95,9 @@ public class LicensePlate : IEquatable<LicensePlate>
 
   public Country Country { get; protected set; }
 
-  public virtual ICollection<Game> Games { get; protected set; } = default!;
-
-  protected HashSet<GameLicensePlate> _gameLicensePlates = [];
-  public virtual ICollection<GameLicensePlate> GameLicensePlates => _gameLicensePlates;
-
-  public LicensePlate() { }
-
-  public static OneOf<LicensePlate, Failure> GetLicensePlate(Country country, StateOrProvince stateOrProvince)
+  public static OneOf<LicensePlate, Failure> GetLicensePlate(PlateKey plateKey)
   {
-    if (LicensePlatesByCountryAndProvinceLookup.TryGetValue((country, stateOrProvince), out var licensePlateModel))
+    if (LicensePlatesByCountryAndProvinceLookup.TryGetValue(plateKey, out var licensePlateModel))
     {
       return licensePlateModel;
     }
@@ -112,9 +107,7 @@ public class LicensePlate : IEquatable<LicensePlate>
 
   public override string ToString() => $"{Id}_{Country}_{StateOrProvince}";
 
-  public override int GetHashCode() => $"{Country}_{StateOrProvince}".GetHashCode();
-
-  public override bool Equals(object? obj) => Equals(obj as LicensePlate);
+  public override int GetHashCode() => ToString().GetHashCode();
 
   public bool Equals(LicensePlate? other)
   {
@@ -124,26 +117,14 @@ public class LicensePlate : IEquatable<LicensePlate>
     }
 
     return Country == other.Country &&
-      StateOrProvince == other.StateOrProvince;
+      StateOrProvince == other.StateOrProvince &&
+      Id == other.Id;
   }
 
-  public static bool operator ==(LicensePlate lhs, LicensePlate rhs)
+  public override bool Equals(object? obj)
   {
-    if (lhs is null)
-    {
-      if (rhs is null)
-      {
-        return true;
-      }
-
-      // Only the left side is null.
-      return false;
-    }
-    // Equals handles case of null on right side.
-    return lhs.Equals(rhs);
+    return Equals(obj as LicensePlate);
   }
-
-  public static bool operator !=(LicensePlate lhs, LicensePlate rhs) => !(lhs == rhs);
 }
 
 public enum StateOrProvince

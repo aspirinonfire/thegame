@@ -9,7 +9,7 @@ namespace TheGame.Tests.DomainModels.Games
     [Fact]
     public void WillCalculateZeroWhenNothingIsSpotted()
     {
-      var spottedPlates = Array.Empty<(Country, StateOrProvince)>();
+      var spottedPlates = Array.Empty<LicensePlate.PlateKey>();
 
       var uutCalculator = new GameScoreCalculator();
 
@@ -23,10 +23,10 @@ namespace TheGame.Tests.DomainModels.Games
     [Fact]
     public void WillCalculateScoresWithoutAchievements()
     {
-      var spottedPlates = new[]
+      var spottedPlates = new LicensePlate.PlateKey[]
       {
-        (Country.US, StateOrProvince.CA),
-        (Country.US, StateOrProvince.OR),
+        new(Country.US, StateOrProvince.CA),
+        new(Country.US, StateOrProvince.OR),
       };
 
       var uutCalculator = new GameScoreCalculator();
@@ -41,11 +41,11 @@ namespace TheGame.Tests.DomainModels.Games
     [Fact]
     public void WillIncludeWestCoastBonusWhenAchieved()
     {
-      var spottedPlates = new[]
+      var spottedPlates = new LicensePlate.PlateKey[]
       {
-        (Country.US, StateOrProvince.CA),
-        (Country.US, StateOrProvince.OR),
-        (Country.US, StateOrProvince.WA),
+        new (Country.US, StateOrProvince.CA),
+        new (Country.US, StateOrProvince.OR),
+        new (Country.US, StateOrProvince.WA),
       };
 
       var uutCalculator = new GameScoreCalculator();
@@ -62,22 +62,22 @@ namespace TheGame.Tests.DomainModels.Games
     [Fact]
     public void WillIncludeEastCoastBonusWhenAchieved()
     {
-      var spottedPlates = new[]
+      var spottedPlates = new LicensePlate.PlateKey[]
       {
-        (Country.US, StateOrProvince.CT),
-        (Country.US, StateOrProvince.DE),
-        (Country.US, StateOrProvince.FL),
-        (Country.US, StateOrProvince.GA),
-        (Country.US, StateOrProvince.ME),
-        (Country.US, StateOrProvince.MD),
-        (Country.US, StateOrProvince.MA),
-        (Country.US, StateOrProvince.NH),
-        (Country.US, StateOrProvince.NJ),
-        (Country.US, StateOrProvince.NY),
-        (Country.US, StateOrProvince.NC),
-        (Country.US, StateOrProvince.RI),
-        (Country.US, StateOrProvince.SC),
-        (Country.US, StateOrProvince.VA)
+        new (Country.US, StateOrProvince.CT),
+        new (Country.US, StateOrProvince.DE),
+        new (Country.US, StateOrProvince.FL),
+        new (Country.US, StateOrProvince.GA),
+        new (Country.US, StateOrProvince.ME),
+        new (Country.US, StateOrProvince.MD),
+        new (Country.US, StateOrProvince.MA),
+        new (Country.US, StateOrProvince.NH),
+        new (Country.US, StateOrProvince.NJ),
+        new (Country.US, StateOrProvince.NY),
+        new (Country.US, StateOrProvince.NC),
+        new (Country.US, StateOrProvince.RI),
+        new (Country.US, StateOrProvince.SC),
+        new (Country.US, StateOrProvince.VA)
       };
 
       var uutCalculator = new GameScoreCalculator();
@@ -94,15 +94,15 @@ namespace TheGame.Tests.DomainModels.Games
     [Fact]
     public void WillIncludeCoastToCoastWhenAchieved()
     {
-      var spottedPlates = new[]
+      var spottedPlates = new LicensePlate.PlateKey[]
       {
-        (Country.US, StateOrProvince.CA),
-        (Country.US, StateOrProvince.AZ),
-        (Country.US, StateOrProvince.NM),
-        (Country.US, StateOrProvince.TX),
-        (Country.US, StateOrProvince.AR),
-        (Country.US, StateOrProvince.TN),
-        (Country.US, StateOrProvince.NC)
+        new (Country.US, StateOrProvince.CA),
+        new (Country.US, StateOrProvince.AZ),
+        new (Country.US, StateOrProvince.NM),
+        new (Country.US, StateOrProvince.TX),
+        new (Country.US, StateOrProvince.AR),
+        new (Country.US, StateOrProvince.TN),
+        new (Country.US, StateOrProvince.NC)
       };
       
       var uutCalculator = new GameScoreCalculator();

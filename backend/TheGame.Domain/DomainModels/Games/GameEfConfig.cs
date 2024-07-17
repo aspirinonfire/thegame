@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using TheGame.Domain.DomainModels.LicensePlates;
@@ -66,12 +65,11 @@ class GameEfConfig : IEntityTypeConfiguration<Game>
     // define game license plate nav props
     builder
       .HasMany(game => game.LicensePlates)
-      .WithMany(licensePlate => licensePlate.Games)
+      .WithMany()
       .UsingEntity<GameLicensePlate>("GameLicensePlates",
         right => right
           .HasOne(glp => glp.LicensePlate)
-          .WithMany(plate => plate.GameLicensePlates)
-          .HasForeignKey(glp => glp.LicensePlateId),
+          .WithMany(),
         left => left
           .HasOne(glp => glp.Game)
           .WithMany(game => game.GameLicensePlates)

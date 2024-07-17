@@ -5,8 +5,7 @@ namespace TheGame.Domain.DomainModels.LicensePlates;
 
 public interface IGameLicensePlateFactory
 {
-  OneOf<GameLicensePlate, Failure> CreateLicensePlateSpot(Country country,
-    StateOrProvince stateOrProvince,
+  OneOf<GameLicensePlate, Failure> CreateLicensePlateSpot(LicensePlate.PlateKey plateKey,
     Player spottedBy,
     DateTimeOffset spotDate);
 }
@@ -15,12 +14,11 @@ public partial class GameLicensePlate
 {
   public class LicensePlateSpotFactory() : IGameLicensePlateFactory
   {
-    public OneOf<GameLicensePlate, Failure> CreateLicensePlateSpot(Country country,
-      StateOrProvince stateOrProvince,
+    public OneOf<GameLicensePlate, Failure> CreateLicensePlateSpot(LicensePlate.PlateKey plateKey,
       Player spottedBy,
       DateTimeOffset spotDate)
     {
-      var licensePlateResult = LicensePlate.GetLicensePlate(country, stateOrProvince);
+      var licensePlateResult = LicensePlate.GetLicensePlate(plateKey);
       if (!licensePlateResult.TryGetSuccessful(out var success, out var failure))
       {
         return failure;

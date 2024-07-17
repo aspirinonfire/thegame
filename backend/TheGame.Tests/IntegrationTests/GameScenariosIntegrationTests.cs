@@ -143,5 +143,85 @@ namespace TheGame.Tests.IntegrationTests
 
       Assert.False(hasEmptyGame);
     }
+
+    [Fact]
+    public async Task CanReAddPreviouslyUnspottedPlate()
+    {
+      var gameId = 0L;
+      var playerId = 0L;
+      var connectionString = msSqlFixture.GetConnectionString();
+      var services = CommonMockedServices.GetGameServicesWithTestDevDb(connectionString);
+
+      var diOpts = new ServiceProviderOptions
+      {
+        ValidateOnBuild = true,
+        ValidateScopes = true,
+      };
+      await using var sp = services.BuildServiceProvider(diOpts);
+      await using (var scope = sp.CreateAsyncScope())
+      {
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+        var gameQryProvider = scope.ServiceProvider.GetRequiredService<IGameQueryProvider>();
+
+        // create new player with identity
+        var newPlayerRequest = new NewPlayerIdentityRequest("test_provider_3", "test_id_3", "refresh_token", "Test Player 3");
+        var newPlayerIdentityCommandResult = await mediator.Send(new GetOrCreateNewPlayerCommand(newPlayerRequest));
+        newPlayerIdentityCommandResult.AssertIsSucceessful(out var actualNewPlayerIdentity);
+
+        // start new game
+        var startNewGameCommandResult = await mediator.Send(new StartNewGameCommand("Respotted Plate Game", actualNewPlayerIdentity.PlayerId));
+        startNewGameCommandResult.AssertIsSucceessful(out var actualNewGame);
+
+        gameId = actualNewGame.GameId;
+        playerId = actualNewPlayerIdentity.PlayerId;
+      }
+
+      // spot new plates +CA, +OR
+      var initialSpotRequest = new SpotLicensePlatesCommand(
+      [
+        new SpottedPlate(Country.US, StateOrProvince.CA),
+        new SpottedPlate(Country.US, StateOrProvince.OR)
+      ],
+      gameId,
+      playerId);
+      var actualInitialSpotGameResult = await RunAsScopedRequest(sp, initialSpotRequest);
+      Assert.Equal(2, actualInitialSpotGameResult.GameScore.TotalScore);
+
+      // remove one plate ~OR, +WA, +AL, -CA
+      var spotRequestWithSpotRemoval = new SpotLicensePlatesCommand([
+        new SpottedPlate(Country.US, StateOrProvince.OR),
+        new SpottedPlate(Country.US, StateOrProvince.AL),
+        new SpottedPlate(Country.US, StateOrProvince.WA)
+      ],
+      gameId,
+      playerId);
+      var actualGameAfterSpotRemoval = await RunAsScopedRequest(sp, spotRequestWithSpotRemoval);
+      Assert.Equal(3, actualGameAfterSpotRemoval.GameScore.TotalScore);
+
+
+      // re-add plate ~OR, ~WA, ~AL, +CA
+      var spotRequestWithReAdd = new SpotLicensePlatesCommand([
+        new SpottedPlate(Country.US, StateOrProvince.CA),
+        new SpottedPlate(Country.US, StateOrProvince.OR),
+        new SpottedPlate(Country.US, StateOrProvince.AL),
+        new SpottedPlate(Country.US, StateOrProvince.WA)
+      ],
+      gameId,
+      playerId);
+      var actualGameAfterReadd = await RunAsScopedRequest(sp, spotRequestWithReAdd);
+      Assert.Equal(14, actualGameAfterReadd.GameScore.TotalScore);
+    }
+
+    private async Task<T> RunAsScopedRequest<T>(IServiceProvider serviceProvider, IRequest<OneOf<T, Failure>> mediatorRequest)
+    {
+      await using var scope = serviceProvider.CreateAsyncScope();
+      var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+
+      var result = await mediator.Send(mediatorRequest);
+
+      result.AssertIsSucceessful(out var successfulResult);
+
+      return successfulResult;
+    }
   }
 }

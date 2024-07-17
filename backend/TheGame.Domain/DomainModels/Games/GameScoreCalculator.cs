@@ -7,13 +7,13 @@ using TheGame.Domain.DomainModels.LicensePlates;
 
 namespace TheGame.Domain.DomainModels.Games;
 
-public sealed record Achievement(string AchievementName, int ScoreBonus, Func<HashSet<(Country country, StateOrProvince stateOrProvince)>, bool> IsUnlocked);
+public sealed record Achievement(string AchievementName, int ScoreBonus, Func<HashSet<LicensePlate.PlateKey>, bool> IsUnlocked);
 
 public sealed record GameScoreResult(int NumberOfSpottedPlates, IReadOnlyCollection<string> Achievements, int TotalScore);
 
 public interface IGameScoreCalculator
 {
-  GameScoreResult CalculateGameScore(IReadOnlyCollection<(Country country, StateOrProvince stateOrProvince)> Spots);
+  GameScoreResult CalculateGameScore(IReadOnlyCollection<LicensePlate.PlateKey> Spots);
 }
 
 public class GameScoreCalculator : IGameScoreCalculator
@@ -78,10 +78,10 @@ public class GameScoreCalculator : IGameScoreCalculator
     10,
     spottedPlates =>
     {
-      var westCoastStates = new HashSet<(Country, StateOrProvince)>([
-        (Country.US, StateOrProvince.CA),
-        (Country.US, StateOrProvince.OR),
-        (Country.US, StateOrProvince.WA)
+      var westCoastStates = new HashSet<LicensePlate.PlateKey>([
+        new (Country.US, StateOrProvince.CA),
+        new (Country.US, StateOrProvince.OR),
+        new (Country.US, StateOrProvince.WA)
       ]);
 
       return !westCoastStates.Except(spottedPlates).Any();
@@ -91,21 +91,21 @@ public class GameScoreCalculator : IGameScoreCalculator
     30,
     spottedPlates =>
     {
-      var eastCoastStates = new HashSet<(Country, StateOrProvince)>([
-        (Country.US, StateOrProvince.CT),
-        (Country.US, StateOrProvince.DE),
-        (Country.US, StateOrProvince.FL),
-        (Country.US, StateOrProvince.GA),
-        (Country.US, StateOrProvince.ME),
-        (Country.US, StateOrProvince.MD),
-        (Country.US, StateOrProvince.MA),
-        (Country.US, StateOrProvince.NH),
-        (Country.US, StateOrProvince.NJ),
-        (Country.US, StateOrProvince.NY),
-        (Country.US, StateOrProvince.NC),
-        (Country.US, StateOrProvince.RI),
-        (Country.US, StateOrProvince.SC),
-        (Country.US, StateOrProvince.VA)
+      var eastCoastStates = new HashSet<LicensePlate.PlateKey>([
+        new (Country.US, StateOrProvince.CT),
+        new (Country.US, StateOrProvince.DE),
+        new (Country.US, StateOrProvince.FL),
+        new (Country.US, StateOrProvince.GA),
+        new (Country.US, StateOrProvince.ME),
+        new (Country.US, StateOrProvince.MD),
+        new (Country.US, StateOrProvince.MA),
+        new (Country.US, StateOrProvince.NH),
+        new (Country.US, StateOrProvince.NJ),
+        new (Country.US, StateOrProvince.NY),
+        new (Country.US, StateOrProvince.NC),
+        new (Country.US, StateOrProvince.RI),
+        new (Country.US, StateOrProvince.SC),
+        new (Country.US, StateOrProvince.VA)
       ]);
 
       return !eastCoastStates.Except(spottedPlates).Any();
@@ -115,7 +115,7 @@ public class GameScoreCalculator : IGameScoreCalculator
     100,
     spottedPlates =>
     {
-      var spotLookup = spottedPlates.Select(spt => spt.stateOrProvince).ToHashSet();
+      var spotLookup = spottedPlates.Select(spt => spt.StateOrProvince).ToHashSet();
 
       var westCoastSpots = new[]
         {
@@ -201,7 +201,7 @@ public class GameScoreCalculator : IGameScoreCalculator
     });
 
 
-  public GameScoreResult CalculateGameScore(IReadOnlyCollection<(Country country, StateOrProvince stateOrProvince)> Spots)
+  public GameScoreResult CalculateGameScore(IReadOnlyCollection<LicensePlate.PlateKey> Spots)
   {
     var currentScore = Spots.Count;
     var currentAchievements = new List<string>();

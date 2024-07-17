@@ -15,7 +15,8 @@ public static class GameServiceExtensions
 {
   public static IServiceCollection AddGameServices(this IServiceCollection services,
     string connectionString,
-    bool isDevelopment)
+    bool isDevelopment,
+    Action<ILoggingBuilder>? efLogger = null)
   {
     if (string.IsNullOrEmpty(connectionString))
     {
@@ -30,7 +31,11 @@ public static class GameServiceExtensions
       {
         if (isDevelopment)
         {
-          options.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddConsole()));
+          options.UseLoggerFactory(LoggerFactory.Create(builder =>
+          {
+            builder.AddConsole();
+            efLogger?.Invoke(builder);
+          }));
           options.EnableSensitiveDataLogging(true);
         }
         options.UseLazyLoadingProxies(true);
