@@ -59,6 +59,8 @@ public class GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
   public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess,
     CancellationToken cancellationToken = default)
   {
+    HandleEnumerationEntities();
+
     var saveTime = systemService.DateTimeOffset.Now;
     HandleAuditedRecords(saveTime);
 
@@ -116,6 +118,19 @@ public class GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
         entity.AddProperty(nameof(IAuditedRecord.DateCreated), typeof(DateTimeOffset));
         entity.AddProperty(nameof(IAuditedRecord.DateModified), typeof(DateTimeOffset?));
       }
+    }
+  }
+
+  private void HandleEnumerationEntities()
+  {
+    var enumEntires = ChangeTracker
+      .Entries<IEnumeration>()
+      .ToList();
+
+    // Enum entities should never be changed
+    foreach (var enumEntry in enumEntires)
+    {
+      enumEntry.State = EntityState.Unchanged;
     }
   }
 

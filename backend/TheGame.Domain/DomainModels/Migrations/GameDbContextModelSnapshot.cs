@@ -46,7 +46,7 @@ namespace TheGame.Domain.DomainModels.Migrations
 
                     b.HasIndex("SpottedByPlayerId");
 
-                    b.ToTable("GameLicensePlates");
+                    b.ToTable("GameLicensePlates", (string)null);
                 });
 
             modelBuilder.Entity("TheGame.Domain.DomainModels.Games.Game", b =>
@@ -120,7 +120,7 @@ namespace TheGame.Domain.DomainModels.Migrations
 
                     b.HasIndex("PlayerId");
 
-                    b.ToTable("GamePlayer");
+                    b.ToTable("GamePlayer", (string)null);
                 });
 
             modelBuilder.Entity("TheGame.Domain.DomainModels.LicensePlates.LicensePlate", b =>
@@ -144,7 +144,7 @@ namespace TheGame.Domain.DomainModels.Migrations
                     b.HasIndex("Country", "StateOrProvince")
                         .IsUnique();
 
-                    b.ToTable("LicensePlates");
+                    b.ToTable("LicensePlates", (string)null);
 
                     b.HasData(
                         new

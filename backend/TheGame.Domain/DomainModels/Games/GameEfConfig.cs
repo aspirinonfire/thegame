@@ -69,8 +69,7 @@ class GameEfConfig : IEntityTypeConfiguration<Game>
       .UsingEntity<GameLicensePlate>("GameLicensePlates",
         right => right
           .HasOne(glp => glp.LicensePlate)
-          .WithMany(plate => plate.GameLicensePlates)
-          .HasForeignKey(glp => glp.LicensePlateId),
+          .WithMany(),
         left => left
           .HasOne(glp => glp.Game)
           .WithMany(game => game.GameLicensePlates)

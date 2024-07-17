@@ -1,12 +1,16 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 
 namespace TheGame.Domain.DomainModels.LicensePlates;
 
-public class LicensePlate
+public class LicensePlate : IEnumeration, IEquatable<LicensePlate>
 {
+  public sealed record PlateKey(Country Country, StateOrProvince StateOrProvince);
+
   public static class ErrorMessages
   {
     public const string LicensePlateNotFoundError = "license_plate_not_found";
@@ -81,9 +85,9 @@ public class LicensePlate
     new LicensePlate { Id = 64, StateOrProvince = StateOrProvince.YT,  Country = Country.CA }
   ];
 
-  public static readonly ReadOnlyDictionary<(Country, StateOrProvince), LicensePlate> LicensePlatesByCountryAndProvinceLookup =
+  public static readonly ReadOnlyDictionary<PlateKey, LicensePlate> LicensePlatesByCountryAndProvinceLookup =
     AvailableLicensePlates
-      .ToDictionary(lp => (lp.Country, lp.StateOrProvince))
+      .ToDictionary(lp => new PlateKey(lp.Country, lp.StateOrProvince))
       .AsReadOnly();
 
   public long Id { get; protected set; }
@@ -94,14 +98,9 @@ public class LicensePlate
 
   public virtual IReadOnlySet<Game> Games { get; protected set; } = default!;
 
-  protected HashSet<GameLicensePlate> _gameLicensePlates = [];
-  public virtual IReadOnlySet<GameLicensePlate> GameLicensePlates => _gameLicensePlates;
-
-  public LicensePlate() { }
-
-  public static OneOf<LicensePlate, Failure> GetLicensePlate(Country country, StateOrProvince stateOrProvince)
+  public static OneOf<LicensePlate, Failure> GetLicensePlate(PlateKey plateKey)
   {
-    if (LicensePlatesByCountryAndProvinceLookup.TryGetValue((country, stateOrProvince), out var licensePlateModel))
+    if (LicensePlatesByCountryAndProvinceLookup.TryGetValue(plateKey, out var licensePlateModel))
     {
       return licensePlateModel;
     }
@@ -110,6 +109,25 @@ public class LicensePlate
   }
 
   public override string ToString() => $"{Id}_{Country}_{StateOrProvince}";
+
+  public override int GetHashCode() => ToString().GetHashCode();
+
+  public bool Equals(LicensePlate? other)
+  {
+    if (other is null)
+    {
+      return false;
+    }
+
+    return Country == other.Country &&
+      StateOrProvince == other.StateOrProvince &&
+      Id == other.Id;
+  }
+
+  public override bool Equals(object? obj)
+  {
+    return Equals(obj as LicensePlate);
+  }
 }
 
 public enum StateOrProvince

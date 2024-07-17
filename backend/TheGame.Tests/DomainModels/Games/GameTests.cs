@@ -1,3 +1,4 @@
+using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.Games.Events;
 using TheGame.Domain.DomainModels.LicensePlates;
@@ -15,25 +16,26 @@ namespace TheGame.Tests.DomainModels.Games
     {
       var spottedBy = new MockPlayer(1, "test");
 
-      var gameLpSpots = new GameLicensePlateSpots([(Country.US, StateOrProvince.CA)], spottedBy);
+      var gameLpSpots = new GameLicensePlateSpots([new (Country.US, StateOrProvince.CA)],
+        spottedBy);
 
       var lpSpot = new MockGameLicensePlate(
-        new MockLicensePlate(Country.US, StateOrProvince.CA),
+        new MockLicensePlate(new (Country.US, StateOrProvince.CA)),
         spottedBy);
 
       var licensePlateFactory = Substitute.For<IGameLicensePlateFactory>();
       licensePlateFactory
-        .CreateLicensePlateSpot(Country.US, StateOrProvince.CA, spottedBy, Arg.Any<DateTimeOffset>())
+        .CreateLicensePlateSpot(Arg.Any<LicensePlate.PlateKey>(), spottedBy, Arg.Any<DateTimeOffset>())
         .Returns(callInfo =>
         {
-          var newPlateSpot = new MockLicensePlate(callInfo.ArgAt<Country>(0), callInfo.ArgAt<StateOrProvince>(1));
+          var newPlateSpot = new MockLicensePlate(callInfo.ArgAt<LicensePlate.PlateKey>(0));
           return new MockGameLicensePlate(newPlateSpot,
-            callInfo.ArgAt<Player>(2));
+            callInfo.ArgAt<Player>(1));
         });
 
       var calculator = Substitute.For<IGameScoreCalculator>();
       calculator
-        .CalculateGameScore(Arg.Any<IReadOnlyCollection<(Country,  StateOrProvince)>>())
+        .CalculateGameScore(Arg.Any<IReadOnlyCollection<LicensePlate.PlateKey>>())
         .Returns(new GameScoreResult(0, [], 0));
 
       var uut = new MockGame(licensePlates: null,
@@ -43,6 +45,7 @@ namespace TheGame.Tests.DomainModels.Games
       var actualSpotResult = uut.UpdateLicensePlateSpots(licensePlateFactory,
         CommonMockedServices.GetSystemService(),
         calculator,
+        Substitute.For<IGameDbContext>(),
         gameLpSpots);
 
       actualSpotResult.AssertIsSucceessful();
@@ -63,25 +66,26 @@ namespace TheGame.Tests.DomainModels.Games
     {
       var spottedBy = new MockPlayer(1, "test");
 
-      var gameLpSpots = new GameLicensePlateSpots([(Country.US, StateOrProvince.CA)], spottedBy);
+      var gameLpSpots = new GameLicensePlateSpots([new(Country.US, StateOrProvince.CA)],
+        spottedBy);
 
       var lpSpot = new MockGameLicensePlate(
-        new MockLicensePlate(Country.US, StateOrProvince.CA),
+        new MockLicensePlate(new (Country.US, StateOrProvince.CA)),
         spottedBy);
 
       var licensePlateFactory = Substitute.For<IGameLicensePlateFactory>();
       licensePlateFactory
-        .CreateLicensePlateSpot(Country.US, StateOrProvince.CA, spottedBy, Arg.Any<DateTimeOffset>())
+        .CreateLicensePlateSpot(Arg.Any<LicensePlate.PlateKey>(), spottedBy, Arg.Any<DateTimeOffset>())
         .Returns(callInfo =>
         {
-          var newPlateSpot = new MockLicensePlate(callInfo.ArgAt<Country>(0), callInfo.ArgAt<StateOrProvince>(1));
+          var newPlateSpot = new MockLicensePlate(callInfo.ArgAt<LicensePlate.PlateKey>(0));
           return new MockGameLicensePlate(newPlateSpot,
-            callInfo.ArgAt<Player>(2));
+            callInfo.ArgAt<Player>(1));
         });
 
       var calculator = Substitute.For<IGameScoreCalculator>();
       calculator
-        .CalculateGameScore(Arg.Any<IReadOnlyCollection<(Country, StateOrProvince)>>())
+        .CalculateGameScore(Arg.Any<IReadOnlyCollection<LicensePlate.PlateKey>>())
         .Returns(new GameScoreResult(0, ["Test Achievement"], 100));
 
       var uut = new MockGame(licensePlates: null,
@@ -91,6 +95,7 @@ namespace TheGame.Tests.DomainModels.Games
       var actualSpotResult = uut.UpdateLicensePlateSpots(licensePlateFactory,
         CommonMockedServices.GetSystemService(),
         calculator,
+        Substitute.For<IGameDbContext>(),
         gameLpSpots);
 
       actualSpotResult.AssertIsSucceessful(actualUpdatedGame =>
@@ -110,7 +115,7 @@ namespace TheGame.Tests.DomainModels.Games
       var gameLpSpots = new GameLicensePlateSpots([], spottedBy);
 
       var existingSpot = new MockGameLicensePlate(
-        new MockLicensePlate(Country.US, StateOrProvince.CA),
+        new MockLicensePlate(new (Country.US, StateOrProvince.CA)),
         spottedBy);
 
       var uut = new MockGame(licensePlates: [existingSpot],
@@ -119,12 +124,13 @@ namespace TheGame.Tests.DomainModels.Games
 
       var calculator = Substitute.For<IGameScoreCalculator>();
       calculator
-        .CalculateGameScore(Arg.Any<IReadOnlyCollection<(Country, StateOrProvince)>>())
+        .CalculateGameScore(Arg.Any<IReadOnlyCollection<LicensePlate.PlateKey>>())
         .Returns(new GameScoreResult(0, [], 0));
 
       var actualSpotResult = uut.UpdateLicensePlateSpots(null!,
         CommonMockedServices.GetSystemService(),
         calculator,
+        Substitute.For<IGameDbContext>(),
         gameLpSpots);
 
       actualSpotResult.AssertIsSucceessful();
@@ -140,25 +146,25 @@ namespace TheGame.Tests.DomainModels.Games
     {
       var existingSpottedBy = new MockPlayer(2, "existing");
       var existingSpot = new MockGameLicensePlate(
-  new MockLicensePlate(Country.US, StateOrProvince.CA),
+  new MockLicensePlate(new (Country.US, StateOrProvince.CA)),
         existingSpottedBy);
 
       var spottedBy = new MockPlayer(1, "test");
-      var gameLpSpots = new GameLicensePlateSpots([(Country.US, StateOrProvince.CA)],
+      var gameLpSpots = new GameLicensePlateSpots([new(Country.US, StateOrProvince.CA)],
         spottedBy);
 
       var newSpot = new MockGameLicensePlate(
-        new MockLicensePlate(Country.US, StateOrProvince.CA),
+        new MockLicensePlate(new (Country.US, StateOrProvince.CA)),
         spottedBy);
 
       var licensePlateFactory = Substitute.For<IGameLicensePlateFactory>();
       licensePlateFactory
-        .CreateLicensePlateSpot(Country.US, StateOrProvince.CA, spottedBy, CommonMockedServices.DefaultTestDate)
+        .CreateLicensePlateSpot(Arg.Any<LicensePlate.PlateKey>(), spottedBy, CommonMockedServices.DefaultTestDate)
         .Returns(newSpot);
 
       var calculator = Substitute.For<IGameScoreCalculator>();
       calculator
-        .CalculateGameScore(Arg.Any<IReadOnlyCollection<(Country, StateOrProvince)>>())
+        .CalculateGameScore(Arg.Any<IReadOnlyCollection<LicensePlate.PlateKey>>())
         .Returns(new GameScoreResult(0, [], 0));
 
       var uut = new MockGame([existingSpot],
@@ -170,6 +176,7 @@ namespace TheGame.Tests.DomainModels.Games
       var actualSpotResult = uut.UpdateLicensePlateSpots(licensePlateFactory,
         CommonMockedServices.GetSystemService(),
         calculator,
+        Substitute.For<IGameDbContext>(),
         gameLpSpots);
 
       actualSpotResult.AssertIsSucceessful();
@@ -184,20 +191,20 @@ namespace TheGame.Tests.DomainModels.Games
     public void WillReturnInactiveGameErrorOnSpottingPlateForHistoricGameRecord()
     {
       var spottedBy = new MockPlayer(1, "test");
-      var gameLpSpots = new GameLicensePlateSpots([(Country.US, StateOrProvince.CA)], spottedBy);
+      var gameLpSpots = new GameLicensePlateSpots([new (Country.US, StateOrProvince.CA)], spottedBy);
 
       var lpSpot = new MockGameLicensePlate(
-        new MockLicensePlate(Country.US, StateOrProvince.CA),
+        new MockLicensePlate(new (Country.US, StateOrProvince.CA)),
         spottedBy);
 
       var licensePlateFactory = Substitute.For<IGameLicensePlateFactory>();
       licensePlateFactory
-        .CreateLicensePlateSpot(Country.US, StateOrProvince.CA, spottedBy, CommonMockedServices.DefaultTestDate)
+        .CreateLicensePlateSpot(Arg.Any<LicensePlate.PlateKey>(), spottedBy, CommonMockedServices.DefaultTestDate)
         .Returns(lpSpot);
 
       var calculator = Substitute.For<IGameScoreCalculator>();
       calculator
-        .CalculateGameScore(Arg.Any<IReadOnlyCollection<(Country, StateOrProvince)>>())
+        .CalculateGameScore(Arg.Any<IReadOnlyCollection<LicensePlate.PlateKey>>())
         .Returns(new GameScoreResult(0, [], 0));
 
       var uut = new MockGame(licensePlates: null,
@@ -207,6 +214,7 @@ namespace TheGame.Tests.DomainModels.Games
       var actualSpotResult = uut.UpdateLicensePlateSpots(licensePlateFactory,
         CommonMockedServices.GetSystemService(),
         calculator,
+        Substitute.For<IGameDbContext>(),
         gameLpSpots);
 
       actualSpotResult.AssertIsFailure(actualFailure => Assert.Equal(Game.ErrorMessages.InactiveGameError, actualFailure.ErrorMessage));

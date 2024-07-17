@@ -4,11 +4,10 @@ namespace TheGame.Tests.DomainModels.LicensePlates
 {
   internal class MockLicensePlate : LicensePlate
   {
-    public MockLicensePlate(Country country,
-      StateOrProvince stateOrProvince)
+    public MockLicensePlate(PlateKey plateKey)
     {
-      Country = country;
-      StateOrProvince = stateOrProvince;
+      Country = plateKey.Country;
+      StateOrProvince = plateKey.StateOrProvince;
     }
   }
 }

@@ -11,7 +11,10 @@ using TheGame.Domain.DomainModels.LicensePlates;
 
 namespace TheGame.Domain.CommandHandlers;
 
-public sealed record SpottedPlate(Country Country, StateOrProvince StateOrProvince);
+public sealed record SpottedPlate(Country Country, StateOrProvince StateOrProvince)
+{
+  public LicensePlate.PlateKey ToPlateKey() => new(Country, StateOrProvince);
+}
 
 public sealed record SpotLicensePlatesCommand(IReadOnlyCollection<SpottedPlate> SpottedPlates, long GameId, long SpottedByPlayerId) : IRequest<OneOf<OwnedOrInvitedGame, Failure>>;
 
@@ -50,12 +53,13 @@ public class SpotLicensePlatesCommandHandler(IGameDbContext gameDb,
         return new Failure(ActiveGameNotFoundError);
       }
 
-      var spots = request.SpottedPlates.Select(plate => (plate.Country, plate.StateOrProvince)).ToList();
+      var spots = request.SpottedPlates.Select(plate => plate.ToPlateKey()).ToList();
       var updatedSpots = new GameLicensePlateSpots(spots, activeGame.Player);
 
       var updatedSpotsResult = activeGame.Game.UpdateLicensePlateSpots(gameLicensePlateFactory,
         systemService,
         gameScoreCalculator,
+        gameDb,
         updatedSpots);
       
       if (!updatedSpotsResult.TryGetSuccessful(out var updatedGame, out var spotFailure))
