@@ -20,13 +20,13 @@ public partial class Game : RootModel, IAuditedRecord
     public const string UninvitedPlayerError = "invalid_player";
   }
 
-  public virtual ICollection<LicensePlate> LicensePlates { get; private set; } = [];
+  public virtual IReadOnlySet<LicensePlate> LicensePlates { get; private set; } = default!;
   protected HashSet<GameLicensePlate> _gameLicensePlates = [];
-  public virtual ICollection<GameLicensePlate> GameLicensePlates => _gameLicensePlates;
+  public virtual IReadOnlySet<GameLicensePlate> GameLicensePlates => _gameLicensePlates;
 
-  public virtual ICollection<Player> InvitedPlayers { get; private set; } = [];
+  public virtual IReadOnlySet<Player> InvitedPlayers { get; private set; } = default!;
   protected HashSet<GamePlayer> _gamePlayerInvites = [];
-  public virtual ICollection<GamePlayer> GamePlayerInvites => _gamePlayerInvites;
+  public virtual IReadOnlySet<GamePlayer> GamePlayerInvites => _gamePlayerInvites;
 
   public GameScore GameScore { get; protected set; } = new(ReadOnlyCollection<string>.Empty, 0);
 
@@ -64,12 +64,13 @@ public partial class Game : RootModel, IAuditedRecord
   public virtual OneOf<GamePlayer, Failure> InvitePlayer(IGamePlayerFactory gamePlayerFactory, Player playerToInvite)
   {
     var newGamePlayerResult = gamePlayerFactory.AddPlayer(playerToInvite, this);
-    if (!newGamePlayerResult.TryGetSuccessful(out var successfulInvite, out var inviteFailure))
+    if (!newGamePlayerResult.TryGetSuccessful(out var newInvite, out var inviteFailure))
     {
       return inviteFailure;
     }
+    GamePlayerInvites.GetWriteableCollection().Add(newInvite);
 
-    return successfulInvite;
+    return newInvite;
   }
 
   public virtual OneOf<Game, Failure> UpdateLicensePlateSpots(IGameLicensePlateFactory licensePlateSpotFactory,

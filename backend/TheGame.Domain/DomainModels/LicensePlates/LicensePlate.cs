@@ -92,10 +92,10 @@ public class LicensePlate
 
   public Country Country { get; protected set; }
 
-  public virtual ICollection<Game> Games { get; protected set; } = default!;
+  public virtual IReadOnlySet<Game> Games { get; protected set; } = default!;
 
   protected HashSet<GameLicensePlate> _gameLicensePlates = [];
-  public virtual ICollection<GameLicensePlate> GameLicensePlates => _gameLicensePlates;
+  public virtual IReadOnlySet<GameLicensePlate> GameLicensePlates => _gameLicensePlates;
 
   public LicensePlate() { }
 

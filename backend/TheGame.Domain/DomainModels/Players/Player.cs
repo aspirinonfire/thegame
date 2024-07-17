@@ -7,10 +7,10 @@ namespace TheGame.Domain.DomainModels.Players;
 
 public partial class Player : RootModel
 {
-  public virtual ICollection<Game> InvitedGames { get; private set; } = [];
+  public virtual IReadOnlySet<Game> InvitedGames { get; private set; } = default!;
 
   protected HashSet<GamePlayer> _invitedGamePlayers = [];
-  public virtual ICollection<GamePlayer> InvatedGamePlayers => _invitedGamePlayers;
+  public virtual IReadOnlySet<GamePlayer> InvatedGamePlayers => _invitedGamePlayers;
 
   public long Id { get; protected set; }
 

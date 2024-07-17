@@ -16,7 +16,7 @@ public sealed record OwnedOrInvitedGame
   public DateTimeOffset DateCreated { get; init; }
   public DateTimeOffset? DateModified { get; init; }
   public DateTimeOffset? EndedOn { get; init; }
-  public ICollection<SpottedGamePlate> SpottedPlates { get; init; } = [];
+  public IReadOnlyCollection<SpottedGamePlate> SpottedPlates { get; init; } = [];
   public GameScore GameScore { get; init; } = new GameScore(ReadOnlyCollection<string>.Empty, 0);
 
   public static OwnedOrInvitedGame FromGame(Game game, long playerId) => new()
