@@ -65,7 +65,7 @@ class GameEfConfig : IEntityTypeConfiguration<Game>
     // define game license plate nav props
     builder
       .HasMany(game => game.LicensePlates)
-      .WithMany(licensePlate => licensePlate.Games)
+      .WithMany()
       .UsingEntity<GameLicensePlate>("GameLicensePlates",
         right => right
           .HasOne(glp => glp.LicensePlate)

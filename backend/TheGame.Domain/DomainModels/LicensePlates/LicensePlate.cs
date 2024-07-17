@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using TheGame.Domain.DomainModels.Common;
-using TheGame.Domain.DomainModels.Games;
 
 namespace TheGame.Domain.DomainModels.LicensePlates;
 
@@ -95,8 +94,6 @@ public class LicensePlate : IEnumeration, IEquatable<LicensePlate>
   public StateOrProvince StateOrProvince { get; protected set; }
 
   public Country Country { get; protected set; }
-
-  public virtual IReadOnlySet<Game> Games { get; protected set; } = default!;
 
   public static OneOf<LicensePlate, Failure> GetLicensePlate(PlateKey plateKey)
   {
