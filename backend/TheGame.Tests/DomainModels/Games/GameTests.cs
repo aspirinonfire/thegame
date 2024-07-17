@@ -48,7 +48,7 @@ namespace TheGame.Tests.DomainModels.Games
       actualSpotResult.AssertIsSucceessful();
 
       var actualLicensePlateSpot = Assert.Single(uut.GameLicensePlates);
-      Assert.Equal(lpSpot.LicensePlate, actualLicensePlateSpot.LicensePlate);
+      Assert.Equal(lpSpot.LicensePlate.Id, actualLicensePlateSpot.LicensePlate.Id);
       Assert.Equal(spottedBy, actualLicensePlateSpot.SpottedBy);
       Assert.Equal(CommonMockedServices.DefaultTestDate, actualLicensePlateSpot.DateCreated);
 

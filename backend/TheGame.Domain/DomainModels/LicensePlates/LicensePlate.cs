@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -6,7 +5,7 @@ using TheGame.Domain.DomainModels.Games;
 
 namespace TheGame.Domain.DomainModels.LicensePlates;
 
-public class LicensePlate : IEquatable<LicensePlate>
+public class LicensePlate
 {
   public static class ErrorMessages
   {
@@ -111,39 +110,6 @@ public class LicensePlate : IEquatable<LicensePlate>
   }
 
   public override string ToString() => $"{Id}_{Country}_{StateOrProvince}";
-
-  public override int GetHashCode() => $"{Country}_{StateOrProvince}".GetHashCode();
-
-  public override bool Equals(object? obj) => Equals(obj as LicensePlate);
-
-  public bool Equals(LicensePlate? other)
-  {
-    if (other is null)
-    {
-      return false;
-    }
-
-    return Country == other.Country &&
-      StateOrProvince == other.StateOrProvince;
-  }
-
-  public static bool operator ==(LicensePlate lhs, LicensePlate rhs)
-  {
-    if (lhs is null)
-    {
-      if (rhs is null)
-      {
-        return true;
-      }
-
-      // Only the left side is null.
-      return false;
-    }
-    // Equals handles case of null on right side.
-    return lhs.Equals(rhs);
-  }
-
-  public static bool operator !=(LicensePlate lhs, LicensePlate rhs) => !(lhs == rhs);
 }
 
 public enum StateOrProvince

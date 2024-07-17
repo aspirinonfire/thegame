@@ -1,32 +1,37 @@
-import { Game, ScoreData, LicensePlateSpot, Territory, NewSpottedPlate } from "./gameModels";
+import { Game, Territory, NewSpottedPlate } from "./gameModels";
 import { mockGameData } from "@/app/common/data/mockGameData";
-import { GetFromLocalStorage, SendAuthenticatedApiRequest, SetLocalStorage } from "@/app/appUtils";
+import { getFromLocalStorage, handleApiResponse, sendAuthenticatedApiRequest, setLocalStorage } from "@/app/appUtils";
 import { PlayerInfo } from "../accounts";
 
 const currentGameKey: string = "currentGame";
 
 export async function GetCurrentGame() : Promise<Game | null> {
-  return GetFromLocalStorage(currentGameKey);
+  return getFromLocalStorage(currentGameKey);
 }
 
 export async function RetrieveActiveGame() : Promise<Game | null> {
-  const activeGames = await SendAuthenticatedApiRequest<Game[]>("game?isActive=true", "GET");
-  const currentActiveGame = activeGames?.at(0) ?? null;
+  const getActiveGamesResult = await sendAuthenticatedApiRequest<Game[]>("game?isActive=true", "GET");
 
-  SetLocalStorage(currentGameKey, currentActiveGame);
-
-  return currentActiveGame;
+  return handleApiResponse(getActiveGamesResult,
+    activeGames => {
+      const currentActiveGame = activeGames?.at(0) ?? null;
+      setLocalStorage(currentGameKey, currentActiveGame);
+      return currentActiveGame
+    },
+    error => null);
 }
 
-export async function GetPastGames(): Promise<Game[]> {
-  const allGames = await SendAuthenticatedApiRequest<Game[]>("game", "GET") ?? [];
+export async function GetPastGames(): Promise<Game[] | string> {
+  const getPastGamesResult = await sendAuthenticatedApiRequest<Game[]>("game", "GET") ?? [];
 
-  return allGames
-    .filter(game => !!game.endedOn)
+  return handleApiResponse<Game[], Game[] | string>(getPastGamesResult,
+    pastGames => pastGames.filter(game => !!game.endedOn),
+    error => "Failed to retrieve past games"
+  )
 }
 
 export async function CreateNewGame(name: string): Promise<Game | string> {
-  let currentGame = await GetCurrentGame();
+  const currentGame = await GetCurrentGame();
   if (!!currentGame) {
     return "Only one active game is allowed!";
   }
@@ -35,14 +40,14 @@ export async function CreateNewGame(name: string): Promise<Game | string> {
     newGameName: name
   };
 
-  const newGame = await SendAuthenticatedApiRequest<Game>("game", "POST", newGameRequest);
-  if (!newGame) {
-    return "Failed to create new game.";
-  }
+  const newGameResult = await sendAuthenticatedApiRequest<Game>("game", "POST", newGameRequest);
 
-  SetLocalStorage(currentGameKey, newGame);
-  
-  return newGame;
+  return handleApiResponse<Game, Game | string>(newGameResult,
+    newGame => {
+      setLocalStorage(currentGameKey, newGame);
+      return newGame;
+    },
+    error => "Failed to create new game.");
 }
 
 export function GetPlateDataForRendering() : Territory[] {
@@ -68,12 +73,12 @@ export async function FinishActiveGame(): Promise<string | null> {
     return "No active game!";
   }
 
-  const endedGame = await SendAuthenticatedApiRequest<Game>(`game/${currentGame.gameId}/endgame`, "POST");
+  const endedGame = await sendAuthenticatedApiRequest<Game>(`game/${currentGame.gameId}/endgame`, "POST");
   if (!endedGame) {
     return "Failed to save updated plate spots.";
   }
 
-  SetLocalStorage(currentGameKey, null);
+  setLocalStorage(currentGameKey, null);
 
   return null;
 }
@@ -84,16 +89,22 @@ export async function UpdateCurrentGameWithNewSpots(newSpottedPlates: NewSpotted
     return "No active game!";
   }
 
-  const updatedGame = await SendAuthenticatedApiRequest<Game>(`game/${currentGame.gameId}/spotplates`, "POST", newSpottedPlates);
-  if (!updatedGame) {
-    return "Failed to save updated plate spots.";
-  }
+  const updatedGameResult = await sendAuthenticatedApiRequest<Game>(`game/${currentGame.gameId}/spotplates`, "POST", newSpottedPlates);
 
-  SetLocalStorage(currentGameKey, updatedGame);
+  return handleApiResponse<Game, Game | string>(updatedGameResult,
+    updatedGame => {
+      setLocalStorage(currentGameKey, updatedGame);
 
-  return updatedGame;
+      return updatedGame;
+    },
+    error => "Failed to save updated plate spots."
+  )
 }
 
 export async function GetAccount() : Promise<PlayerInfo | null> {
-  return await SendAuthenticatedApiRequest("user", "GET");
+  const accountResult = await sendAuthenticatedApiRequest<PlayerInfo>("user", "GET");
+  return handleApiResponse(accountResult,
+    playerInfo => playerInfo,
+    error => null
+  )
 }

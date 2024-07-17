@@ -122,15 +122,17 @@ public class GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
   private void HandleAuditedRecords(DateTimeOffset saveTime)
   {
     var datedRecords = ChangeTracker
-      .Entries()
-      .Where(e => e.Entity is IAuditedRecord &&
-        (e.State == EntityState.Added || e.State == EntityState.Modified));
+      .Entries<IAuditedRecord>()
+      .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified)
+      .ToList();
 
     foreach (var rec in datedRecords)
     {
       // using Reflection because these properties are not writable otherwise
-
-      rec.Property(nameof(IAuditedRecord.DateModified)).CurrentValue = saveTime;
+      if (rec.State == EntityState.Modified)
+      {
+        rec.Property(nameof(IAuditedRecord.DateModified)).CurrentValue = saveTime;
+      }
 
       if (rec.State == EntityState.Added)
       {

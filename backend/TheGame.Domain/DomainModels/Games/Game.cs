@@ -118,15 +118,11 @@ public partial class Game : RootModel, IAuditedRecord
       .ToHashSet();
 
     var spotsToRemove = existingSpotsLookup
-      .Values
-      .Where(existingSpot => !updatedSpotsLookup.Contains((existingSpot.LicensePlate.Country, existingSpot.LicensePlate.StateOrProvince)))
-      .ToList()
-      .AsReadOnly();
-    
-    foreach (var toRemove in spotsToRemove)
-    {
-      writeableGameSpots.Remove(toRemove);
-    }
+      .Where(existingSpot => !updatedSpotsLookup.Contains(existingSpot.Key))
+      .Select(existingSpot => existingSpot.Value)
+      .ToHashSet();
+
+    writeableGameSpots.RemoveWhere(spotsToRemove.Contains);
 
     // update score and notify players if spots were updated
     if (newSpots.Count != 0 || spotsToRemove.Count != 0)
@@ -138,7 +134,11 @@ public partial class Game : RootModel, IAuditedRecord
       
       var newScore = scoreCalculator.CalculateGameScore(allSpottedPlates);
 
-      GameScore = GameScore with { Achievements = newScore.Achievements.ToList().AsReadOnly(), TotalScore = newScore.TotalScore };
+      GameScore = GameScore with
+      {
+        Achievements = newScore.Achievements.ToList().AsReadOnly(),
+        TotalScore = newScore.TotalScore
+      };
 
       AddDomainEvent(new LicensePlateSpottedEvent(this));
     }
@@ -157,7 +157,6 @@ public partial class Game : RootModel, IAuditedRecord
       .Select(glp => glp.DateCreated)
       .OrderByDescending(dateSpotted => dateSpotted)
       .FirstOrDefault(DateCreated);
-    
 
     IsActive = false;
     EndedOn = endedOn;

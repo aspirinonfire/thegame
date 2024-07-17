@@ -11,6 +11,12 @@ export default function History() {
   useEffect(() => {
     async function FetchPastGames() {
       const pastGames = await GetPastGames();
+
+      if (typeof pastGames === "string") {
+        console.error(pastGames);
+        return;
+      }
+
       setIsFetchingPastGames(false);
       setPastGames(pastGames);
     }

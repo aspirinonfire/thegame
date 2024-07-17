@@ -1,5 +1,5 @@
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
-import { authTokenKey, SetLocalStorage } from "./appUtils";
+import { authTokenKey, setLocalStorage } from "./appUtils";
 import { useContext } from "react";
 import { CurrentUserAccountContext } from "./common/gameCore/gameContext";
 
@@ -29,7 +29,7 @@ export default function GoogleAuth({ raiseSignedInEvent } : GoogleSignInArgs) {
     const responseBody = await accessTokenResponse.json() as ApiTokenResponse;
 
     if (accessTokenResponse.status == 200) {
-      SetLocalStorage(authTokenKey, responseBody.accessToken);
+      setLocalStorage(authTokenKey, responseBody.accessToken);
       raiseSignedInEvent();
       return;
     }
@@ -38,7 +38,7 @@ export default function GoogleAuth({ raiseSignedInEvent } : GoogleSignInArgs) {
   }
 
   function onSignOut() {
-    SetLocalStorage(authTokenKey, null);
+    setLocalStorage(authTokenKey, null);
     raiseSignedInEvent();
   }
 

@@ -143,5 +143,85 @@ namespace TheGame.Tests.IntegrationTests
 
       Assert.False(hasEmptyGame);
     }
+
+    [Fact]
+    public async Task CanReAddPreviouslyUnspottedPlate()
+    {
+      var gameId = 0L;
+      var playerId = 0L;
+      var connectionString = msSqlFixture.GetConnectionString();
+      var services = CommonMockedServices.GetGameServicesWithTestDevDb(connectionString);
+
+      var diOpts = new ServiceProviderOptions
+      {
+        ValidateOnBuild = true,
+        ValidateScopes = true,
+      };
+      using var sp = services.BuildServiceProvider(diOpts);
+      using (var scope = sp.CreateScope())
+      {
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+        var gameQryProvider = scope.ServiceProvider.GetRequiredService<IGameQueryProvider>();
+
+        // create new player with identity
+        var newPlayerRequest = new NewPlayerIdentityRequest("test_provider_3", "test_id_3", "refresh_token", "Test Player 3");
+        var newPlayerIdentityCommandResult = await mediator.Send(new GetOrCreateNewPlayerCommand(newPlayerRequest));
+        newPlayerIdentityCommandResult.AssertIsSucceessful(out var actualNewPlayerIdentity);
+
+        // start new game
+        var startNewGameCommandResult = await mediator.Send(new StartNewGameCommand("Respotted Plate Game", actualNewPlayerIdentity.PlayerId));
+        startNewGameCommandResult.AssertIsSucceessful(out var actualNewGame);
+
+        gameId = actualNewGame.GameId;
+        playerId = actualNewPlayerIdentity.PlayerId;
+      }
+
+      // spot new plates +CA, +OR
+      using (var scope = sp.CreateScope())
+      {
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+
+        var initialSpotResult = await mediator.Send(new SpotLicensePlatesCommand(
+          [
+            new SpottedPlate(Country.US, StateOrProvince.CA),
+            new SpottedPlate(Country.US, StateOrProvince.OR)
+          ],
+          gameId,
+          playerId));
+
+        initialSpotResult.AssertIsSucceessful();
+      }
+
+      // remove one plate ~OR, +WA, -CA
+      using (var scope = sp.CreateScope())
+      {
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+
+        var removedSpotResult = await mediator.Send(new SpotLicensePlatesCommand([
+          new SpottedPlate(Country.US, StateOrProvince.OR),
+          new SpottedPlate(Country.US, StateOrProvince.WA)
+        ],
+        gameId,
+        playerId));
+
+        removedSpotResult.AssertIsSucceessful();
+      }
+
+      // re-add plate ~OR, ~WA, +CA
+      using (var scope = sp.CreateScope())
+      {
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+
+        var respottedResult = await mediator.Send(new SpotLicensePlatesCommand([
+          new SpottedPlate(Country.US, StateOrProvince.CA),
+          new SpottedPlate(Country.US, StateOrProvince.OR),
+          new SpottedPlate(Country.US, StateOrProvince.WA)
+        ],
+        gameId,
+        playerId));
+
+        respottedResult.AssertIsSucceessful();
+      }
+    }
   }
 }

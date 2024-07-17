@@ -1,3 +1,23 @@
+export type ApiErrorType = "auth_error" | "api_error" | "json_error"
+
+// TODO better union types
+export interface ApiError {
+  type: ApiErrorType,
+  statusCode: number | undefined,
+  exception: any | undefined
+}
+
+function isApiError(response: any | ApiError ) : response is ApiError {
+  return (response as ApiError).type !== undefined;
+}
+
+export function handleApiResponse<T, TResp>(apiResponse: T | ApiError,
+  onSuccess: (parsedResponse: T) => TResp,
+  onError: (apiError: ApiError) => TResp
+) : TResp {
+  return isApiError(apiResponse) ? onError(apiResponse) : onSuccess(apiResponse);
+}
+
 export default function refreshOnNewVersion() {
   if (!('serviceWorker' in navigator)) {
     return;
@@ -32,7 +52,7 @@ export default function refreshOnNewVersion() {
 
 export const authTokenKey: string = "authToken";
 
-export function GetFromLocalStorage<T>(key: string) : T | null {
+export function getFromLocalStorage<T>(key: string) : T | null {
   const rawValue = localStorage.getItem(key);
   if (!rawValue) {
     return null;
@@ -47,37 +67,75 @@ export function GetFromLocalStorage<T>(key: string) : T | null {
   }
 }
 
-export function SetLocalStorage(key: string, value: any): void {
+export function setLocalStorage(key: string, value: any): void {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-export async function SendAuthenticatedApiRequest<T>(url: string, method: string, body?: any) : Promise<T | null> {
-    // TODO validate auth token before making api requests
-    const authToken = GetFromLocalStorage<string>(authTokenKey);
-    if (authToken == null) {
-      console.warn("Api auth token is missing. Need to re-login.");
-      return null;
-    }
-  
-  const userDataResponse = await fetch(`/api/${url}`, {
-    cache: "no-store",
-    method: method,
-    headers: {
-      "Authorization": `bearer ${authToken}`,
-      "Content-Type": "application/json; charset=utf-8"
-    },
-    body: body != null ? JSON.stringify(body) : undefined
-  });
+export async function sendAuthenticatedApiRequest<T>(url: string, method: string, body?: any) : Promise<T | ApiError> {
+  // TODO need to handle offline. Main goal is not to break UI.
 
-  // TODO handle offline, 401, 400, 500 separately!
-  if (userDataResponse.status == 200) {
-    return await userDataResponse.json() as T;
-  } else if (userDataResponse.status == 401) {
-    console.error("Got 401 API status code. Need to re-login");
-    SetLocalStorage(authToken, null);
-    return null;
+  const authToken = getFromLocalStorage<string>(authTokenKey);
+  if (authToken == null) {
+    console.warn("Api auth token is missing. Need to re-login.");
+    return {
+      type: "auth_error",
+      exception: undefined,
+      statusCode: undefined
+    };
+  }
+  
+  let apiResponse: Response = null!;
+  
+  try {
+    const request: RequestInit = {
+      cache: "no-store",
+      method: method,
+      headers: {
+        "Authorization": `bearer ${authToken}`,
+        "Content-Type": "application/json; charset=utf-8"
+      },
+      body: body != null ? JSON.stringify(body) : undefined
+    };
+    
+    apiResponse = await fetch(`/api/${url}`, request);
+  } catch (apiException) {
+    console.log(apiException);
+    
+    return {
+      type: "api_error",
+      exception: apiException,
+      statusCode: undefined
+    }
   }
 
-  console.error("Failed to retrieve data.");
-  return null;
+  if (apiResponse.status == 200) {
+    try {
+      return await apiResponse.json() as T;
+    } catch (jsonException) {
+      return {
+        type: "json_error",
+        exception: jsonException,
+        statusCode: apiResponse.status
+      }
+    }
+  } else if (apiResponse.status == 401) {
+    console.error("Got 401 API status code. Need to re-login");
+    setLocalStorage(authToken, null);
+
+    // TODO refresh token and try again. then signal API if still 401
+
+    return {
+      type: "auth_error",
+      exception: undefined,
+      statusCode: apiResponse.status
+    };
+  }
+
+  console.error(`Failed to retrieve data. status: ${apiResponse.status}`);
+  
+  return {
+    type: "api_error",
+    exception: undefined,
+    statusCode: apiResponse.status
+  };
 }
