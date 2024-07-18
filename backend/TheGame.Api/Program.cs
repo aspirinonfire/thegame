@@ -69,7 +69,7 @@ public class Program
       .ValidateDataAnnotations();
 
     builder.Services
-      .AddGameServices(connString, isDevEnvironment)
+      .AddGameServices(connString, typeof(Program).Assembly)
       .AddGameAuthenticationServices(builder.Configuration);
 
     // Set json serializer options. Both configs must be set.

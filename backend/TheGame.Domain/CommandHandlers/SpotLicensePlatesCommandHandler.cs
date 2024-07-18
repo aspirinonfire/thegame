@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TheGame.Domain.DomainModels;
+using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 
@@ -26,8 +27,6 @@ public sealed class SpotLicensePlatesCommandHandler(IGameDbContext gameDb,
   ILogger<SpotLicensePlatesCommandHandler> logger)
   : IRequestHandler<SpotLicensePlatesCommand, OneOf<OwnedOrInvitedGame, Failure>>
 {
-  public const string ActiveGameNotFoundError = "active_game_not_found";
-
   public async Task<OneOf<OwnedOrInvitedGame, Failure>> Handle(SpotLicensePlatesCommand request, CancellationToken cancellationToken) =>
     await transactionWrapper.ExecuteInTransaction<OwnedOrInvitedGame>(async () =>
     {
@@ -45,12 +44,12 @@ public sealed class SpotLicensePlatesCommandHandler(IGameDbContext gameDb,
           Player = game.CreatedByPlayerId == request.SpottedByPlayerId ?
             game.CreatedBy : game.InvitedPlayers.First(invite => invite.Id == request.SpottedByPlayerId)
         })
-        .FirstOrDefaultAsync();
+        .FirstOrDefaultAsync(cancellationToken);
 
       if (activeGame is null)
       {
         logger.LogError("Active game for player {playerId} not found. Execution cannot continue.", request.SpottedByPlayerId);
-        return new Failure(ActiveGameNotFoundError);
+        return new Failure(ErrorMessageProvider.ActiveGameNotFoundError);
       }
 
       var spots = request.SpottedPlates.Select(plate => plate.ToPlateKey()).ToList();
@@ -68,7 +67,7 @@ public sealed class SpotLicensePlatesCommandHandler(IGameDbContext gameDb,
         return spotFailure;
       }
 
-      await gameDb.SaveChangesAsync();
+      await gameDb.SaveChangesAsync(cancellationToken);
       
       logger.LogInformation("Successfully spotted license plates.");
 

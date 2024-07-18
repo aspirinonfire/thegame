@@ -1,4 +1,5 @@
 using TheGame.Domain.DomainModels;
+using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.Games.Events;
 using TheGame.Domain.DomainModels.LicensePlates;
@@ -217,7 +218,7 @@ namespace TheGame.Tests.DomainModels.Games
         Substitute.For<IGameDbContext>(),
         gameLpSpots);
 
-      actualSpotResult.AssertIsFailure(actualFailure => Assert.Equal(Game.ErrorMessages.InactiveGameError, actualFailure.ErrorMessage));
+      actualSpotResult.AssertIsFailure(actualFailure => Assert.Equal(ErrorMessageProvider.InactiveGameError, actualFailure.ErrorMessage));
 
       Assert.Empty(uut.GameLicensePlates);
       Assert.Empty(uut.DomainEvents);

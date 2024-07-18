@@ -70,26 +70,15 @@ public static class ApiRoutes
     apiRoute
       .MapPost("/user/refresh-token", async (HttpContext ctx, GameAuthService authService, [FromBody] string accessToken) =>
       {
-        if (string.IsNullOrEmpty(accessToken))
+        var refreshResult = await authService.RefreshAccessToken(ctx, accessToken);
+        if (!refreshResult.TryGetSuccessful(out var refreshTokens, out var tokenFailure))
         {
-          return Results.BadRequest();
+          return Results.BadRequest(tokenFailure.ErrorMessage);
         }
-
-        var refreshCookie = ctx.Request.Cookies
-          .Where(cookie => cookie.Key == GameAuthService.ApiRefreshTokenCookieName)
-          .Select(cookie => cookie.Value)
-          .FirstOrDefault();
-        
-        if (string.IsNullOrEmpty(refreshCookie))
-        {
-          return Results.BadRequest();
-        }
-
-        // TODO move checks above to AuthService and retrieve new api and refresh tokens
 
         return Results.Ok(new
         {
-          accessToken = "new_token_here"
+          refreshTokens.AccessToken
         });
       })
       .WithDescription("Refresh Game API Token using Refresh Cookie")

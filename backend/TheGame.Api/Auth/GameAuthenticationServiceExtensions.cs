@@ -2,9 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
 using System;
-using System.Text;
 
 namespace TheGame.Api.Auth;
 
@@ -32,17 +30,7 @@ public static class GameAuthenticationServiceExtensions
       {
         options.RequireHttpsMetadata = true;
         options.SaveToken = false;
-        options.TokenValidationParameters = new TokenValidationParameters()
-        {
-          ValidateIssuer = false,
-          ValidateLifetime = true,
-          ValidateAudience = true,
-          ValidateIssuerSigningKey = true,
-          IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-
-          ValidAudience = jwtAudience,
-        };
-        
+        options.TokenValidationParameters = GameAuthService.GetTokenValidationParams(jwtAudience, jwtSecret);
         options.Validate();
       });
 

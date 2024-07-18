@@ -10,11 +10,6 @@ public class LicensePlate : IEnumeration, IEquatable<LicensePlate>
 {
   public sealed record PlateKey(Country Country, StateOrProvince StateOrProvince);
 
-  public static class ErrorMessages
-  {
-    public const string LicensePlateNotFoundError = "license_plate_not_found";
-  }
-
   public static readonly IReadOnlyCollection<LicensePlate> AvailableLicensePlates =
   [
     new LicensePlate { Id = 1, StateOrProvince = StateOrProvince.AL, Country = Country.US },
@@ -102,7 +97,7 @@ public class LicensePlate : IEnumeration, IEquatable<LicensePlate>
       return licensePlateModel;
     }
 
-    return new Failure(ErrorMessages.LicensePlateNotFoundError);
+    return new Failure(ErrorMessageProvider.LicensePlateNotFoundError);
   }
 
   public override string ToString() => $"{Id}_{Country}_{StateOrProvince}";

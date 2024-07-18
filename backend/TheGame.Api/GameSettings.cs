@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MediatR;
+using System.ComponentModel.DataAnnotations;
 
 namespace TheGame.Api;
 
@@ -24,6 +25,15 @@ public sealed class ApiAuthSettings
 
   [Required]
   public required string JwtAudience { get; init; }
+
+  [Required]
+  public required ushort JwtTokenExpirationMin { get; init; }
+
+  [Required]
+  public required ushort RefreshTokenByteCount { get; init; }
+
+  [Required]
+  public required uint RefreshTokenAgeMinutes { get; init; }
 }
 
 public sealed class ApiGoogleSettings
