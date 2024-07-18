@@ -32,7 +32,6 @@ public sealed class GetOrCreateNewPlayerCommandHandler(IGameDbContext gameDb,
           async () =>
           {
             var playerIdentity = await gameDb.PlayerIdentities
-              .AsNoTracking()
               .Include(ident => ident.Player)
               .Where(ident =>
                 ident.ProviderName == request.NewPlayerIdentityRequest.ProviderName &&
@@ -62,6 +61,7 @@ public sealed class GetOrCreateNewPlayerCommandHandler(IGameDbContext gameDb,
 
             if (isMissingRefreshToken || tokenExpiredOrAboutToExpire)
             {
+              logger.LogInformation("Refresh token needs rotation.");
               var tokenRefreshResult = playerIdentity.RotateRefreshToken(systemService,
                 request.NewPlayerIdentityRequest.RefreshTokenByteCount,
                 TimeSpan.FromMinutes(request.NewPlayerIdentityRequest.RefreshTokenAgeMinutes));
