@@ -51,7 +51,12 @@ namespace TheGame.Tests.IntegrationTests
       var db = scope.ServiceProvider.GetRequiredService<IGameDbContext>();
       var playerIdentFac = scope.ServiceProvider.GetRequiredService<IPlayerIdentityFactory>();
 
-      var newPlayerIdentityResult = playerIdentFac.CreatePlayerIdentity(new NewPlayerIdentityRequest("test_provider", "test_id", "refresh_token", "Test Player"));
+      var newIdentityRequest = new NewPlayerIdentityRequest("test_provider",
+        "test_id",
+        "Test Player",
+        64,
+        5);
+      var newPlayerIdentityResult = playerIdentFac.CreatePlayerIdentity(newIdentityRequest);
       newPlayerIdentityResult.AssertIsSucceessful();
 
       await db.SaveChangesAsync();
@@ -81,8 +86,12 @@ namespace TheGame.Tests.IntegrationTests
       var gameQryProvider = scope.ServiceProvider.GetRequiredService<IGameQueryProvider>();
 
       // create new player with identity
-      var newPlayerRequest = new NewPlayerIdentityRequest("test_provider_1", "test_id_1", "refresh_token", "Test Player");
-      var newPlayerIdentityCommandResult = await mediator.Send(new GetOrCreateNewPlayerCommand(newPlayerRequest));
+      var newIdentityRequest = new NewPlayerIdentityRequest("test_provider",
+        "test_id_1",
+        "Test Player 1",
+        64,
+        5);
+      var newPlayerIdentityCommandResult = await mediator.Send(new GetOrCreateNewPlayerCommand(newIdentityRequest));
       newPlayerIdentityCommandResult.AssertIsSucceessful(out var actualNewPlayerIdentity);
 
       // start new game
@@ -125,8 +134,12 @@ namespace TheGame.Tests.IntegrationTests
       var gameQryProvider = scope.ServiceProvider.GetRequiredService<IGameQueryProvider>();
 
       // create new player with identity
-      var newPlayerRequest = new NewPlayerIdentityRequest("test_provider_2", "test_id_2", "refresh_token", "Test Player 2");
-      var newPlayerIdentityCommandResult = await mediator.Send(new GetOrCreateNewPlayerCommand(newPlayerRequest));
+      var newIdentityRequest = new NewPlayerIdentityRequest("test_provider",
+  "test_id_2",
+  "Test Player 2",
+  64,
+  5);
+      var newPlayerIdentityCommandResult = await mediator.Send(new GetOrCreateNewPlayerCommand(newIdentityRequest));
       newPlayerIdentityCommandResult.AssertIsSucceessful(out var actualNewPlayerIdentity);
 
       // start new game
@@ -164,8 +177,12 @@ namespace TheGame.Tests.IntegrationTests
         var gameQryProvider = scope.ServiceProvider.GetRequiredService<IGameQueryProvider>();
 
         // create new player with identity
-        var newPlayerRequest = new NewPlayerIdentityRequest("test_provider_3", "test_id_3", "refresh_token", "Test Player 3");
-        var newPlayerIdentityCommandResult = await mediator.Send(new GetOrCreateNewPlayerCommand(newPlayerRequest));
+        var newIdentityRequest = new NewPlayerIdentityRequest("test_provider",
+  "test_id_3",
+  "Test Player 3",
+  64,
+  5);
+        var newPlayerIdentityCommandResult = await mediator.Send(new GetOrCreateNewPlayerCommand(newIdentityRequest));
         newPlayerIdentityCommandResult.AssertIsSucceessful(out var actualNewPlayerIdentity);
 
         // start new game

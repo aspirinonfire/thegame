@@ -11,7 +11,7 @@ namespace TheGame.Tests
     public void CanInstantiateGameServicesDI()
     {
       var services = new ServiceCollection()
-        .AddGameServices("test_conn_string", true);
+        .AddGameServices("test_conn_string");
 
       var diOpts = new ServiceProviderOptions
       {

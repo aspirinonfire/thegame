@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Reflection;
 using TheGame.Domain;
 
 namespace TheGame.Tests.TestUtils
@@ -26,10 +27,10 @@ namespace TheGame.Tests.TestUtils
       return sysSvc;
     }
 
-    public static IServiceCollection GetGameServicesWithTestDevDb(string connString) =>
+    public static IServiceCollection GetGameServicesWithTestDevDb(string connString, Assembly? additionalScanAssembly = null) =>
       new ServiceCollection()
         .AddGameServices(connString,
-          true,
+          additionalScanAssembly,
           efLogger => efLogger.AddDebug())
         .AddLogging(builder => builder.AddDebug());
   }

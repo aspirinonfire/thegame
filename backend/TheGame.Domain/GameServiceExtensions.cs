@@ -2,12 +2,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Reflection;
 using TheGame.Domain.CommandHandlers;
 using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
-using TheGame.Domain.DomainModels.Players;
 using TheGame.Domain.DomainModels.PlayerIdentities;
+using TheGame.Domain.DomainModels.Players;
 
 namespace TheGame.Domain;
 
@@ -15,7 +16,7 @@ public static class GameServiceExtensions
 {
   public static IServiceCollection AddGameServices(this IServiceCollection services,
     string connectionString,
-    bool isDevelopment,
+    Assembly? additionalMediatrAssemblyToScan = null,
     Action<ILoggingBuilder>? efLogger = null)
   {
     if (string.IsNullOrEmpty(connectionString))
@@ -29,15 +30,14 @@ public static class GameServiceExtensions
       // DB ctx
       .AddDbContext<GameDbContext>(options =>
       {
-        if (isDevelopment)
+#if DEBUG
+        options.UseLoggerFactory(LoggerFactory.Create(builder =>
         {
-          options.UseLoggerFactory(LoggerFactory.Create(builder =>
-          {
-            builder.AddConsole();
-            efLogger?.Invoke(builder);
-          }));
-          options.EnableSensitiveDataLogging(true);
-        }
+          builder.AddConsole();
+          efLogger?.Invoke(builder);
+        }));
+        options.EnableSensitiveDataLogging(true);
+#endif
         options.UseLazyLoadingProxies(true);
         options.UseSqlServer(connectionString);
       })
@@ -48,6 +48,10 @@ public static class GameServiceExtensions
       .AddMediatR(cfg =>
       {
         cfg.RegisterServicesFromAssembly(typeof(GameServiceExtensions).Assembly);
+        if (additionalMediatrAssemblyToScan != null)
+        {
+          cfg.RegisterServicesFromAssembly(additionalMediatrAssemblyToScan);
+        }
       })
       // Game domain services
       .AddScoped<IPlayerIdentityFactory, PlayerIdentity.PlayerIdentityFactory>()

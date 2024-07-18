@@ -12,14 +12,6 @@ namespace TheGame.Domain.DomainModels.Games;
 
 public partial class Game : RootModel, IAuditedRecord
 {
-  public static class ErrorMessages
-  {
-    public const string InactiveGameError = "inactive_game";
-    public const string FailedToAddSpotError = "failed_to_add_spot";
-    public const string InvalidEndedOnDateError = "invalid_ended_on_date";
-    public const string UninvitedPlayerError = "invalid_player";
-  }
-
   public virtual IReadOnlySet<LicensePlate> LicensePlates { get; private set; } = default!;
   protected HashSet<GameLicensePlate> _gameLicensePlates = [];
   public virtual IReadOnlySet<GameLicensePlate> GameLicensePlates => _gameLicensePlates;
@@ -82,12 +74,12 @@ public partial class Game : RootModel, IAuditedRecord
   {
     if (!IsActive)
     {
-      return new Failure(ErrorMessages.InactiveGameError);
+      return new Failure(ErrorMessageProvider.InactiveGameError);
     }
 
     if (!GetActiveGamePlayers().Contains(licensePlateSpots.SpottedBy))
     {
-      return new Failure(ErrorMessages.UninvitedPlayerError);
+      return new Failure(ErrorMessageProvider.UninvitedPlayerError);
     }
 
     var existingSpotsLookup = this.GameLicensePlates
@@ -152,7 +144,7 @@ public partial class Game : RootModel, IAuditedRecord
   {
     if (!IsActive)
     {
-      return new Failure(ErrorMessages.InactiveGameError);
+      return new Failure(ErrorMessageProvider.InactiveGameError);
     }
 
     var endedOn = GameLicensePlates
