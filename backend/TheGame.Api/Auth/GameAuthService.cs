@@ -8,7 +8,6 @@ using OneOf;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -68,19 +67,13 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
     // TODO store refresh token expiration in DB as well. Rotate if necessary
     if (!string.IsNullOrEmpty(playerIdentity.RefreshToken))
     {
-      //var cookieDomain = httpContext.Request.Headers.Origin
-      //  .FirstOrDefault($"{httpContext.Request.Scheme}:{httpContext.Request.Host.Value}");
-
-      // TODO set domain from ctx (must omit scheme and port)
-      var cookieDomain = "localhost";
-
       var refreshCookieOptions = new CookieBuilder()
       {
         Name = ApiRefreshTokenCookieName,
         IsEssential = true,
         HttpOnly = true,
-        Domain = cookieDomain,
-        Path = "/",
+        // refresh cookie should be sent to this api path only!
+        Path = "/api/user/refresh-token",
         MaxAge = TimeSpan.FromDays(7),
         Expiration = TimeSpan.FromDays(7),
         SameSite = SameSiteMode.Strict,
