@@ -1,8 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc.Testing;
+﻿using Google.Apis.Auth;
+using MediatR;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using MockQueryable.NSubstitute;
+using NSubstitute.Extensions;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -74,6 +79,83 @@ public class ApiRoutesTests
     Assert.Equal(expectedTestPlayerInfo, actualPlayerInfo);
   }
 
+  [Fact]
+  public async Task WillAuthenticateNewPlayerWithWhenGoogleTokenIdIsValid()
+  {
+    var testGoogleIdToken = "google-id-token";
+
+    await using var uutApiApp = GetApiFactory(services =>
+    {
+      services.AddTransient(sp =>
+      {
+        var mediatr = Substitute.For<IMediator>();
+        mediatr
+          .Send(Arg.Any<GetOrCreateNewPlayerCommand>())
+          .Returns(new GetOrCreatePlayerResult(true,
+            123,
+            123,
+            "test provider",
+            "test id",
+            "refresh_token"));
+
+        return mediatr;
+      });
+
+      services.AddScoped(sp =>
+      {
+        var opts = sp.GetRequiredService<IOptions<GameSettings>>();
+        var mediatr = sp.GetRequiredService<IMediator>();
+
+        var mockedAuthService = Substitute.ForPartsOf<GameAuthService>(NullLogger<GameAuthService>.Instance,
+          mediatr,
+          opts);
+
+        mockedAuthService
+          .Configure()
+          .GetValidatedGoogleIdTokenPayload(testGoogleIdToken)
+          .Returns(new GoogleJsonWebSignature.Payload()
+          {
+            Subject = "test-user",
+            Name = "Test User"
+          });
+
+        return mockedAuthService;
+      });
+    });
+
+    var client = uutApiApp.CreateClient();
+
+    var actualAuthTokenResponseMessage = await client.PostAsJsonAsync("/api/user/google/apitoken", testGoogleIdToken);
+
+    Assert.True(actualAuthTokenResponseMessage.IsSuccessStatusCode);
+
+    var actualCookiesFromResponse = actualAuthTokenResponseMessage.Headers
+      .Where(header => header.Key == "Set-Cookie")
+      .SelectMany(header => header.Value)
+      .Select(cookie =>
+      {
+        var cookieParts = cookie.Split("=");
+
+        return new
+        {
+          Name = cookieParts[0],
+          Value = string.Join("=", cookieParts[1..])
+        };
+      })
+      .ToDictionary(x => x.Name, x => x.Value);
+
+    var actualRefreshCookieValue = Assert.Contains(GameAuthService.ApiRefreshTokenCookieName, actualCookiesFromResponse);
+    Assert.NotNull(actualRefreshCookieValue);
+    Assert.Contains("secure", actualRefreshCookieValue);
+    Assert.Contains("samesite=strict", actualRefreshCookieValue);
+    Assert.Contains("httponly", actualRefreshCookieValue);
+
+    var actualResponse = await actualAuthTokenResponseMessage.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+    Assert.NotNull(actualResponse);
+    var actualToken = Assert.Contains("accessToken", actualResponse);
+    Assert.NotEmpty(actualToken);
+  }
+
   private WebApplicationFactory<Program> GetApiFactory(Action<IServiceCollection>? registerServices = null) => new WebApplicationFactory<Program>()
     .WithWebHostBuilder(builder =>
     {
@@ -105,7 +187,12 @@ public class ApiRoutesTests
 
   private static HttpClient CreateAuthenticatedClient(WebApplicationFactory<Program> apiAppFactory, long playerId)
   {
-    var playerIdentity = new GetOrCreatePlayerResult(playerId, playerId, "test provider", "test provider user id");
+    var playerIdentity = new GetOrCreatePlayerResult(false,
+      playerId,
+      playerId,
+      "test provider",
+      "test provider user id",
+      "refresh_token");
 
     var scope = apiAppFactory.Services.CreateScope();
 

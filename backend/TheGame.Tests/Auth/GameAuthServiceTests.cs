@@ -31,10 +31,12 @@ public class GameAuthServiceTests
       }
     };
 
-    var gamePlayer = new GetOrCreatePlayerResult(1,
+    var gamePlayer = new GetOrCreatePlayerResult(true,
+      1,
       1,
       "Test",
-      "test_user_id");
+      "test_user_id",
+      "refresh_token");
 
     var options = Substitute.For<IOptions<GameSettings>>();
     options.Value.Returns(gameSettings);

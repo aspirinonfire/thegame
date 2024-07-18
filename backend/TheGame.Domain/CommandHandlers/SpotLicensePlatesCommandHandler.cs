@@ -18,7 +18,7 @@ public sealed record SpottedPlate(Country Country, StateOrProvince StateOrProvin
 
 public sealed record SpotLicensePlatesCommand(IReadOnlyCollection<SpottedPlate> SpottedPlates, long GameId, long SpottedByPlayerId) : IRequest<OneOf<OwnedOrInvitedGame, Failure>>;
 
-public class SpotLicensePlatesCommandHandler(IGameDbContext gameDb,
+public sealed class SpotLicensePlatesCommandHandler(IGameDbContext gameDb,
   ITransactionExecutionWrapper transactionWrapper,
   IGameLicensePlateFactory gameLicensePlateFactory,
   ISystemService systemService,

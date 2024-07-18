@@ -53,17 +53,27 @@ public static class ApiRoutes
     apiRoute
       .MapPost("/user/google/apitoken", async (HttpContext ctx, GameAuthService authService, [FromBody] string credential) =>
       {
-        var apiTokenResult = await authService.AuthenticateWithGoogleIdTokenAndGenerateApiAuthToken(credential);
+        var apiTokenResult = await authService.AuthenticateWithGoogleIdToken(credential, ctx);
         if (!apiTokenResult.TryGetSuccessful(out var apiTokens, out var tokenFailure))
         {
           return Results.BadRequest(tokenFailure.ErrorMessage);
         }
 
-        return Results.Ok(apiTokens);
+        return Results.Ok(new
+        {
+          apiTokens.AccessToken
+        });
       })
       .WithDescription("Validate Google ID Token and generate API tokens for accessing Game APIs.")
       .AllowAnonymous();
 
+    apiRoute
+      .MapGet("/user/refresh-token", async (HttpContext ctx, GameAuthService authService) =>
+      {
+        throw new NotImplementedException("wip...");
+      })
+      .WithDescription("Refresh Game API Token using Refresh Cookie")
+      .AllowAnonymous();
     
     apiRoute
       .MapGet("user", async (HttpContext ctx, IPlayerQueryProvider playerQueryProvider) =>

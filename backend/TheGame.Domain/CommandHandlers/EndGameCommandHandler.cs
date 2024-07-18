@@ -11,7 +11,7 @@ namespace TheGame.Domain.CommandHandlers;
 
 public sealed record EndGameCommand(long GameId, long OwnerPlayerId) : IRequest<OneOf<OwnedOrInvitedGame, Failure>>;
 
-public class EndGameCommandHandler(IGameDbContext gameDb, ITransactionExecutionWrapper transactionExecutionWrapper, ILogger<EndGameCommandHandler> logger)
+public sealed class EndGameCommandHandler(IGameDbContext gameDb, ITransactionExecutionWrapper transactionExecutionWrapper, ILogger<EndGameCommandHandler> logger)
   : IRequestHandler<EndGameCommand, OneOf<OwnedOrInvitedGame, Failure>>
 {
   public const string ActiveGameNotFoundError = "active_game_not_found";

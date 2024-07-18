@@ -120,7 +120,7 @@ export async function sendAuthenticatedApiRequest<T>(url: string, method: string
     }
   } else if (apiResponse.status == 401) {
     console.error("Got 401 API status code. Need to re-login");
-    setLocalStorage(authToken, null);
+    setLocalStorage(authTokenKey, null);
 
     // TODO refresh token and try again. then signal API if still 401
 

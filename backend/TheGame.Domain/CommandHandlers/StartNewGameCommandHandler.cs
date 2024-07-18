@@ -9,7 +9,7 @@ namespace TheGame.Domain.CommandHandlers;
 
 public sealed record StartNewGameCommand(string GameName, long OwnerPlayerId) : IRequest<OneOf<OwnedOrInvitedGame, Failure>>;
 
-public class StartNewGameCommandHandler(IGameDbContext gameDb, IGameFactory gameFactory, ITransactionExecutionWrapper transactionWrapper, ILogger<StartNewGameCommandHandler> logger)
+public sealed class StartNewGameCommandHandler(IGameDbContext gameDb, IGameFactory gameFactory, ITransactionExecutionWrapper transactionWrapper, ILogger<StartNewGameCommandHandler> logger)
   : IRequestHandler<StartNewGameCommand, OneOf<OwnedOrInvitedGame, Failure>>
 {
   public const string PlayerNotFoundError = "player_not_found";

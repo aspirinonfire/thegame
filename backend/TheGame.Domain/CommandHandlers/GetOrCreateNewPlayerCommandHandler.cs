@@ -11,9 +11,9 @@ namespace TheGame.Domain.CommandHandlers;
 
 public sealed record GetOrCreateNewPlayerCommand(NewPlayerIdentityRequest NewPlayerIdentityRequest) : IRequest<OneOf<GetOrCreatePlayerResult, Failure>>;
 
-public sealed record GetOrCreatePlayerResult(long PlayerIdentityId, long PlayerId, string ProviderName, string ProviderIdentityId);
+public sealed record GetOrCreatePlayerResult(bool IsNewIdentity, long PlayerIdentityId, long PlayerId, string ProviderName, string ProviderIdentityId, string RefreshToken);
 
-public class GetOrCreateNewPlayerCommandHandler(IGameDbContext gameDb, IPlayerIdentityFactory playerIdentityFactory, ITransactionExecutionWrapper transactionWrapper, ILogger<GetOrCreateNewPlayerCommand> logger)
+public sealed class GetOrCreateNewPlayerCommandHandler(IGameDbContext gameDb, IPlayerIdentityFactory playerIdentityFactory, ITransactionExecutionWrapper transactionWrapper, ILogger<GetOrCreateNewPlayerCommand> logger)
   : IRequestHandler<GetOrCreateNewPlayerCommand, OneOf<GetOrCreatePlayerResult, Failure>>
 {
     public async Task<OneOf<GetOrCreatePlayerResult, Failure>> Handle(GetOrCreateNewPlayerCommand request, CancellationToken cancellationToken) =>
@@ -31,10 +31,12 @@ public class GetOrCreateNewPlayerCommandHandler(IGameDbContext gameDb, IPlayerId
             if (existingPlayer != null)
             {
               logger.LogInformation("Found an existing player with identity. Returning...");
-              return new GetOrCreatePlayerResult(existingPlayer.Id,
+              return new GetOrCreatePlayerResult(false,
+                existingPlayer.Id,
                 existingPlayer.Player?.Id ?? -1,
                 existingPlayer.ProviderName,
-                existingPlayer.ProviderIdentityId);
+                existingPlayer.ProviderIdentityId,
+                existingPlayer.RefreshToken);
             }
 
             logger.LogInformation("Attempting to create new player with identity.");
@@ -50,10 +52,12 @@ public class GetOrCreateNewPlayerCommandHandler(IGameDbContext gameDb, IPlayerId
             
             logger.LogInformation("New player with identity was created successfully.");
             
-            return new GetOrCreatePlayerResult(newIdentity.Id,
+            return new GetOrCreatePlayerResult(true,
+              newIdentity.Id,
               newIdentity.Player?.Id ?? -1,
               newIdentity.ProviderName,
-              newIdentity.ProviderIdentityId);
+              newIdentity.ProviderIdentityId,
+              newIdentity.RefreshToken);
           },
           nameof(GetOrCreateNewPlayerCommand),
           logger,
