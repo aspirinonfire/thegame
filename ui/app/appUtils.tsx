@@ -1,21 +1,43 @@
-export type ApiErrorType = "auth_error" | "api_error" | "json_error"
-
-// TODO better union types
-export interface ApiError {
-  type: ApiErrorType,
+interface ApiError {
+  type: "api_error",
   statusCode: number | undefined,
   exception: any | undefined
 }
 
-function isApiError(response: any | ApiError ) : response is ApiError {
-  return (response as ApiError).type !== undefined;
+interface AuthError {
+  type: "auth_error",
+  error: string
 }
 
-export function handleApiResponse<T, TResp>(apiResponse: T | ApiError,
+interface SerializationError {
+  type: "json_error",
+  error: any | undefined,
+  statusCode: number | undefined
+}
+
+export type GameApiError = ApiError | AuthError | SerializationError;
+
+function isApiError(response: any | GameApiError ) : response is ApiError {
+  return (response as ApiError).type === "api_error";
+}
+
+function isAuthError(response: any | GameApiError ) : response is AuthError {
+  return (response as AuthError).type === "auth_error";
+}
+
+function isJsonError(response: any | GameApiError ) : response is SerializationError {
+  return (response as SerializationError).type === "json_error";
+}
+
+export function handleApiResponse<T, TResp>(apiResponse: T | GameApiError,
   onSuccess: (parsedResponse: T) => TResp,
-  onError: (apiError: ApiError) => TResp
+  onError: (apiError: GameApiError) => TResp
 ) : TResp {
-  return isApiError(apiResponse) ? onError(apiResponse) : onSuccess(apiResponse);
+  if (isApiError(apiResponse) || isAuthError(apiResponse) || isJsonError(apiResponse)) {
+    return onError(apiResponse);
+  } else {
+    return onSuccess(apiResponse);
+  }
 }
 
 export default function refreshOnNewVersion() {
@@ -71,7 +93,7 @@ export function setLocalStorage(key: string, value: any): void {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-export async function sendAuthenticatedApiRequest<T>(url: string, method: string, body?: any) : Promise<T | ApiError> {
+export async function sendAuthenticatedApiRequest<T>(url: string, method: string, body?: any) : Promise<T | GameApiError> {
   // TODO need to handle offline. Main goal is not to break UI.
 
   const authToken = getFromLocalStorage<string>(authTokenKey);
@@ -79,8 +101,7 @@ export async function sendAuthenticatedApiRequest<T>(url: string, method: string
     console.warn("Api auth token is missing. Need to re-login.");
     return {
       type: "auth_error",
-      exception: undefined,
-      statusCode: undefined
+      error: "missing_token"
     };
   }
   
@@ -114,7 +135,7 @@ export async function sendAuthenticatedApiRequest<T>(url: string, method: string
     } catch (jsonException) {
       return {
         type: "json_error",
-        exception: jsonException,
+        error: jsonException,
         statusCode: apiResponse.status
       }
     }
@@ -126,8 +147,7 @@ export async function sendAuthenticatedApiRequest<T>(url: string, method: string
 
     return {
       type: "auth_error",
-      exception: undefined,
-      statusCode: apiResponse.status
+      error: "invalid_token"
     };
   }
 

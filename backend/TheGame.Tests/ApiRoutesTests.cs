@@ -127,7 +127,7 @@ public class ApiRoutesTests
 
     var actualAuthTokenResponseMessage = await client.PostAsJsonAsync("/api/user/google/apitoken", testGoogleIdToken);
 
-    Assert.True(actualAuthTokenResponseMessage.IsSuccessStatusCode);
+    Assert.Equal(HttpStatusCode.OK, actualAuthTokenResponseMessage.StatusCode);
 
     var actualCookiesFromResponse = actualAuthTokenResponseMessage.Headers
       .Where(header => header.Key == "Set-Cookie")
@@ -149,11 +149,125 @@ public class ApiRoutesTests
     Assert.Contains("secure", actualRefreshCookieValue);
     Assert.Contains("samesite=strict", actualRefreshCookieValue);
     Assert.Contains("httponly", actualRefreshCookieValue);
+    Assert.Contains("path=/api/user/refresh-token", actualRefreshCookieValue);
 
     var actualResponse = await actualAuthTokenResponseMessage.Content.ReadFromJsonAsync<Dictionary<string, string>>();
     Assert.NotNull(actualResponse);
     var actualToken = Assert.Contains("accessToken", actualResponse);
     Assert.NotEmpty(actualToken);
+  }
+
+  [Fact]
+  public async Task WillRefreshTokenWithUnexpiredAccessToken()
+  {
+    var currentAccessToken = "token";
+    var currentRefreshToken = "refresh";
+
+    await using var uutApiApp = GetApiFactory(services =>
+    {
+
+    });
+
+    var client = uutApiApp.CreateClient();
+    client.DefaultRequestHeaders.Add("Cookie", $"gameapi-refresh={currentRefreshToken}");
+
+    var actualAuthTokenResponseMessage = await client.PostAsJsonAsync("/api/user/refresh-token", currentAccessToken);
+
+    Assert.Equal(HttpStatusCode.OK, actualAuthTokenResponseMessage.StatusCode);
+
+    var actualResponse = await actualAuthTokenResponseMessage.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+    Assert.NotNull(actualResponse);
+    var actualNewAccessToken = Assert.Contains("accessToken", actualResponse);
+    Assert.NotEqual(currentAccessToken, actualNewAccessToken);
+
+    var actualCookiesFromResponse = actualAuthTokenResponseMessage.Headers
+      .Where(header => header.Key == "Set-Cookie")
+      .SelectMany(header => header.Value)
+      .Select(cookie =>
+      {
+        var cookieParts = cookie.Split("=");
+
+        return new
+        {
+          Name = cookieParts[0],
+          Value = string.Join("=", cookieParts[1..])
+        };
+      })
+      .ToDictionary(x => x.Name, x => x.Value);
+
+    var actualNewRefreshCookieValue = Assert.Contains(GameAuthService.ApiRefreshTokenCookieName, actualCookiesFromResponse);
+    Assert.NotNull(actualNewRefreshCookieValue);
+    Assert.NotEqual(currentRefreshToken, actualNewRefreshCookieValue);
+  }
+
+  [Fact]
+  public async Task WillRefreshTokenWithExpiredAccessToken()
+  {
+    var currentAccessToken = "expired token";
+    var currentRefreshToken = "refresh";
+
+    await using var uutApiApp = GetApiFactory(services =>
+    {
+
+    });
+
+    var client = uutApiApp.CreateClient();
+    client.DefaultRequestHeaders.Add("Cookie", $"gameapi-refresh={currentRefreshToken}");
+
+    var actualAuthTokenResponseMessage = await client.PostAsJsonAsync("/api/user/refresh-token", currentAccessToken);
+
+    Assert.Equal(HttpStatusCode.OK, actualAuthTokenResponseMessage.StatusCode);
+
+    var actualResponse = await actualAuthTokenResponseMessage.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+    Assert.NotNull(actualResponse);
+    var actualNewAccessToken = Assert.Contains("accessToken", actualResponse);
+    Assert.NotEqual(currentAccessToken, actualNewAccessToken);
+
+    var actualCookiesFromResponse = actualAuthTokenResponseMessage.Headers
+      .Where(header => header.Key == "Set-Cookie")
+      .SelectMany(header => header.Value)
+      .Select(cookie =>
+      {
+        var cookieParts = cookie.Split("=");
+
+        return new
+        {
+          Name = cookieParts[0],
+          Value = string.Join("=", cookieParts[1..])
+        };
+      })
+      .ToDictionary(x => x.Name, x => x.Value);
+
+    var actualNewRefreshCookieValue = Assert.Contains(GameAuthService.ApiRefreshTokenCookieName, actualCookiesFromResponse);
+    Assert.NotNull(actualNewRefreshCookieValue);
+    Assert.NotEqual(currentRefreshToken, actualNewRefreshCookieValue);
+  }
+
+  [Fact]
+  public async Task WillReturn400WhenRefreshTokenCookeIsMissing()
+  {
+    var currentAccessToken = "token";
+
+    await using var uutApiApp = GetApiFactory();
+
+    var client = uutApiApp.CreateClient();
+
+    var actualAuthTokenResponseMessage = await client.PostAsJsonAsync("/api/user/refresh-token", currentAccessToken);
+
+    Assert.Equal(HttpStatusCode.BadRequest, actualAuthTokenResponseMessage.StatusCode);
+  }
+
+  [Fact]
+  public async Task WillReturn400WhenAccessTokenIsMissing()
+  {
+    await using var uutApiApp = GetApiFactory();
+
+    var client = uutApiApp.CreateClient();
+    client.DefaultRequestHeaders.Add("Cookie", $"gameapi-refresh=refresh_token_value");
+
+    var actualAuthTokenResponseMessage = await client.PostAsJsonAsync("/api/user/refresh-token", string.Empty);
+
+    Assert.Equal(HttpStatusCode.BadRequest, actualAuthTokenResponseMessage.StatusCode);
   }
 
   private WebApplicationFactory<Program> GetApiFactory(Action<IServiceCollection>? registerServices = null) => new WebApplicationFactory<Program>()
