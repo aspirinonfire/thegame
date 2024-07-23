@@ -265,7 +265,7 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
     var jwtToken = new JwtSecurityToken(
       claims: claims,
       notBefore: DateTime.UtcNow,
-      expires: DateTime.UtcNow.AddMinutes(60),
+      expires: DateTime.UtcNow.AddMinutes(gameSettings.Value.Auth.Api.JwtTokenExpirationMin),
       audience: gameSettings.Value.Auth.Api.JwtAudience,
       signingCredentials: new SigningCredentials(
         GetAccessTokenSigningKey(gameSettings.Value.Auth.Api.JwtSecret),

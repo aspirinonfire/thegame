@@ -1,4 +1,6 @@
 using MediatR;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -68,8 +70,14 @@ public static class ApiRoutes
       .AllowAnonymous();
 
     apiRoute
-      .MapPost("/user/refresh-token", async (HttpContext ctx, GameAuthService authService, [FromBody] string accessToken) =>
+      .MapPost("/user/refresh-token", async (HttpContext ctx, GameAuthService authService) =>
       {
+        // we cannot use GetTokenAsync because expired tokens are not saved in context
+        var accessToken = ctx.Request.Headers.Authorization
+          .FirstOrDefault()?
+          .Split(" ")
+          .LastOrDefault() ?? string.Empty;
+
         var refreshResult = await authService.RefreshAccessToken(ctx, accessToken);
         if (!refreshResult.TryGetSuccessful(out var refreshTokens, out var tokenFailure))
         {
