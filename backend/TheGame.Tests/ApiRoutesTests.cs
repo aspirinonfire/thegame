@@ -1,4 +1,5 @@
 ﻿using Google.Apis.Auth;
+using Google.Apis.Auth.OAuth2.Responses;
 using MediatR;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -81,8 +82,10 @@ public class ApiRoutesTests
   }
 
   [Fact]
-  public async Task WillAuthenticateNewPlayerWithWhenGoogleTokenIdIsValid()
+  public async Task WillAuthenticateNewPlayerWithWhenGoogleAuthCodeIsValid()
   {
+    var authCode = "auth-code";
+
     var testGoogleIdToken = "google-id-token";
 
     await using var uutApiApp = GetApiFactory(services =>
@@ -116,6 +119,14 @@ public class ApiRoutesTests
 
         mockedAuthService
           .Configure()
+          .ExchangeGoogleAuthCodeForTokens(authCode)
+          .Returns(new TokenResponse()
+          {
+            IdToken = testGoogleIdToken
+          });
+
+        mockedAuthService
+          .Configure()
           .GetValidatedGoogleIdTokenPayload(testGoogleIdToken)
           .Returns(new GoogleJsonWebSignature.Payload()
           {
@@ -129,7 +140,7 @@ public class ApiRoutesTests
 
     var client = uutApiApp.CreateClient();
 
-    var actualAuthTokenResponseMessage = await client.PostAsJsonAsync("/api/user/google/apitoken", testGoogleIdToken);
+    var actualAuthTokenResponseMessage = await client.PostAsJsonAsync("/api/user/google/apitoken", authCode);
 
     Assert.Equal(HttpStatusCode.OK, actualAuthTokenResponseMessage.StatusCode);
 
