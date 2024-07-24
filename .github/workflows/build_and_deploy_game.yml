@@ -17,6 +17,8 @@ env:
   DOTNET_VERSION: '8.0.x'
   DOTNET_SLN_PATH: 'backend/backend.sln'
   DOTNET_BUILD_CONFIG: 'Release'
+  TEST_SETTINGS_SAMPLE_PATH: 'backend/TheGame.Tests/testsettings.sample.json'
+  TEST_SETTINGS_PLACEHOLDER_PATH: 'backend/TheGame.Tests/testsettings.json'
 
 jobs:
   # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
@@ -41,6 +43,9 @@ jobs:
 
       - name: Build solution
         run: dotnet build ${{ env.DOTNET_SLN_PATH }} --configuration ${{ env.DOTNET_BUILD_CONFIG }} --no-restore --nologo
+
+      - name: Test Settings placeholder config
+        run: cp ${{ env.TEST_SETTINGS_SAMPLE_PATH }} ${{ env.TEST_SETTINGS_PLACEHOLDER_PATH }}
 
       - name: Run Tests
         run: dotnet test ${{ env.DOTNET_SLN_PATH }} --no-build --no-restore --verbosity normal
