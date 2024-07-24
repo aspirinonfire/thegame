@@ -92,6 +92,7 @@ jobs:
           --no-restore \
           --nologo \
           --verbosity normal \
+          /p:UseAppHost=false \
           --output ${{ env.API_PUBLISH_PATH }}
 
       - name: Upload API build artifacts for next action
