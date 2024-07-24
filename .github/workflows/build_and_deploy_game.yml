@@ -1,5 +1,6 @@
 # This action is responsible for building and deploying both backend and frontend code
 # TODO separate into multiple stages/actions
+# TODO rename to build.yml
 
 name: Build and Deploy Game
 
@@ -7,28 +8,42 @@ on:
   push:
     branches:
       - release/backend_ui_integration
-  # pull_request:
-  #   types: [opened, synchronize, reopened, closed]
-  #   branches:
-  #     - master
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - release/backend_ui_integration
   workflow_dispatch:
 
 env:
+  # general settings
+  ARTIFACTS_FOLDER: 'artifacts'
+  # API Settings
+  API_ROOT: 'backend'
+  API_PROJECT_TO_PUBLISH: 'backend/TheGame.Api/TheGame.Api.csproj'
+  API_PUBLISH_PATH: 'backend/publish_artifacts'
+  API_TEST_SETTINGS_PLACEHOLDER_PATH: 'backend/TheGame.Tests/testsettings.json'
   DOTNET_VERSION: '8.0.x'
-  DOTNET_SLN_PATH: 'backend/backend.sln'
   DOTNET_BUILD_CONFIG: 'Release'
-  TEST_SETTINGS_SAMPLE_PATH: 'backend/TheGame.Tests/testsettings.sample.json'
-  TEST_SETTINGS_PLACEHOLDER_PATH: 'backend/TheGame.Tests/testsettings.json'
+  # UI Settings
+  NODE_VERSION: 20
+  UI_ROOT: 'ui'
+  UI_EXPORT_PATH: 'ui/next_out'
 
 jobs:
   # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
-  build_test_and_publish_api_job:
+  build_and_test_api_job:
     # TODO add PR update to 'if'
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-22.04
-    name: Build, Test, and Publish APIs Job
+    name: Build, and Test API Job
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      # Build and Test backend
+      
+      - name: Create Test Settings placeholder config
+        run: touch ${{ env.API_TEST_SETTINGS_PLACEHOLDER_PATH }}
       
       - name: Setup dotnet ${{ env.DOTNET_VERSION }}
         uses: actions/setup-dotnet@v3
@@ -38,63 +53,85 @@ jobs:
       - name: Display dotnet version
         run: dotnet --version
 
-      - name: Test Settings placeholder config
-        run: cp ${{ env.TEST_SETTINGS_SAMPLE_PATH }} ${{ env.TEST_SETTINGS_PLACEHOLDER_PATH }}
+      - name: Restore dotnet packages
+        working-directory: ${{ env.API_ROOT }}
+        run: dotnet restore *.sln
 
-      - name: Restore packages
-        run: dotnet restore ${{ env.DOTNET_SLN_PATH }}
+      - name: Build dotnet solution
+        working-directory: ${{ env.API_ROOT }}
+        run: |
+          dotnet build *.sln \
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
+          --no-restore \
+          --nologo \
+          /p:ContinuousIntegrationBuild=true \
+          /p:Deterministic=true \
+          /p:UseAppHost=false
 
-      - name: Build solution
-        run: dotnet build ${{ env.DOTNET_SLN_PATH }} --configuration ${{ env.DOTNET_BUILD_CONFIG }} --no-restore --nologo
+      - name: Run dotnet tests
+        working-directory: ${{ env.API_ROOT }}
+        run: |
+          dotnet test *.sln \
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
+          --no-build \
+          --no-restore \
+          --nologo \
+          --verbosity normal \
+          /p:CollectCoverage=true \
+          /p:CoverletOutputFormat=opencover \
+          --logger trx \
+          --collect "XPlat Code Coverage" \
+          --settings ./coverlet.runsettings'
+      
+      - name: Publish dotnet solution
+        run: |
+          dotnet publish ${{ env.API_ROOT }}/${{ env.API_PROJECT_TO_PUBLISH }} \
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
+          --no-build \
+          --no-restore \
+          --nologo \
+          --verbosity normal \
+          --output ${{ env.API_PUBLISH_PATH }}
 
-      - name: Run Tests
-        run: dotnet test ${{ env.DOTNET_SLN_PATH }} --configuration ${{ env.DOTNET_BUILD_CONFIG }} --no-build --no-restore --verbosity normal
 
-  build_and_deploy_swa_job:
-    if: false
-    # if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed') || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-22.04
-    name: Build and Deploy Job
-    steps:
-      - name: Setup Node.js environment
+      # Build NextJS
+      
+      - name: Setup node.js environment
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-      
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: true
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: NPM install
+        working-directory: ${{ env.UI_ROOT }}
+        run: npm install
 
       - name: Set version file
-        id: vars
+        working-directory: ${{ env.UI_ROOT }}
         run: |
           calculateSha=$(git rev-parse --short ${{ github.sha }})
           deployDate=$(date --iso-8601=seconds)
-          echo "{\"deployDate\":\"$deployDate\",\"sha\":\"$calculateSha\"}" > ./ui/public/version.json
-      
-      # TODO separate build and deploy steps. Use pulumi (or terraform) to configure and deploy to static web app
-      - name: Build And Deploy UI
-        id: swa
-        uses: azure/static-web-apps-deploy@latest
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_ASHY_SMOKE_0BF195F1E }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for GitHub integrations (i.e. PR comments)
-          action: "upload"
-          app_location: "/ui" # App source code path
-          is_static_export: true
-          output_location: "/next_out" # Built app content directory - optional
-          api_location: "" # Api source code path - optional
-          skip_api_build: true
+          echo "{\"deployDate\":\"$deployDate\",\"sha\":\"$calculateSha\"}" > ./public/version.json
 
-  # close_pull_request_job:
-  #   if: github.event_name == 'pull_request' && github.event.action == 'closed'
-  #   runs-on: ubuntu-latest
-  #   name: Close Pull Request Job
-  #   steps:
-  #     - name: Close Pull Request
-  #       id: closepullrequest
-  #       uses: azure/static-web-apps-deploy@latest
-  #       with:
-  #         azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_ASHY_SMOKE_0BF195F1E }}
-  #         action: "close"
+      - name: Build and export NextJS
+        working-directory: ${{ env.UI_ROOT }}
+        run: npm run build
+    
+      # Upload backend and ui artifacts when both succeed
+
+      - name: Upload API build artifacts for next action
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'artifacts_backend'
+          path: ${{ env.API_PUBLISH_PATH }}
+          if-no-files-found: 'error'
+          retention-days: 1
+          overwrite: true
+
+      - name: Upload UI build artifacts for next action
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'artifacts_ui'
+          path: ${{ env.UI_EXPORT_PATH }}
+          if-no-files-found: 'error'
+          retention-days: 1
+          overwrite: true
