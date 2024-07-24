@@ -15,12 +15,10 @@ on:
   workflow_dispatch:
 
 env:
-  # general settings
-  ARTIFACTS_FOLDER: 'artifacts'
   # API Settings
   API_ROOT: 'backend'
-  API_PROJECT_TO_PUBLISH: 'backend/TheGame.Api/TheGame.Api.csproj'
-  API_PUBLISH_PATH: 'backend/publish_artifacts'
+  API_PROJECT_TO_PUBLISH: 'TheGame.Api/TheGame.Api.csproj'
+  API_PUBLISH_DIR: 'publish_artifacts'
   API_TEST_SETTINGS_PLACEHOLDER_PATH: 'backend/TheGame.Tests/testsettings.json'
   DOTNET_VERSION: '8.0.x'
   DOTNET_BUILD_CONFIG: 'Release'
@@ -82,17 +80,29 @@ jobs:
           --logger trx \
           --collect 'XPlat Code Coverage' \
           --settings './coverlet.runsettings'
+
+      - name: Set publish path env var
+        run: echo ::set-env name=API_PUBLISH_PATH::${{ github.workspace }}/${{ env.API_ROOT }}/${{ env.API_PUBLISH_DIR }}
       
       - name: Publish dotnet solution
+        working-directory: ${{ env.API_ROOT }}
         run: |
-          dotnet publish ${{ env.API_ROOT }}/${{ env.API_PROJECT_TO_PUBLISH }} \
+          dotnet publish ${{ env.API_PROJECT_TO_PUBLISH }} \
           --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
           --no-build \
           --no-restore \
           --nologo \
           --verbosity normal \
-          --output ${{ env.API_PUBLISH_PATH }}
+          --output $API_PUBLISH_PATH
 
+      - name: Upload API build artifacts for next action
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'artifacts_backend'
+          path: $API_PUBLISH_PATH
+          if-no-files-found: 'error'
+          retention-days: 1
+          overwrite: true
 
       # Build NextJS
       
@@ -115,23 +125,12 @@ jobs:
       - name: Build and export NextJS
         working-directory: ${{ env.UI_ROOT }}
         run: npm run build
-    
-      # Upload backend and ui artifacts when both succeed
-
-      - name: Upload API build artifacts for next action
-        uses: actions/upload-artifact@v4
-        with:
-          name: 'artifacts_backend'
-          path: ${{ env.API_PUBLISH_PATH }}
-          if-no-files-found: 'error'
-          retention-days: 1
-          overwrite: true
 
       - name: Upload UI build artifacts for next action
         uses: actions/upload-artifact@v4
         with:
           name: 'artifacts_ui'
-          path: ${{ env.UI_EXPORT_PATH }}
+          path: ${{ github.workspace }}/${{ env.UI_ROOT }}/${{ env.UI_EXPORT_PATH }}
           if-no-files-found: 'error'
           retention-days: 1
           overwrite: true
