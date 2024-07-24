@@ -48,7 +48,7 @@ jobs:
         run: dotnet build ${{ env.DOTNET_SLN_PATH }} --configuration ${{ env.DOTNET_BUILD_CONFIG }} --no-restore --nologo
 
       - name: Run Tests
-        run: dotnet test ${{ env.DOTNET_SLN_PATH }} --no-build --no-restore --verbosity normal
+        run: dotnet test ${{ env.DOTNET_SLN_PATH }} --configuration ${{ env.DOTNET_BUILD_CONFIG }} --no-build --no-restore --verbosity normal
 
   build_and_deploy_swa_job:
     if: false
