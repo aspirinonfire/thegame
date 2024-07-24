@@ -29,11 +29,13 @@ env:
 
 jobs:
   # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
-  build_and_test_api_job:
+  build_test_and_publish_artifacts_job:
     # TODO add PR update to 'if'
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-22.04
-    name: Build, and Test API Job
+    name: Build, Test and Publish API and UI artifacts
+    env:
+      API_PUBLISH_PATH: ${{ github.workspace }}/$API_ROOT/$API_PUBLISH_DIR
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -81,9 +83,6 @@ jobs:
           --collect 'XPlat Code Coverage' \
           --settings './coverlet.runsettings'
 
-      - name: Set publish path env var
-        run: echo ::set-env name=API_PUBLISH_PATH::${{ github.workspace }}/${{ env.API_ROOT }}/${{ env.API_PUBLISH_DIR }}
-      
       - name: Publish dotnet solution
         working-directory: ${{ env.API_ROOT }}
         run: |
@@ -93,13 +92,13 @@ jobs:
           --no-restore \
           --nologo \
           --verbosity normal \
-          --output $API_PUBLISH_PATH
+          --output ${{ env.API_PUBLISH_PATH }}
 
       - name: Upload API build artifacts for next action
         uses: actions/upload-artifact@v4
         with:
           name: 'artifacts_backend'
-          path: $API_PUBLISH_PATH
+          path: ${{ env.API_PUBLISH_PATH }}
           if-no-files-found: 'error'
           retention-days: 1
           overwrite: true
