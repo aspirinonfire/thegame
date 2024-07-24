@@ -80,8 +80,8 @@ jobs:
           /p:CollectCoverage=true \
           /p:CoverletOutputFormat=opencover \
           --logger trx \
-          --collect "XPlat Code Coverage" \
-          --settings ./coverlet.runsettings'
+          --collect 'XPlat Code Coverage' \
+          --settings './coverlet.runsettings'
       
       - name: Publish dotnet solution
         run: |
