@@ -52,7 +52,8 @@ public static class ApiOtelServiceExtensions
       {
         tracing
           .AddAspNetCoreInstrumentation()
-          .AddHttpClientInstrumentation();
+          .AddHttpClientInstrumentation()
+          .AddEntityFrameworkCoreInstrumentation();
 
         if (!string.IsNullOrEmpty(otelConfig?.ExporterEndpoint))
         {
