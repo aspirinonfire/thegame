@@ -3,12 +3,15 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
-	<!-- CS4014 - async not awaited -->
-	<WarningsAsErrors>Nullable,CS4014</WarningsAsErrors>
-	<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+	  <!-- CS4014 - async not awaited -->
+	  <WarningsAsErrors>Nullable,CS4014</WarningsAsErrors>
+	  <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <UserSecretsId>d3a2e6a9-e47b-48c6-9f87-b0973f9b5e11</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
+    <!-- Publish settings-->
+    <RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
+    <SelfContained>false</SelfContained> 
   </PropertyGroup>
 
   <ItemGroup>
