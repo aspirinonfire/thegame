@@ -1,0 +1,43 @@
+name: Deploy App
+
+on:
+  workflow_run:
+    workflows: [Build]
+    types: [completed]
+    branches: [master]
+  workflow_dispatch:
+
+env:
+  artifacts_backend: artifacts_backend
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+    - name: 'Download API artifact'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            run_id: context.payload.workflow_run.id,
+          });
+          let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
+            return artifact.name == "${{ env.artifacts_backend }}"
+          })[0];
+          let download = await github.rest.actions.downloadArtifact({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            artifact_id: matchArtifact.id,
+            archive_format: 'zip',
+          });
+          let fs = require('fs');
+          fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/${{ env.artifacts_backend }}.zip`, Buffer.from(download.data));
+
+    - name: 'Unzip API artifact'
+      run: unzip ${{ env.artifacts_backend }}.zip
+
+    - name: 'List artifacts'
+      run: ls -lsR ${{ env.artifacts_backend }}
