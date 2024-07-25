@@ -2,7 +2,7 @@
 # TODO separate into multiple stages/actions
 # TODO rename to build.yml
 
-name: Build and Deploy Game
+name: Build Test and Publish
 
 on:
   push:
@@ -25,7 +25,6 @@ env:
   # UI Settings
   NODE_VERSION: 20
   UI_ROOT: 'ui'
-  UI_EXPORT_PATH: 'ui/next_out'
 
 jobs:
   # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
@@ -128,7 +127,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: 'artifacts_ui'
-          path: ${{ github.workspace }}/${{ env.UI_ROOT }}/${{ env.UI_EXPORT_PATH }}
+          path: ${{ github.workspace }}/${{ env.UI_ROOT }}/next_out
           if-no-files-found: 'error'
           retention-days: 1
           overwrite: true
