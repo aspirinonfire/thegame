@@ -16,10 +16,18 @@ services:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=${SQL_PASSWORD}
 
+  aspire.dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:8.0.0
+    ports:
+      - "18888:18888" # UI
+      #- "4317:18889"  # OTLP port (gRPC)
+    environment:
+      - Dashboard__Frontend__AuthMode=Unsecured # Dev only!
+      - DASHBOARD__OTLP__AUTHMODE=ApiKey
+      - DASHBOARD__OTLP__PRIMARYAPIKEY=${OTLP_API_KEY}
+
   thegame.api:
     image: ${DOCKER_REGISTRY-}thegameapi
-    ports:
-        - "9000:80"
     build:
       context: .
       dockerfile: TheGame.Api/Dockerfile
@@ -36,8 +44,11 @@ services:
       - ASPNETCORE_URLS=http://+:80
       - Logging__LogLevel__Default=Warning
       - Logging__LogLevel__Microsoft=Information
+      - Otel__ExporterEndpoint=http://aspire.dashboard:18889
+      - Otel__ExporterApiKey=${OTLP_API_KEY}
     depends_on:
     - mssql
+    - aspire.dashboard 
   
   nginx:
     image: nginx:1.25.3-alpine

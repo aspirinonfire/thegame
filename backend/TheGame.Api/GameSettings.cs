@@ -1,15 +1,16 @@
-﻿using MediatR;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace TheGame.Api;
 
-public sealed class GameSettings
+public sealed record GameSettings
 {
   [Required]
   public required AuthSettings Auth { get; init; }
+
+  public OtelConfig? Otel { get; init; }
 }
 
-public sealed class AuthSettings
+public sealed record AuthSettings
 {
   [Required]
   public required ApiAuthSettings Api { get; init; }
@@ -18,7 +19,7 @@ public sealed class AuthSettings
   public required ApiGoogleSettings Google { get; init; }
 }
 
-public sealed class ApiAuthSettings
+public sealed record ApiAuthSettings
 {
   [Required]
   public required string JwtSecret { get; init; }
@@ -36,11 +37,17 @@ public sealed class ApiAuthSettings
   public required uint RefreshTokenAgeMinutes { get; init; }
 }
 
-public sealed class ApiGoogleSettings
+public sealed record ApiGoogleSettings
 {
   [Required]
   public required string ClientId { get; init; }
 
   [Required]
   public required string ClientSecret { get; init; }
+}
+
+public sealed record OtelConfig
+{
+  public string? ExporterEndpoint { get; init; }
+  public string? ExporterApiKey { get; init; }
 }
