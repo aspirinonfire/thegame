@@ -89,6 +89,8 @@ public class Program
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
       });
 
+    builder.AddGameApiOpenTelemtry();
+
     var app = builder.Build();
 
     // Configure the HTTP request pipeline.
