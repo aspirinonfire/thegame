@@ -31,6 +31,7 @@ services:
       - Auth__Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
       - Auth__Api__JwtSecret=${API_JWT_SECRET}
       - Auth__Api__JwtAudience=${API_JWT_AUDIENCE}
+      - Auth__Api__JwtTokenExpirationMin=5
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80
       - Logging__LogLevel__Default=Warning

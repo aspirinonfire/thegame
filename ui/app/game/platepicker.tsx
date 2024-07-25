@@ -1,21 +1,22 @@
 "use client"
-import { mockAccount } from "../common/data";
 import { LicensePlateSpot, Territory } from "../common/gameCore/gameModels";
-import React, { useRef, useState } from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import { Button, Modal } from "flowbite-react";
 import Image from 'next/image'
 import { GetPlateDataForRendering, GetTerritoryKey } from "../common/gameCore/gameRepository";
+import { CurrentUserAccountContext } from "../common/gameCore/gameContext";
 
 interface PickerControls {
   isShowPicker: boolean;
   setShowPicker: (isShown: boolean) => void;
-  saveNewPlateData: (plates: { [key: string]: LicensePlateSpot }) => void;
+  saveNewPlateData: (plates: LicensePlateSpot[] ) => void;
   plateData: { [key: string]: LicensePlateSpot };
 }
 
 export default function PlatePicker({ isShowPicker, setShowPicker, saveNewPlateData, plateData }: PickerControls) {
   const [formData, setFormData] = useState(plateData);
   const [searchTerm, setSearchTerm] = useState<string | null>();
+  const {userDetails} = useContext(CurrentUserAccountContext);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -64,8 +65,8 @@ export default function PlatePicker({ isShowPicker, setShowPicker, saveNewPlateD
         country: territory.country,
         stateOrProvince: territory.shortName,
 
-        dateSpotted: new Date(),
-        spottedBy: mockAccount.name
+        spottedOn: new Date(),
+        spottedByPlayerName: userDetails.Player.playerName
       } as LicensePlateSpot;
     }
     
@@ -74,7 +75,10 @@ export default function PlatePicker({ isShowPicker, setShowPicker, saveNewPlateD
   }
 
   function handelSaveNewSpots() {
-    saveNewPlateData(formData);
+    const newSpottedPlates = Object.keys(formData)
+      .map(key => formData[key]);
+
+    saveNewPlateData(newSpottedPlates);
     setShowPicker(false);
     setSearchTerm(null);
   }
