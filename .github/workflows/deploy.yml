@@ -5,15 +5,13 @@ on:
     workflows: [Build Test and Publish]
     types: [completed]
     branches: [master]
-  workflow_dispatch:
-
 env:
   artifacts_backend: artifacts_backend
 
 jobs:
   deploy:
     runs-on: ubuntu-22.04
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch' }}
     steps:
     - name: 'Download API artifact'
       uses: actions/github-script@v6
@@ -40,4 +38,4 @@ jobs:
       run: unzip ${{ env.artifacts_backend }}.zip
 
     - name: 'List artifacts'
-      run: ls -lsR ${{ env.artifacts_backend }}
+      run: ls -lsR
