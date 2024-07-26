@@ -8,7 +8,7 @@ namespace TheGame.Domain.CommandHandlers;
 
 public interface ITransactionExecutionWrapper
 {
-  Task<OneOf<TSuccessResult, Failure>> ExecuteInTransaction<TSuccessResult>(Func<Task<OneOf<TSuccessResult, Failure>>> commandHandler,
+  Task<Maybe<TSuccessResult>> ExecuteInTransaction<TSuccessResult>(Func<Task<Maybe<TSuccessResult>>> commandHandler,
     string commandName,
     ILogger logger,
     CancellationToken? cancellationToken = null);
@@ -16,7 +16,7 @@ public interface ITransactionExecutionWrapper
 
 public sealed class TransactionExecutionWrapper(IGameDbContext gameDb) : ITransactionExecutionWrapper
 {
-  public async Task<OneOf<TSuccessResult, Failure>> ExecuteInTransaction<TSuccessResult>(Func<Task<OneOf<TSuccessResult, Failure>>> commandHandler,
+  public async Task<Maybe<TSuccessResult>> ExecuteInTransaction<TSuccessResult>(Func<Task<Maybe<TSuccessResult>>> commandHandler,
     string commandName,
     ILogger logger,
     CancellationToken? cancellationToken = default)

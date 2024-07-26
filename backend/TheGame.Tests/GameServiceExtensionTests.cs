@@ -2,28 +2,27 @@ using Microsoft.Extensions.DependencyInjection;
 using TheGame.Domain;
 using TheGame.Domain.DomainModels;
 
-namespace TheGame.Tests
+namespace TheGame.Tests;
+
+[Trait(XunitTestProvider.Category, XunitTestProvider.Unit)]
+public class GameServiceExtensionTests
 {
-  [Trait(XunitTestProvider.Category, XunitTestProvider.Unit)]
-  public class GameServiceExtensionTests
+  [Fact]
+  public void CanInstantiateGameServicesDI()
   {
-    [Fact]
-    public void CanInstantiateGameServicesDI()
+    var services = new ServiceCollection()
+      .AddGameServices("test_conn_string");
+
+    var diOpts = new ServiceProviderOptions
     {
-      var services = new ServiceCollection()
-        .AddGameServices("test_conn_string");
+      ValidateOnBuild = true,
+      ValidateScopes = true,
+    };
+    using var sp = services.BuildServiceProvider(diOpts);
+    using var scope = sp.CreateScope();
 
-      var diOpts = new ServiceProviderOptions
-      {
-        ValidateOnBuild = true,
-        ValidateScopes = true,
-      };
-      using var sp = services.BuildServiceProvider(diOpts);
-      using var scope = sp.CreateScope();
+    var actualException = Record.Exception(scope.ServiceProvider.GetRequiredService<IGameDbContext>);
 
-      var actualException = Record.Exception(scope.ServiceProvider.GetRequiredService<IGameDbContext>);
-
-      Assert.Null(actualException);
-    }
+    Assert.Null(actualException);
   }
 }

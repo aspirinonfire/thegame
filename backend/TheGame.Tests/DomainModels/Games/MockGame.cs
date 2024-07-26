@@ -2,53 +2,52 @@ using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.Players;
 
-namespace TheGame.Tests.DomainModels.Games
+namespace TheGame.Tests.DomainModels.Games;
+
+public class MockGame : Game
 {
-  public class MockGame : Game
+  public MockGame(IEnumerable<GameLicensePlate>? licensePlates,
+    Player createdBy,
+    bool isActive,
+    DateTimeOffset? endedOn = null,
+    string name = "test game")
   {
-    public MockGame(IEnumerable<GameLicensePlate>? licensePlates,
-      Player createdBy,
-      bool isActive,
-      DateTimeOffset? endedOn = null,
-      string name = "test game")
-    {
-      _gameLicensePlates = licensePlates?.ToHashSet() ?? [];
+    _gameLicensePlates = licensePlates?.ToHashSet() ?? [];
 
-      CreatedBy = createdBy;
+    CreatedBy = createdBy;
 
-      _gamePlayerInvites = []; 
+    _gamePlayerInvites = []; 
 
-      Name = name;
+    Name = name;
 
-      IsActive = isActive;
+    IsActive = isActive;
 
-      EndedOn = endedOn;
-    }
-
-    public void SetActiveFlag(bool newValue)
-    {
-      IsActive = newValue;
-    }
-
-    public void AddInvitedPlayer(Player player,
-      Guid? inviteToken = null,
-      GamePlayerInviteStatus? gamePlayerInviteStatus = null)
-    {
-      _gamePlayerInvites.Add(new MockGamePlayer(player, this, inviteToken, gamePlayerInviteStatus));
-    }
+    EndedOn = endedOn;
   }
 
-  public class MockGamePlayer : GamePlayer
+  public void SetActiveFlag(bool newValue)
   {
-    public MockGamePlayer(Player player,
-      Game game,
-      Guid? inviteToken,
-      GamePlayerInviteStatus? gamePlayerInviteStatus)
-    {
-      Player = player;
-      Game = game;
-      InviteStatus = gamePlayerInviteStatus.GetValueOrDefault(GamePlayerInviteStatus.Accepted);
-      InvitationToken = inviteToken.GetValueOrDefault(Guid.NewGuid());
-    }
+    IsActive = newValue;
+  }
+
+  public void AddInvitedPlayer(Player player,
+    Guid? inviteToken = null,
+    GamePlayerInviteStatus? gamePlayerInviteStatus = null)
+  {
+    _gamePlayerInvites.Add(new MockGamePlayer(player, this, inviteToken, gamePlayerInviteStatus));
+  }
+}
+
+public class MockGamePlayer : GamePlayer
+{
+  public MockGamePlayer(Player player,
+    Game game,
+    Guid? inviteToken,
+    GamePlayerInviteStatus? gamePlayerInviteStatus)
+  {
+    Player = player;
+    Game = game;
+    InviteStatus = gamePlayerInviteStatus.GetValueOrDefault(GamePlayerInviteStatus.Accepted);
+    InvitationToken = inviteToken.GetValueOrDefault(Guid.NewGuid());
   }
 }

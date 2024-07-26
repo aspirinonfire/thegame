@@ -9,7 +9,7 @@ namespace TheGame.Domain.Utils
   /// Failure object
   /// </summary>
   /// <param name="Error"></param>
-  public class Failure(string Error)
+  public record Failure(string Error)
   {
     public static Failure CreateFromValidationErrors(IEnumerable<ValidationFailure> validationFailures)
     {
