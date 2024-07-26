@@ -1,0 +1,9 @@
+# Pulumi project config
+# See https://www.pulumi.com/docs/concepts/projects/project-file/
+name: TheGame.Pulumi
+runtime: dotnet
+description: The Game IaC using Pulumi csharp
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: csharp

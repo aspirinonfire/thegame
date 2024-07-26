@@ -23,6 +23,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nginx", "nginx", "{53F82690
 		nginx\www\index.html = nginx\www\index.html
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheGame.Pulumi", "TheGame.Pulumi\TheGame.Pulumi.csproj", "{3FB889E6-E2D1-4EAF-A0EC-684A7F31CF41}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -81,6 +83,18 @@ Global
 		{000525DA-C4D5-4AD5-8716-7E5901315F2A}.Release|x64.Build.0 = Release|Any CPU
 		{000525DA-C4D5-4AD5-8716-7E5901315F2A}.Release|x86.ActiveCfg = Release|Any CPU
 		{000525DA-C4D5-4AD5-8716-7E5901315F2A}.Release|x86.Build.0 = Release|Any CPU
+		{3FB889E6-E2D1-4EAF-A0EC-684A7F31CF41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3FB889E6-E2D1-4EAF-A0EC-684A7F31CF41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3FB889E6-E2D1-4EAF-A0EC-684A7F31CF41}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3FB889E6-E2D1-4EAF-A0EC-684A7F31CF41}.Debug|x64.Build.0 = Debug|Any CPU
+		{3FB889E6-E2D1-4EAF-A0EC-684A7F31CF41}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3FB889E6-E2D1-4EAF-A0EC-684A7F31CF41}.Debug|x86.Build.0 = Debug|Any CPU
+		{3FB889E6-E2D1-4EAF-A0EC-684A7F31CF41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3FB889E6-E2D1-4EAF-A0EC-684A7F31CF41}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3FB889E6-E2D1-4EAF-A0EC-684A7F31CF41}.Release|x64.ActiveCfg = Release|Any CPU
+		{3FB889E6-E2D1-4EAF-A0EC-684A7F31CF41}.Release|x64.Build.0 = Release|Any CPU
+		{3FB889E6-E2D1-4EAF-A0EC-684A7F31CF41}.Release|x86.ActiveCfg = Release|Any CPU
+		{3FB889E6-E2D1-4EAF-A0EC-684A7F31CF41}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
