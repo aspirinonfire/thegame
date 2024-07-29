@@ -94,15 +94,6 @@ jobs:
           /p:UseAppHost=false \
           --output ${{ github.workspace }}/${{ env.API_ROOT }}/${{ env.API_PUBLISH_DIR }}
 
-      - name: Upload API build artifacts for next action
-        uses: actions/upload-artifact@v4
-        with:
-          name: 'artifacts_backend'
-          path: ${{ github.workspace }}/${{ env.API_ROOT }}/${{ env.API_PUBLISH_DIR }}
-          if-no-files-found: 'error'
-          retention-days: 1
-          overwrite: true
-
       # Build NextJS
       - name: NPM install
         working-directory: ${{ env.UI_ROOT }}
@@ -118,12 +109,18 @@ jobs:
       - name: Build and export NextJS
         working-directory: ${{ env.UI_ROOT }}
         run: npm run build
+        env:
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.GOOGLECLIENTID }}
 
-      - name: Upload UI build artifacts for next action
+      # Publish artifacts for deploy workflow
+      - name: Combine artifacts
+        run: mv ${{ github.workspace }}/${{ env.UI_ROOT }}/next_out ${{ github.workspace }}/${{ env.API_ROOT }}/${{ env.API_PUBLISH_DIR }}/wwwroot
+
+      - name: Upload combined artifacts for deployment
         uses: actions/upload-artifact@v4
         with:
-          name: 'artifacts_ui'
-          path: ${{ github.workspace }}/${{ env.UI_ROOT }}/next_out
+          name: 'artifacts'
+          path: ${{ github.workspace }}/${{ env.API_ROOT }}/${{ env.API_PUBLISH_DIR }}
           if-no-files-found: 'error'
           retention-days: 1
           overwrite: true

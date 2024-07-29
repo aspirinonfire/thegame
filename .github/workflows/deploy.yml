@@ -6,7 +6,7 @@ on:
     types: [completed]
     branches: [master]
 env:
-  artifacts_backend: artifacts_backend
+  artifacts: artifacts
 
 jobs:
   deploy:
@@ -24,7 +24,7 @@ jobs:
             run_id: context.payload.workflow_run.id,
           });
           let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
-            return artifact.name == "${{ env.artifacts_backend }}"
+            return artifact.name == "${{ env.artifacts }}"
           })[0];
           let download = await github.rest.actions.downloadArtifact({
             owner: context.repo.owner,
@@ -33,10 +33,10 @@ jobs:
             archive_format: 'zip',
           });
           let fs = require('fs');
-          fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/${{ env.artifacts_backend }}.zip`, Buffer.from(download.data));
+          fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/${{ env.artifacts }}.zip`, Buffer.from(download.data));
 
     - name: 'Unzip API artifact'
-      run: unzip -d ${{ env.artifacts_backend }} ${{ env.artifacts_backend }}.zip
+      run: unzip -d ${{ env.artifacts }} ${{ env.artifacts }}.zip
 
     - name: 'List artifacts'
-      run: ls -l ${{ env.artifacts_backend }}
+      run: ls -l ${{ env.artifacts }}
