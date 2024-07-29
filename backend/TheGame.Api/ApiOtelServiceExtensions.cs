@@ -16,7 +16,7 @@ public static class ApiOtelServiceExtensions
   public static void AddGameApiOpenTelemtry(this WebApplicationBuilder builder)
   {
     var otelConfig = builder.Configuration.GetSection("Otel").Get<OtelConfig>();
-    if (otelConfig == null)
+    if (string.IsNullOrEmpty(otelConfig?.ExporterEndpoint))
     {
       return;
     }
@@ -41,15 +41,8 @@ public static class ApiOtelServiceExtensions
           .AddAspNetCoreInstrumentation()
           .AddHttpClientInstrumentation();
 
-        if (!string.IsNullOrEmpty(otelConfig?.ExporterEndpoint))
-        {
-          metrics.AddOtlpExporter(opts =>
-            CreateExporterOptions(opts, otelConfig.ExporterEndpoint, otelConfig.ExporterApiKey));
-        }
-        else
-        {
-          metrics.AddConsoleExporter();
-        }
+        metrics.AddOtlpExporter(opts =>
+          CreateExporterOptions(opts, otelConfig.ExporterEndpoint, otelConfig.ExporterApiKey));
       })
       // Configure tracing
       .WithTracing(tracing =>
@@ -59,28 +52,14 @@ public static class ApiOtelServiceExtensions
           .AddHttpClientInstrumentation()
           .AddEntityFrameworkCoreInstrumentation();
 
-        if (!string.IsNullOrEmpty(otelConfig?.ExporterEndpoint))
-        {
-          tracing.AddOtlpExporter(opts =>
-            CreateExporterOptions(opts, otelConfig.ExporterEndpoint, otelConfig.ExporterApiKey));
-        }
-        else
-        {
-          tracing.AddConsoleExporter();
-        }
+        tracing.AddOtlpExporter(opts =>
+          CreateExporterOptions(opts, otelConfig.ExporterEndpoint, otelConfig.ExporterApiKey));
       })
       // Configure logging
       .WithLogging(logging =>
       {
-        if (!string.IsNullOrEmpty(otelConfig?.ExporterEndpoint))
-        {
-          logging.AddOtlpExporter(opts =>
-            CreateExporterOptions(opts, otelConfig.ExporterEndpoint, otelConfig.ExporterApiKey));
-        }
-        else
-        {
-          logging.AddConsoleExporter();
-        }
+        logging.AddOtlpExporter(opts =>
+          CreateExporterOptions(opts, otelConfig.ExporterEndpoint, otelConfig.ExporterApiKey));
       });
   }
 
