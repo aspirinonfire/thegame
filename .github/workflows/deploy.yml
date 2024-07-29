@@ -6,14 +6,15 @@ on:
     types: [completed]
     branches: [master]
 env:
-  artifacts_backend: artifacts_backend
+  artifacts: artifacts
+  dockerfile: Dockerfile-pipelines
 
 jobs:
   deploy:
     runs-on: ubuntu-22.04
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch' }}
     steps:
-    - name: 'Download API artifact'
+    - name: Download artifacts
       uses: actions/github-script@v6
       with:
         # TODO download and unzip ALL artifacts
@@ -24,7 +25,7 @@ jobs:
             run_id: context.payload.workflow_run.id,
           });
           let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
-            return artifact.name == "${{ env.artifacts_backend }}"
+            return artifact.name == "${{ env.artifacts }}"
           })[0];
           let download = await github.rest.actions.downloadArtifact({
             owner: context.repo.owner,
@@ -33,10 +34,20 @@ jobs:
             archive_format: 'zip',
           });
           let fs = require('fs');
-          fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/${{ env.artifacts_backend }}.zip`, Buffer.from(download.data));
+          fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/${{ env.artifacts }}.zip`, Buffer.from(download.data));
+    
+    - name: Unzip artifacts
+      run: unzip -d ${{ env.artifacts }} ${{ env.artifacts }}.zip
 
-    - name: 'Unzip API artifact'
-      run: unzip -d ${{ env.artifacts_backend }} ${{ env.artifacts_backend }}.zip
+    - name: List artifacts
+      run: ls -l ${{ env.artifacts }}
 
-    - name: 'List artifacts'
-      run: ls -l ${{ env.artifacts_backend }}
+    - name: Prepare artifacts for docker build
+      run: mv ${{ env.artifacts }}/${{ env.dockerfile }} .
+    
+    # TODO: tag management
+    - name: Build and Push docker image
+      run: |
+        docker login --username ${{ github.repository_owner }} --password ${{ secrets.GHCR_PAT }} ghcr.io
+        docker build ${{ env.artifacts }} --file ${{ env.dockerfile }} --tag ghcr.io/${{ github.repository_owner }}/thegame-everything:latest
+        docker push ghcr.io/${{ github.repository_owner }}/thegame-everything:latest

@@ -90,7 +90,7 @@ public class LicensePlate : IEnumeration, IEquatable<LicensePlate>
 
   public Country Country { get; protected set; }
 
-  public static OneOf<LicensePlate, Failure> GetLicensePlate(PlateKey plateKey)
+  public static Maybe<LicensePlate> GetLicensePlate(PlateKey plateKey)
   {
     if (LicensePlatesByCountryAndProvinceLookup.TryGetValue(plateKey, out var licensePlateModel))
     {

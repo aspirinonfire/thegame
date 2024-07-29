@@ -62,3 +62,4 @@ Release/
 
 # IDE
 .vs
+/backend/TheGame.Pulumi/Pulumi.localdev.yaml

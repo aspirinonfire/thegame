@@ -6,14 +6,14 @@ namespace TheGame.Domain.DomainModels.Games;
 
 public interface IGamePlayerFactory
 {
-  OneOf<GamePlayer, Failure> AddPlayer(Player playerToAdd, Game currentGame);
+  Maybe<GamePlayer> AddPlayer(Player playerToAdd, Game currentGame);
 }
 
 public partial class GamePlayer
 {
   public class GamePlayerFactory : IGamePlayerFactory
   {
-    public OneOf<GamePlayer, Failure> AddPlayer(Player playerToAdd, Game currentGame)
+    public Maybe<GamePlayer> AddPlayer(Player playerToAdd, Game currentGame)
     {
       if (!currentGame.IsActive)
       {

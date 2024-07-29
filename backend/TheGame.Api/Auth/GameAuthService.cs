@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using OneOf;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -64,7 +63,7 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
   /// <param name="googleAuthCode"></param>
   /// <param name="httpContext"></param>
   /// <returns></returns>
-  public async Task<OneOf<ApiTokens, Failure>> AuthenticateWithGoogleAuthCode(string googleAuthCode, HttpContext httpContext)
+  public async Task<Maybe<ApiTokens>> AuthenticateWithGoogleAuthCode(string googleAuthCode, HttpContext httpContext)
   {
     var tokenResult = await ExchangeGoogleAuthCodeForTokens(googleAuthCode);
     if (!tokenResult.TryGetSuccessful(out var googleTokens, out var tokenFailure))
@@ -107,7 +106,7 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
     return new ApiTokens(playerIdentity.IsNewIdentity, apiToken);
   }
 
-  public virtual async Task<OneOf<ApiTokens, Failure>> RefreshAccessToken(HttpContext httpContext, string accessToken)
+  public virtual async Task<Maybe<ApiTokens>> RefreshAccessToken(HttpContext httpContext, string accessToken)
   {
     var refreshCookieValue = httpContext.Request.Cookies
       .Where(cookie => cookie.Key == ApiRefreshTokenCookieName)
@@ -172,7 +171,7 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
     return new ApiTokens(false, apiToken);
   }
 
-  public virtual async Task<OneOf<TokenResponse, Failure>> ExchangeGoogleAuthCodeForTokens(string authCode)
+  public virtual async Task<Maybe<TokenResponse>> ExchangeGoogleAuthCodeForTokens(string authCode)
   {
     if (string.IsNullOrWhiteSpace(authCode))
     {
@@ -216,7 +215,7 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
   /// </summary>
   /// <param name="googleIdToken"></param>
   /// <returns></returns>
-  public virtual async Task<OneOf<GoogleJsonWebSignature.Payload, Failure>> GetValidatedGoogleIdTokenPayload(string googleIdToken)
+  public virtual async Task<Maybe<GoogleJsonWebSignature.Payload>> GetValidatedGoogleIdTokenPayload(string googleIdToken)
   {
     if (string.IsNullOrEmpty(googleIdToken))
     {

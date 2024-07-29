@@ -1,4 +1,3 @@
-using OneOf.Types;
 using System;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Players;
@@ -32,7 +31,7 @@ public partial class PlayerIdentity : IAuditedRecord
 
   public DateTimeOffset? DateModified { get; }
 
-  public OneOf<Success, Failure> RotateRefreshToken(ISystemService systemService, ushort newTokenLenght, TimeSpan tokenAge)
+  public Maybe<Success> RotateRefreshToken(ISystemService systemService, ushort newTokenLenght, TimeSpan tokenAge)
   {
     if (newTokenLenght < MinTokenByteLenght)
     {
@@ -50,7 +49,7 @@ public partial class PlayerIdentity : IAuditedRecord
     return new Success();
   }
 
-  public OneOf<Success, Failure> InvalidateRefreshToken()
+  public Maybe<Success> InvalidateRefreshToken()
   {
     RefreshToken = null;
     RefreshTokenExpiration = null;

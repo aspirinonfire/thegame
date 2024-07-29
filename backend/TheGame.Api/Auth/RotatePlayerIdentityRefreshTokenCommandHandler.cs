@@ -1,7 +1,6 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using OneOf;
 using System;
 using System.Linq;
 using System.Threading;
@@ -16,7 +15,7 @@ namespace TheGame.Api.Auth;
 public sealed record RotatePlayerIdentityRefreshTokenCommand(long PlayerIdentityId,
   string CurrentRefreshToken,
   ushort NewRefreshTokenByteCount,
-  uint NewRefreshTokenAgeMinutes) : IRequest<OneOf<RotatePlayerIdentityRefreshTokenResult, Failure>>;
+  uint NewRefreshTokenAgeMinutes) : IRequest<Maybe<RotatePlayerIdentityRefreshTokenResult>>;
 
 public sealed record RotatePlayerIdentityRefreshTokenResult(string RefreshToken,
   DateTimeOffset RefreshTokenExpiration,
@@ -29,9 +28,9 @@ public sealed class RotatePlayerIdentityRefreshTokenCommandHandler(IGameDbContex
   ITransactionExecutionWrapper transactionWrapper,
   ISystemService systemService,
   ILogger<RotatePlayerIdentityRefreshTokenCommandHandler> logger)
-  : IRequestHandler<RotatePlayerIdentityRefreshTokenCommand, OneOf<RotatePlayerIdentityRefreshTokenResult, Failure>>
+  : IRequestHandler<RotatePlayerIdentityRefreshTokenCommand, Maybe<RotatePlayerIdentityRefreshTokenResult>>
 {
-  public async Task<OneOf<RotatePlayerIdentityRefreshTokenResult, Failure>> Handle(RotatePlayerIdentityRefreshTokenCommand request, CancellationToken cancellationToken) =>
+  public async Task<Maybe<RotatePlayerIdentityRefreshTokenResult>> Handle(RotatePlayerIdentityRefreshTokenCommand request, CancellationToken cancellationToken) =>
     await transactionWrapper.ExecuteInTransaction<RotatePlayerIdentityRefreshTokenResult>(
       async () =>
       {
@@ -54,7 +53,7 @@ public sealed class RotatePlayerIdentityRefreshTokenCommandHandler(IGameDbContex
         var newTokenResult = playerIdentity.RotateRefreshToken(systemService,
           request.NewRefreshTokenByteCount,
           TimeSpan.FromMinutes(request.NewRefreshTokenAgeMinutes));
-        if (!OneOfExtensions.TryGetSuccessful(newTokenResult, out _, out var rotationFailure))
+        if (!newTokenResult.TryGetSuccessful(out _, out var rotationFailure))
         {
           return rotationFailure;
         }

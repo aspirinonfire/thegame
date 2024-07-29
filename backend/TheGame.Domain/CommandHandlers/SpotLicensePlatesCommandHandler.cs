@@ -17,7 +17,8 @@ public sealed record SpottedPlate(Country Country, StateOrProvince StateOrProvin
   public LicensePlate.PlateKey ToPlateKey() => new(Country, StateOrProvince);
 }
 
-public sealed record SpotLicensePlatesCommand(IReadOnlyCollection<SpottedPlate> SpottedPlates, long GameId, long SpottedByPlayerId) : IRequest<OneOf<OwnedOrInvitedGame, Failure>>;
+public sealed record SpotLicensePlatesCommand(IReadOnlyCollection<SpottedPlate> SpottedPlates, long GameId, long SpottedByPlayerId) 
+  : IRequest<Maybe<OwnedOrInvitedGame>>;
 
 public sealed class SpotLicensePlatesCommandHandler(IGameDbContext gameDb,
   ITransactionExecutionWrapper transactionWrapper,
@@ -25,9 +26,9 @@ public sealed class SpotLicensePlatesCommandHandler(IGameDbContext gameDb,
   ISystemService systemService,
   IGameScoreCalculator gameScoreCalculator,
   ILogger<SpotLicensePlatesCommandHandler> logger)
-  : IRequestHandler<SpotLicensePlatesCommand, OneOf<OwnedOrInvitedGame, Failure>>
+  : IRequestHandler<SpotLicensePlatesCommand, Maybe<OwnedOrInvitedGame>>
 {
-  public async Task<OneOf<OwnedOrInvitedGame, Failure>> Handle(SpotLicensePlatesCommand request, CancellationToken cancellationToken) =>
+  public async Task<Maybe<OwnedOrInvitedGame>> Handle(SpotLicensePlatesCommand request, CancellationToken cancellationToken) =>
     await transactionWrapper.ExecuteInTransaction<OwnedOrInvitedGame>(async () =>
     {
       logger.LogInformation("Validating command");

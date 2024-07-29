@@ -93,6 +93,9 @@ public class Program
 
     var app = builder.Build();
 
+    app.UseDefaultFiles();  // re-write path only. / to /index.html
+    app.UseStaticFiles();   // serve ui files from wwwroot
+
     // Configure the HTTP request pipeline.
     if (isDevEnvironment)
     {
@@ -103,13 +106,11 @@ public class Program
         swaggerOpts.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1");
       });
     }
-
+    
     app.UseHsts();
     app.UseHttpsRedirection();
 
     app.UseHealthChecks("/api/health");
-
-    app.UseRouting();
 
     app.UseAuthentication();
     app.UseAuthorization();
@@ -117,6 +118,9 @@ public class Program
     app.MapGroup("")
       .RequireAuthorization()
       .AddGameApiRoutes();
+
+    // fallback to spa
+    app.MapFallbackToFile("/index.html");
 
     await app.RunAsync();
   }
