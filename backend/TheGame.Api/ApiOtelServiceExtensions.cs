@@ -15,12 +15,16 @@ public static class ApiOtelServiceExtensions
 {
   public static void AddGameApiOpenTelemtry(this WebApplicationBuilder builder)
   {
+    var otelConfig = builder.Configuration.GetSection("Otel").Get<OtelConfig>();
+    if (otelConfig == null)
+    {
+      return;
+    }
+
     builder.Logging.AddOpenTelemetry(logging =>
     {
       logging.IncludeFormattedMessage = true;
     });
-
-    var otelConfig = builder.Configuration.GetSection("Otel").Get<OtelConfig>();
 
     var otel = builder.Services
       .AddOpenTelemetry()

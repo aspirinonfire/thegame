@@ -1,0 +1,14 @@
+# IMPORTANT!
+# Make sure to set the correct Docker build context!!
+# Execute docker command from repository root:
+# docker build --file .\<project-name>\Dockerfile-pipelines --tag <image-name>:<tags> .\path\to\published-artifacts
+# This Dockerfile definition expects dotnet restore, build, test, and publish commands to be executed and completed prior to issuing docker build.
+# This will ensure we use same artifacts during and testing and when generating a Docker image in CI/CD pipelines.
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+USER app
+WORKDIR /app
+EXPOSE 8080
+
+COPY . .
+ENTRYPOINT ["dotnet", "TheGame.Api.dll"]

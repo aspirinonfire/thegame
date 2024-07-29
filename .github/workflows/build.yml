@@ -1,6 +1,4 @@
 # This action is responsible for building and deploying both backend and frontend code
-# TODO separate into multiple stages/actions
-# TODO rename to build.yml
 
 name: Build Test and Publish
 
@@ -115,6 +113,10 @@ jobs:
       # Publish artifacts for deploy workflow
       - name: Combine artifacts
         run: mv ${{ github.workspace }}/${{ env.UI_ROOT }}/next_out ${{ github.workspace }}/${{ env.API_ROOT }}/${{ env.API_PUBLISH_DIR }}/wwwroot
+
+      - name: Copy dockerfile for deployment
+        working-directory: ${{ env.API_ROOT }}
+        run: cp TheGame.Api/Dockerfile-pipelines ${{ env.API_PUBLISH_DIR }}
 
       - name: Upload combined artifacts for deployment
         uses: actions/upload-artifact@v4
