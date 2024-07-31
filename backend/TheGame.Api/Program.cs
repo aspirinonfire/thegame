@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using System;
+using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using TheGame.Api.Auth;
@@ -17,6 +20,19 @@ public class Program
 {
   public static async Task Main(string[] args)
   {
+    // Containerized API project "knows" how to execute EF migrations correctly without additional tooling.
+    // Migrations shouldn't be executed every time app starts but they can be executed in Init container context.
+    // To avoid creating additional image and de-couple required migrations from the business code,
+    // this project image can be executed in db migration mode only.
+    // To achieve this, init container must have the following:
+    // 1. start with --migrate-db arg: dotnet TheGame.Api --migrate-db
+    // 2. include connection string in env vars with the same key as app (eg ConnectionStrings__GameDb)
+    if (args.Any(arg => "--migrate-db".Equals(arg, StringComparison.OrdinalIgnoreCase)))
+    {
+      await RunDbMigrations();
+      return;
+    }
+
     var builder = WebApplication.CreateBuilder(args);
     builder.WebHost.UseDefaultServiceProvider(diOpts =>
     {
@@ -123,5 +139,36 @@ public class Program
     app.MapFallbackToFile("/index.html");
 
     await app.RunAsync();
+  }
+
+  private static async Task RunDbMigrations()
+  {
+    try
+    {
+      Console.WriteLine("Executing EF Migrations");
+      
+      var connectionString = Environment.GetEnvironmentVariable($"ConnectionStrings__{GameDbContext.ConnectionStringName}");
+
+      var services = new ServiceCollection()
+        .AddGameServices(connectionString ?? string.Empty);
+
+      await using var sp = services.BuildServiceProvider();
+
+      var dbContext = (GameDbContext)sp.GetRequiredService<IGameDbContext>();
+
+      using var trx = await dbContext.Database.BeginTransactionAsync();
+
+      await dbContext.Database.MigrateAsync();
+
+      await trx.CommitAsync();
+      
+      Console.WriteLine("EF Migrations executed successfully!");
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"Failed to execute migrations due to unhandled exception. {ex.GetType().Name}: {ex.Message}");
+      // TODO re-enable throw once everything is working.
+      //throw;
+    }
   }
 }

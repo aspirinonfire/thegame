@@ -15,6 +15,16 @@ services:
     environment:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=${SQL_PASSWORD}
+    healthcheck:
+      # see https://docs.docker.com/reference/dockerfile/#healthcheck
+      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${SQL_PASSWORD}", "-Q", "SELECT 1"]
+      # expected container initialization time. once healthcheck succeeds, container is considered started
+      start_period: 20s
+      start_interval: 1s
+      # once started, container will run healtchecks with the following configuration
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   aspire.dashboard:
     image: mcr.microsoft.com/dotnet/aspire-dashboard:8.0.0
@@ -25,6 +35,23 @@ services:
       - Dashboard__Frontend__AuthMode=Unsecured # Dev only!
       - DASHBOARD__OTLP__AUTHMODE=ApiKey
       - DASHBOARD__OTLP__PRIMARYAPIKEY=${OTLP_API_KEY}
+
+  gamedb.migrations:
+    image: ${DOCKER_REGISTRY-}thegameapi
+    command:
+      - dotnet
+      - TheGame.Api.dll
+      - --migrate-db
+    build:
+      context: .
+      dockerfile: TheGame.Api/Dockerfile
+      args:
+        BUILD_CONFIGURATION: Debug
+    environment:
+      - ConnectionStrings__GameDB=Server=mssql; Initial Catalog=${DB_NAME}; User Id=sa; Password=${SQL_PASSWORD}; Trust Server Certificate=True;
+    depends_on:
+      mssql:
+        condition: service_healthy
 
   thegame.api:
     image: ${DOCKER_REGISTRY-}thegameapi
@@ -47,8 +74,12 @@ services:
       - Otel__ExporterEndpoint=http://aspire.dashboard:18889
       - Otel__ExporterApiKey=${OTLP_API_KEY}
     depends_on:
-    - mssql
-    - aspire.dashboard 
+      mssql:
+        condition: service_healthy
+      aspire.dashboard:
+        condition: service_started
+      gamedb.migrations:
+        condition: service_completed_successfully
   
   nginx:
     image: nginx:1.25.3-alpine
@@ -63,5 +94,6 @@ services:
       - ./nginx/config:/etc/nginx/templates
       - ./nginx/ssl:/etc/nginx/ssl
     depends_on:
-      - thegame.api
+      thegame.api:
+        condition: service_started
   

@@ -3,9 +3,9 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
-	<!-- CS4014 - async not awaited -->
-	<WarningsAsErrors>Nullable,CS4014</WarningsAsErrors>
-	<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+	  <!-- CS4014 - async not awaited -->
+	  <WarningsAsErrors>Nullable,CS4014</WarningsAsErrors>
+	  <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <ItemGroup>
