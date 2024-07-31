@@ -22,9 +22,18 @@ Some of these steps can be automated but for the current setup it is assumed the
 CREATE USER [aca-thegame-dev] FROM EXTERNAL PROVIDER;
 ALTER ROLE db_datareader ADD MEMBER [aca-thegame-dev];
 ALTER ROLE db_datawriter ADD MEMBER [aca-thegame-dev];
+ALTER ROLE db_ddladmin ADD MEMBER [aca-thegame-dev];
 GO
 ```
 
 #### Database Migrations
 Migrations are executed as Init Containers. For the simplicity sake, API image ships with optional startup arg that
 invokes EF migration and exits. This setup also enables shipping both business code and required migrations in a single package.
+
+To manually drop tables without dropping entire database:
+```sql
+DROP TABLE Games;
+DROP TABLE LicensePlates;
+DROP TABLE Players;
+DROP TABLE PlayerIdentities;
+```

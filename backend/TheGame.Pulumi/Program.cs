@@ -1,11 +1,9 @@
-﻿using Pulumi.AzureNative.Sql;
-using Pulumi.AzureNative.App;
+﻿using Pulumi.AzureNative.App;
+using Pulumi.AzureNative.App.Inputs;
 using Pulumi.AzureNative.Resources.V20240301;
+using Pulumi.AzureNative.Sql;
 using System;
 using System.Collections.Generic;
-using Pulumi.AzureNative.App.Inputs;
-using Pulumi.AzureNative.AzureData;
-using Pulumi.AzureNative.Authorization;
 
 return await Pulumi.Deployment.RunAsync(async () =>
 {
@@ -37,7 +35,7 @@ return await Pulumi.Deployment.RunAsync(async () =>
   });
 
   // this connection string will not contain username and password and is therefore can be stored safely in repo
-  var connectionString = $"Server=tcp:{gameDbServer.Name}.database.windows.net,1433;Initial Catalog={gameDb.Name};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=\"ctive Directory Managed Identity\";";
+  var connectionString = $"Server=tcp:{gameDbServer.Name}.database.windows.net,1433;Initial Catalog={gameDb.Name};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=\"Active Directory Managed Identity\";";
 
   var containerAppEnv = new ManagedEnvironment(gameConfig.AcaEnvName, new ManagedEnvironmentArgs
   {
@@ -145,7 +143,7 @@ return await Pulumi.Deployment.RunAsync(async () =>
             new EnvironmentVarArgs()
             {
               Name = "Auth__Api__JwtSecret",
-              Value = TheGameConfig.JwtSecretName
+              SecretRef = TheGameConfig.JwtSecretName
             },
             new EnvironmentVarArgs()
             {
@@ -178,7 +176,7 @@ return await Pulumi.Deployment.RunAsync(async () =>
             {
               Name = "ConnectionStrings__GameDB",
               Value = connectionString
-            },
+            }
           },
           Command = new []
           {
@@ -195,7 +193,7 @@ return await Pulumi.Deployment.RunAsync(async () =>
   return new Dictionary<string, object?>
   {
     ["ResourceGroupId"] = resGroup?.Id,
-    ["GameUrl"] = containerApp.LatestRevisionFqdn
+    ["RevisionGameUrl"] = containerApp.LatestRevisionFqdn
   };
 });
 

@@ -27,7 +27,7 @@ public class Program
     // To achieve this, init container must have the following:
     // 1. start with --migrate-db arg: dotnet TheGame.Api --migrate-db
     // 2. include connection string in env vars with the same key as app (eg ConnectionStrings__GameDb)
-    if (args.Any(arg => "--migrate-db".Equals(arg, StringComparison.OrdinalIgnoreCase)))
+    if (args.Any(arg => arg.Contains("--migrate-db", StringComparison.OrdinalIgnoreCase)))
     {
       await RunDbMigrations();
       return;
@@ -167,8 +167,7 @@ public class Program
     catch (Exception ex)
     {
       Console.WriteLine($"Failed to execute migrations due to unhandled exception. {ex.GetType().Name}: {ex.Message}");
-      // TODO re-enable throw once everything is working.
-      //throw;
+      throw;
     }
   }
 }
