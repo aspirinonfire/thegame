@@ -37,3 +37,6 @@ DROP TABLE LicensePlates;
 DROP TABLE Players;
 DROP TABLE PlayerIdentities;
 ```
+
+#### ACA Gotchas
+1. Init Containers do not support Managed Identity by default. This breaks passwordless SQL authentication during migrations. See [MSDN](https://learn.microsoft.com/en-us/azure/container-apps/managed-identity?tabs=portal%2Cdotnet#control-managed-identity-availability) and [GH Issue](https://github.com/microsoft/azure-container-apps/issues/807)
