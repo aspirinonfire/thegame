@@ -4,6 +4,8 @@ using Pulumi.AzureNative.Resources.V20240301;
 using System;
 using System.Collections.Generic;
 using Pulumi.AzureNative.App.Inputs;
+using Pulumi.AzureNative.AzureData;
+using Pulumi.AzureNative.Authorization;
 
 return await Pulumi.Deployment.RunAsync(async () =>
 {
@@ -11,22 +13,36 @@ return await Pulumi.Deployment.RunAsync(async () =>
 
   var gameConfig = config.RequireObject<TheGameConfig>("game_config");
 
-
   // Get reference to an existing resource group
   var getResGroupArgs = new GetResourceGroupArgs
   {
-    ResourceGroupName = gameConfig.resourceGroupName
+    ResourceGroupName = gameConfig.ResourceGroupName
   };
 
   var resGroup = await GetResourceGroup.InvokeAsync(getResGroupArgs)
-    ?? throw new InvalidOperationException($"Resource group {gameConfig.resourceGroupName} was not found!");
+    ?? throw new InvalidOperationException($"Resource group {gameConfig.ResourceGroupName} was not found!");
 
-  // TODO Create Azure SQL
-
-  var containerAppEnv = new ManagedEnvironment(gameConfig.acaEnvName, new ManagedEnvironmentArgs
+  // TODO Create Azure SQL with Pulumi
+  var gameDbServer = await GetServer.InvokeAsync(new GetServerArgs()
   {
     ResourceGroupName = resGroup.Name,
-    EnvironmentName = gameConfig.acaEnvName,
+    ServerName = gameConfig.DbServerName,
+  });
+
+  var gameDb = await GetDatabase.InvokeAsync(new GetDatabaseArgs()
+  {
+    ResourceGroupName = resGroup.Name,
+    ServerName = gameDbServer.Name,
+    DatabaseName = gameConfig.DbName
+  });
+
+  // this connection string will not contain username and password and is therefore can be stored safely in repo
+  var connectionString = $"Server=tcp:{gameDbServer.Name}.database.windows.net,1433;Initial Catalog={gameDb.Name};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=\"ctive Directory Managed Identity\";";
+
+  var containerAppEnv = new ManagedEnvironment(gameConfig.AcaEnvName, new ManagedEnvironmentArgs
+  {
+    ResourceGroupName = resGroup.Name,
+    EnvironmentName = gameConfig.AcaEnvName,
 
     Sku = new EnvironmentSkuPropertiesArgs
     {
@@ -34,10 +50,10 @@ return await Pulumi.Deployment.RunAsync(async () =>
     }
   });
 
-  var containerApp = new ContainerApp(gameConfig.acaName, new ContainerAppArgs()
+  var containerApp = new ContainerApp(gameConfig.AcaName, new ContainerAppArgs()
   {
     ResourceGroupName = resGroup.Name,
-    ContainerAppName = gameConfig.acaName,
+    ContainerAppName = gameConfig.AcaName,
     ManagedEnvironmentId = containerAppEnv.Id,
     Identity = new ManagedServiceIdentityArgs()
     {
@@ -63,9 +79,9 @@ return await Pulumi.Deployment.RunAsync(async () =>
       {
         new RegistryCredentialsArgs()
         {
-          Server = gameConfig.ghcrUrl,
-          Username = gameConfig.ghcrUsername,
-          PasswordSecretRef = "registry-password",
+          Server = gameConfig.GhcrUrl,
+          Username = gameConfig.GhcrUsername,
+          PasswordSecretRef = TheGameConfig.GhcrPatSecretName,
         }
       },
       ActiveRevisionsMode = ActiveRevisionsMode.Single,
@@ -74,9 +90,19 @@ return await Pulumi.Deployment.RunAsync(async () =>
       {
         new SecretArgs()
         {
-          Name = "registry-password",
-          Value = gameConfig.ghcrPat
+          Name = TheGameConfig.GhcrPatSecretName,
+          Value = gameConfig.GhcrPat
         },
+        new SecretArgs()
+        {
+          Name = TheGameConfig.GoogleClientSecretName,
+          Value = gameConfig.GoogleClientSecret,
+        },
+        new SecretArgs()
+        {
+          Name = TheGameConfig.JwtSecretName,
+          Value = gameConfig.JwtSecret,
+        }
       }
     },
 
@@ -87,26 +113,83 @@ return await Pulumi.Deployment.RunAsync(async () =>
         MinReplicas = 0,
         MaxReplicas = 1
       },
-      
 
       Containers = new []
       {
         new ContainerArgs()
         {
           Name = "gameapp",
-          Image = $"{gameConfig.ghcrUrl}/{gameConfig.ghcrUsername}/{gameConfig.gameImage}",
+          Image = $"{gameConfig.GhcrUrl}/{gameConfig.GhcrUsername}/{gameConfig.GameImage}",
           Resources = new ContainerResourcesArgs()
           {
             Cpu = 0.25,
             Memory = "0.5Gi"
+          },
+          Env = new []
+          {
+            new EnvironmentVarArgs()
+            {
+              Name = "ConnectionStrings__GameDB",
+              Value = connectionString
+            },
+            new EnvironmentVarArgs()
+            {
+              Name = "Auth__Google__ClientId",
+              Value = gameConfig.GoogleClientId
+            },
+            new EnvironmentVarArgs()
+            {
+              Name = "Auth__Google__ClientSecret",
+              SecretRef = TheGameConfig.GoogleClientSecretName
+            },
+            new EnvironmentVarArgs()
+            {
+              Name = "Auth__Api__JwtSecret",
+              Value = TheGameConfig.JwtSecretName
+            },
+            new EnvironmentVarArgs()
+            {
+              Name = "Auth__Api__JwtAudience",
+              Value = gameConfig.JwtAudience
+            },
+            new EnvironmentVarArgs()
+            {
+              Name = "Auth__Api__JwtTokenExpirationMin",
+              Value = $"{gameConfig.JwtTokenExpirationMin}"
+            }
+          }
+        }
+      },
+      InitContainers = new[]
+      {
+        // use same API image to run migrations
+        new InitContainerArgs()
+        {
+          Name = "gameapp-db-mig",
+          Image = $"{gameConfig.GhcrUrl}/{gameConfig.GhcrUsername}/{gameConfig.GameImage}",
+          Resources = new ContainerResourcesArgs()
+          {
+            Cpu = 0.25,
+            Memory = "0.5Gi"
+          },
+          Env = new []
+          {
+            new EnvironmentVarArgs()
+            {
+              Name = "ConnectionStrings__GameDB",
+              Value = connectionString
+            },
+          },
+          Command = new []
+          {
+            "dotnet",
+            "TheGame.Api.dll",
+            "--migrate-db"
           }
         }
       }
     }
   });
-
-  // TODO add RBAC to enabe ACA access to SQL
-
 
   // Export outputs here
   return new Dictionary<string, object?>
@@ -118,16 +201,31 @@ return await Pulumi.Deployment.RunAsync(async () =>
 
 public sealed record TheGameConfig
 {
-  public string subscriptionId { get; set; } = default!;
-  public string resourceGroupName { get; set; } = default!;
+  public const string GhcrPatSecretName = "ghcr-pat";
+  public const string GoogleClientSecretName = "google-client-secret";
+  public const string JwtSecretName = "jwt-secret";
 
-  public string dbName { get; set; } = default!;
-  public string dbSku { get; set; } = default!;
+  // Azure Environment
+  public string SubscriptionId { get; set; } = default!;
+  public string ResourceGroupName { get; set; } = default!;
 
-  public string acaEnvName { get; set; } = default!;
-  public string acaName { get; set; } = default!;
-  public string ghcrUrl { get; set; } = default!;
-  public string ghcrUsername { get; set; } = default!;
-  public string ghcrPat { get; set; } = default!;
-  public string gameImage { get; set; } = default!;
+  // Azure SQL
+  public string DbServerName { get; set; } = default!;
+  public string DbName { get; set; } = default!;
+  public string DbSku { get; set; } = default!;
+
+  // Azure Container Apps
+  public string AcaEnvName { get; set; } = default!;
+  public string AcaName { get; set; } = default!;
+  public string GhcrUrl { get; set; } = default!;
+  public string GhcrUsername { get; set; } = default!;
+  public string GhcrPat { get; set; } = default!;
+  public string GameImage { get; set; } = default!;
+
+  // Game Auth
+  public string GoogleClientId { get; set; } = default!;
+  public string GoogleClientSecret { get; set; } = default!;
+  public string JwtSecret { get; set; } = default!;
+  public string JwtAudience { get; set; } = default!;
+  public int JwtTokenExpirationMin { get; set; }
 }
