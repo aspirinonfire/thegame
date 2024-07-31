@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - master
+      - feature/pulumi
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:

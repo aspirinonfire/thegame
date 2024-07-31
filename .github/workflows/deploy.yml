@@ -4,7 +4,9 @@ on:
   workflow_run:
     workflows: [Build Test and Publish]
     types: [completed]
-    branches: [master]
+    branches:
+      - master
+      - feature/pulumi
 env:
   artifacts: artifacts
   dockerfile: Dockerfile-pipelines
