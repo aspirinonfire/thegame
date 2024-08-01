@@ -17,13 +17,13 @@ Some of these steps can be automated but for the current setup it is assumed the
 1. Create a new Service Principal (SP) in Entra (App Registration) to be used by Pulumi. Create and "store" password.
 1. Assign `Owner` role to new SP on the resource group. More granular RBAC roles should be explored for Production.
 1. Create Azure SQL server and database. Use free serverless tier for dev. Select Entra auth only mode (passwordless). Follow [Passwordless Setup Instructions](https://learn.microsoft.com/en-us/azure/azure-sql/database/azure-sql-dotnet-quickstart?view=azuresql&tabs=visual-studio%2Cpasswordless%2Cservice-connector%2Cportal).
+1. Deploy script will need `az login` to establish an identity required to spin up Azure Infra and run db migrations (for simplicity sake, pulumi sp will have owner role over res group AND sql admin). [Setup](https://www.gatevnotes.com/passwordless-authentication-github-actions-to-microsoft-azure/).
 
 ```sql
 # Give access to Container App
 CREATE USER [aca-thegame-dev] FROM EXTERNAL PROVIDER;
 ALTER ROLE db_datareader ADD MEMBER [aca-thegame-dev];
 ALTER ROLE db_datawriter ADD MEMBER [aca-thegame-dev];
-ALTER ROLE db_ddladmin ADD MEMBER [aca-thegame-dev];
 GO
 ```
 

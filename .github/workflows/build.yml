@@ -111,13 +111,32 @@ jobs:
         env:
           NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.GOOGLECLIENTID }}
 
+      # Install dotnet ef tools
+      - name: Install EF Core CLI
+        run: dotnet tool install dotnet-ef --global
+        shell: bash
+
+      # Build efbundle with DbMigrator as a startup project
+      - name: Create EF Migration bundle
+        working-directory: ${{ env.API_ROOT }}
+        run: |
+          dotnet ef migrations bundle \
+          --project ./TheGame.Domain
+          --startup-project ./TheGame.DbMigrator \
+          --output ${{ env.API_PUBLISH_DIR }}/efbundle
+          --self-contained \
+          --runtime linux-x64 \
+          --force \
+          --no-restore \
+          --no-build \
+          --nologo
+
       # Publish artifacts for deploy workflow
       - name: Combine artifacts
-        run: mv ${{ github.workspace }}/${{ env.UI_ROOT }}/next_out ${{ github.workspace }}/${{ env.API_ROOT }}/${{ env.API_PUBLISH_DIR }}/wwwroot
-
-      - name: Copy dockerfile for deployment
-        working-directory: ${{ env.API_ROOT }}
-        run: cp TheGame.Api/Dockerfile-pipelines ${{ env.API_PUBLISH_DIR }}
+        working-directory: ${{ github.workspace }}/${{ env.API_ROOT }}/${{ env.API_PUBLISH_DIR }}
+        run: |
+          mv ${{ github.workspace }}/${{ env.UI_ROOT }}/next_out ./wwwroot
+          cp ${{ github.workspace }}/${{ env.API_ROOT }}/TheGame.Api/Dockerfile-pipelines .
 
       - name: Upload combined artifacts for deployment
         uses: actions/upload-artifact@v4
