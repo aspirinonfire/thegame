@@ -1,5 +1,5 @@
-﻿using Pulumi.AzureNative.App.V20240202Preview;
-using Pulumi.AzureNative.App.V20240202Preview.Inputs;
+﻿using Pulumi.AzureNative.App;
+using Pulumi.AzureNative.App.Inputs;
 
 namespace TheGame.Pulumi.AppComponents;
 
@@ -7,21 +7,10 @@ public static class GameContainerApp
 {
   public static ContainerApp CreateGameContainerApp(TheGameConfig gameConfig,
     global::Pulumi.AzureNative.Resources.GetResourceGroupResult resGroup,
-    global::Pulumi.AzureNative.App.ManagedEnvironment containerAppEnv,
+    ManagedEnvironment containerAppEnv,
     string gameDbServerName,
     string gameDbName)
   {
-    // this connection string will not contain username and password and is therefore can be stored safely in repo
-    var connectionString = $"Server=tcp:{gameDbServerName}.database.windows.net,1433;Initial Catalog={gameDbName};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=\"Active Directory Managed Identity\";";
-
-
-    var appImage = $"{gameConfig.GhcrUrl}/{gameConfig.GhcrUsername}/{gameConfig.GameImage}";
-    var connStringAppEnvVar = new EnvironmentVarArgs()
-    {
-      Name = "ConnectionStrings__GameDB",
-      Value = connectionString
-    };
-
     var containerApp = new ContainerApp(gameConfig.AcaName, new ContainerAppArgs()
     {
       ResourceGroupName = resGroup.Name,
@@ -33,18 +22,7 @@ public static class GameContainerApp
       },
 
       Configuration = new ConfigurationArgs()
-      {
-        // ensure managed identity is set on both main AND init containers
-        // this is critical for db migrations
-        IdentitySettings = new[]
-        {
-          new IdentitySettingsArgs()
-          {
-            Identity = "system",
-            Lifecycle = IdentitySettingsLifeCycle.All
-          }
-        },
-        
+      {        
         Ingress = new IngressArgs()
         {
           AllowInsecure = false,
@@ -102,7 +80,7 @@ public static class GameContainerApp
           new ContainerArgs()
           {
             Name = "gameapp",
-            Image = appImage,
+            Image = $"{gameConfig.GhcrUrl}/{gameConfig.GhcrUsername}/{gameConfig.GameImage}",
             Resources = new ContainerResourcesArgs()
             {
               Cpu = 0.25,
@@ -110,7 +88,12 @@ public static class GameContainerApp
             },
             Env = new []
             {
-              connStringAppEnvVar,
+              new EnvironmentVarArgs()
+              {
+                Name = "ConnectionStrings__GameDB",
+                // This is a passwordless connection string so it is safe to commit to repo since it does not contain any secrets.
+                Value = $"Server=tcp:{gameDbServerName}.database.windows.net,1433;Initial Catalog={gameDbName};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=\"Active Directory Managed Identity\";"
+              },
               new EnvironmentVarArgs()
               {
                 Name = "Auth__Google__ClientId",
@@ -137,27 +120,6 @@ public static class GameContainerApp
                 Value = $"{gameConfig.JwtTokenExpirationMin}"
               }
             }
-          }
-        },
-        
-        InitContainers = new[]
-        {
-          new InitContainerArgs()
-          {
-            Name = "gameapp-db-mig",
-            Image = appImage,
-            Command = new []
-            {
-              "dotnet",
-              "TheGame.Api.dll",
-              "--migrate-db"
-            },
-            Resources = new ContainerResourcesArgs()
-            {
-              Cpu = 0.25,
-              Memory = "0.5Gi"
-            },
-            Env = new [] { connStringAppEnvVar }
           }
         }
       }

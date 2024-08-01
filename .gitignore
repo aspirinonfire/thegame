@@ -54,6 +54,7 @@ bin/
 obj/
 Debug/
 Release/
+efbundle*
 
 # Docker stuff
 /backend/mssql_volume

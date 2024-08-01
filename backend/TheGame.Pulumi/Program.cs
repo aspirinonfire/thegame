@@ -4,6 +4,7 @@ using Pulumi.AzureNative.Resources;
 using Pulumi.AzureNative.Sql;
 using System;
 using System.Collections.Generic;
+using TheGame.Pulumi;
 using TheGame.Pulumi.AppComponents;
 
 return await Pulumi.Deployment.RunAsync(async () =>

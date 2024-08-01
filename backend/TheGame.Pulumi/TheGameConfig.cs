@@ -1,4 +1,6 @@
-﻿public sealed record TheGameConfig
+﻿namespace TheGame.Pulumi;
+
+public sealed record TheGameConfig
 {
   public const string GhcrPatSecretName = "ghcr-pat";
   public const string GoogleClientSecretName = "google-client-secret";
