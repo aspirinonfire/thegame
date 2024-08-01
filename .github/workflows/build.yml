@@ -129,7 +129,6 @@ jobs:
           --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
           --runtime linux-x64 \
           --self-contained \
-          --no-restore \
           --nologo \
           --force \
           --output ${{ env.API_PUBLISH_DIR }}/efbundle
