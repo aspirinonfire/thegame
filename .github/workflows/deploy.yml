@@ -65,7 +65,7 @@ jobs:
       run: |
         mv ${{ env.artifacts }}/${{ env.dockerfile }} .
         mv ${{ env.artifacts}}/efbundle .
-        chmod 744 efbundle
+        chmod 744 ./efbundle
 
     # establish identity context for the deployment run (https://www.gatevnotes.com/passwordless-authentication-github-actions-to-microsoft-azure/)
     # this implementation uses github token exchange for service principal identity defined in entra
@@ -76,15 +76,22 @@ jobs:
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+    - name: Run test az command
+      uses: 'azure/CLI@v1'
+      with:
+        inlineScript: |
+          az account show
+          az group list
+
     # execute migrator
-    # note: firewall rules are not required because target database allows azure service access
+    # note:
+    # 1. Firewall rules are not required because target database allows azure service access.
+    # 2. Authentication must be set to "Active Directory Default" in connection string to make it work with az login
     - name: Run DB migrations
-      run: efbundle --connection "Server=tcp:${{ vars.DBSERVERNAME }}.database.windows.net,1433;Initial Catalog=${{ vars.DBNAME }};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=\"Active Directory Managed Identity\";"
+      run: ./efbundle --verbose --connection "Server=tcp:${{ vars.DBSERVERNAME }}.database.windows.net,1433;Initial Catalog=${{ vars.DBNAME }};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=\"Active Directory Default\";"
     
     # TODO: tag management
     - name: Build and Push docker image
-      # temporary disable this step to speed up dev and testing
-      if: false
       run: |
         docker login --username ${{ github.repository_owner }} --password ${{ secrets.GHCR_PAT }} ghcr.io
         docker build ${{ env.artifacts }} --file ${{ env.dockerfile }} --tag ghcr.io/${{ github.repository_owner }}/thegame-everything:latest
