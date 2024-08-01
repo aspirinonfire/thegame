@@ -6,7 +6,6 @@ on:
     types: [completed]
     branches:
       - master
-      - feature/pulumi
 env:
   artifacts: artifacts
   dockerfile: Dockerfile-pipelines
@@ -14,7 +13,7 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-22.04
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch' }}
+    if: false
     steps:
     - name: Download artifacts
       uses: actions/github-script@v6
