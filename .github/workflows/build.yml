@@ -111,12 +111,13 @@ jobs:
         env:
           NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.GOOGLECLIENTID }}
 
-      # Install dotnet ef tools
+      # build db migrator to be used in deploy workflow
       - name: Install EF Core CLI
-        run: dotnet tool install dotnet-ef --global
+        run: |
+          dotnet tool install dotnet-ef --global
+          dotnet tool restore
         shell: bash
 
-      # Build efbundle with DbMigrator as a startup project
       - name: Create EF Migration bundle
         working-directory: ${{ env.API_ROOT }}
         run: |
