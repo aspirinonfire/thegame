@@ -17,6 +17,8 @@ env:
   # API Settings
   API_ROOT: 'backend'
   API_PROJECT_TO_PUBLISH: 'TheGame.Api/TheGame.Api.csproj'
+  MIGRATOR_PROJECT: 'TheGame.DbMigrator'
+  DBCONTEXT_PROJECT: 'TheGame.Domain'
   API_PUBLISH_DIR: 'publish_artifacts'
   API_TEST_SETTINGS_PLACEHOLDER_PATH: 'backend/TheGame.Tests/testsettings.json'
   DOTNET_VERSION: '8.0.x'
@@ -111,13 +113,31 @@ jobs:
         env:
           NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.GOOGLECLIENTID }}
 
+      # build db migrator to be used in deploy workflow
+      - name: Install EF Core CLI
+        run: |
+          dotnet tool install dotnet-ef --global
+          dotnet tool restore
+        shell: bash
+
+      - name: Create EF Migration bundle
+        working-directory: ${{ env.API_ROOT }}
+        run: |
+          dotnet ef migrations bundle \
+          --project ${{ env.DBCONTEXT_PROJECT }} \
+          --startup-project ${{ env.MIGRATOR_PROJECT }} \
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
+          --runtime linux-x64 \
+          --self-contained \
+          --force \
+          --output ${{ env.API_PUBLISH_DIR }}/efbundle
+
       # Publish artifacts for deploy workflow
       - name: Combine artifacts
-        run: mv ${{ github.workspace }}/${{ env.UI_ROOT }}/next_out ${{ github.workspace }}/${{ env.API_ROOT }}/${{ env.API_PUBLISH_DIR }}/wwwroot
-
-      - name: Copy dockerfile for deployment
-        working-directory: ${{ env.API_ROOT }}
-        run: cp TheGame.Api/Dockerfile-pipelines ${{ env.API_PUBLISH_DIR }}
+        working-directory: ${{ github.workspace }}/${{ env.API_ROOT }}/${{ env.API_PUBLISH_DIR }}
+        run: |
+          mv ${{ github.workspace }}/${{ env.UI_ROOT }}/next_out ./wwwroot
+          cp ${{ github.workspace }}/${{ env.API_ROOT }}/TheGame.Api/Dockerfile-pipelines .
 
       - name: Upload combined artifacts for deployment
         uses: actions/upload-artifact@v4
