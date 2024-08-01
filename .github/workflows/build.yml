@@ -17,6 +17,8 @@ env:
   # API Settings
   API_ROOT: 'backend'
   API_PROJECT_TO_PUBLISH: 'TheGame.Api/TheGame.Api.csproj'
+  MIGRATOR_PROJECT: 'TheGame.DbMigrator'
+  DBCONTEXT_PROJECT: 'TheGame.Domain'
   API_PUBLISH_DIR: 'publish_artifacts'
   API_TEST_SETTINGS_PLACEHOLDER_PATH: 'backend/TheGame.Tests/testsettings.json'
   DOTNET_VERSION: '8.0.x'
@@ -122,9 +124,9 @@ jobs:
         working-directory: ${{ env.API_ROOT }}
         run: |
           dotnet ef migrations bundle \
-          --project ./TheGame.Domain
-          --startup-project ./TheGame.DbMigrator \
-          --output ${{ env.API_PUBLISH_DIR }}/efbundle
+          --project ${{ env.DBCONTEXT_PROJECT }} \
+          --startup-project ${{ env.MIGRATOR_PROJECT }} \
+          --output ${{ env.API_PUBLISH_DIR }}/efbundle \
           --self-contained \
           --runtime linux-x64 \
           --force \
