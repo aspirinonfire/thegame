@@ -9,7 +9,7 @@ public interface IPlayerIdentityFactory
 
 public partial class PlayerIdentity
 {
-  public class PlayerIdentityFactory(GameDbContext dbContext, IPlayerFactory playerFactory) : IPlayerIdentityFactory
+  public class PlayerIdentityFactory(IGameDbContext dbContext, IPlayerFactory playerFactory) : IPlayerIdentityFactory
   {
     public Maybe<PlayerIdentity> CreatePlayerIdentity(NewPlayerIdentityRequest newPlayerRequest)
     {

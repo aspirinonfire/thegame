@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
@@ -14,17 +15,29 @@ public interface ITransactionExecutionWrapper
     CancellationToken? cancellationToken = null);
 }
 
-public sealed class TransactionExecutionWrapper(IGameDbContext gameDb) : ITransactionExecutionWrapper
+public sealed class TransactionExecutionWrapper(GameDbContext gameDb) : ITransactionExecutionWrapper
 {
   public async Task<Maybe<TSuccessResult>> ExecuteInTransaction<TSuccessResult>(Func<Task<Maybe<TSuccessResult>>> commandHandler,
     string commandName,
     ILogger logger,
     CancellationToken? cancellationToken = default)
   {
-    var cToken = cancellationToken ?? CancellationToken.None;
     logger.LogInformation("Starting transaction for {commandName}", commandName);
 
-    using var trx = await gameDb.BeginTransactionAsync(cToken);
+    return await gameDb.Database
+      .CreateExecutionStrategy()
+      .ExecuteAsync(
+        async (cToken) => await ExecuteOperation(gameDb, commandHandler, commandName, logger, cToken),
+        cancellationToken ?? CancellationToken.None);
+  }
+
+  public static async Task<Maybe<TSuccessResult>> ExecuteOperation<TSuccessResult>(IGameDbContext gameDb,
+    Func<Task<Maybe<TSuccessResult>>> commandHandler,
+    string commandName,
+    ILogger logger,
+    CancellationToken cToken)
+  {
+    await using var trx = await gameDb.BeginTransactionAsync(cToken);
     var commandResult = await commandHandler();
 
     if (commandResult.TryGetSuccessful(out var success, out var failure))

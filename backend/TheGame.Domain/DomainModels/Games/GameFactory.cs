@@ -15,7 +15,7 @@ public partial class Game
 {
   public const string HasActiveGameError = "only_one_active_game_allowed";
 
-  public class GameFactory(GameDbContext gameDbContext) : IGameFactory
+  public class GameFactory(IGameDbContext gameDbContext) : IGameFactory
   {
     public async Task<Maybe<Game>> StartNewGame(string name, Player gameOwner)
     {

@@ -20,9 +20,8 @@ public class TransactionExecutionWrapperTests
 
     var handlerWithSuccess = () => Task.FromResult<Maybe<string>>("hello world!");
 
-    var uutWrapper = new TransactionExecutionWrapper(gameDb);
-
-    var actualResult = await uutWrapper.ExecuteInTransaction(handlerWithSuccess,
+    var actualResult = await TransactionExecutionWrapper.ExecuteOperation(gameDb,
+      handlerWithSuccess,
       "test command",
       NullLogger.Instance,
       ctoken);
@@ -45,9 +44,8 @@ public class TransactionExecutionWrapperTests
 
     var handlerWithSuccess = () => Task.FromResult<Maybe<string>>(new Failure("test error"));
 
-    var uutWrapper = new TransactionExecutionWrapper(gameDb);
-
-    var actualResult = await uutWrapper.ExecuteInTransaction(handlerWithSuccess,
+    var actualResult = await TransactionExecutionWrapper.ExecuteOperation(gameDb,
+      handlerWithSuccess,
       "test command",
       NullLogger.Instance,
       ctoken);

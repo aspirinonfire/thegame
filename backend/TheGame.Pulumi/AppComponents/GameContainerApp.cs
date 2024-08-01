@@ -15,7 +15,9 @@ public static class GameContainerApp
     {
       ResourceGroupName = resGroup.Name,
       ContainerAppName = gameConfig.AcaName,
+      Location = gameConfig.Location,
       ManagedEnvironmentId = containerAppEnv.Id,
+      
       Identity = new ManagedServiceIdentityArgs()
       {
         Type = ManagedServiceIdentityType.SystemAssigned,

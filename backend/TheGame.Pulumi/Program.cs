@@ -40,6 +40,7 @@ return await Pulumi.Deployment.RunAsync(async () =>
   {
     ResourceGroupName = resGroup.Name,
     EnvironmentName = gameConfig.AcaEnvName,
+    Location = gameConfig.Location,
 
     Sku = new EnvironmentSkuPropertiesArgs()
     {

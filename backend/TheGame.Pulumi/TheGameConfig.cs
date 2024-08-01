@@ -9,6 +9,7 @@ public sealed record TheGameConfig
   // Azure Environment
   public string SubscriptionId { get; set; } = default!;
   public string ResourceGroupName { get; set; } = default!;
+  public string Location { get; set; } = "westus2";
 
   // Azure SQL
   public string DbServerName { get; set; } = default!;
