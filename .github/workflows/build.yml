@@ -23,6 +23,7 @@ env:
   API_TEST_SETTINGS_PLACEHOLDER_PATH: 'backend/TheGame.Tests/testsettings.json'
   DOTNET_VERSION: '8.0.x'
   DOTNET_BUILD_CONFIG: 'Release'
+  API_RUNTIME: 'linux-x64'
   # UI Settings
   NODE_VERSION: 20
   UI_ROOT: 'ui'
@@ -62,6 +63,7 @@ jobs:
         run: |
           dotnet build *.sln \
           --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
+          --runtime ${{ env.API_RUNTIME }} \
           --no-restore \
           --nologo \
           /p:ContinuousIntegrationBuild=true \
@@ -73,6 +75,7 @@ jobs:
         run: |
           dotnet test *.sln \
           --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
+          --runtime ${{ env.API_RUNTIME }} \
           --no-build \
           --no-restore \
           --nologo \
@@ -88,6 +91,7 @@ jobs:
         run: |
           dotnet publish ${{ env.API_PROJECT_TO_PUBLISH }} \
           --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
+          --runtime ${{ env.API_RUNTIME }} \
           --no-build \
           --no-restore \
           --nologo \
@@ -127,8 +131,8 @@ jobs:
           --project ${{ env.DBCONTEXT_PROJECT }} \
           --startup-project ${{ env.MIGRATOR_PROJECT }} \
           --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
+          --runtime ${{ env.API_RUNTIME }} \
           --self-contained \
-          --runtime linux-x64 \
           --no-restore \
           --no-build \
           --nologo \
