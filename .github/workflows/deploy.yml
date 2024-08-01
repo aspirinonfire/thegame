@@ -6,6 +6,12 @@ on:
     types: [completed]
     branches:
       - feature/pulumi
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        type: string
+        required: true
+        description: build workflow run id (used to download build artifacts)
 
 permissions:
   id-token: write # write is required for requesting the JWT
@@ -30,12 +36,12 @@ jobs:
     - name: Download artifacts
       uses: actions/github-script@v6
       with:
-        # TODO download and unzip ALL artifacts
         script: |
+          let run_id = context.payload.workflow_run.id || ${{ github.event.inputs.build_run_id }}
           let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            run_id: context.payload.workflow_run.id,
+            run_id: run_id,
           });
           let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
             return artifact.name == "${{ env.artifacts }}"
