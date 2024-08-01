@@ -126,13 +126,14 @@ jobs:
           dotnet ef migrations bundle \
           --project ${{ env.DBCONTEXT_PROJECT }} \
           --startup-project ${{ env.MIGRATOR_PROJECT }} \
-          --output ${{ env.API_PUBLISH_DIR }}/efbundle \
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
           --self-contained \
           --runtime linux-x64 \
-          --force \
           --no-restore \
           --no-build \
-          --nologo
+          --nologo \
+          --force \
+          --output ${{ env.API_PUBLISH_DIR }}/efbundle
 
       # Publish artifacts for deploy workflow
       - name: Combine artifacts
