@@ -50,6 +50,7 @@
   <ItemGroup>
     <ProjectReference Include="..\TheGame.Api\TheGame.Api.csproj" />
     <ProjectReference Include="..\TheGame.Domain\TheGame.Domain.csproj" />
+    <ProjectReference Include="..\TheGame.Infra\TheGame.Infra.csproj" />
   </ItemGroup>
 
 </Project>
