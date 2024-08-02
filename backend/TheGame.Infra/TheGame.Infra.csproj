@@ -9,7 +9,20 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="stack.localdev.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="stack.localdev.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
     <PackageReference Include="Pulumi" Version="3.65.0" />
+    <PackageReference Include="Pulumi.Automation" Version="3.65.0" />
     <PackageReference Include="Pulumi.AzureAD" Version="5.53.3" />
     <PackageReference Include="Pulumi.AzureNative" Version="2.51.0" />
     <PackageReference Include="Pulumi.Command" Version="1.0.1" />

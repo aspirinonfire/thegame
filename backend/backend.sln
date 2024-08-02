@@ -30,9 +30,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github_workflows", "github_
 		..\.github\workflows\deploy.yml = ..\.github\workflows\deploy.yml
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheGame.Pulumi", "TheGame.Pulumi\TheGame.Pulumi.csproj", "{3FB889E6-E2D1-4EAF-A0EC-684A7F31CF41}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheGame.Infra", "TheGame.Infra\TheGame.Infra.csproj", "{3FB889E6-E2D1-4EAF-A0EC-684A7F31CF41}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TheGame.DbMigrator", "TheGame.DbMigrator\TheGame.DbMigrator.csproj", "{0FAC149D-941C-468D-8977-8C24210F2255}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheGame.DbMigrator", "TheGame.DbMigrator\TheGame.DbMigrator.csproj", "{0FAC149D-941C-468D-8977-8C24210F2255}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

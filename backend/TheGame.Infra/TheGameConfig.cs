@@ -1,10 +1,18 @@
-﻿namespace TheGame.Pulumi;
+﻿using System;
+using System.Collections.Generic;
+
+namespace TheGame.Infra;
 
 public sealed record TheGameConfig
 {
   public const string GhcrPatSecretName = "ghcr-pat";
   public const string GoogleClientSecretName = "google-client-secret";
   public const string JwtSecretName = "jwt-secret";
+
+  // Pulumi Data
+  public string ProjectName { get; set; } = default!;
+  public string StackName { get; set; } = default!;
+  public string AzureNativeVersion { get; set; } = default!;
 
   // Azure Environment
   public string SubscriptionId { get; set; } = default!;
@@ -30,4 +38,11 @@ public sealed record TheGameConfig
   public string JwtSecret { get; set; } = default!;
   public string JwtAudience { get; set; } = default!;
   public int JwtTokenExpirationMin { get; set; }
+
+  public IReadOnlyCollection<string> GetValidationErrors()
+  {
+    // TODO implement
+
+    return Array.Empty<string>();
+  }
 }

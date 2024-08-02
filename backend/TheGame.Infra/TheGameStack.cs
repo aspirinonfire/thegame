@@ -1,30 +1,71 @@
-﻿using Pulumi.AzureNative.App;
+﻿using Pulumi;
+using Pulumi.AzureNative.App;
 using Pulumi.AzureNative.App.Inputs;
+using Pulumi.AzureNative.Resources;
+using Pulumi.AzureNative.Sql;
+using System;
 
-namespace TheGame.Pulumi.AppComponents;
+namespace TheGame.Infra;
 
-public static class GameContainerApp
+// devnote: this file cannot inherit from Stack or it will cause duplicate urn error
+// see: https://archive.pulumi.com/t/14250948/hello-any-reason-why-i-would-be-recieving-this-error-on-pulu#511b0f4a-cd53-45ca-b894-3d059fd346a4
+public class TheGameStack
 {
-  public static ContainerApp CreateGameContainerApp(TheGameConfig gameConfig,
-    global::Pulumi.AzureNative.Resources.GetResourceGroupResult resGroup,
-    ManagedEnvironment containerAppEnv,
-    string gameDbServerName,
-    string gameDbName)
+  public TheGameStack(TheGameConfig gameConfig)
   {
+    // Get reference to an existing resource group
+    var getResGroupArgs = new GetResourceGroupInvokeArgs
+    {
+      ResourceGroupName = gameConfig.ResourceGroupName
+    };
+
+    var resGroup = GetResourceGroup.Invoke(getResGroupArgs)
+      ?? throw new InvalidOperationException($"Resource group {gameConfig.ResourceGroupName} was not found!");
+
+    var resgroupName = resGroup.Apply(grp => grp.Name);
+
+    var gameDbServer = GetServer.Invoke(new GetServerInvokeArgs()
+    {
+      ResourceGroupName = resgroupName,
+      ServerName = gameConfig.DbServerName,
+    });
+
+    var gameDb = GetDatabase.Invoke(new GetDatabaseInvokeArgs()
+    {
+      ResourceGroupName = resgroupName,
+      ServerName = gameDbServer.Apply(server => server.Name),
+      DatabaseName = gameConfig.DbName
+    });
+
+    var containerAppEnv = new ManagedEnvironment(gameConfig.AcaEnvName, new ManagedEnvironmentArgs
+    {
+      ResourceGroupName = resgroupName,
+      EnvironmentName = gameConfig.AcaEnvName,
+      Location = gameConfig.Location,
+
+      Sku = new EnvironmentSkuPropertiesArgs()
+      {
+        Name = SkuName.Consumption
+      }
+    });
+
+    var gameDbServerName = gameDbServer.Apply(server => server.Name);
+    var gameDbName = gameDb.Apply(db => db.Name);
+
     var containerApp = new ContainerApp(gameConfig.AcaName, new ContainerAppArgs()
     {
-      ResourceGroupName = resGroup.Name,
+      ResourceGroupName = resgroupName,
       ContainerAppName = gameConfig.AcaName,
       Location = gameConfig.Location,
       ManagedEnvironmentId = containerAppEnv.Id,
-      
+
       Identity = new ManagedServiceIdentityArgs()
       {
-        Type = ManagedServiceIdentityType.SystemAssigned,
+        Type = Pulumi.AzureNative.App.ManagedServiceIdentityType.SystemAssigned,
       },
 
       Configuration = new ConfigurationArgs()
-      {        
+      {
         Ingress = new IngressArgs()
         {
           AllowInsecure = false,
@@ -88,6 +129,7 @@ public static class GameContainerApp
               Cpu = 0.25,
               Memory = "0.5Gi"
             },
+            
             Env = new []
             {
               new EnvironmentVarArgs()
@@ -127,6 +169,16 @@ public static class GameContainerApp
       }
     });
 
-    return containerApp;
+    // TODO run SQL command to assign ACA identity SQL roles
+    
+
+    ResourceGroupId = resGroup.Apply(grp => grp.Id);
+    LatestRevisionFqnd = containerApp.LatestRevisionFqdn;
   }
+
+  [Output]
+  public Output<string> LatestRevisionFqnd { get; private set; }
+
+  [Output]
+  public Output<string> ResourceGroupId { get; private set; }
 }

@@ -55,6 +55,7 @@ obj/
 Debug/
 Release/
 efbundle*
+stack*.json
 
 # Docker stuff
 /backend/mssql_volume
