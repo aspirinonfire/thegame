@@ -63,7 +63,7 @@ jobs:
       run: unzip -d ${{ env.ARTIFACTS }} ${{ env.ARTIFACTS }}.zip
 
     - name: List build artifacts
-      run: ls -l ${{ env.ARTIFACTS }}
+      run: ls -lR ${{ env.ARTIFACTS }}
 
     - name: Prepare artifacts for deployment
       run: |
@@ -103,7 +103,7 @@ jobs:
         pulumi-version: 3.127.0
 
     - name: Deploy Game Infra with Pulumi
-      working-directory: ${{ env.ARTIFACTS}}/${{ env.PULUMI_PUBLISH_DIR }}
+      working-directory: ${{ env.PULUMI_PUBLISH_DIR }}
       run: ./${{ env.INFRA_BINARY }}
       env:
         ProjectName: ${{ vars.PROJECTNAME }}
