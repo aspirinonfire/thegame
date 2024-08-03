@@ -15,17 +15,19 @@ on:
 
 env:
   # API Settings
-  API_ROOT: 'backend'
-  API_PROJECT_TO_PUBLISH: 'TheGame.Api/TheGame.Api.csproj'
-  MIGRATOR_PROJECT: 'TheGame.DbMigrator'
-  DBCONTEXT_PROJECT: 'TheGame.Domain'
-  API_PUBLISH_DIR: 'publish_artifacts'
-  API_TEST_SETTINGS_PLACEHOLDER_PATH: 'backend/TheGame.Tests/testsettings.json'
-  DOTNET_VERSION: '8.0.x'
-  DOTNET_BUILD_CONFIG: 'Release'
+  API_ROOT: backend
+  API_PROJECT_TO_PUBLISH: TheGame.Api/TheGame.Api.csproj
+  MIGRATOR_PROJECT: TheGame.DbMigrator
+  DBCONTEXT_PROJECT: TheGame.Domain
+  API_PUBLISH_DIR: publish_artifacts
+  PULUMI_PROJECT_TO_PUBLISH: TheGame.Infra/TheGame.Infra.csproj
+  PULUMI_PUBLISH_DIR: infra
+  API_TEST_SETTINGS_PLACEHOLDER_PATH: backend/TheGame.Tests/testsettings.json
+  DOTNET_VERSION: 8.0.x
+  DOTNET_BUILD_CONFIG: Release
   # UI Settings
   NODE_VERSION: 20
-  UI_ROOT: 'ui'
+  UI_ROOT: ui
 
 jobs:
   # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
@@ -131,6 +133,18 @@ jobs:
           --self-contained \
           --force \
           --output ${{ env.API_PUBLISH_DIR }}/efbundle
+
+      # Publish IaC artifacts (Pulumi).
+      - name: Publish Pulumi runner
+        run: |
+          dotnet publish ${{ env.PULUMI_PROJECT_TO_PUBLISH }} \
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
+          --no-restore \
+          --nologo \
+          --runtime linux-x64 \
+          --self-contained \
+          /p:PublishSingleFile=true \
+          --output ${{ github.workspace }}/${{ env.API_ROOT }}/${{ env.API_PUBLISH_DIR }}/${{ env.PULUMI_PUBLISH_DIR}}
 
       # Publish artifacts for deploy workflow
       - name: Combine artifacts

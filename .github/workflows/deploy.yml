@@ -18,9 +18,13 @@ permissions:
   contents: read 
 
 env:
-  artifacts: artifacts
-  dockerfile: Dockerfile-pipelines
+  ARTIFACTS: artifacts
+  DOCKERFILE: Dockerfile-pipelines
   NODE_VERSION: 20
+  PULUMI_PUBLISH_DIR: infra
+  INFRA_BINARY: TheGame.Infra
+  CONTAINER_REPO: ghcr.io
+  GAMEAPP_IMAGE_NAME: thegame-everything
 
 jobs:
   deploy:
@@ -44,7 +48,7 @@ jobs:
             run_id: run_id,
           });
           let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
-            return artifact.name == "${{ env.artifacts }}"
+            return artifact.name == "${{ env.ARTIFACTS }}"
           })[0];
           let download = await github.rest.actions.downloadArtifact({
             owner: context.repo.owner,
@@ -53,19 +57,21 @@ jobs:
             archive_format: 'zip',
           });
           let fs = require('fs');
-          fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/${{ env.artifacts }}.zip`, Buffer.from(download.data));
+          fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/${{ env.ARTIFACTS }}.zip`, Buffer.from(download.data));
 
     - name: Unzip build artifacts
-      run: unzip -d ${{ env.artifacts }} ${{ env.artifacts }}.zip
+      run: unzip -d ${{ env.ARTIFACTS }} ${{ env.ARTIFACTS }}.zip
 
     - name: List build artifacts
-      run: ls -l ${{ env.artifacts }}
+      run: ls -l ${{ env.ARTIFACTS }}
 
     - name: Prepare artifacts for deployment
       run: |
-        mv ${{ env.artifacts }}/${{ env.dockerfile }} .
-        mv ${{ env.artifacts}}/efbundle .
+        mv ${{ env.ARTIFACTS }}/${{ env.DOCKERFILE }} .
+        mv ${{ env.ARTIFACTS }}/efbundle .
+        mv ${{ env.ARTIFACTS }}/${{ env.PULUMI_PUBLISH_DIR }} .
         chmod 744 ./efbundle
+        chmod 744 ./${{ env.PULUMI_PUBLISH_DIR }}/${{ env.INFRA_BINARY }}
 
     # establish identity context for the deployment run (https://www.gatevnotes.com/passwordless-authentication-github-actions-to-microsoft-azure/)
     # this implementation uses github token exchange for service principal identity defined in entra
@@ -82,19 +88,53 @@ jobs:
         inlineScript: |
           az account show
           az group list
+ 
+    # TODO: tag management
+    - name: Build and Push docker image
+      run: |
+        docker login --username ${{ github.repository_owner }} --password ${{ secrets.GHCR_PAT }} ${{ env.CONTAINER_REPO }}
+        docker build ${{ env.ARTIFACTS }} --file ${{ env.DOCKERFILE }} --tag ${{ env.CONTAINER_REPO }}/${{ github.repository_owner }}/${{ env.GAMEAPP_IMAGE_NAME }}:latest
+        docker push ${{ env.CONTAINER_REPO }}/${{ github.repository_owner }}/${{ env.GAMEAPP_IMAGE_NAME }}:latest
 
+    # Deploy infra
+    - name: Install pulumi
+      uses: pulumi/actions@v4
+      with:
+        pulumi-version: 3.127.0
+
+    - name: Deploy Game Infra with Pulumi
+      working-directory: ${{ env.ARTIFACTS}}/${{ env.PULUMI_PUBLISH_DIR }}
+      run: ./${{ env.INFRA_BINARY }}
+      env:
+        ProjectName: ${{ vars.PROJECTNAME }}
+        StackName: ${{ vars.STACKNAME }}
+        AzureNativeVersion: ${{ vars.AZURENATIVEVERSION }}
+        AzureAdVersion: ${{ vars.AZUREADVERSION }}
+        BackendBlobStorageUrl: ${{ vars.BACKENDBLOBSTORAGEURL }}
+
+        SubscriptionId: ${{ vars.SUBSCRIPTIONID }}
+        ResourceGroupName: ${{ vars.RESOURCEGROUPNAME }}
+
+        DbServerName: ${{ vars.DBSERVERNAME }}
+        DbName: ${{ vars.DBNAME }}
+
+        AcaEnvName: ${{ vars.ACAENVNAME }}
+        AcaName: ${{ vars.ACANAME }}
+        GhcrUrl: ${{ env.CONTAINER_REPO }}
+        GhcrUsername: ${{ github.repository_owner }}
+        GhcrPat: ${{ secrets.GHCR_PAT }}
+        GameImage: ${{ env.GAMEAPP_IMAGE_NAME }}:latest
+
+        GoogleClientId: ${{ vars.GOOGLECLIENTID }}
+        GoogleClientSecret: ${{ secrets.GOOGLECLIENTSECRET }}
+        JwtSecret: ${{ secrets.JWTSECRET }}
+        JwtAudience: ${{ vars.JWTAUDIENCE }}
+        JwtTokenExpirationMin: ${{ vars.JWTTOKENEXPIRATIONMIN }}
+   
     # execute migrator
     # note:
     # 1. Firewall rules are not required because target database allows azure service access.
     # 2. Authentication must be set to "Active Directory Default" in connection string to make it work with az login
     - name: Run DB migrations
-      run: ./efbundle --verbose --connection "Server=tcp:${{ vars.DBSERVERNAME }}.database.windows.net,1433;Initial Catalog=${{ vars.DBNAME }};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=\"Active Directory Default\";"
-    
-    # TODO: tag management
-    - name: Build and Push docker image
-      run: |
-        docker login --username ${{ github.repository_owner }} --password ${{ secrets.GHCR_PAT }} ghcr.io
-        docker build ${{ env.artifacts }} --file ${{ env.dockerfile }} --tag ghcr.io/${{ github.repository_owner }}/thegame-everything:latest
-        docker push ghcr.io/${{ github.repository_owner }}/thegame-everything:latest
-
-    # Deploy infra with Pulumi
+      run: ./efbundle --verbose --connection "Server=tcp:${{ vars.DBSERVERNAME }}.database.windows.net,1433;Initial Catalog=${{ vars.DBNAME }};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=Active Directory Default;"
+   
