@@ -5,7 +5,7 @@ on:
     workflows: [Build Test and Publish]
     types: [completed]
     branches:
-      - feature/pulumi
+      - master
   workflow_dispatch:
     inputs:
       build_run_id:
