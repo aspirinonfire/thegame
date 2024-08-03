@@ -22,7 +22,6 @@ env:
   PULUMI_PROJECT_TO_PUBLISH: TheGame.Infra/TheGame.Infra.csproj
   PULUMI_PUBLISH_DIR: infra
   API_TEST_SETTINGS_PLACEHOLDER_PATH: backend/TheGame.Tests/testsettings.json
-  DOTNET_VERSION: 8.0.x
   DOTNET_BUILD_CONFIG: Release
   # UI Settings
   NODE_VERSION: 20
@@ -44,10 +43,12 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Setup dotnet ${{ env.DOTNET_VERSION }}
+      - name: Setup dotnet versions
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-version: |
+            8.0.x
+            6.0.x
 
       # Build and Test backend
       
@@ -139,7 +140,6 @@ jobs:
         run: |
           dotnet publish ${{ env.PULUMI_PROJECT_TO_PUBLISH }} \
           --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
-          --no-restore \
           --nologo \
           --runtime linux-x64 \
           --self-contained \
