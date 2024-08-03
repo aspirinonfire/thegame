@@ -1,24 +1,23 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Linq;
 
-namespace TheGame.Domain.DomainModels.Players
+namespace TheGame.Domain.DomainModels.Players;
+
+public sealed record PlayerInfo(string PlayerName, long PlayerId);
+
+public interface IPlayerQueryProvider
 {
-  public sealed record PlayerInfo(string PlayerName, long PlayerId);
+  IQueryable<PlayerInfo> GetPlayerInfoQuery(long playerId);
+}
 
-  public interface IPlayerQueryProvider
+public class PlayerQueryProvider(IGameDbContext gameDbContext) : IPlayerQueryProvider
+{
+  public IQueryable<PlayerInfo> GetPlayerInfoQuery(long playerId)
   {
-    IQueryable<PlayerInfo> GetPlayerInfoQuery(long playerId);
-  }
-
-  public class PlayerQueryProvider(IGameDbContext gameDbContext) : IPlayerQueryProvider
-  {
-    public IQueryable<PlayerInfo> GetPlayerInfoQuery(long playerId)
-    {
-      return gameDbContext
-        .Players
-        .AsNoTracking()
-        .Where(player => player.Id == playerId)
-        .Select(player => new PlayerInfo(player.Name, player.PlayerIdentityId));
-    }
+    return gameDbContext
+      .Players
+      .AsNoTracking()
+      .Where(player => player.Id == playerId)
+      .Select(player => new PlayerInfo(player.Name, player.PlayerIdentityId));
   }
 }
