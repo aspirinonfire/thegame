@@ -10,7 +10,7 @@ public static class AssertMaybe
   {
     if (!toAssert.TryGetSuccessful(out var successResult, out var failure))
     {
-      Assert.Fail($"Expected successful result got failure: {failure.ErrorMessage}");
+      Assert.Fail($"Expected successful result got failure: {failure?.ErrorMessage}");
       throw new UnreachableException();
     }
 

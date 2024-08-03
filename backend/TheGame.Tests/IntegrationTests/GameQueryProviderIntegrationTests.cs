@@ -40,7 +40,7 @@ public class GameQueryProviderIntegrationTests(MsSqlFixture msSqlFixture) : ICla
     using var scope = sp.CreateScope();
     
     // seed data
-    var db = (GameDbContext)scope.ServiceProvider.GetRequiredService<IGameDbContext>();
+    var db = scope.ServiceProvider.GetRequiredService<GameDbContext>();
     await db.Database.ExecuteSqlRawAsync(seedSql);
 
     var uutQueryService = scope.ServiceProvider.GetRequiredService<IGameQueryProvider>();

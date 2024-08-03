@@ -54,6 +54,8 @@ bin/
 obj/
 Debug/
 Release/
+efbundle*
+stack*.json
 
 # Docker stuff
 /backend/mssql_volume
@@ -62,3 +64,4 @@ Release/
 
 # IDE
 .vs
+/backend/TheGame.Pulumi/Pulumi.localdev.yaml

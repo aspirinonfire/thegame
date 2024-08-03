@@ -36,23 +36,6 @@ services:
       - DASHBOARD__OTLP__AUTHMODE=ApiKey
       - DASHBOARD__OTLP__PRIMARYAPIKEY=${OTLP_API_KEY}
 
-  gamedb.migrations:
-    image: ${DOCKER_REGISTRY-}thegameapi
-    command:
-      - dotnet
-      - TheGame.Api.dll
-      - --migrate-db
-    build:
-      context: .
-      dockerfile: TheGame.Api/Dockerfile
-      args:
-        BUILD_CONFIGURATION: Debug
-    environment:
-      - ConnectionStrings__GameDB=Server=mssql; Initial Catalog=${DB_NAME}; User Id=sa; Password=${SQL_PASSWORD}; Trust Server Certificate=True;
-    depends_on:
-      mssql:
-        condition: service_healthy
-
   thegame.api:
     image: ${DOCKER_REGISTRY-}thegameapi
     build:
@@ -78,8 +61,6 @@ services:
         condition: service_healthy
       aspire.dashboard:
         condition: service_started
-      gamedb.migrations:
-        condition: service_completed_successfully
   
   nginx:
     image: nginx:1.25.3-alpine
