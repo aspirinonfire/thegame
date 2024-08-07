@@ -9,7 +9,7 @@ namespace TheGame.Domain.CommandHandlers;
 
 public interface ITransactionExecutionWrapper
 {
-  Task<Maybe<TSuccessResult>> ExecuteInTransaction<TSuccessResult>(Func<Task<Maybe<TSuccessResult>>> commandHandler,
+  Task<Result<TSuccessResult>> ExecuteInTransaction<TSuccessResult>(Func<Task<Result<TSuccessResult>>> commandHandler,
     string commandName,
     ILogger logger,
     CancellationToken? cancellationToken = null);
@@ -17,7 +17,7 @@ public interface ITransactionExecutionWrapper
 
 public sealed class TransactionExecutionWrapper(GameDbContext gameDb) : ITransactionExecutionWrapper
 {
-  public async Task<Maybe<TSuccessResult>> ExecuteInTransaction<TSuccessResult>(Func<Task<Maybe<TSuccessResult>>> commandHandler,
+  public async Task<Result<TSuccessResult>> ExecuteInTransaction<TSuccessResult>(Func<Task<Result<TSuccessResult>>> commandHandler,
     string commandName,
     ILogger logger,
     CancellationToken? cancellationToken = default)
@@ -31,8 +31,8 @@ public sealed class TransactionExecutionWrapper(GameDbContext gameDb) : ITransac
         cancellationToken ?? CancellationToken.None);
   }
 
-  public static async Task<Maybe<TSuccessResult>> ExecuteOperation<TSuccessResult>(IGameDbContext gameDb,
-    Func<Task<Maybe<TSuccessResult>>> commandHandler,
+  public static async Task<Result<TSuccessResult>> ExecuteOperation<TSuccessResult>(IGameDbContext gameDb,
+    Func<Task<Result<TSuccessResult>>> commandHandler,
     string commandName,
     ILogger logger,
     CancellationToken cToken)

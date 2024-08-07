@@ -18,7 +18,7 @@ public class TransactionExecutionWrapperTests
     using var cTokenRegistration = new CancellationTokenRegistration();
     var ctoken = cTokenRegistration.Token;
 
-    var handlerWithSuccess = () => Task.FromResult<Maybe<string>>("hello world!");
+    var handlerWithSuccess = () => Task.FromResult<Result<string>>("hello world!");
 
     var actualResult = await TransactionExecutionWrapper.ExecuteOperation(gameDb,
       handlerWithSuccess,
@@ -42,7 +42,7 @@ public class TransactionExecutionWrapperTests
     using var cTokenRegistration = new CancellationTokenRegistration();
     var ctoken = cTokenRegistration.Token;
 
-    var handlerWithSuccess = () => Task.FromResult<Maybe<string>>(new Failure("test error"));
+    var handlerWithSuccess = () => Task.FromResult<Result<string>>(new Failure("test error"));
 
     var actualResult = await TransactionExecutionWrapper.ExecuteOperation(gameDb,
       handlerWithSuccess,

@@ -53,7 +53,7 @@ public partial class Game : RootModel, IAuditedRecord
       .ToHashSet();
   }
 
-  public virtual Maybe<GamePlayer> InvitePlayer(IGamePlayerFactory gamePlayerFactory, Player playerToInvite)
+  public virtual Result<GamePlayer> InvitePlayer(IGamePlayerFactory gamePlayerFactory, Player playerToInvite)
   {
     var newGamePlayerResult = gamePlayerFactory.AddPlayer(playerToInvite, this);
     if (!newGamePlayerResult.TryGetSuccessful(out var newInvite, out var inviteFailure))
@@ -66,7 +66,7 @@ public partial class Game : RootModel, IAuditedRecord
     return newInvite;
   }
 
-  public virtual Maybe<Game> UpdateLicensePlateSpots(IGameLicensePlateFactory licensePlateSpotFactory,
+  public virtual Result<Game> UpdateLicensePlateSpots(IGameLicensePlateFactory licensePlateSpotFactory,
     ISystemService systemService,
     IGameScoreCalculator scoreCalculator,
     IGameDbContext gameDbContext,
@@ -140,7 +140,7 @@ public partial class Game : RootModel, IAuditedRecord
     return this;
   }
 
-  public virtual Maybe<Game> EndGame()
+  public virtual Result<Game> EndGame()
   {
     if (!IsActive)
     {

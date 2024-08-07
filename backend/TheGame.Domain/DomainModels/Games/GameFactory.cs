@@ -8,7 +8,7 @@ namespace TheGame.Domain.DomainModels.Games;
 
 public interface IGameFactory
 {
-  Task<Maybe<Game>> StartNewGame(string name, Player gameOwner);
+  Task<Result<Game>> StartNewGame(string name, Player gameOwner);
 }
 
 public partial class Game
@@ -17,7 +17,7 @@ public partial class Game
 
   public class GameFactory(IGameDbContext gameDbContext) : IGameFactory
   {
-    public async Task<Maybe<Game>> StartNewGame(string name, Player gameOwner)
+    public async Task<Result<Game>> StartNewGame(string name, Player gameOwner)
     {
       var hasActiveGame = await gameDbContext.Games
         .AnyAsync(game => game.IsActive && game.CreatedBy.Id == gameOwner.Id);

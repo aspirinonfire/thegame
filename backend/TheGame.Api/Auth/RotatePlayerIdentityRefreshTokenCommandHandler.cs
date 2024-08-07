@@ -15,7 +15,7 @@ namespace TheGame.Api.Auth;
 public sealed record RotatePlayerIdentityRefreshTokenCommand(long PlayerIdentityId,
   string CurrentRefreshToken,
   ushort NewRefreshTokenByteCount,
-  uint NewRefreshTokenAgeMinutes) : IRequest<Maybe<RotatePlayerIdentityRefreshTokenResult>>;
+  uint NewRefreshTokenAgeMinutes) : IRequest<Result<RotatePlayerIdentityRefreshTokenResult>>;
 
 public sealed record RotatePlayerIdentityRefreshTokenResult(string RefreshToken,
   DateTimeOffset RefreshTokenExpiration,
@@ -28,9 +28,9 @@ public sealed class RotatePlayerIdentityRefreshTokenCommandHandler(IGameDbContex
   ITransactionExecutionWrapper transactionWrapper,
   ISystemService systemService,
   ILogger<RotatePlayerIdentityRefreshTokenCommandHandler> logger)
-  : IRequestHandler<RotatePlayerIdentityRefreshTokenCommand, Maybe<RotatePlayerIdentityRefreshTokenResult>>
+  : IRequestHandler<RotatePlayerIdentityRefreshTokenCommand, Result<RotatePlayerIdentityRefreshTokenResult>>
 {
-  public async Task<Maybe<RotatePlayerIdentityRefreshTokenResult>> Handle(RotatePlayerIdentityRefreshTokenCommand request, CancellationToken cancellationToken) =>
+  public async Task<Result<RotatePlayerIdentityRefreshTokenResult>> Handle(RotatePlayerIdentityRefreshTokenCommand request, CancellationToken cancellationToken) =>
     await transactionWrapper.ExecuteInTransaction<RotatePlayerIdentityRefreshTokenResult>(
       async () =>
       {

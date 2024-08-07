@@ -63,7 +63,7 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
   /// <param name="googleAuthCode"></param>
   /// <param name="httpContext"></param>
   /// <returns></returns>
-  public async Task<Maybe<ApiTokens>> AuthenticateWithGoogleAuthCode(string googleAuthCode, HttpContext httpContext)
+  public async Task<Result<ApiTokens>> AuthenticateWithGoogleAuthCode(string googleAuthCode, HttpContext httpContext)
   {
     var tokenResult = await ExchangeGoogleAuthCodeForTokens(googleAuthCode);
     if (!tokenResult.TryGetSuccessful(out var googleTokens, out var tokenFailure))
@@ -106,7 +106,7 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
     return new ApiTokens(playerIdentity.IsNewIdentity, apiToken);
   }
 
-  public virtual async Task<Maybe<ApiTokens>> RefreshAccessToken(HttpContext httpContext, string accessToken)
+  public virtual async Task<Result<ApiTokens>> RefreshAccessToken(HttpContext httpContext, string accessToken)
   {
     var refreshCookieValue = httpContext.Request.Cookies
       .Where(cookie => cookie.Key == ApiRefreshTokenCookieName)
@@ -171,7 +171,7 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
     return new ApiTokens(false, apiToken);
   }
 
-  public virtual async Task<Maybe<TokenResponse>> ExchangeGoogleAuthCodeForTokens(string authCode)
+  public virtual async Task<Result<TokenResponse>> ExchangeGoogleAuthCodeForTokens(string authCode)
   {
     if (string.IsNullOrWhiteSpace(authCode))
     {
@@ -215,7 +215,7 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
   /// </summary>
   /// <param name="googleIdToken"></param>
   /// <returns></returns>
-  public virtual async Task<Maybe<GoogleJsonWebSignature.Payload>> GetValidatedGoogleIdTokenPayload(string googleIdToken)
+  public virtual async Task<Result<GoogleJsonWebSignature.Payload>> GetValidatedGoogleIdTokenPayload(string googleIdToken)
   {
     if (string.IsNullOrEmpty(googleIdToken))
     {

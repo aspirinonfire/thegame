@@ -5,7 +5,7 @@ namespace TheGame.Domain.DomainModels.LicensePlates;
 
 public interface IGameLicensePlateFactory
 {
-  Maybe<GameLicensePlate> CreateLicensePlateSpot(LicensePlate.PlateKey plateKey,
+  Result<GameLicensePlate> CreateLicensePlateSpot(LicensePlate.PlateKey plateKey,
     Player spottedBy,
     DateTimeOffset spotDate);
 }
@@ -14,7 +14,7 @@ public partial class GameLicensePlate
 {
   public class LicensePlateSpotFactory() : IGameLicensePlateFactory
   {
-    public Maybe<GameLicensePlate> CreateLicensePlateSpot(LicensePlate.PlateKey plateKey,
+    public Result<GameLicensePlate> CreateLicensePlateSpot(LicensePlate.PlateKey plateKey,
       Player spottedBy,
       DateTimeOffset spotDate)
     {

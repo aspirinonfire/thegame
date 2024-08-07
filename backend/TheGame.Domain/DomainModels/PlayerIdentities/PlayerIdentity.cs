@@ -31,7 +31,7 @@ public partial class PlayerIdentity : IAuditedRecord
 
   public DateTimeOffset? DateModified { get; }
 
-  public Maybe<Success> RotateRefreshToken(ISystemService systemService, ushort newTokenLenght, TimeSpan tokenAge)
+  public Result<Success> RotateRefreshToken(ISystemService systemService, ushort newTokenLenght, TimeSpan tokenAge)
   {
     if (newTokenLenght < MinTokenByteLenght)
     {
@@ -49,7 +49,7 @@ public partial class PlayerIdentity : IAuditedRecord
     return new Success();
   }
 
-  public Maybe<Success> InvalidateRefreshToken()
+  public Result<Success> InvalidateRefreshToken()
   {
     RefreshToken = null;
     RefreshTokenExpiration = null;

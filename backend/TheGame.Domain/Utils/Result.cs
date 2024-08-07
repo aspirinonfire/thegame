@@ -2,7 +2,7 @@
 
 namespace TheGame.Domain.Utils;
 
-public readonly struct Maybe<TSuccess>
+public readonly struct Result<TSuccess>
 {
   private readonly TSuccess _successValue;
   
@@ -10,7 +10,7 @@ public readonly struct Maybe<TSuccess>
   
   private readonly bool _isSuccess;
 
-  private Maybe(TSuccess? successValue, Failure? failureValue, bool isSuccess)
+  private Result(TSuccess? successValue, Failure? failureValue, bool isSuccess)
   {
     // the only way to access success/failure values is through TryGetSuccessful, which has appropriate checks
     _successValue = successValue!;
@@ -18,9 +18,9 @@ public readonly struct Maybe<TSuccess>
     _isSuccess = isSuccess;
   }
 
-  public static implicit operator Maybe<TSuccess>(TSuccess success) => new(success, default, true);
+  public static implicit operator Result<TSuccess>(TSuccess success) => new(success, default, true);
 
-  public static implicit operator Maybe<TSuccess>(Failure failure) => new(default, failure, false);
+  public static implicit operator Result<TSuccess>(Failure failure) => new(default, failure, false);
 
   /// <summary>
   /// Try Get Successful result

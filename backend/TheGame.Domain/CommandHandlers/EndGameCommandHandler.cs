@@ -10,12 +10,12 @@ using TheGame.Domain.DomainModels.Games;
 
 namespace TheGame.Domain.CommandHandlers;
 
-public sealed record EndGameCommand(long GameId, long OwnerPlayerId) : IRequest<Maybe<OwnedOrInvitedGame>>;
+public sealed record EndGameCommand(long GameId, long OwnerPlayerId) : IRequest<Result<OwnedOrInvitedGame>>;
 
 public sealed class EndGameCommandHandler(IGameDbContext gameDb, ITransactionExecutionWrapper transactionExecutionWrapper, ILogger<EndGameCommandHandler> logger)
-  : IRequestHandler<EndGameCommand, Maybe<OwnedOrInvitedGame>>
+  : IRequestHandler<EndGameCommand, Result<OwnedOrInvitedGame>>
 {
-  public async Task<Maybe<OwnedOrInvitedGame>> Handle(EndGameCommand request, CancellationToken cancellationToken) =>
+  public async Task<Result<OwnedOrInvitedGame>> Handle(EndGameCommand request, CancellationToken cancellationToken) =>
     await transactionExecutionWrapper.ExecuteInTransaction<OwnedOrInvitedGame>(
       async () =>
       {

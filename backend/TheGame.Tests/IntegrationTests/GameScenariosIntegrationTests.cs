@@ -229,7 +229,7 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
     Assert.Equal(14, actualGameAfterReadd.GameScore.TotalScore);
   }
 
-  private async Task<T> RunAsScopedRequest<T>(IServiceProvider serviceProvider, IRequest<Maybe<T>> mediatorRequest)
+  private async Task<T> RunAsScopedRequest<T>(IServiceProvider serviceProvider, IRequest<Result<T>> mediatorRequest)
   {
     await using var scope = serviceProvider.CreateAsyncScope();
     var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();

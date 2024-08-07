@@ -8,12 +8,12 @@ using TheGame.Domain.DomainModels.Games;
 
 namespace TheGame.Domain.CommandHandlers;
 
-public sealed record StartNewGameCommand(string GameName, long OwnerPlayerId) : IRequest<Maybe<OwnedOrInvitedGame>>;
+public sealed record StartNewGameCommand(string GameName, long OwnerPlayerId) : IRequest<Result<OwnedOrInvitedGame>>;
 
 public sealed class StartNewGameCommandHandler(IGameDbContext gameDb, IGameFactory gameFactory, ITransactionExecutionWrapper transactionWrapper, ILogger<StartNewGameCommandHandler> logger)
-  : IRequestHandler<StartNewGameCommand, Maybe<OwnedOrInvitedGame>>
+  : IRequestHandler<StartNewGameCommand, Result<OwnedOrInvitedGame>>
 {
-  public async Task<Maybe<OwnedOrInvitedGame>> Handle(StartNewGameCommand request, CancellationToken cancellationToken) =>
+  public async Task<Result<OwnedOrInvitedGame>> Handle(StartNewGameCommand request, CancellationToken cancellationToken) =>
     await transactionWrapper.ExecuteInTransaction<OwnedOrInvitedGame>(
       async () =>
       {
