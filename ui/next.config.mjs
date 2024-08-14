@@ -25,7 +25,18 @@ const withSerwist = withSerwistInit({
   swDest: "public/sw.js",
   disable: process.env.NODE_ENV === "development", // to disable pwa in development
   register: true,
-  reloadOnOnline: false
+  reloadOnOnline: false,
+  additionalPrecacheEntries: [
+    "favicon.ico",
+    "index.html",
+    "index.txt",
+    "game/index.html",
+    "game/index.txt",
+    "history/index.html",
+    "history/index.txt",
+    "about/index.html",
+    "about/index.txt"
+  ]
 });
 
 // Export the combined configuration for Next.js with PWA support
