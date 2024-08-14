@@ -31,15 +31,28 @@ const serwist = new Serwist({
   // Whether the service worker should claim any currently available clients.
   clientsClaim: true,
   navigationPreload: true,
-  //// A list of runtime caching entries. When a request is made and its URL match
-  //// any of the entries, the response to it will be cached according to the matching
-  //// entry's `handler`. This does not apply to precached URLs.
-  // runtimeCaching: [
-  //   {
-  //     matcher: /.*/i,
-  //     handler: new NetworkOnly()
-  //   }
-  // ],
+  // A list of runtime caching entries. When a request is made and its URL match
+  // any of the entries, the response to it will be cached according to the matching
+  // entry's `handler`. This does not apply to precached URLs.
+  runtimeCaching: [
+    {
+      // non-precached requests should always go through network
+      matcher: /.*/i,
+      handler: new NetworkOnly()
+    }
+  ],
 });
+
+serwist.addToPrecacheList([
+  { url: "favicon.ico", revision: null },
+  { url: "index.html", revision: null },
+  { url: "index.txt", revision: null },
+  { url: "game/index.html", revision: null },
+  { url: "game/index.txt", revision: null },
+  { url: "history/index.html", revision: null },
+  { url: "history/index.txt", revision: null },
+  { url: "about/index.html", revision: null },
+  { url: "about/index.txt", revision: null },
+]);
 
 serwist.addEventListeners();
