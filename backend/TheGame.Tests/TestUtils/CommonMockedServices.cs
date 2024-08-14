@@ -1,16 +1,17 @@
 using Microsoft.Extensions.DependencyInjection;
-using TheGame.Domain.Utils;
+using Microsoft.Extensions.Logging;
+using System.Reflection;
 using TheGame.Domain;
 
 namespace TheGame.Tests.TestUtils
 {
   public static class CommonMockedServices
   {
-    public static readonly DateTimeOffset DefaultDate = new(2021, 12, 31, 0, 0, 0, 0, TimeSpan.Zero);
+    public static readonly DateTimeOffset DefaultTestDate = new(2021, 12, 31, 0, 0, 0, 0, TimeSpan.Zero);
 
     public static ISystemService GetSystemService(DateTimeOffset? dateTimeOffset = null)
     {
-      var currentTimestamp = dateTimeOffset.GetValueOrDefault(DefaultDate);
+      var currentTimestamp = dateTimeOffset.GetValueOrDefault(DefaultTestDate);
 
       var dtOffsetSvc = Substitute.For<IDateTimeOffsetService>();
       dtOffsetSvc.UtcNow.Returns(currentTimestamp);
@@ -26,8 +27,11 @@ namespace TheGame.Tests.TestUtils
       return sysSvc;
     }
 
-    public static IServiceCollection GetGameServicesWithTestDevDb(string connString) =>
+    public static IServiceCollection GetGameServicesWithTestDevDb(string connString, Assembly? additionalScanAssembly = null) =>
       new ServiceCollection()
-        .AddGameServices(connString, true);
+        .AddGameServices(connString,
+          additionalScanAssembly,
+          efLogger => efLogger.AddDebug())
+        .AddLogging(builder => builder.AddDebug());
   }
 }

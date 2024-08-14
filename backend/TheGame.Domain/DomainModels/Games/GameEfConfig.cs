@@ -1,5 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System;
+using System.Collections.ObjectModel;
+using System.Linq;
 using TheGame.Domain.DomainModels.LicensePlates;
 
 namespace TheGame.Domain.DomainModels.Games;
@@ -24,12 +28,34 @@ class GameEfConfig : IEntityTypeConfiguration<Game>
       .Property(game => game.EndedOn)
       .IsRequired(false);
 
+    var gameAchievementsComparer = new ValueComparer<ReadOnlyCollection<string>>(
+      (c1, c2) => c1 != null && c2 != null ? c1.SequenceEqual(c2) : false,
+      c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+      c => c.ToList().AsReadOnly());
+
+    builder
+      .ComplexProperty(game => game.GameScore,
+        scorePropBuilder =>
+        {
+          scorePropBuilder
+            .Property(score => score.Achievements)
+            .HasConversion(
+              achievementsCollection => string.Join(";", achievementsCollection),
+              achievementString => achievementString.Split(";", System.StringSplitOptions.RemoveEmptyEntries).ToList().AsReadOnly(),
+              gameAchievementsComparer)
+            .IsRequired();
+          
+          scorePropBuilder
+            .Property(score => score.TotalScore)
+            .IsRequired();
+        });
+
     // define CreatedBy nav props
     builder
       .HasOne(game => game.CreatedBy)
       .WithMany()
       .IsRequired()
-      .HasForeignKey("CreatedByPlayerId")
+      .HasForeignKey(game => game.CreatedByPlayerId)
       .OnDelete(DeleteBehavior.Cascade);
 
     builder
@@ -39,12 +65,11 @@ class GameEfConfig : IEntityTypeConfiguration<Game>
     // define game license plate nav props
     builder
       .HasMany(game => game.LicensePlates)
-      .WithMany(licensePlate => licensePlate.Games)
+      .WithMany()
       .UsingEntity<GameLicensePlate>("GameLicensePlates",
         right => right
           .HasOne(glp => glp.LicensePlate)
-          .WithMany(plate => plate.GameLicensePlates)
-          .HasForeignKey(glp => glp.LicensePlateId),
+          .WithMany(),
         left => left
           .HasOne(glp => glp.Game)
           .WithMany(game => game.GameLicensePlates)
@@ -56,7 +81,7 @@ class GameEfConfig : IEntityTypeConfiguration<Game>
           joinEntity
             .HasOne(glp => glp.SpottedBy)
             .WithMany()
-            .HasForeignKey("SpottedByPlayerId")
+            .HasForeignKey(glp => glp.SpottedByPlayerId)
             .OnDelete(DeleteBehavior.NoAction);
 
           joinEntity

@@ -12,7 +12,7 @@ namespace TheGame.Tests.DomainModels.Games
       DateTimeOffset? endedOn = null,
       string name = "test game")
     {
-      _gameLicensePlates = licensePlates != null ? new HashSet<GameLicensePlate>(licensePlates) : [];
+      _gameLicensePlates = licensePlates?.ToHashSet() ?? [];
 
       CreatedBy = createdBy;
 

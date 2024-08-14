@@ -59,7 +59,9 @@ Release/
 
 # Docker stuff
 /backend/mssql_volume
+/backend/nginx/ssl/
 .env
 
 # IDE
 .vs
+backend/TheGame.Infra/stack.localdev.json

@@ -1,0 +1,133 @@
+# This action is responsible for building and deploying both backend and frontend code
+# TODO separate into multiple stages/actions
+# TODO rename to build.yml
+
+name: Build Test and Publish
+
+on:
+  push:
+    branches:
+      - release/backend_ui_integration
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches:
+      - release/backend_ui_integration
+  workflow_dispatch:
+
+env:
+  # API Settings
+  API_ROOT: 'backend'
+  API_PROJECT_TO_PUBLISH: 'TheGame.Api/TheGame.Api.csproj'
+  API_PUBLISH_DIR: 'publish_artifacts'
+  API_TEST_SETTINGS_PLACEHOLDER_PATH: 'backend/TheGame.Tests/testsettings.json'
+  DOTNET_VERSION: '8.0.x'
+  DOTNET_BUILD_CONFIG: 'Release'
+  # UI Settings
+  NODE_VERSION: 20
+  UI_ROOT: 'ui'
+
+jobs:
+  # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+  build_test_and_publish_artifacts_job:
+    # TODO add PR update to 'if'
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-22.04
+    name: Build, Test and Publish API and UI artifacts
+    steps:
+      # Checkout and install necessary tools
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup dotnet ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # Build and Test backend
+      
+      - name: Create Test Settings placeholder config
+        run: touch ${{ env.API_TEST_SETTINGS_PLACEHOLDER_PATH }}
+      
+      - name: Display dotnet version
+        run: dotnet --version
+
+      - name: Restore dotnet packages
+        working-directory: ${{ env.API_ROOT }}
+        run: dotnet restore *.sln
+
+      - name: Build dotnet solution
+        working-directory: ${{ env.API_ROOT }}
+        run: |
+          dotnet build *.sln \
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
+          --no-restore \
+          --nologo \
+          /p:ContinuousIntegrationBuild=true \
+          /p:Deterministic=true \
+          /p:UseAppHost=false
+
+      - name: Run dotnet tests
+        working-directory: ${{ env.API_ROOT }}
+        run: |
+          dotnet test *.sln \
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
+          --no-build \
+          --no-restore \
+          --nologo \
+          --verbosity normal \
+          /p:CollectCoverage=true \
+          /p:CoverletOutputFormat=opencover \
+          --logger trx \
+          --collect 'XPlat Code Coverage' \
+          --settings './coverlet.runsettings'
+
+      - name: Publish dotnet solution
+        working-directory: ${{ env.API_ROOT }}
+        run: |
+          dotnet publish ${{ env.API_PROJECT_TO_PUBLISH }} \
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
+          --no-build \
+          --no-restore \
+          --nologo \
+          --verbosity normal \
+          /p:UseAppHost=false \
+          --output ${{ github.workspace }}/${{ env.API_ROOT }}/${{ env.API_PUBLISH_DIR }}
+
+      - name: Upload API build artifacts for next action
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'artifacts_backend'
+          path: ${{ github.workspace }}/${{ env.API_ROOT }}/${{ env.API_PUBLISH_DIR }}
+          if-no-files-found: 'error'
+          retention-days: 1
+          overwrite: true
+
+      # Build NextJS
+      - name: NPM install
+        working-directory: ${{ env.UI_ROOT }}
+        run: npm install
+
+      - name: Set version file
+        working-directory: ${{ env.UI_ROOT }}
+        run: |
+          calculateSha=$(git rev-parse --short ${{ github.sha }})
+          deployDate=$(date --iso-8601=seconds)
+          echo "{\"deployDate\":\"$deployDate\",\"sha\":\"$calculateSha\"}" > ./public/version.json
+
+      - name: Build and export NextJS
+        working-directory: ${{ env.UI_ROOT }}
+        run: npm run build
+
+      - name: Upload UI build artifacts for next action
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'artifacts_ui'
+          path: ${{ github.workspace }}/${{ env.UI_ROOT }}/next_out
+          if-no-files-found: 'error'
+          retention-days: 1
+          overwrite: true

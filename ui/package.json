@@ -9,12 +9,13 @@
     "lint": "next lint"
   },
   "engines": {
-    "node": "20.14"
+    "node": "^20.14"
   },
   "dependencies": {
     "@heroicons/react": "^2.1.4",
     "@serwist/next": "^9.0.3",
     "@serwist/sw": "^9.0.3",
+    "@react-oauth/google": "^0.12.1",
     "flowbite": "^2.3.0",
     "flowbite-react": "^0.10.0",
     "next": "14.2.3",

@@ -13,13 +13,10 @@ public partial class PlayerIdentity
   {
     public OneOf<PlayerIdentity, Failure> CreatePlayerIdentity(NewPlayerIdentityRequest newPlayerRequest)
     {
-      // TODO validate request
-
       var playerIdentity = new PlayerIdentity()
       {
         ProviderIdentityId = newPlayerRequest.ProviderIdentityId,
         ProviderName = newPlayerRequest.ProviderName,
-        RefreshToken = newPlayerRequest.RefreshToken
       };
 
       var newPlayerResult = playerFactory.CreateNewPlayer(newPlayerRequest.PlayerName);
@@ -37,4 +34,8 @@ public partial class PlayerIdentity
   }
 }
 
-public sealed record NewPlayerIdentityRequest(string ProviderName, string ProviderIdentityId, string RefreshToken, string PlayerName);
+public sealed record NewPlayerIdentityRequest(string ProviderName,
+  string ProviderIdentityId,
+  string PlayerName,
+  ushort RefreshTokenByteCount,
+  uint RefreshTokenAgeMinutes);

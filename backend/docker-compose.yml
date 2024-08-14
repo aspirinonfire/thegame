@@ -19,7 +19,7 @@ services:
   thegame.api:
     image: ${DOCKER_REGISTRY-}thegameapi
     ports:
-      - "8080:443"
+        - "9000:80"
     build:
       context: .
       dockerfile: TheGame.Api/Dockerfile
@@ -29,12 +29,27 @@ services:
       - ConnectionStrings__GameDB=Server=mssql; Initial Catalog=${DB_NAME}; User Id=sa; Password=${SQL_PASSWORD}; Trust Server Certificate=True;
       - Auth__Google__ClientId=${GOOGLE_CLIENT_ID}
       - Auth__Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
+      - Auth__Api__JwtSecret=${API_JWT_SECRET}
+      - Auth__Api__JwtAudience=${API_JWT_AUDIENCE}
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=https://+:443
-      # Generate dev certs using `dotnet dev-certs https --export-path <path> --password <password>` `trust`. Do `clean` if already present
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/myCert.pfx
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=${SSL_CERT_PASSWORD}
-    volumes:
-      - ${USERPROFILE}/.aspnet/https:/https:ro  # Mount the ASP.NET Core development certificate
+      - ASPNETCORE_URLS=http://+:80
+      - Logging__LogLevel__Default=Warning
+      - Logging__LogLevel__Microsoft=Information
     depends_on:
     - mssql
+  
+  nginx:
+    image: nginx:1.25.3-alpine
+    ports:
+      - "8080:443"
+    environment:
+      - API_HOST=http://thegame.api:80
+      - UI_HOST=http://host.docker.internal:3000
+      - NGINX_PROXY_PORT=8080
+    volumes:
+      - ./nginx/www:/usr/share/nginx/html
+      - ./nginx/config:/etc/nginx/templates
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - thegame.api
+  
