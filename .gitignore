@@ -44,6 +44,8 @@ next-env.d.ts
 **/public/workbox-*.js.map
 **/public/worker-*.js.map
 **/public/swe-worker-development.js
+**/public/sw*
+**/public/swe-worker*
 
 # Backend stuff
 appsettings.Development.json
@@ -64,4 +66,6 @@ stack*.json
 
 # IDE
 .vs
+backend/TheGame.Infra/stack.localdev.json
+
 /backend/TheGame.Pulumi/Pulumi.localdev.yaml

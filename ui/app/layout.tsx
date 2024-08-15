@@ -8,7 +8,6 @@ import { Spinner } from "flowbite-react";
 import { Game } from "./common/gameCore/gameModels";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import GameNavBar from "./navbar";
-import refreshOnNewVersion from "./appUtils";
 import { UserDetails } from "./common/accounts";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -57,9 +56,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       FetchData();
     }
   }, [needsFetch]);
-
-  // register autorefresh on new version
-  useEffect(() => refreshOnNewVersion());
 
   return (
     <html lang="en">
