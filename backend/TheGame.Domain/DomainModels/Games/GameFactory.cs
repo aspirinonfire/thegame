@@ -8,16 +8,16 @@ namespace TheGame.Domain.DomainModels.Games;
 
 public interface IGameFactory
 {
-  Task<OneOf<Game, Failure>> StartNewGame(string name, Player gameOwner);
+  Task<Result<Game>> StartNewGame(string name, Player gameOwner);
 }
 
 public partial class Game
 {
   public const string HasActiveGameError = "only_one_active_game_allowed";
 
-  public class GameFactory(GameDbContext gameDbContext) : IGameFactory
+  public class GameFactory(IGameDbContext gameDbContext) : IGameFactory
   {
-    public async Task<OneOf<Game, Failure>> StartNewGame(string name, Player gameOwner)
+    public async Task<Result<Game>> StartNewGame(string name, Player gameOwner)
     {
       var hasActiveGame = await gameDbContext.Games
         .AnyAsync(game => game.IsActive && game.CreatedBy.Id == gameOwner.Id);

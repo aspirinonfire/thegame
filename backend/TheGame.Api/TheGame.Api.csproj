@@ -3,12 +3,15 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
-	<!-- CS4014 - async not awaited -->
-	<WarningsAsErrors>Nullable,CS4014</WarningsAsErrors>
-	<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+	  <!-- CS4014 - async not awaited -->
+	  <WarningsAsErrors>Nullable,CS4014</WarningsAsErrors>
+	  <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <UserSecretsId>d3a2e6a9-e47b-48c6-9f87-b0973f9b5e11</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
+    <!-- Publish settings-->
+    <RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
+    <SelfContained>false</SelfContained> 
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +20,12 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.7" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.7" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.9.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.9.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.9.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" Version="1.0.0-beta.12" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.9.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 

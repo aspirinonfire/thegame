@@ -1,35 +1,35 @@
 # This action is responsible for building and deploying both backend and frontend code
-# TODO separate into multiple stages/actions
-# TODO rename to build.yml
 
 name: Build Test and Publish
 
 on:
   push:
     branches:
-      - release/backend_ui_integration
+      - master
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
-      - release/backend_ui_integration
+      - master
   workflow_dispatch:
 
 env:
   # API Settings
-  API_ROOT: 'backend'
-  API_PROJECT_TO_PUBLISH: 'TheGame.Api/TheGame.Api.csproj'
-  API_PUBLISH_DIR: 'publish_artifacts'
-  API_TEST_SETTINGS_PLACEHOLDER_PATH: 'backend/TheGame.Tests/testsettings.json'
-  DOTNET_VERSION: '8.0.x'
-  DOTNET_BUILD_CONFIG: 'Release'
+  BACKEND_ROOT: backend
+  API_PROJECT_TO_PUBLISH: TheGame.Api/TheGame.Api.csproj
+  MIGRATOR_PROJECT: TheGame.DbMigrator
+  DBCONTEXT_PROJECT: TheGame.Domain
+  API_PUBLISH_DIR: publish_artifacts
+  PULUMI_PROJECT_TO_PUBLISH: TheGame.Infra/TheGame.Infra.csproj
+  PULUMI_PUBLISH_DIR: infra
+  API_TEST_SETTINGS_PLACEHOLDER_PATH: backend/TheGame.Tests/testsettings.json
+  DOTNET_BUILD_CONFIG: Release
   # UI Settings
   NODE_VERSION: 20
-  UI_ROOT: 'ui'
+  UI_ROOT: ui
 
 jobs:
   # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
   build_test_and_publish_artifacts_job:
-    # TODO add PR update to 'if'
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-22.04
     name: Build, Test and Publish API and UI artifacts
@@ -43,25 +43,24 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Setup dotnet ${{ env.DOTNET_VERSION }}
+      - name: Setup dotnet versions
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-version: |
+            8.0.x
+            6.0.x
 
       # Build and Test backend
       
       - name: Create Test Settings placeholder config
         run: touch ${{ env.API_TEST_SETTINGS_PLACEHOLDER_PATH }}
-      
-      - name: Display dotnet version
-        run: dotnet --version
 
       - name: Restore dotnet packages
-        working-directory: ${{ env.API_ROOT }}
+        working-directory: ${{ env.BACKEND_ROOT }}
         run: dotnet restore *.sln
 
       - name: Build dotnet solution
-        working-directory: ${{ env.API_ROOT }}
+        working-directory: ${{ env.BACKEND_ROOT }}
         run: |
           dotnet build *.sln \
           --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
@@ -72,7 +71,7 @@ jobs:
           /p:UseAppHost=false
 
       - name: Run dotnet tests
-        working-directory: ${{ env.API_ROOT }}
+        working-directory: ${{ env.BACKEND_ROOT }}
         run: |
           dotnet test *.sln \
           --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
@@ -87,7 +86,7 @@ jobs:
           --settings './coverlet.runsettings'
 
       - name: Publish dotnet solution
-        working-directory: ${{ env.API_ROOT }}
+        working-directory: ${{ env.BACKEND_ROOT }}
         run: |
           dotnet publish ${{ env.API_PROJECT_TO_PUBLISH }} \
           --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
@@ -96,16 +95,7 @@ jobs:
           --nologo \
           --verbosity normal \
           /p:UseAppHost=false \
-          --output ${{ github.workspace }}/${{ env.API_ROOT }}/${{ env.API_PUBLISH_DIR }}
-
-      - name: Upload API build artifacts for next action
-        uses: actions/upload-artifact@v4
-        with:
-          name: 'artifacts_backend'
-          path: ${{ github.workspace }}/${{ env.API_ROOT }}/${{ env.API_PUBLISH_DIR }}
-          if-no-files-found: 'error'
-          retention-days: 1
-          overwrite: true
+          --output ${{ github.workspace }}/${{ env.BACKEND_ROOT }}/${{ env.API_PUBLISH_DIR }}
 
       # Build NextJS
       - name: NPM install
@@ -122,12 +112,52 @@ jobs:
       - name: Build and export NextJS
         working-directory: ${{ env.UI_ROOT }}
         run: npm run build
+        env:
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.GOOGLECLIENTID }}
 
-      - name: Upload UI build artifacts for next action
+      # build db migrator to be used in deploy workflow
+      - name: Install EF Core CLI
+        run: |
+          dotnet tool install dotnet-ef --global
+          dotnet tool restore
+        shell: bash
+
+      - name: Create EF Migration bundle
+        working-directory: ${{ env.BACKEND_ROOT }}
+        run: |
+          dotnet ef migrations bundle \
+          --project ${{ env.DBCONTEXT_PROJECT }} \
+          --startup-project ${{ env.MIGRATOR_PROJECT }} \
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
+          --runtime linux-x64 \
+          --self-contained \
+          --force \
+          --output ${{ env.API_PUBLISH_DIR }}/efbundle
+
+      # Publish IaC artifacts (Pulumi).
+      - name: Publish Pulumi runner
+        working-directory: ${{ env.BACKEND_ROOT }}
+        run: |
+          dotnet publish ${{ env.PULUMI_PROJECT_TO_PUBLISH }} \
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
+          --nologo \
+          --runtime linux-x64 \
+          --self-contained \
+          /p:PublishSingleFile=true \
+          --output ${{ github.workspace }}/${{ env.BACKEND_ROOT }}/${{ env.API_PUBLISH_DIR }}/${{ env.PULUMI_PUBLISH_DIR}}
+
+      # Publish artifacts for deploy workflow
+      - name: Combine artifacts
+        working-directory: ${{ github.workspace }}/${{ env.BACKEND_ROOT }}/${{ env.API_PUBLISH_DIR }}
+        run: |
+          mv ${{ github.workspace }}/${{ env.UI_ROOT }}/next_out ./wwwroot
+          cp ${{ github.workspace }}/${{ env.BACKEND_ROOT }}/TheGame.Api/Dockerfile-pipelines .
+
+      - name: Upload combined artifacts for deployment
         uses: actions/upload-artifact@v4
         with:
-          name: 'artifacts_ui'
-          path: ${{ github.workspace }}/${{ env.UI_ROOT }}/next_out
+          name: 'artifacts'
+          path: ${{ github.workspace }}/${{ env.BACKEND_ROOT }}/${{ env.API_PUBLISH_DIR }}
           if-no-files-found: 'error'
           retention-days: 1
           overwrite: true

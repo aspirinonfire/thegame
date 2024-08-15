@@ -1,12 +1,27 @@
 import { createContext } from "react";
-import UserAccount from "../accounts";
+import { UserDetails } from "../accounts";
 import { Game } from "./gameModels";
 
-export const CurrentUserAccountContext = createContext<UserAccount | null>(null);
+export interface UserDetailsContext {
+  userDetails: UserDetails,
+  setUserDetails: (details: UserDetails) => void
+}
 
 export interface GameContext {
   activeGame : Game | null,
   setActiveGame: (newActiveGame: Game | null) => void
 }
 
-export const CurrentGameContext = createContext<GameContext>({ activeGame: null, setActiveGame: (game) => {} } as GameContext);
+export const CurrentUserAccountContext = createContext<UserDetailsContext>({
+  userDetails: { 
+    isAuthenticated: false,
+    Player: {
+      playerName: "Guest",
+      playerId: -1
+    }
+  },
+  setUserDetails: (details) => {}});
+
+export const CurrentGameContext = createContext<GameContext>({
+  activeGame: null,
+  setActiveGame: (game) => {}});

@@ -15,15 +15,10 @@ namespace TheGame.Domain;
 public static class GameServiceExtensions
 {
   public static IServiceCollection AddGameServices(this IServiceCollection services,
-    string connectionString,
+    string? connectionString = null,
     Assembly? additionalMediatrAssemblyToScan = null,
     Action<ILoggingBuilder>? efLogger = null)
   {
-    if (string.IsNullOrEmpty(connectionString))
-    {
-      throw new ArgumentNullException(nameof(connectionString));
-    }
-
     services
       // Logging
       .AddLogging()
@@ -39,7 +34,13 @@ public static class GameServiceExtensions
         options.EnableSensitiveDataLogging(true);
 #endif
         options.UseLazyLoadingProxies(true);
-        options.UseSqlServer(connectionString);
+        options.UseSqlServer(connectionString ?? $"Name=ConnectionStrings:{GameDbContext.ConnectionStringName}",
+          sqlServerOpts =>
+          {
+            sqlServerOpts.CommandTimeout(15);
+            sqlServerOpts.EnableRetryOnFailure(3, TimeSpan.FromSeconds(2), null);
+            sqlServerOpts.UseAzureSqlDefaults(true);
+          });
       })
       .AddScoped<IGameDbContext>(isp => isp.GetRequiredService<GameDbContext>())
       // Utils

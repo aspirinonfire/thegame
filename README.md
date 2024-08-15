@@ -1,9 +1,10 @@
 # The license plate game
 
-Find all license plates form each U.S. state and Canadian province.
+Find all license plates from each U.S. state and Canadian province.
 
-The game is built using progressive web app ([PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)) technology, allowing users to install it as a standalone app on their phone for a seamless, app-like experience..
+### Implementation Details
+Frontend is built using [Next.js](https://nextjs.org/), [Tailwind](https://tailwindcss.com/), [Flowbite](https://flowbite.com/docs/getting-started/react/), and progressive web app ([PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)) technology, allowing users to install it as a standalone app on their phone for a seamless, app-like experience.
+The backend is built using [ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/introduction-to-aspnet-core?view=aspnetcore-8.0) and [EF Core](https://learn.microsoft.com/en-us/ef/core/).
+App is deployed to [Azure Container Apps](https://azure.microsoft.com/en-us/products/container-apps) and Azure SQL using GitHub Actions and [Pulumi](https://www.pulumi.com/).
 
-## Tech Details
-* Frontend is built using [Next.js](https://nextjs.org/), [Tailwind](https://tailwindcss.com/), and [Flowbite](https://flowbite.com/docs/getting-started/react/).
-* Backend is under active development. Current plan is to use `SQL` and [Entity Framework Core](https://learn.microsoft.com/en-us/ef/core/), [Asp.NET Core minimal APIs](https://learn.microsoft.com/en-us/aspnet/core/tutorials/min-web-api?view=aspnetcore-8.0&tabs=visual-studio), and [SignalR](https://learn.microsoft.com/en-us/aspnet/core/signalr/introduction?view=aspnetcore-8.0).
+See [Wiki page](https://github.com/aspirinonfire/thegame/wiki/The-Game-design) for in-depth technical details.

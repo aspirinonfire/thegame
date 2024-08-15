@@ -7,7 +7,7 @@
     <IsPackable>false</IsPackable>
     <!-- CS4014 - async not awaited -->
     <WarningsAsErrors>Nullable,CS4014</WarningsAsErrors>
-	<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+	  <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <ItemGroup>
@@ -48,8 +48,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\thegame.api\TheGame.Api.csproj" />
-    <ProjectReference Include="..\thegame.domain\TheGame.Domain.csproj" />
+    <ProjectReference Include="..\TheGame.Api\TheGame.Api.csproj" />
+    <ProjectReference Include="..\TheGame.Domain\TheGame.Domain.csproj" />
+    <ProjectReference Include="..\TheGame.Infra\TheGame.Infra.csproj" />
   </ItemGroup>
 
 </Project>

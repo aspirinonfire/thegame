@@ -10,7 +10,7 @@ using TheGame.Domain.DomainModels.PlayerIdentities;
 
 namespace TheGame.Domain.CommandHandlers;
 
-public sealed record GetOrCreateNewPlayerCommand(NewPlayerIdentityRequest NewPlayerIdentityRequest) : IRequest<OneOf<GetOrCreatePlayerResult, Failure>>;
+public sealed record GetOrCreateNewPlayerCommand(NewPlayerIdentityRequest NewPlayerIdentityRequest) : IRequest<Result<GetOrCreatePlayerResult>>;
 
 public sealed record GetOrCreatePlayerResult(bool IsNewIdentity,
   long PlayerIdentityId,
@@ -25,9 +25,9 @@ public sealed class GetOrCreateNewPlayerCommandHandler(IGameDbContext gameDb,
   ITransactionExecutionWrapper transactionWrapper,
   ISystemService systemService,
   ILogger<GetOrCreateNewPlayerCommand> logger)
-  : IRequestHandler<GetOrCreateNewPlayerCommand, OneOf<GetOrCreatePlayerResult, Failure>>
+  : IRequestHandler<GetOrCreateNewPlayerCommand, Result<GetOrCreatePlayerResult>>
 {
-    public async Task<OneOf<GetOrCreatePlayerResult, Failure>> Handle(GetOrCreateNewPlayerCommand request, CancellationToken cancellationToken) =>
+    public async Task<Result<GetOrCreatePlayerResult>> Handle(GetOrCreateNewPlayerCommand request, CancellationToken cancellationToken) =>
       await transactionWrapper.ExecuteInTransaction<GetOrCreatePlayerResult>(
           async () =>
           {

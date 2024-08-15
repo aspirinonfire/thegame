@@ -15,11 +15,29 @@ services:
     environment:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=${SQL_PASSWORD}
+    healthcheck:
+      # see https://docs.docker.com/reference/dockerfile/#healthcheck
+      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "${SQL_PASSWORD}", "-Q", "SELECT 1"]
+      # expected container initialization time. once healthcheck succeeds, container is considered started
+      start_period: 20s
+      start_interval: 1s
+      # once started, container will run healtchecks with the following configuration
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  aspire.dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:8.0.0
+    ports:
+      - "18888:18888" # UI
+      #- "4317:18889"  # OTLP port (gRPC)
+    environment:
+      - Dashboard__Frontend__AuthMode=Unsecured # Dev only!
+      - DASHBOARD__OTLP__AUTHMODE=ApiKey
+      - DASHBOARD__OTLP__PRIMARYAPIKEY=${OTLP_API_KEY}
 
   thegame.api:
     image: ${DOCKER_REGISTRY-}thegameapi
-    ports:
-        - "9000:80"
     build:
       context: .
       dockerfile: TheGame.Api/Dockerfile
@@ -31,12 +49,18 @@ services:
       - Auth__Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
       - Auth__Api__JwtSecret=${API_JWT_SECRET}
       - Auth__Api__JwtAudience=${API_JWT_AUDIENCE}
+      - Auth__Api__JwtTokenExpirationMin=5
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80
       - Logging__LogLevel__Default=Warning
       - Logging__LogLevel__Microsoft=Information
+      - Otel__ExporterEndpoint=http://aspire.dashboard:18889
+      - Otel__ExporterApiKey=${OTLP_API_KEY}
     depends_on:
-    - mssql
+      mssql:
+        condition: service_healthy
+      aspire.dashboard:
+        condition: service_started
   
   nginx:
     image: nginx:1.25.3-alpine
@@ -51,5 +75,6 @@ services:
       - ./nginx/config:/etc/nginx/templates
       - ./nginx/ssl:/etc/nginx/ssl
     depends_on:
-      - thegame.api
+      thegame.api:
+        condition: service_started
   

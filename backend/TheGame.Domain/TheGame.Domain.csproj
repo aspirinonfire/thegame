@@ -3,9 +3,9 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
-	<!-- CS4014 - async not awaited -->
-	<WarningsAsErrors>Nullable,CS4014</WarningsAsErrors>
-	<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+	  <!-- CS4014 - async not awaited -->
+	  <WarningsAsErrors>Nullable,CS4014</WarningsAsErrors>
+	  <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,7 +28,6 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
-    <PackageReference Include="OneOf" Version="3.0.271" />
   </ItemGroup>
 
 </Project>

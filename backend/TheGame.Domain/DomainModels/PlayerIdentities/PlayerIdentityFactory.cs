@@ -4,14 +4,14 @@ namespace TheGame.Domain.DomainModels.PlayerIdentities;
 
 public interface IPlayerIdentityFactory
 {
-  OneOf<PlayerIdentity, Failure> CreatePlayerIdentity(NewPlayerIdentityRequest newPlayerRequest);
+  Result<PlayerIdentity> CreatePlayerIdentity(NewPlayerIdentityRequest newPlayerRequest);
 }
 
 public partial class PlayerIdentity
 {
-  public class PlayerIdentityFactory(GameDbContext dbContext, IPlayerFactory playerFactory) : IPlayerIdentityFactory
+  public class PlayerIdentityFactory(IGameDbContext dbContext, IPlayerFactory playerFactory) : IPlayerIdentityFactory
   {
-    public OneOf<PlayerIdentity, Failure> CreatePlayerIdentity(NewPlayerIdentityRequest newPlayerRequest)
+    public Result<PlayerIdentity> CreatePlayerIdentity(NewPlayerIdentityRequest newPlayerRequest)
     {
       var playerIdentity = new PlayerIdentity()
       {

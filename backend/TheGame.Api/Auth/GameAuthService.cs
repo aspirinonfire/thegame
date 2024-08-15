@@ -1,16 +1,19 @@
 using Google.Apis.Auth;
+using Google.Apis.Auth.OAuth2.Flows;
+using Google.Apis.Auth.OAuth2.Responses;
+using Google.Apis.Util.Store;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using OneOf;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using TheGame.Domain.CommandHandlers;
 using TheGame.Domain.DomainModels.PlayerIdentities;
@@ -43,25 +46,32 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
   public const string PlayerIdentityIdClaimType = "player_identiy_id";
   public const string PlayerIdClaimType = "player_id";
   
+  public const string MissingAuthCodeError = "missing_auth_code";
+  public const string ErrorWhileExchangingAuthCodeForTokens = "auth_code_exchange_error";
   public const string MissingIdTokenError = "missing_id_token";
   public const string InvalidIdTokenError = "invalid_id_token";
   public const string GeneralErrorWhileValidatingTokenError = "token_validation_general_error";
   public const string InvalidRefreshParameters = "access_refresh_parameters_invalid";
 
   /// <summary>
-  /// Use valid Google ID Token to obtain player identity and generate API auth and refresh tokens.
+  /// Use Google Authorization code to obtain player identity and generate API auth and refresh tokens.
   /// </summary>
   /// <remarks>
-  /// This method expects ID Token since its payload contains everything required to generate valid player identity.
+  /// This method expects Authorization Code which is exchanged for ID Token since its payload contains everything required to generate valid player identity.
   /// Currently, no additional user information is required so Access Token is not needed.
-  /// If that requirement changes, UI will need to provide authorization code so auth method can obtain necessary tokens and make appropriate requests.
   /// </remarks>
-  /// <param name="googleIdToken"></param>
+  /// <param name="googleAuthCode"></param>
   /// <param name="httpContext"></param>
   /// <returns></returns>
-  public async Task<OneOf<ApiTokens, Failure>> AuthenticateWithGoogleIdToken(string googleIdToken, HttpContext httpContext)
+  public async Task<Result<ApiTokens>> AuthenticateWithGoogleAuthCode(string googleAuthCode, HttpContext httpContext)
   {
-    var googleIdentityResult = await GetValidatedGoogleIdTokenPayload(googleIdToken);
+    var tokenResult = await ExchangeGoogleAuthCodeForTokens(googleAuthCode);
+    if (!tokenResult.TryGetSuccessful(out var googleTokens, out var tokenFailure))
+    {
+      return tokenFailure;
+    }
+
+    var googleIdentityResult = await GetValidatedGoogleIdTokenPayload(googleTokens.IdToken);
     if (!googleIdentityResult.TryGetSuccessful(out var idTokenPayload, out var tokenValidationFailure))
     {
       return tokenValidationFailure;
@@ -96,7 +106,7 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
     return new ApiTokens(playerIdentity.IsNewIdentity, apiToken);
   }
 
-  public virtual async Task<OneOf<ApiTokens, Failure>> RefreshAccessToken(HttpContext httpContext, string accessToken)
+  public virtual async Task<Result<ApiTokens>> RefreshAccessToken(HttpContext httpContext, string accessToken)
   {
     var refreshCookieValue = httpContext.Request.Cookies
       .Where(cookie => cookie.Key == ApiRefreshTokenCookieName)
@@ -130,13 +140,13 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
     }
     catch (Exception ex)
     {
-      logger.LogError(ex, "Failed to validate access token");
+      logger.LogError(ex, "Failed to validate access token.");
       return new Failure(InvalidRefreshParameters);
     }
 
     if (playerId < 1)
     {
-      logger.LogError("PlayerId claim value is invalid");
+      logger.LogError("PlayerId claim value is invalid.");
       return new Failure(InvalidRefreshParameters);
     }
 
@@ -161,12 +171,51 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
     return new ApiTokens(false, apiToken);
   }
 
+  public virtual async Task<Result<TokenResponse>> ExchangeGoogleAuthCodeForTokens(string authCode)
+  {
+    if (string.IsNullOrWhiteSpace(authCode))
+    {
+      return new Failure(MissingAuthCodeError);
+    }
+
+    using var authCodeFlow = new GoogleAuthorizationCodeFlow(new GoogleAuthorizationCodeFlow.Initializer()
+    {
+      ClientSecrets = new Google.Apis.Auth.OAuth2.ClientSecrets
+      {
+        ClientId = gameSettings.Value.Auth.Google.ClientId,
+        ClientSecret = gameSettings.Value.Auth.Google.ClientSecret
+      },
+      DataStore = new NoopDataStore()
+    });
+
+    try
+    {
+      var tokenResponse = await authCodeFlow.ExchangeCodeForTokenAsync("userId",
+      authCode,
+      "postmessage",
+      CancellationToken.None);
+
+      if (tokenResponse != null)
+      {
+        return tokenResponse;
+      }
+
+      logger.LogError("Failed to exchange auth code for google tokens. Got empty response.");
+      return new Failure(ErrorWhileExchangingAuthCodeForTokens);
+    }
+    catch (Exception ex)
+    {
+      logger.LogError(ex, "Failed to exchange auth code for google tokens.");
+      return new Failure(ErrorWhileExchangingAuthCodeForTokens);
+    }
+  }
+
   /// <summary>
   /// Validate Google ID Token and return payload claims. For validation rules see <see href="https://developers.google.com/identity/openid-connect/openid-connect#validatinganidtoken"/>
   /// </summary>
   /// <param name="googleIdToken"></param>
   /// <returns></returns>
-  public virtual async Task<OneOf<GoogleJsonWebSignature.Payload, Failure>> GetValidatedGoogleIdTokenPayload(string googleIdToken)
+  public virtual async Task<Result<GoogleJsonWebSignature.Payload>> GetValidatedGoogleIdTokenPayload(string googleIdToken)
   {
     if (string.IsNullOrEmpty(googleIdToken))
     {
@@ -189,7 +238,7 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
     }
     catch (Exception ex)
     {
-      logger.LogError(ex, "Encountered error while validating Google ID Token");
+      logger.LogError(ex, "Encountered error while validating Google ID Token.");
       return new Failure(GeneralErrorWhileValidatingTokenError);
     }
   }
@@ -215,7 +264,7 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
     var jwtToken = new JwtSecurityToken(
       claims: claims,
       notBefore: DateTime.UtcNow,
-      expires: DateTime.UtcNow.AddMinutes(60),
+      expires: DateTime.UtcNow.AddMinutes(gameSettings.Value.Auth.Api.JwtTokenExpirationMin),
       audience: gameSettings.Value.Auth.Api.JwtAudience,
       signingCredentials: new SigningCredentials(
         GetAccessTokenSigningKey(gameSettings.Value.Auth.Api.JwtSecret),
@@ -241,5 +290,16 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
     }.Build(httpContext);
 
     httpContext.Response.Cookies.Append(ApiRefreshTokenCookieName, refreshTokenValue, refreshCookieOptions);
+  }
+
+  private sealed class NoopDataStore : IDataStore
+  {
+    public Task ClearAsync() => Task.CompletedTask;
+
+    public Task DeleteAsync<T>(string key) => Task.CompletedTask;
+
+    public Task<T> GetAsync<T>(string key) => Task.FromResult<T>(default!);
+
+    public Task StoreAsync<T>(string key, T value) => Task.CompletedTask;
   }
 }

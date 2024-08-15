@@ -1,0 +1,146 @@
+name: Deploy App
+
+on:
+  workflow_run:
+    workflows: [Build Test and Publish]
+    types: [completed]
+    branches:
+      - master
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        type: string
+        required: true
+        description: build workflow run id (used to download build artifacts)
+
+permissions:
+  id-token: write # write is required for requesting the JWT
+  contents: read 
+
+env:
+  ARTIFACTS: artifacts
+  DOCKERFILE: Dockerfile-pipelines
+  NODE_VERSION: 20
+  PULUMI_PUBLISH_DIR: infra
+  INFRA_BINARY: TheGame.Infra
+  CONTAINER_REPO: ghcr.io
+  GAMEAPP_IMAGE_NAME: thegame-everything
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+    if: ${{ (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push') || github.event.workflow_run.event == 'workflow_dispatch' }}
+    environment: dev
+    steps:
+    - name: Setup node.js environment
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Download artifacts
+      uses: actions/github-script@v6
+      with:
+        script: |
+          let run_id = context.payload.workflow_run.id || context.payload.inputs.build_run_id;
+          let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            run_id: run_id,
+          });
+          let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
+            return artifact.name == "${{ env.ARTIFACTS }}"
+          })[0];
+          let download = await github.rest.actions.downloadArtifact({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            artifact_id: matchArtifact.id,
+            archive_format: 'zip',
+          });
+          let fs = require('fs');
+          fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/${{ env.ARTIFACTS }}.zip`, Buffer.from(download.data));
+
+    - name: Unzip build artifacts
+      run: unzip -d ${{ env.ARTIFACTS }} ${{ env.ARTIFACTS }}.zip
+
+    - name: List build artifacts
+      run: ls -lR ${{ env.ARTIFACTS }}
+
+    - name: Prepare artifacts for deployment
+      run: |
+        mv ${{ env.ARTIFACTS }}/${{ env.DOCKERFILE }} .
+        mv ${{ env.ARTIFACTS }}/efbundle .
+        mv ${{ env.ARTIFACTS }}/${{ env.PULUMI_PUBLISH_DIR }} .
+        chmod 744 ./efbundle
+        chmod 744 ./${{ env.PULUMI_PUBLISH_DIR }}/${{ env.INFRA_BINARY }}
+
+    # establish identity context for the deployment run (https://www.gatevnotes.com/passwordless-authentication-github-actions-to-microsoft-azure/)
+    # this implementation uses github token exchange for service principal identity defined in entra
+    - name: Az login
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Run test az command
+      uses: 'azure/CLI@v1'
+      with:
+        inlineScript: |
+          az account show
+          az group list
+ 
+    # TODO: tag management
+    - name: Build and Push docker image
+      run: |
+        docker login --username ${{ github.repository_owner }} --password ${{ secrets.GHCR_PAT }} ${{ env.CONTAINER_REPO }}
+        docker build ${{ env.ARTIFACTS }} --file ${{ env.DOCKERFILE }} --tag ${{ env.CONTAINER_REPO }}/${{ github.repository_owner }}/${{ env.GAMEAPP_IMAGE_NAME }}:latest
+        docker push ${{ env.CONTAINER_REPO }}/${{ github.repository_owner }}/${{ env.GAMEAPP_IMAGE_NAME }}:latest
+
+    # Deploy infra
+    - name: Install pulumi
+      uses: pulumi/actions@v4
+      with:
+        pulumi-version: 3.127.0
+
+    - name: Deploy Game Infra with Pulumi
+      working-directory: ${{ env.PULUMI_PUBLISH_DIR }}
+      run: ./${{ env.INFRA_BINARY }}
+      env:
+        # We cannot use az login as service principal for pulumi azure native auth
+        ARM_USE_OIDC: 'true'
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+        ProjectName: ${{ vars.PROJECTNAME }}
+        StackName: ${{ vars.STACKNAME }}
+        AzureNativeVersion: ${{ vars.AZURENATIVEVERSION }}
+        AzureAdVersion: ${{ vars.AZUREADVERSION }}
+        BackendBlobStorageUrl: ${{ vars.BACKENDBLOBSTORAGEURL }}
+
+        SubscriptionId: ${{ vars.SUBSCRIPTIONID }}
+        ResourceGroupName: ${{ vars.RESOURCEGROUPNAME }}
+
+        DbServerName: ${{ vars.DBSERVERNAME }}
+        DbName: ${{ vars.DBNAME }}
+
+        AcaEnvName: ${{ vars.ACAENVNAME }}
+        AcaName: ${{ vars.ACANAME }}
+        GhcrUrl: ${{ env.CONTAINER_REPO }}
+        GhcrUsername: ${{ github.repository_owner }}
+        GhcrPat: ${{ secrets.GHCR_PAT }}
+        GameImage: ${{ env.GAMEAPP_IMAGE_NAME }}:latest
+
+        GoogleClientId: ${{ vars.GOOGLECLIENTID }}
+        GoogleClientSecret: ${{ secrets.GOOGLECLIENTSECRET }}
+        JwtSecret: ${{ secrets.JWTSECRET }}
+        JwtAudience: ${{ vars.JWTAUDIENCE }}
+        JwtTokenExpirationMin: ${{ vars.JWTTOKENEXPIRATIONMIN }}
+   
+    # execute migrator
+    # note:
+    # 1. Firewall rules are not required because target database allows azure service access.
+    # 2. Authentication must be set to "Active Directory Default" in connection string to make it work with az login
+    - name: Run DB migrations
+      run: ./efbundle --verbose --connection "Server=tcp:${{ vars.DBSERVERNAME }}.database.windows.net,1433;Initial Catalog=${{ vars.DBNAME }};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=Active Directory Default;"
+   

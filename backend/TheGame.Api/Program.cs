@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
@@ -9,7 +8,6 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using TheGame.Api.Auth;
 using TheGame.Domain;
-using TheGame.Domain.DomainModels;
 
 namespace TheGame.Api;
 
@@ -60,7 +58,6 @@ public class Program
       .AddCheck<ApiInfraHealthCheck>(nameof(ApiInfraHealthCheck));
 
     var isDevEnvironment = builder.Environment.IsDevelopment();
-    var connString = builder.Configuration.GetConnectionString(GameDbContext.ConnectionStringName) ?? string.Empty;
 
     // register game api services
     builder.Services
@@ -69,7 +66,7 @@ public class Program
       .ValidateDataAnnotations();
 
     builder.Services
-      .AddGameServices(connString, typeof(Program).Assembly)
+      .AddGameServices(additionalMediatrAssemblyToScan: typeof(Program).Assembly)
       .AddGameAuthenticationServices(builder.Configuration);
 
     // Set json serializer options. Both configs must be set.
@@ -89,7 +86,12 @@ public class Program
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
       });
 
+    builder.AddGameApiOpenTelemtry();
+
     var app = builder.Build();
+
+    app.UseDefaultFiles();  // re-write path only. / to /index.html
+    app.UseStaticFiles();   // serve ui files from wwwroot
 
     // Configure the HTTP request pipeline.
     if (isDevEnvironment)
@@ -101,13 +103,11 @@ public class Program
         swaggerOpts.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1");
       });
     }
-
+    
     app.UseHsts();
     app.UseHttpsRedirection();
 
     app.UseHealthChecks("/api/health");
-
-    app.UseRouting();
 
     app.UseAuthentication();
     app.UseAuthorization();
@@ -115,6 +115,9 @@ public class Program
     app.MapGroup("")
       .RequireAuthorization()
       .AddGameApiRoutes();
+
+    // fallback to spa
+    app.MapFallbackToFile("/index.html");
 
     await app.RunAsync();
   }
