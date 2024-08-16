@@ -7,4 +7,4 @@ Frontend is built using [Next.js](https://nextjs.org/), [Tailwind](https://tailw
 The backend is built using [ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/introduction-to-aspnet-core?view=aspnetcore-8.0) and [EF Core](https://learn.microsoft.com/en-us/ef/core/).
 App is deployed to [Azure Container Apps](https://azure.microsoft.com/en-us/products/container-apps) and Azure SQL using GitHub Actions and [Pulumi](https://www.pulumi.com/).
 
-See [Wiki page](https://github.com/aspirinonfire/thegame/wiki/The-Game-Technical-details) for in-depth technical details.
+See [Wiki page](https://github.com/aspirinonfire/thegame/wiki) for in-depth technical details.
