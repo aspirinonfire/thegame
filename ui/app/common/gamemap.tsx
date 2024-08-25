@@ -295,8 +295,8 @@ export default function GameMap(mapArguments: ActiveGameData | HistoricalGamesDa
           <text transform="matrix(1 0 0 1 495 120)" style={{fill: '#333', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>MN</text>
           <text transform="matrix(1 0 0 1 570 160)" style={{fill: '#333', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>WI</text>
           <text transform="matrix(1 0 0 1 653 185)" style={{fill: '#333', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>MI</text>
-          <text transform="matrix(1 0 0 1 415 230)" style={{fill: '#333', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>IA</text>
-          <text transform="matrix(1 0 0 1 510 215)" style={{fill: '#333', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>NE</text>
+          <text transform="matrix(1 0 0 1 415 230)" style={{fill: '#333', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>NE</text>
+          <text transform="matrix(1 0 0 1 510 215)" style={{fill: '#333', fontFamily:'Montserrat-Medium', fontSize:'1.2rem'}}>IA</text>
         </g>
         <path id="frames" fill="none" stroke="#777" strokeWidth="2" d="M215 493v55l36 45M0 425h147l68 68h85l54 54v46" />
       </svg>
