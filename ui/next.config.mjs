@@ -18,7 +18,7 @@ const nextConfig = {
     loader: "custom",
     loaderFile: "./staticImgLoader.ts"
   },
-
+  // pass env vars from build
   env: {
     NEXT_PUBLIC_BUILD_ID: process.env.NEXT_PUBLIC_BUILD_ID
   }
