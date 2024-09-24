@@ -13,6 +13,9 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
+// ensure manual pre-cache gets evicted on new service worker
+const manualPrecacheRevision = process.env.BUILD_ID ?? `${new Date().getTime()}`;
+
 const serwist = new Serwist({
   // A list of URLs that should be cached. Usually, you don't generate
   // this list yourself; rather, you'd rely on a Serwist build tool/your framework
@@ -21,15 +24,15 @@ const serwist = new Serwist({
     // These urls are required for a fully working offline ux however, they are not included during sw build by default.
     // Additionally, additionalPrecacheEntries cannot be used because of an issue that overrides public asset caching,
     // see https://github.com/serwist/serwist/issues/139
-    { url: "/favicon.ico", revision: null },
-    { url: "/index.html", revision: null },
-    { url: "/index.txt", revision: null },
-    { url: "/game/index.html", revision: null },
-    { url: "/game/index.txt", revision: null },
-    { url: "/history/index.html", revision: null },
-    { url: "/history/index.txt", revision: null },
-    { url: "/about/index.html", revision: null },
-    { url: "/about/index.txt", revision: null },
+    { url: "/favicon.ico", revision: manualPrecacheRevision },
+    { url: "/index.html", revision: manualPrecacheRevision },
+    { url: "/index.txt", revision: manualPrecacheRevision },
+    { url: "/game/index.html", revision: manualPrecacheRevision },
+    { url: "/game/index.txt", revision: manualPrecacheRevision },
+    { url: "/history/index.html", revision: manualPrecacheRevision },
+    { url: "/history/index.txt", revision: manualPrecacheRevision },
+    { url: "/about/index.html", revision: manualPrecacheRevision },
+    { url: "/about/index.txt", revision: manualPrecacheRevision },
   ]),
   // Options to customize how Serwist precaches the URLs.
   precacheOptions: {
