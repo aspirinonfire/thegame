@@ -47,6 +47,7 @@ jobs:
           api_location: "" # Api source code path - optional
         env: # Add environment variables here
           IS_STATIC_EXPORT: true
+          NEXT_PUBLIC_BUILD_ID: ${{ github.sha }}_${{ github.run_id }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed' || github.event_name == 'workflow_dispatch'
