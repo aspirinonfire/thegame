@@ -1,5 +1,6 @@
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
 import { Serwist, NetworkOnly } from "serwist";
+import versionInfo from "@/public/version.json";
 
 // This declares the value of `injectionPoint` to TypeScript.
 // `injectionPoint` is the string that will be replaced by the
@@ -14,7 +15,9 @@ declare global {
 declare const self: ServiceWorkerGlobalScope;
 
 // ensure manual pre-cache gets evicted on new service worker
-const manualPrecacheRevision = process.env.NEXT_PUBLIC_BUILD_ID || `${new Date().getTime()}`;
+const manualPrecacheRevision = !!versionInfo.deployDate && !!versionInfo.sha ?
+  `${new Date(versionInfo.deployDate).getTime()}_${versionInfo.sha}` :
+  `${new Date().getTime()}`;
 
 const serwist = new Serwist({
   // A list of URLs that should be cached. Usually, you don't generate
