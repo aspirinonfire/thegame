@@ -14,7 +14,7 @@ declare global {
 declare const self: ServiceWorkerGlobalScope;
 
 // ensure manual pre-cache gets evicted on new service worker
-const manualPrecacheRevision = process.env.NEXT_PUBLIC_BUILD_ID ?? `${new Date().getTime()}`;
+const manualPrecacheRevision = process.env.NEXT_PUBLIC_BUILD_ID || `${new Date().getTime()}`;
 
 const serwist = new Serwist({
   // A list of URLs that should be cached. Usually, you don't generate

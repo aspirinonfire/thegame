@@ -17,6 +17,10 @@ const nextConfig = {
   images: {
     loader: "custom",
     loaderFile: "./staticImgLoader.ts"
+  },
+
+  env: {
+    NEXT_PUBLIC_BUILD_ID: process.env.NEXT_PUBLIC_BUILD_ID
   }
 };
 
