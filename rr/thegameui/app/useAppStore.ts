@@ -3,6 +3,8 @@ import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import type UserAccount from "./game-core/UserAccount";
 import type { Game } from "./game-core/models/Game";
 import type { ScoreData } from "./game-core/models/ScoreData";
+import type { LicensePlateSpot } from "./game-core/models/LicensePlateSpot";
+import CalculateScore from "./game-core/GameScoreCalculator";
 
 interface AppState {
   _hasStorageHydrated: boolean,
@@ -22,6 +24,8 @@ interface AppActions {
   initialize: () => Promise<void>,
 
   startNewGame: (name: string) => Promise<Game | string>,
+
+  spotNewPlates: (newPlateSpotsLkp: { [key: string]: LicensePlateSpot }) => Promise<Game | string>,
 
   finishCurrentGame: () => Promise<string | void>,
 };
@@ -94,6 +98,28 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
     });
     
     return newGame;
+  },
+
+  spotNewPlates: async (newPlateSpotsLkp) => {
+    const currentGame = get().activeGame;
+    if (!currentGame) {
+      console.error("No Active Game!");
+      return "No active game!";
+    }
+
+    const plateSpotCalcInput = Object.keys(newPlateSpotsLkp)
+      .map(key => newPlateSpotsLkp[key]);
+
+    const updatedGame = <Game>{...currentGame,
+      licensePlates: newPlateSpotsLkp,
+      score: CalculateScore(plateSpotCalcInput)
+    };
+
+    set({
+      activeGame: updatedGame
+    });
+
+    return updatedGame;
   },
 
   finishCurrentGame: async () => {

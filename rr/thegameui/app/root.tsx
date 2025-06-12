@@ -9,7 +9,7 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
-import { Spinner, ThemeConfig } from "flowbite-react";
+import { ThemeConfig } from "flowbite-react";
 import AppNavbar from "./main-layout/app-navbar";
 import { useAppStore } from "./useAppStore";
 import { useShallow } from "zustand/shallow";
