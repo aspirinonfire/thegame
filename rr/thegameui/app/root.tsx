@@ -31,7 +31,7 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [hasInitialized, initialize] = useAppStore(useShallow((state) => 
-    [state.hasInitialized, state.initialize]));
+    [state.isInitialized, state.initialize]));
 
   useEffect(() => {
     if (hasInitialized) {

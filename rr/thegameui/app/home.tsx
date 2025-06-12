@@ -4,7 +4,7 @@ import { useAppStore } from "./useAppStore";
 
 const HomePage = () => {
   let navigate = useNavigate();
-  let currentGame = useAppStore(state => state.currentGame);
+  let currentGame = useAppStore(state => state.activeGame);
 
   useEffect(() => {
     if (!currentGame) {
