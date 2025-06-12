@@ -1,5 +1,7 @@
 import { territories, UsStateBorders } from "./gameConfiguration";
-import type { LicensePlateSpot, ScoreData, StateBorder } from "./gameModels";
+import type { StateBorder } from "./models/StateBorder";
+import type { LicensePlateSpot } from "./models/LicensePlateSpot";
+import type { ScoreData } from "./models/ScoreData";
 
 // west-coast states lookup
 const westCoastUsStatesLkp: Set<string> = territories

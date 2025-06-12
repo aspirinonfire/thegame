@@ -9,11 +9,12 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
-import { ThemeConfig } from "flowbite-react";
+import { Spinner, ThemeConfig } from "flowbite-react";
 import AppNavbar from "./main-layout/app-navbar";
 import { useAppStore } from "./useAppStore";
 import { useShallow } from "zustand/shallow";
 import { useEffect } from "react";
+import LoadingWidget from "./common-components/loading";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -57,7 +58,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <AppNavbar />
           </div>
         </header>
-        { hasInitialized ? children : HydrateFallback() }
+        { hasInitialized ? children : <LoadingWidget/> }
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -70,7 +71,7 @@ export default function App() {
 }
 
 export function HydrateFallback() {
-  return <h2>Please wait while app is loading...</h2>;
+  return <LoadingWidget/>
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

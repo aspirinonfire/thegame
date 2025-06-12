@@ -1,4 +1,5 @@
-import type { Territory, StateBorder } from "./gameModels";
+import type { StateBorder } from "./models/StateBorder";
+import type { Territory } from "./models/Territory";
 
 export const territories: Territory[] = [
   // US

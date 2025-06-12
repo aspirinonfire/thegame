@@ -7,6 +7,10 @@ export default [
   layout("./common-components/app-default-layout.tsx", [
     index("./home.tsx"),
 
+    route("/game", "./game/index.tsx"),
+    
+    route("/history", "./history/index.tsx"),
+
     route("/about", "./about/index.tsx")
   ])
 

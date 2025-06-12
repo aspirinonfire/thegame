@@ -1,12 +1,15 @@
 import { create, type StateCreator } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
-import type UserAccount from "./game-core/gameModels";
+import type UserAccount from "./game-core/UserAccount";
+import type { Game } from "./game-core/models/Game";
 
 interface AppState {
   _hasStorageHydrated: boolean,
   hasInitialized: boolean,
 
   activeUser: UserAccount | null,
+
+  currentGame: Game | null
 }
 
 interface AppActions {
@@ -31,6 +34,7 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
   _hasStorageHydrated: false,
   hasInitialized: false,
   activeUser: null,
+  currentGame: null,
 
   // app actions
   _setStorageHydrated: (state: boolean) => {

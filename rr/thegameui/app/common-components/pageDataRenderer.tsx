@@ -1,5 +1,5 @@
-import { Spinner } from "flowbite-react";
 import React from "react";
+import LoadingWidget from "./loading";
 
 type PageDataRendererProps = {
   loading: boolean;
@@ -22,7 +22,7 @@ export function PageDataRenderer({
   noDataFallback,
 }: PageDataRendererProps) {
   if (loading) {
-    return <>{loadingFallback ?? <Spinner size="xl" />}</>;
+    return <>{loadingFallback ?? <LoadingWidget/> }</>;
   }
   if (error) {
     return <>{errorFallback ? errorFallback(error) : <p>Failed to load page data - {String(error)}</p>}</>;
