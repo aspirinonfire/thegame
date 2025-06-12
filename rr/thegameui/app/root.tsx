@@ -11,6 +11,9 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { ThemeConfig } from "flowbite-react";
 import AppNavbar from "./main-layout/app-navbar";
+import { useAppStore } from "./useAppStore";
+import { useShallow } from "zustand/shallow";
+import { useEffect } from "react";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -26,6 +29,17 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const [hasInitialized, initialize] = useAppStore(useShallow((state) => 
+    [state.hasInitialized, state.initialize]));
+
+  useEffect(() => {
+    if (hasInitialized) {
+      return;
+    }
+
+    initialize();
+  }, [hasInitialized, initialize]);
+
   return (
     <html lang="en">
       <head>
@@ -43,7 +57,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <AppNavbar />
           </div>
         </header>
-        {children}
+        { hasInitialized ? children : HydrateFallback() }
         <ScrollRestoration />
         <Scripts />
       </body>

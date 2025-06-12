@@ -16,4 +16,6 @@ npm create vite@latest
 npm i @heroicons/react flowbite flowbite-react
 
 npx flowbite-react@latest init
+
+# on useContext error - delete node_modules and reinstall
 ```
