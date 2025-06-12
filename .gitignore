@@ -65,3 +65,8 @@ Release/
 # IDE
 .vs
 backend/TheGame.Infra/stack.localdev.json
+
+# React Router
+.react-router/
+/build/
+.vscode
