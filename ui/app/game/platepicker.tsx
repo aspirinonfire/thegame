@@ -113,6 +113,7 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
     return territoriesToRender
       .map((territory) => (
         <div key={territory.key}
+          data-testid={`select-plate-${territory.key}`}
           onClick={e => handleCheckboxChange(territory, e)}
           className="flex flex-row grow gap-3 text-black justify-start items-center">
           <div className="flex w-1/5 md:w-1/4 justify-end">
@@ -174,8 +175,8 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
 
         <ModalFooter>
           <div className="flex flex-row grow items-center gap-5 justify-between">
-            <Button onClick={handleClose} color="gray" className="border-black">never mind</Button>
-            <Button onClick={handelSaveNewSpots} className="bg-amber-800">Save Changes</Button>
+            <Button onClick={handleClose} data-testid="cancel-spotted-changes" color="gray" className="border-black">never mind</Button>
+            <Button onClick={handelSaveNewSpots} data-testid="save-spotted-changes" className="bg-amber-800">Save Changes</Button>
           </div>
         </ModalFooter>
 

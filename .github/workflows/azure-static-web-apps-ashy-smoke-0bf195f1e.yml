@@ -41,6 +41,15 @@ jobs:
       - name: Build and export React App
         working-directory: "ui"
         run: npm run build
+
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+      
+      - name: Run Playwright tests
+        run: npx playwright test
       
       - name: Build And Deploy UI
         id: swa
