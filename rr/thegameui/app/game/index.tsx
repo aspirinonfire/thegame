@@ -17,18 +17,12 @@ const GamePage = () => {
 
   const handleNewSpots = () => {
     // TODO read new spots from modal/picker
-    var testSpots = territories
-      .filter(ter => (ter.shortName == "CA" && ter.country == "US") || (ter.shortName == "WA" && ter.country == "US"))
-      .reduce((lkp, ter) => {
-        lkp[`${ter.country}-${ter.shortName}`] = {
-          country: ter.country,
-          stateOrProvince: ter.shortName,
-          spottedBy: user?.name ?? "n/a",
-          dateSpotted: new Date()
-        }
-
-        return lkp;
-      }, {} as { [key: string]: LicensePlateSpot });
+    var testSpots = ["US-CA", "US-WA", "CA-AB"]
+      .map<LicensePlateSpot>(key => ({
+        key: key,
+        dateSpotted: new Date(),
+        spottedBy: user?.name ?? "n/a"
+      }));
 
     spotNewPlates(testSpots);
   };
