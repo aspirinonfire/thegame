@@ -14,5 +14,8 @@
       "/workbox*.js",
       "/*.{png,jpg,jpeg,svg,webp,avif,gif,ico,css,js,woff2}"
     ]
+  },
+  "responseOverrides": {
+    "404": { "rewrite": "/index.html" }
   }
 }
