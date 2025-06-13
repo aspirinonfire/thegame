@@ -9,7 +9,7 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
-import { ThemeConfig } from "flowbite-react";
+import { Button, ThemeConfig } from "flowbite-react";
 import AppNavbar from "./main-layout/app-navbar";
 import { useAppStore } from "./useAppStore";
 import { useShallow } from "zustand/shallow";
@@ -91,7 +91,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto">
+    <main className="flex flex-col gap-4 items-center justify-center p-5 min-h-[calc(100vh-20rem)] min-w-[calc(100dvw-5dvw)]">
       <h1>{message}</h1>
       <p>{details}</p>
       {stack && (
@@ -99,6 +99,9 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
           <code>{stack}</code>
         </pre>
       )}
+      <Button size="xs" className="mt-10" onClick={() => window.location.href = '/'}>
+        Go back to Main Screen
+      </Button>
     </main>
   );
 }
