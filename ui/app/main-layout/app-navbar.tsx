@@ -30,7 +30,7 @@ const AppNavbar = () => {
       <span className="text-lg text-gray-100 uppercase">License Plate Game</span>
     </NavbarBrand>
 
-    <NavbarToggle />
+    <NavbarToggle className="text-gray-400" />
 
     <NavbarCollapse>
       <div className="block md:flex md:flex-row md:gap-5 m-0 p-0">

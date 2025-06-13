@@ -21,6 +21,7 @@ export default defineConfig({
         globPatterns: [
           '**\/*.{js,json,css,html,woff2,ico,png,jpg,jpeg,svg,avif,webp,gif}'
         ],
+        navigationPreload: false,
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
         additionalManifestEntries: [{ url: '/index.html', revision: Date.now().toString() }]
@@ -30,9 +31,10 @@ export default defineConfig({
         short_name: "The License Plate Game",
         icons: [
           {
-            src: "/icons/map-blue-128.png",
-            sizes: "128x128",
-            type: "image/png"
+            src: "/icons/map-blue-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any"
           }
         ],
         theme_color: "#FFFFFF",
@@ -43,14 +45,14 @@ export default defineConfig({
         screenshots: [
           {
           src: "screenshots/GameUI.png",
-            sizes: "430x584",
+            sizes: "693x789",
             type: "image/png",
             form_factor: "narrow",
             label: "The Game"
           },
           {
             src: "screenshots/GameUI.png",
-            sizes: "430x584",
+            sizes: "693x789",
             type: "image/png",
             form_factor: "wide",
             label: "The Game"

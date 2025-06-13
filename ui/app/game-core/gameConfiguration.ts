@@ -512,6 +512,6 @@ export const territoriesByModifiers = territories
     return map;
   }, new Map<TerritoryModifier, Set<string>>());
 
-export const westCoastStates = territoriesByModifiers.get("East Coast") ?? new Set<string>();
+export const westCoastStates = territoriesByModifiers.get("West Coast") ?? new Set<string>();
 
-export const eastCoastStates = territoriesByModifiers.get("West Coast") ?? new Set<string>();
+export const eastCoastStates = territoriesByModifiers.get("East Coast") ?? new Set<string>();

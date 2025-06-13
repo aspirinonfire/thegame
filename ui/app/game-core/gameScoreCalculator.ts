@@ -33,7 +33,7 @@ function AreBordersConnected(startingFromBorder: string[],
 
     // visit state borders.
     const currentStateBorders = territoriesByKeyLkp.get(first)?.borders ?? new Set<string>();
-    const currentMarkedBorders = Object.keys(currentStateBorders)
+    const currentMarkedBorders = currentStateBorders.values()
       // ensure border state has been marked, and hasn't been marked for visiting
       .filter((borderState: string) => markedStatesLookup.has(borderState) &&
         !toVisit.has(borderState));
