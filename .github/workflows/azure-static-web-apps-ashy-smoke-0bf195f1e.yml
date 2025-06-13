@@ -50,7 +50,7 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for GitHub integrations (i.e. PR comments)
           action: "upload"
           skip_app_build: true
-          app_location: "/build/client" # Pre-built app artifacts path
+          app_location: "/ui/build/client" # Pre-built app artifacts path
           api_location: "" # Api source code path - optional
         env: # Add environment variables here
           IS_STATIC_EXPORT: true
