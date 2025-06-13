@@ -5,6 +5,7 @@
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev --port 3000",
+    "prodpreview": "react-router build && vite preview --port 3030",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
     "postinstall": "flowbite-react patch"
@@ -30,7 +31,9 @@
     "tailwindcss": "^4.1.4",
     "typescript": "^5.8.3",
     "vite": "^6.3.3",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-plugin-pwa": "^1.0.0",
+    "vite-tsconfig-paths": "^5.1.4",
+    "workbox-window": "^7.3.0"
   },
   "peerDependencies": {
     "react": "^19.1.0",

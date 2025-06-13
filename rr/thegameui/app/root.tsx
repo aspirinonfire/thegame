@@ -5,6 +5,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  type LinkDescriptor,
 } from "react-router";
 
 import type { Route } from "./+types/root";
@@ -16,18 +17,27 @@ import { useShallow } from "zustand/shallow";
 import { useEffect } from "react";
 import LoadingWidget from "./common-components/loading";
 
-export const links: Route.LinksFunction = () => [
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
-  },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
-  },
-];
+// force sw registration
+import './register-sw.client';
+
+
+export const links: Route.LinksFunction = (): LinkDescriptor[] => {
+  const links: LinkDescriptor[] = [
+    { rel: "preconnect", href: "https://fonts.googleapis.com" },
+    { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+    {
+      rel: "stylesheet",
+      href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
+    },
+  ];
+
+  // PWA manifest only in production
+  if (import.meta.env.PROD) {
+    links.push({ rel: "manifest", href: "/manifest.webmanifest" });
+  }
+
+  return links;
+};
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [hasInitialized, initialize] = useAppStore(useShallow((state) => 
