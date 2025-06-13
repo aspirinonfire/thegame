@@ -7,6 +7,6 @@ export interface Game {
   createdBy: string;
   dateCreated: Date;
   dateFinished?: Date;
-  licensePlates: { [K: string]: LicensePlateSpot; };
+  licensePlates: LicensePlateSpot[];
   score: ScoreData;
 }

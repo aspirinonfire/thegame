@@ -4,7 +4,7 @@ import type UserAccount from "./game-core/UserAccount";
 import type { Game } from "./game-core/models/Game";
 import type { ScoreData } from "./game-core/models/ScoreData";
 import type { LicensePlateSpot } from "./game-core/models/LicensePlateSpot";
-import CalculateScore from "./game-core/GameScoreCalculator";
+import CalculateScore from "./game-core/gameScoreCalculator";
 
 interface AppState {
   _hasStorageHydrated: boolean,
@@ -25,7 +25,7 @@ interface AppActions {
 
   startNewGame: (name: string) => Promise<Game | string>,
 
-  spotNewPlates: (newPlateSpotsLkp: { [key: string]: LicensePlateSpot }) => Promise<Game | string>,
+  spotNewPlates: (spottedPlates: LicensePlateSpot[]) => Promise<Game | string>,
 
   finishCurrentGame: () => Promise<string | void>,
 };
@@ -85,7 +85,7 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
       dateCreated: new Date(),
       createdBy: get().activeUser?.name ?? "N/A",
       id: new Date().getTime().toString(),
-      licensePlates: {},
+      licensePlates: [],
       name: name,
       score: <ScoreData>{
         totalScore: 0,
@@ -100,19 +100,16 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
     return newGame;
   },
 
-  spotNewPlates: async (newPlateSpotsLkp) => {
+  spotNewPlates: async (spottedPlates) => {
     const currentGame = get().activeGame;
     if (!currentGame) {
       console.error("No Active Game!");
       return "No active game!";
     }
 
-    const plateSpotCalcInput = Object.keys(newPlateSpotsLkp)
-      .map(key => newPlateSpotsLkp[key]);
-
     const updatedGame = <Game>{...currentGame,
-      licensePlates: newPlateSpotsLkp,
-      score: CalculateScore(plateSpotCalcInput)
+      licensePlates: spottedPlates,
+      score: CalculateScore(spottedPlates)
     };
 
     set({
@@ -130,8 +127,8 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
     }
 
     // use last spot as date finished
-    const lastSpot = Object.keys(currentGame.licensePlates)
-      .map(key => currentGame.licensePlates[key].dateSpotted)
+    const lastSpot = currentGame.licensePlates
+      .map(plate => plate.dateSpotted)
       .filter(date => !!date)
       .sort()
       .at(-1);

@@ -1,8 +1,5 @@
-import type { Country } from "./Country";
-
 export interface LicensePlateSpot {
-  stateOrProvince: string;
-  country: Country;
+  key: string;
   dateSpotted: Date | null;
   spottedBy: string | null;
 }

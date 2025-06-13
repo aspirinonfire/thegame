@@ -1,26 +1,6 @@
-import { territories, UsStateBorders } from "./gameConfiguration";
-import type { StateBorder } from "./models/StateBorder";
+import { eastCoastStates, territories, westCoastStates } from "./gameConfiguration";
 import type { LicensePlateSpot } from "./models/LicensePlateSpot";
 import type { ScoreData } from "./models/ScoreData";
-
-// west-coast states lookup
-const westCoastUsStatesLkp: Set<string> = territories
-  .filter(state => !!state.modifier && state.modifier.indexOf('West Coast') >= 0)
-  .map(state => state.shortName)
-  .reduce((lkp, state) => lkp.add(state), new Set<string>());
-
-// east-coast states lookup
-const eastCoastStatesLkp: Set<string> = territories
-  .filter(state => !!state.modifier && state.modifier?.indexOf('East Coast') >= 0)
-  .map(state => state.shortName)
-  .reduce((lkp, state) => lkp.add(state), new Set<string>());
-
-// score multiplier by state lookup
-const scopeMultiplierByPlateLkp: Map<string, number> = territories
-  .reduce((lkp, territory) => {
-    lkp.set(`${territory.country}-${territory.shortName}`, territory.scoreMultiplier ?? 1);
-    return lkp;
-  }, new Map<string, number>());
 
 /**
  * Check if borders are connected using Breadth-First Search Graph algorithm
@@ -31,13 +11,10 @@ const scopeMultiplierByPlateLkp: Map<string, number> = territories
  */
 function AreBordersConnected(startingFromBorder: string[],
   isMatchingOtherBorder: (state: string) => boolean,
-  markedStates: string[]): boolean {
+  markedStatesLookup: Set<string>): boolean {
 
   const toVisit = startingFromBorder
     .reduce((lkp, state) => lkp.add(state), new Set<string>());
-
-  const markedStatesLookup = markedStates
-    .reduce((lkp, state) => lkp.add(state), new Set<string>())
 
   const visitedStates = new Set<string>();
 
@@ -55,7 +32,7 @@ function AreBordersConnected(startingFromBorder: string[],
     visitedStates.add(first);
 
     // visit state borders.
-    const currentStateBorders = UsStateBorders[first] ?? <StateBorder>{};
+    const currentStateBorders = territories.get(first)?.borders ?? new Set<string>();
     const currentMarkedBorders = Object.keys(currentStateBorders)
       // ensure border state has been marked, and hasn't been marked for visiting
       .filter((borderState: string) => markedStatesLookup.has(borderState) &&
@@ -98,44 +75,39 @@ export default function CalculateScore(plateData: LicensePlateSpot[]): ScoreData
     return scoreData;
   }
 
-  const markedUsStates = allSpottedPlates
-    .filter(plate => plate.country == 'US')
-    .map(plate => plate.stateOrProvince);
-
-  const markedStatesSet = new Set<string>(markedUsStates);
+  const markedPlates = new Set<string>(allSpottedPlates.map(plate => plate.key));
 
   // apply score multiplier for all marked states
   const baseScore = allSpottedPlates
     .reduce((currentScore, plate) => {
-      const key = `${plate.country}-${plate.stateOrProvince}`;
-      const multiplier = scopeMultiplierByPlateLkp.get(key) ?? 1;
+      const multiplier = territories.get(plate.key)?.scoreMultiplier ?? 1;
       return currentScore + multiplier;
     }, 0);
   scoreData.totalScore += baseScore;
 
   // apply milestone bonuses
-  const hasAllWestCoastMarked = [...westCoastUsStatesLkp]
-    .every(westCoastState => markedStatesSet.has(westCoastState));
+  const hasAllWestCoastMarked = [...westCoastStates]
+    .every(key => markedPlates.has(key));
 
   if (hasAllWestCoastMarked) {
     scoreData.totalScore += 10;
     scoreData.milestones.push('West Coast');
   }
 
-  const hasAllEastCoastMarked = [...eastCoastStatesLkp]
-    .every(eastCoastState => markedStatesSet.has(eastCoastState));
+  const hasAllEastCoastMarked = [...eastCoastStates]
+    .every(key => markedPlates.has(key));
 
   if (hasAllEastCoastMarked) {
     scoreData.totalScore += 50;
     scoreData.milestones.push('East Coast');
   }
 
-  const markedWestCoastStates = markedUsStates
-    .filter(state => westCoastUsStatesLkp.has(state));
+  const markedWestCoastStates = [...markedPlates]
+    .filter(key => westCoastStates.has(key));
 
   const hasCoastToCoastConnection = AreBordersConnected(markedWestCoastStates,
-    (state: string) => eastCoastStatesLkp.has(state),
-    markedUsStates);
+    (state: string) => eastCoastStates.has(state),
+    markedPlates);
 
   if (hasCoastToCoastConnection) {
     scoreData.totalScore += 100;
