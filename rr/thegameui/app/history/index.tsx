@@ -1,22 +1,28 @@
-import { Button } from "flowbite-react";
-import { useShallow } from "zustand/shallow";
+import GameMap from "~/common-components/gamemap";
 import { useAppStore } from "~/useAppStore";
 
 const HistoryPage = () => {
-  const [activeGame, pastGames, startNewGame] = useAppStore(useShallow(state => 
-    [state.activeGame, state.pastGames, state.startNewGame]
-  ));
+  const pastGames = useAppStore(state => state.pastGames);
 
-  return <>
-    <h1>History Page</h1>
-    <pre>
-      {JSON.stringify(pastGames, null, 2)}
-    </pre>
-    <p>Active Game: {activeGame ? 'yes': 'no'}</p>
-    <Button disabled={!!activeGame} onClick={() => startNewGame(new Date().toISOString())}>
-      Start new Journey
-    </Button>
-  </>
+  const numberOfSpotsByPlateLkp = pastGames
+    .reduce((lkp, game) => {
+      game.licensePlates
+        .filter(plate => !!plate.dateSpotted)
+        .forEach(plate => {
+          lkp[plate.key] = (lkp[plate.key] || 0) + 1;
+        });
+
+      return lkp;
+    }, {} as {[key: string]: number});
+
+  return (
+    <div className="flex flex-col gap-5">
+      <h1 className="text-xl sm:text-2xl">Total Games Played: {pastGames.length}</h1>
+      <GameMap argType="historicData"
+        totalNumberOfGames={ pastGames.length}
+        spotsByStateLookup={ numberOfSpotsByPlateLkp } />
+    </div>
+  )
 }
 
 export default HistoryPage;
