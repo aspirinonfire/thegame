@@ -1,4 +1,4 @@
-import { eastCoastStates, territories, westCoastStates } from "./gameConfiguration";
+import { eastCoastStates, territoriesByKeyLkp, westCoastStates } from "./gameConfiguration";
 import type { LicensePlateSpot } from "./models/LicensePlateSpot";
 import type { ScoreData } from "./models/ScoreData";
 
@@ -32,7 +32,7 @@ function AreBordersConnected(startingFromBorder: string[],
     visitedStates.add(first);
 
     // visit state borders.
-    const currentStateBorders = territories.get(first)?.borders ?? new Set<string>();
+    const currentStateBorders = territoriesByKeyLkp.get(first)?.borders ?? new Set<string>();
     const currentMarkedBorders = Object.keys(currentStateBorders)
       // ensure border state has been marked, and hasn't been marked for visiting
       .filter((borderState: string) => markedStatesLookup.has(borderState) &&
@@ -80,7 +80,7 @@ export default function CalculateScore(plateData: LicensePlateSpot[]): ScoreData
   // apply score multiplier for all marked states
   const baseScore = allSpottedPlates
     .reduce((currentScore, plate) => {
-      const multiplier = territories.get(plate.key)?.scoreMultiplier ?? 1;
+      const multiplier = territoriesByKeyLkp.get(plate.key)?.scoreMultiplier ?? 1;
       return currentScore + multiplier;
     }, 0);
   scoreData.totalScore += baseScore;

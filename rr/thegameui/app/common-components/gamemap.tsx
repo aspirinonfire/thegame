@@ -2,7 +2,7 @@ import type { LicensePlateSpot } from "~/game-core/models/LicensePlateSpot";
 
 interface ActiveGameData {
   argType: "activeGame"
-  plateSpots: { [key: string]: LicensePlateSpot };
+  plateSpots: LicensePlateSpot[];
   onMapClick: () => void;
 }
 
@@ -22,7 +22,7 @@ const GameMap = (mapArguments: ActiveGameData | HistoricalGamesData) => {
 
   function getWeightClass(lkpKey: string, isSvg: boolean = true): string {
     if (mapArguments.argType == "activeGame") {
-      const isSpotted = mapArguments.plateSpots[lkpKey];
+      const isSpotted = mapArguments.plateSpots.filter(plate => plate.key == lkpKey)[0];
 
       // if plate has a spot date, then mark it as spotted
       return !!isSpotted && !!isSpotted.dateSpotted ? "transition-all fill-amber-700" : unspottedState;
@@ -54,11 +54,11 @@ const GameMap = (mapArguments: ActiveGameData | HistoricalGamesData) => {
     }
   }
 
-  function isChecked(stateOrProvince: string) {
+  function isChecked(key: string) {
     if (mapArguments.argType == "activeGame") {
-      return !!mapArguments.plateSpots[stateOrProvince]?.dateSpotted;
+      return !!mapArguments.plateSpots.filter(plate => plate.key == key)[0]?.dateSpotted;
     } else {
-      return !!mapArguments.spotsByStateLookup[stateOrProvince];
+      return !!mapArguments.spotsByStateLookup[key];
     }
   }
 
