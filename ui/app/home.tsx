@@ -7,7 +7,9 @@ const HomePage = () => {
   let currentGame = useAppStore(state => state.activeGame);
 
   useEffect(() => {
-    if (!currentGame) {
+    if (currentGame) {
+      navigate("/game");
+    } else {
       navigate("/history");
     }
   }, [currentGame]);
