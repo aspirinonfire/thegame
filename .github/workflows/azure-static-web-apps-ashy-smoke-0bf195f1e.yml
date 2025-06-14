@@ -19,7 +19,7 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,6 +41,14 @@ jobs:
       - name: Build and export React App
         working-directory: "ui"
         run: npm run build
+      
+      - name: Install Playwright Browsers
+        working-directory: "ui"
+        run: npx playwright install --with-deps chromium
+      
+      - name: Run Playwright tests
+        working-directory: "ui"
+        run: npm run teste2eci
       
       - name: Build And Deploy UI
         id: swa

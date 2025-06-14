@@ -67,6 +67,8 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
 
     await mockDataAccessDelay();
 
+    // TODO add migration
+
     set({
       activeUser: {
         name: "Guest User"

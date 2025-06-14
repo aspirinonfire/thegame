@@ -39,7 +39,7 @@ const GamePage = () => {
   function renderStartNewGameContents() {
     return (<div className="flex flex-col justify-center items-center grow gap-5 text-center">
       <h1 className="text-3xl">Get ready for a roadtip!</h1>
-      <Button className="bg-amber-700 animate-pulse" size="xl" 
+      <Button className="bg-amber-700 animate-pulse" size="xl" data-testid="start-new-game"
         onClick={() => startNewGame(new Date().toISOString())}>
           <ChevronRightIcon className="mr-2 h-5 w-5 pt-1" />
           Let&apos;s Go!
@@ -52,9 +52,12 @@ const GamePage = () => {
       <>
         <div className={`flex flex-col gap-5 transition-all ${showPicker ? "blur-sm": ""}`}>
           <div className="flex flex-row items-center justify-between sm:justify-start gap-5">
-            <h1 className="text-xl sm:text-2xl">Score: {activeGame?.score.totalScore} </h1>
-            <div className="flex flex-row justify-center gap-3 animate-pulse text-sm text-amber-500" style={{ fontSize: ".7rem"}}>
-              { (activeGame?.score.milestones ?? []).map(ms =>(<div key={ms}>{ms}</div>)) }
+            <h1 className="text-xl sm:text-2xl" data-testid="current-score">Score: {activeGame?.score.totalScore}</h1>
+            <div
+              className="flex flex-row justify-center gap-3 animate-pulse text-sm text-amber-500"
+              data-testid="current-milestones"
+              style={{ fontSize: ".7rem"}}>
+                { (activeGame?.score.milestones ?? []).map(ms =>(<div key={ms}>{ms}</div>)) }
             </div>
           </div>
           
@@ -63,10 +66,10 @@ const GamePage = () => {
 
         <div className={`flex flex-row grow justify-end items-center fixed bottom-0 right-5 ${showPicker ? 'hidden' : ''}`}>
           <small className="text-xs opacity-50 ml-5">Game started on <br /> {dateStartedFriendly}</small>
-          <button type="button" className="text-white bg-amber-950 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-3 sm:px-5 py-2.5 m-4"
+          <Button size="xs" data-testid="open-finish-game-modal" className="m-5 bg-amber-700"
             onClick={() => setShowEndGame(true)}>
             We have arrived!
-          </button>
+          </Button>
         </div>
 
         { !!activeGame ? (<PlatePicker
@@ -83,10 +86,10 @@ const GamePage = () => {
                 Are we there yet?
               </h3>
               <div className="flex flex-row justify-between grow">
-                <Button color="gray" onClick={() => setShowEndGame(false)}>
+                <Button color="gray" onClick={() => setShowEndGame(false)} data-testid="cancel-finish-game">
                   Not yet
                 </Button>
-                <Button className="bg-amber-700" onClick={tryEndGame}>
+                <Button className="bg-amber-700" onClick={tryEndGame} data-testid="confirm-finish-game">
                   End Game
                 </Button>
               </div>

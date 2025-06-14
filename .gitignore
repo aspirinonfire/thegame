@@ -70,3 +70,9 @@ backend/TheGame.Infra/stack.localdev.json
 .react-router/
 /build/
 .vscode
+
+# Playwright
+**/*/test-results/
+**/*/playwright-report/
+**/*/blob-report/
+**/*/playwright/.cache/
