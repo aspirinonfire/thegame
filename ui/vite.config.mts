@@ -24,7 +24,25 @@ export default defineConfig({
         navigationPreload: false,
         navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
-        additionalManifestEntries: [{ url: '/index.html', revision: Date.now().toString() }]
+        additionalManifestEntries: [{ url: '/index.html', revision: Date.now().toString() }],
+        runtimeCaching: [
+          // we must cache react-router manifest manually due to an unresolved bug
+          // see https://github.com/remix-run/react-router/issues/12659
+          {
+            urlPattern: ({ url }) =>
+              url.pathname.startsWith('/assets/manifest-') &&
+              url.pathname.endsWith('.js'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'rr-manifest',
+              plugins: [],
+              expiration: {
+                maxEntries: 1,
+                purgeOnQuotaError: true
+              }
+            }
+          }
+        ]
       },
       manifest: {
         name: "The License Plate Game",
