@@ -6,7 +6,8 @@ export function createEmptyAppState() {
     version: 0,
     state: {
       activeGame: <Game | null>null,
-      pastGames: <Game[]>[]
+      pastGames: <Game[]>[],
+      isMigratedFromNextJs: true
     }
   }
 };

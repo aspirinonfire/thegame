@@ -17,7 +17,7 @@ const HistoryPage = () => {
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-xl sm:text-2xl">Total Games Played: {pastGames.length}</h1>
+      <h1 className="text-xl sm:text-2xl" data-testid="total-games-played">Total Games Played: {pastGames.length}</h1>
       <GameMap argType="historicData"
         totalNumberOfGames={ pastGames.length}
         spotsByStateLookup={ numberOfSpotsByPlateLkp } />
