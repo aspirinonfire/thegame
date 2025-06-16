@@ -5,10 +5,14 @@ import type { Game } from "./game-core/models/Game";
 import type { ScoreData } from "./game-core/models/ScoreData";
 import type { LicensePlateSpot } from "./game-core/models/LicensePlateSpot";
 import CalculateScore from "./game-core/gameScoreCalculator";
+import { deleteNextJsGameData, retrieveNextJsData } from "./game-core/migrations/nextjs-game-repository";
+import type { NextJsGame } from "./game-core/migrations/nextjs-models";
 
 interface AppState {
   _hasStorageHydrated: boolean,
   isInitialized: boolean,
+
+  isMigratedFromNextJs: boolean,
 
   activeUser: UserAccount | null,
 
@@ -40,6 +44,42 @@ const rehydrationPromise = new Promise<void>(resolve => {
   rehydrationPromiseResolve = resolve;
 });
 
+const getNewGameFromNextJsGame = (oldGame: NextJsGame, activeUser: UserAccount | null) : Game => ({
+  id: oldGame.id,
+  name: oldGame.name,
+  score: {
+    totalScore: oldGame.score?.totalScore ?? 0,
+    milestones: oldGame.score?.milestones ?? []
+  },
+  createdBy: activeUser?.name ?? oldGame.createdBy,
+  dateCreated: oldGame.dateCreated,
+  dateFinished: oldGame.dateFinished,
+  licensePlates: Object.values(oldGame.licensePlates)
+    .filter(spot => !!spot.dateSpotted)
+    .map(spot => ({
+      key: `${spot.country}-${spot.stateOrProvince}`,
+      dateSpotted: spot.dateSpotted,
+      spottedBy: activeUser?.name ?? spot.spottedBy
+    } as LicensePlateSpot))
+})
+
+const getNextJsDataAsNew = (activeUser: UserAccount | null) => {
+  const oldData = retrieveNextJsData();
+
+
+  const currentGame: Game | null = !!oldData.currentGame ?
+    getNewGameFromNextJsGame(oldData.currentGame, activeUser):
+    null;
+
+  const pastGames: Game[] = (oldData.pastGames ?? [])
+    .map(game => getNewGameFromNextJsGame(game, activeUser));
+
+  return {
+    currentGame,
+    pastGames
+  }
+}
+
 const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
   // app state
   _hasStorageHydrated: false,
@@ -47,6 +87,7 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
   activeUser: null,
   activeGame: null,
   pastGames: [],
+  isMigratedFromNextJs: false,
 
   // app actions
   _setStorageHydrated: (state: boolean) => {
@@ -67,7 +108,17 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
 
     await mockDataAccessDelay();
 
-    // TODO add migration
+    if (!get().isMigratedFromNextJs) {
+      const dataToInsert = getNextJsDataAsNew(get().activeUser);
+
+      set({
+        activeGame: dataToInsert.currentGame,
+        pastGames: dataToInsert.pastGames.concat(get().pastGames),
+        isMigratedFromNextJs: true
+      });
+
+      deleteNextJsGameData();
+    }
 
     set({
       activeUser: {
@@ -161,7 +212,8 @@ export const useAppStore = create<AppState & AppActions>()(
         
         partialize: (state) => ({
           activeGame: state.activeGame,
-          pastGames: state.pastGames
+          pastGames: state.pastGames,
+          isMigratedFromNextJs: state.isMigratedFromNextJs
         }),
 
         onRehydrateStorage: (state) => {
