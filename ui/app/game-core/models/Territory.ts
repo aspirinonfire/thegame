@@ -1,6 +1,6 @@
 import type { Country } from "./Country";
 
-export type TerritoryModifier = 'West Coast' | 'East Coast';
+export type TerritoryModifier = 'West Coast' | 'East Coast' | 'Midwest' | 'Southwest' | 'South';
 
 export interface Territory {
   key: string;

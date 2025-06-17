@@ -1,6 +1,28 @@
-import { eastCoastStates, territoriesByKeyLkp, westCoastStates } from "./gameConfiguration";
+import { territories, territoryModifierScoreLookup } from "./gameConfiguration";
 import type { LicensePlateSpot } from "./models/LicensePlateSpot";
-import type { ScoreData } from "./models/ScoreData";
+import { type ScoreData } from "./models/ScoreData";
+import type { Territory, TerritoryModifier } from "./models/Territory";
+
+export const territoriesByKeyLkp = territories.reduce((map, ter) => {
+  map.set(ter.key, ter);
+  return map;
+}, new Map<string, Territory>());
+
+export function createTerritoriyModifierLookup(srcTerritories: Territory[]) {
+  return srcTerritories
+    .filter(ter => (ter.modifier ?? []).length > 0)
+    .reduce((map, ter) => {
+      for (const modifier of ter.modifier!) {
+        const territoriesWithThisModifier = map.get(modifier) ?? new Set<TerritoryModifier>();
+        territoriesWithThisModifier.add(ter.key);
+        map.set(modifier, territoriesWithThisModifier);
+      }
+
+      return map;
+    }, new Map<TerritoryModifier, Set<string>>());
+}
+
+export const territoriesByModifiers = createTerritoriyModifierLookup(territories);
 
 /**
  * Check if borders are connected using Breadth-First Search Graph algorithm
@@ -75,7 +97,7 @@ export default function CalculateScore(plateData: LicensePlateSpot[]): ScoreData
     return scoreData;
   }
 
-  const markedPlates = new Set<string>(allSpottedPlates.map(plate => plate.key));
+  const markedPlatesKeys = new Set<string>(allSpottedPlates.map(plate => plate.key));
 
   // apply score multiplier for all marked states
   const baseScore = allSpottedPlates
@@ -86,32 +108,32 @@ export default function CalculateScore(plateData: LicensePlateSpot[]): ScoreData
   scoreData.totalScore += baseScore;
 
   // apply milestone bonuses
-  const hasAllWestCoastMarked = [...westCoastStates]
-    .every(key => markedPlates.has(key));
+  const markedPlatesByMilestones = createTerritoriyModifierLookup(allSpottedPlates
+    .map(spot => territoriesByKeyLkp.get(spot.key))
+    .filter(ter => !!ter)
+  );
 
-  if (hasAllWestCoastMarked) {
-    scoreData.totalScore += 10;
-    scoreData.milestones.push('West Coast');
+  for (const [modifier, territoriesInSet] of territoriesByModifiers) {
+    const numOfSpottedPlatesWithCurrentModifier = markedPlatesByMilestones.get(modifier)?.size ?? 0;
+    if (territoriesInSet.size === numOfSpottedPlatesWithCurrentModifier) {
+      scoreData.milestones.push(modifier);
+      scoreData.totalScore += territoryModifierScoreLookup.get(modifier) ?? 10;
+    }
   }
 
-  const hasAllEastCoastMarked = [...eastCoastStates]
-    .every(key => markedPlates.has(key));
-
-  if (hasAllEastCoastMarked) {
-    scoreData.totalScore += 50;
-    scoreData.milestones.push('East Coast');
-  }
-
-  const markedWestCoastStates = [...markedPlates]
-    .filter(key => westCoastStates.has(key));
-
+  const markedWestCoastStates = [...markedPlatesByMilestones.get("West Coast") ?? []];
   const hasCoastToCoastConnection = AreBordersConnected(markedWestCoastStates,
-    (state: string) => eastCoastStates.has(state),
-    markedPlates);
+    (state: string) => (territoriesByModifiers.get("East Coast") ?? new Set<string>()).has(state),
+    markedPlatesKeys);
 
   if (hasCoastToCoastConnection) {
-    scoreData.totalScore += 100;
-    scoreData.milestones.push('Coast-to-Coast');
+    scoreData.milestones.push("Coast-to-Coast");
+    scoreData.totalScore += territoryModifierScoreLookup.get("Coast-to-Coast") ?? 10;
+  }
+
+  if (territories.length === allSpottedPlates.length) {
+    scoreData.milestones.push("Globetrotter");
+    scoreData.totalScore += territoryModifierScoreLookup.get("Globetrotter") ?? 1000;
   }
 
   return scoreData;

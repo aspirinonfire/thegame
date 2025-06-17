@@ -1,4 +1,6 @@
-export type ScoreMilestone = "Coast-to-Coast" | "West Coast" | "East Coast";
+import type { TerritoryModifier } from "./Territory";
+
+export type ScoreMilestone = TerritoryModifier | "Coast-to-Coast" | "Globetrotter";
 
 export interface ScoreData {
   totalScore: number;

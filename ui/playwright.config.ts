@@ -8,6 +8,23 @@ import { defineConfig, devices } from '@playwright/test';
 // import path from 'path';
 // dotenv.config({ path: path.resolve(__dirname, '.env') });
 
+const DEV  = !!process.env.PW_DEV;          // set by `npm run teste2edev`
+const PORT = DEV ? 3000 : 3030;             // 3030 = your preview port
+
+const webServer = DEV ?
+  {
+    command: 'react-router dev --port 3000',
+    url:     'http://localhost:3000',
+    reuseExistingServer: true,
+    timeout: 30_000,
+  } :
+  {
+    command: 'npm run prodpreview',
+    url: 'http://localhost:3030',
+    timeout: 120_000,
+    reuseExistingServer: !process.env.CI,
+  }
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -25,19 +42,14 @@ export default defineConfig({
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    baseURL: 'http://localhost:3030',
+    baseURL: `http://localhost:${PORT}`,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
   },
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npm run prodpreview',
-    url: 'http://localhost:3030',
-    timeout: 120_000,
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: webServer,
 
   /* Configure projects for major browsers */
   projects: [

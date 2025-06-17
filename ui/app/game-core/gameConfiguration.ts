@@ -1,3 +1,4 @@
+import type { ScoreMilestone } from "./models/ScoreData";
 import type { Territory, TerritoryModifier } from "./models/Territory";
 
 export const territories: Territory[] = [
@@ -9,6 +10,7 @@ export const territories: Territory[] = [
     country: "US",
     scoreMultiplier: 2,
     borders: new Set<string>(["US-FL", "US-GA", "US-TN", "US-MS"]),
+    modifier: ["South"]
   },
   {
     key: "US-AK",
@@ -24,6 +26,7 @@ export const territories: Territory[] = [
     longName: "Arizona",
     country: "US",
     borders: new Set<string>(["US-NM", "US-UT", "US-NV", "US-CA"]),
+    modifier: ["Southwest"]
   },
   {
     key: "US-AR",
@@ -32,6 +35,7 @@ export const territories: Territory[] = [
     country: "US",
     scoreMultiplier: 3,
     borders: new Set<string>(["US-LA", "US-MS", "US-TN", "US-MO", "US-OK", "US-TX"]),
+    modifier: ["South"]
   },
   {
     key: "US-CA",
@@ -71,7 +75,7 @@ export const territories: Territory[] = [
     shortName: "FL",
     longName: "Florida",
     country: "US",
-    modifier: ["East Coast"],
+    modifier: ["East Coast", "South"],
     borders: new Set<string>(["US-GA", "US-AL"]),
   },
   {
@@ -79,9 +83,9 @@ export const territories: Territory[] = [
     shortName: "GA",
     longName: "Georgia",
     country: "US",
-    modifier: ["East Coast"],
+    modifier: ["East Coast", "South"],
     scoreMultiplier: 2,
-    borders: new Set<string>(["US-SC", "US-NC", "US-TN", "US-AL", "US-FL"]),
+    borders: new Set<string>(["US-SC", "US-NC", "US-TN", "US-AL", "US-FL"])
   },
   {
     key: "US-HI",
@@ -104,6 +108,7 @@ export const territories: Territory[] = [
     longName: "Illinois",
     country: "US",
     borders: new Set<string>(["US-WI", "US-IA", "US-MO", "US-KY", "US-IN"]),
+    modifier: ["Midwest"]
   },
   {
     key: "US-IN",
@@ -112,6 +117,7 @@ export const territories: Territory[] = [
     country: "US",
     scoreMultiplier: 3,
     borders: new Set<string>(["US-IL", "US-KY", "US-OH", "US-MI"]),
+    modifier: ["Midwest"]
   },
   {
     key: "US-IA",
@@ -120,6 +126,7 @@ export const territories: Territory[] = [
     country: "US",
     scoreMultiplier: 3,
     borders: new Set<string>(["US-MN", "US-SD", "US-NE", "US-MO", "US-IL", "US-WI"]),
+    modifier: ["Midwest"]
   },
   {
     key: "US-KS",
@@ -128,6 +135,7 @@ export const territories: Territory[] = [
     country: "US",
     scoreMultiplier: 3,
     borders: new Set<string>(["US-OK", "US-MO", "US-NE", "US-CO"]),
+    modifier: ["Midwest"]
   },
   {
     key: "US-KY",
@@ -136,6 +144,7 @@ export const territories: Territory[] = [
     country: "US",
     scoreMultiplier: 3,
     borders: new Set<string>(["US-TN", "US-VA", "US-WV", "US-OH", "US-IN", "US-IL", "US-MO"]),
+    modifier: ["South"]
   },
   {
     key: "US-LA",
@@ -144,6 +153,7 @@ export const territories: Territory[] = [
     country: "US",
     scoreMultiplier: 3,
     borders: new Set<string>(["US-MS", "US-AR", "US-TX"]),
+    modifier: ["South"]
   },
   {
     key: "US-ME",
@@ -179,6 +189,7 @@ export const territories: Territory[] = [
     country: "US",
     scoreMultiplier: 2,
     borders: new Set<string>(["US-WI", "US-IN", "US-OH"]),
+    modifier: ["Midwest"]
   },
   {
     key: "US-MN",
@@ -187,6 +198,7 @@ export const territories: Territory[] = [
     country: "US",
     scoreMultiplier: 2,
     borders: new Set<string>(["US-ND", "US-SD", "US-IA", "US-WI"]),
+    modifier: ["Midwest"]
   },
   {
     key: "US-MS",
@@ -195,6 +207,7 @@ export const territories: Territory[] = [
     country: "US",
     scoreMultiplier: 2,
     borders: new Set<string>(["US-AL", "US-TN", "US-AR", "US-LA"]),
+    modifier: ["South"]
   },
   {
     key: "US-MO",
@@ -203,6 +216,7 @@ export const territories: Territory[] = [
     country: "US",
     scoreMultiplier: 2,
     borders: new Set<string>(["US-AR", "US-TN", "US-KY", "US-IL", "US-IA", "US-NE", "US-KS", "US-OK"]),
+    modifier: ["Midwest"]
   },
   {
     key: "US-MT",
@@ -219,6 +233,7 @@ export const territories: Territory[] = [
     country: "US",
     scoreMultiplier: 2,
     borders: new Set<string>(["US-KS", "US-MO", "US-IA", "US-SD", "US-WY", "US-CO"]),
+    modifier: ["Midwest"]
   },
   {
     key: "US-NV",
@@ -250,6 +265,7 @@ export const territories: Territory[] = [
     longName: "New Mexico",
     country: "US",
     borders: new Set<string>(["US-TX", "US-OK", "US-CO", "US-AZ"]),
+    modifier: ["Southwest"]
   },
   {
     key: "US-NY",
@@ -264,7 +280,7 @@ export const territories: Territory[] = [
     shortName: "NC",
     longName: "North Carolina",
     country: "US",
-    modifier: ["East Coast"],
+    modifier: ["East Coast", "South"],
     borders: new Set<string>(["US-VA", "US-TN", "US-GA", "US-SC"]),
   },
   {
@@ -274,6 +290,7 @@ export const territories: Territory[] = [
     country: "US",
     scoreMultiplier: 3,
     borders: new Set<string>(["US-MT", "US-SD", "US-MN"]),
+    modifier: ["Midwest"]
   },
   {
     key: "US-OH",
@@ -281,6 +298,7 @@ export const territories: Territory[] = [
     longName: "Ohio",
     country: "US",
     borders: new Set<string>(["US-MI", "US-IN", "US-KY", "US-WV", "US-PA"]),
+    modifier: ["Midwest"]
   },
   {
     key: "US-OK",
@@ -288,6 +306,7 @@ export const territories: Territory[] = [
     longName: "Oklahoma",
     country: "US",
     borders: new Set<string>(["US-TX", "US-AR", "US-MO", "US-KS", "US-CO", "US-NM"]),
+    modifier: ["Southwest", "South"]
   },
   {
     key: "US-OR",
@@ -318,7 +337,7 @@ export const territories: Territory[] = [
     shortName: "SC",
     longName: "South Carolina",
     country: "US",
-    modifier: ["East Coast"],
+    modifier: ["East Coast", "South"],
     scoreMultiplier: 3,
     borders: new Set<string>(["US-NC", "US-GA"]),
   },
@@ -329,6 +348,7 @@ export const territories: Territory[] = [
     country: "US",
     scoreMultiplier: 2,
     borders: new Set<string>(["US-NE", "US-IA", "US-MN", "US-ND", "US-MT", "US-WY"]),
+    modifier: ["Midwest"]
   },
   {
     key: "US-TN",
@@ -337,6 +357,7 @@ export const territories: Territory[] = [
     country: "US",
     scoreMultiplier: 2,
     borders: new Set<string>(["US-AL", "US-GA", "US-NC", "US-VA", "US-KY", "US-MO", "US-AR", "US-MS"]),
+    modifier: ["South"]
   },
   {
     key: "US-TX",
@@ -344,6 +365,7 @@ export const territories: Territory[] = [
     longName: "Texas",
     country: "US",
     borders: new Set<string>(["US-LA", "US-AR", "US-OK", "US-NM"]),
+    modifier: ["Southwest", "South"]
   },
   {
     key: "US-UT",
@@ -392,6 +414,7 @@ export const territories: Territory[] = [
     country: "US",
     scoreMultiplier: 2,
     borders: new Set<string>(["US-MN", "US-IA", "US-IL", "US-MI"]),
+    modifier: ["Midwest"]
   },
   {
     key: "US-WY",
@@ -494,24 +517,13 @@ export const territories: Territory[] = [
   }
 ];
 
-export const territoriesByKeyLkp = territories.reduce((map, ter) => {
-  map.set(ter.key, ter);
-  return map;
-}, new Map<string, Territory>());
-
-
-export const territoriesByModifiers = territories
-  .filter(ter => (ter.modifier ?? []).length > 0)
-  .reduce((map, ter) => {
-    for (const modifier of ter.modifier!) {
-      const territoriesWithThisModifier = map.get(modifier) ?? new Set<TerritoryModifier>();
-      territoriesWithThisModifier.add(ter.key);
-      map.set(modifier, territoriesWithThisModifier);
-    }
-
-    return map;
-  }, new Map<TerritoryModifier, Set<string>>());
-
-export const westCoastStates = territoriesByModifiers.get("West Coast") ?? new Set<string>();
-
-export const eastCoastStates = territoriesByModifiers.get("East Coast") ?? new Set<string>();
+export const territoryModifierScoreLookup = new Map<ScoreMilestone, number>([
+  ["West Coast", 10],
+  ["East Coast", 50],
+  ["Midwest", 30],
+  ["South", 30],
+  ["Southwest", 10],
+  ["Coast-to-Coast", 100],
+  ["Globetrotter", 1000]
+]);
+  

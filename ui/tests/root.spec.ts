@@ -1,20 +1,20 @@
-import { test, expect } from '@playwright/test';
-import { createEmptyAppState, createNewGame, SetAppState } from './test-helpers';
+import { test, expect } from "@playwright/test";
+import { createEmptyAppState, createNewGame, SetAppState } from "./test-helpers";
 
-test('has title', async ({ page }) => {
-  await page.goto('/');
+test("has title", async ({ page }) => {
+  await page.goto("/");
 
   // Expect a title "to contain" a substring.
   await expect(page).toHaveTitle(/The License Plate Game/);
 });
 
-test('redirect to history page on very first navigation', async ({ page }) => {
-  await page.goto('/');
+test("redirect to history page on very first navigation", async ({ page }) => {
+  await page.goto("/");
 
   await expect(page).toHaveURL("/history");
 });
 
-test('redirect to history page on no active game', async ({ browser }) => {
+test("redirect to history page on no active game", async ({ browser }) => {
   const context = await browser.newContext();
 
   const stateWithNoActiveGame = createEmptyAppState();
@@ -23,14 +23,14 @@ test('redirect to history page on no active game', async ({ browser }) => {
 
   const page = await context.newPage();
   
-  await page.goto('/');
+  await page.goto("/");
 
   await expect(page).toHaveURL("/history");
 
   await context.close();
 });
 
-test('redirect to game page on active game', async ({ browser }) => {
+test("redirect to game page on active game", async ({ browser }) => {
   const context = await browser.newContext();
 
   const stateWithActiveGame = createEmptyAppState();
@@ -40,14 +40,14 @@ test('redirect to game page on active game', async ({ browser }) => {
   
   const page = await context.newPage();
   
-  await page.goto('/');
+  await page.goto("/");
 
   await expect(page).toHaveURL("/game");
 
   await context.close();
 });
 
-test('will migrate old nextjs data and show correct score for active game', async ({browser}) => {
+test("will migrate old nextjs data and show correct score for active game", async ({browser}) => {
   const context = await browser.newContext();
 
   context.addInitScript(() => {
@@ -58,17 +58,17 @@ test('will migrate old nextjs data and show correct score for active game', asyn
 
   const page = await context.newPage();
   
-  await page.goto('/');
+  await page.goto("/");
 
   await expect(page).toHaveURL("/game");
 
-  const scoreElement = page.getByTestId('current-score');
-  await expect(scoreElement).toHaveText('Score: 11');
+  const scoreElement = page.getByTestId("current-score");
+  await expect(scoreElement).toHaveText("Score: 11");
 
   await context.close();
 });
 
-test('will migrate old nextjs data and show correct history', async ({browser}) => {
+test("will migrate old nextjs data and show correct history", async ({browser}) => {
   const context = await browser.newContext();
 
   context.addInitScript(() => {
@@ -79,10 +79,10 @@ test('will migrate old nextjs data and show correct history', async ({browser}) 
 
   const page = await context.newPage();
   
-  await page.goto('/history');
+  await page.goto("/history");
 
-  const scoreElement = page.getByTestId('total-games-played');
-  await expect(scoreElement).toHaveText('Total Games Played: 2');
+  const scoreElement = page.getByTestId("total-games-played");
+  await expect(scoreElement).toHaveText("Total Games Played: 2");
 
   await context.close();
 });

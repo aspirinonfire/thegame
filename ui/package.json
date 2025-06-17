@@ -10,7 +10,8 @@
     "typecheck": "react-router typegen && tsc",
     "postinstall": "flowbite-react patch",
     "teste2e": "npx playwright test --ui",
-    "teste2eci": "npx playwright test"
+    "teste2eci": "npx playwright test",
+    "teste2edev": "cross-env PW_DEV=1 npx playwright test --ui"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -31,6 +32,7 @@
     "@types/node": "^20",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
+    "cross-env": "^7.0.3",
     "tailwindcss": "^4.1.4",
     "typescript": "^5.8.3",
     "vite": "^6.3.3",
