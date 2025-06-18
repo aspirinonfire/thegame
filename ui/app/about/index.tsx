@@ -2,6 +2,7 @@ import { Button, Card, Modal, ModalBody, ModalHeader } from "flowbite-react";
 import { useEffect, useState } from "react";
 import { ExclamationCircleIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import type { Route } from "./+types";
+import HumanDateTime from "~/common-components/humanDateTime";
 
 export interface VersionInfo {
   deployDate: Date,
@@ -21,15 +22,18 @@ const AboutPage = ({
 } : Route.ComponentProps) => {
   const [isShowShareConfirmation, setIsShowShareConfirmation] = useState(false);
   const [isShowDeleteConfirmation, setIsShowDeleteConfirmation] = useState(false);
-  const [versionString, setVersionString] = useState("App deploy date: 2025-06-13 commit: unknown");
+  const [versionInfo, setVersionString] = useState<VersionInfo>({
+    deployDate: new Date("2025-06-18T00:00:00Z"),
+    sha: "unknown"
+  });
 
   useEffect(() => {
     loaderData.versionInfoProm
       .then(resp => {
         if (resp.ok && !resp.bodyUsed) {
           resp.json()
-            .then((versionInfo: VersionInfo) => {
-              setVersionString(`App deploy date: ${new Date(versionInfo.deployDate).toISOString()} commit: ${versionInfo.sha}`);
+            .then((info: VersionInfo) => {
+              setVersionString(info);
             })
             .catch(console.error);
         }
@@ -86,7 +90,9 @@ const AboutPage = ({
           <p>
             Made with React, Tailwind, Flowbite, coffee, ducktape, and WD-40
           </p>
-          {versionString ? (<p className="text-gray-400 pt-5">{versionString}</p>) : null}
+          <p className="text-gray-400 pt-5">
+            App deploy date: <HumanDateTime isoDateTime={versionInfo.deployDate} />. Commit: {versionInfo.sha}
+          </p>
         </div>
       </div>
 
