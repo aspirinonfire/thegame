@@ -6,7 +6,7 @@ import PlatePicker from "./platepicker";
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import HumanDateTime from "~/common-components/humanDateTime";
+import LocalDateTime from "~/common-components/localDateTime";
 
 const GamePage = () => {
   const [user, activeGame, finishCurrentGame, spotNewPlates, startNewGame] =
@@ -66,7 +66,7 @@ const GamePage = () => {
         <div className={`flex flex-row grow justify-end items-center fixed bottom-0 right-5 ${showPicker ? 'hidden' : ''}`}>
           <small className="text-xs opacity-50 ml-5">
             Game started on: <br />
-            <HumanDateTime isoDateTime={activeGame?.dateCreated} />
+            <LocalDateTime isoDateTime={activeGame?.dateCreated} />
           </small>
           <Button size="xs" data-testid="open-finish-game-modal" className="m-5 bg-amber-700"
             onClick={() => setShowEndGame(true)}>

@@ -2,7 +2,7 @@ import { Button, Card, Modal, ModalBody, ModalHeader } from "flowbite-react";
 import { useEffect, useState } from "react";
 import { ExclamationCircleIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import type { Route } from "./+types";
-import HumanDateTime from "~/common-components/humanDateTime";
+import LocalDateTime from "~/common-components/localDateTime";
 
 export interface VersionInfo {
   deployDate: Date,
@@ -91,7 +91,7 @@ const AboutPage = ({
             Made with React, Tailwind, Flowbite, coffee, ducktape, and WD-40
           </p>
           <p className="text-gray-400 pt-5">
-            App deploy date: <HumanDateTime isoDateTime={versionInfo.deployDate} />. Commit: {versionInfo.sha}
+            App deploy date: <LocalDateTime isoDateTime={versionInfo.deployDate} format="MMMM D, YYYY" />. Commit: {versionInfo.sha}
           </p>
         </div>
       </div>
