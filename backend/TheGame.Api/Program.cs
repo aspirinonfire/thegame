@@ -23,6 +23,20 @@ public class Program
       diOpts.ValidateScopes = true;
     });
 
+    string? uiHost = builder.Configuration["cors:uiHost"];
+    if (!string.IsNullOrWhiteSpace(uiHost))
+    {
+      builder.Services.AddCors(options =>
+      {
+        options.AddPolicy("ui", policy =>
+        {
+          policy.WithOrigins(uiHost)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+        });
+      });
+    }
+
     // TODO switch to OpenAPI and Scalar
     // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
     builder.Services
@@ -65,7 +79,8 @@ public class Program
     builder.Services
       .AddOptions<GameSettings>()
       .BindConfiguration("")
-      .ValidateDataAnnotations();
+      .ValidateDataAnnotations()
+      .ValidateOnStart();
 
     builder.Services
       .AddGameServices(additionalMediatrAssemblyToScan: typeof(Program).Assembly)
@@ -90,6 +105,11 @@ public class Program
 
     var app = builder.Build();
 
+    if (!string.IsNullOrWhiteSpace(uiHost))
+    {
+      app.UseCors("ui");
+    }
+
     // TODO enable and configure exception handler
     //app.UseExceptionHandler();
     //app.UseStatusCodePages();
@@ -106,9 +126,11 @@ public class Program
         swaggerOpts.SwaggerEndpoint("/swagger/v1/swagger.json", "Api v1");
       });
     }
-    
-    app.UseHsts();
-    app.UseHttpsRedirection();
+    else
+    {
+      app.UseHsts();
+      app.UseHttpsRedirection();
+    }
 
     app.UseAuthentication();
     app.UseAuthorization();

@@ -47,6 +47,7 @@ var api = builder
   .WithEnvironment("Auth__Api__JwtSecret", apiJwtSecret)
   .WithEnvironment("Auth__Api__JwtAudience", apiJwtAudience)
   .WithEnvironment("Auth__Api__JwtTokenExpirationMin", apiJwtExpMinutes.Resource.Value)
+  .WithEnvironment("cors__uiHost", $"http://localhost:{uiExposedPort.ToString()}")
   // service dependencies
   .WaitFor(theGameDevDb);
 
@@ -55,6 +56,7 @@ var _ = builder
   .WithHttpEndpoint(port: uiExposedPort, targetPort: uiDevServerPort)
   // app config
   .WithEnvironment("NEXT_PUBLIC_GOOGLE_CLIENT_ID", googleClientId)
+  .WithEnvironment("NEXT_PUBLIC_API_URL", api.GetEndpoint("http"))
   // service dependencies
   .WithReference(api)
   .WaitFor(api);

@@ -93,7 +93,7 @@ export async function sendAuthenticatedApiRequest<T>(url: string,
     let apiResponse: Response = null!;
     
     try {
-      apiResponse = await fetch(`/api/${url}`, request);
+      apiResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/${url}`, request);
     } catch (apiException) {
       console.log(apiException);
       

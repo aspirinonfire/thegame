@@ -25,7 +25,7 @@ export default function GoogleAuth({ raiseSignedInEvent } : GoogleSignInArgs) {
       };
   
       try {
-        const accessTokenResponse = await fetch("/api/user/google/apitoken", requestParams);
+        const accessTokenResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/google/apitoken`, requestParams);
   
         const responseBody = await accessTokenResponse.json() as ApiTokenResponse;
     

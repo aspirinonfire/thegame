@@ -22,6 +22,7 @@ public sealed record AuthSettings
 public sealed record ApiAuthSettings
 {
   [Required]
+  [MinLength(32, ErrorMessage = "JWT Key must be 32 chars or 256 bit long")]
   public required string JwtSecret { get; init; }
 
   [Required]

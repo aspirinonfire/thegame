@@ -22,6 +22,11 @@ public sealed class EndGameCommandHandler(IGameDbContext gameDb, ITransactionExe
         logger.LogInformation("Validating command");
 
         var ownedActiveGame = await gameDb.Games
+          .Include(game => game.GameLicensePlates)
+            .ThenInclude(plate => plate.LicensePlate)
+          .Include(game => game.GameLicensePlates)
+            .ThenInclude(plate => plate.SpottedBy)
+          .Include(game => game.CreatedBy)
           .Where(game => game.IsActive && game.CreatedByPlayerId == request.OwnerPlayerId)
           .FirstOrDefaultAsync(cancellationToken);
 
