@@ -40,7 +40,7 @@ const GamePage = () => {
       <h1 className="text-3xl">Get ready for a roadtip!</h1>
       <Button className="bg-amber-700 animate-pulse" size="xl" data-testid="start-new-game"
         onClick={() => startNewGame(new Date().toISOString())}>
-          <ChevronRightIcon className="mr-2 h-5 w-5 pt-1" />
+          <ChevronRightIcon className="mr-2 h-5 w-5" />
           Let&apos;s Go!
       </Button>
     </div>);

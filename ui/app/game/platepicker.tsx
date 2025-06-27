@@ -147,8 +147,8 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
           autoFocus={true}
           ref={searchInputRef}
           id="default-search"
-          className="block w-full p-4 ps-10 text-lg text-gray-900 border border-gray-300 rounded-lg bg-gray-200 focus:ring-blue-500 focus:border-blue-500"
-          placeholder="Name or abbreviation (California or CA)..."
+          className="block w-full p-4 ps-10 text-xl placeholder:text-base text-gray-900 border border-gray-300 rounded-lg bg-gray-200 focus:ring-blue-500 focus:border-blue-500"
+          placeholder="Name or abbreviation"
           onChange={event => setSearchTerm(event.target.value)}
           value={searchTerm || ""} />
         <button type="button"
