@@ -31,6 +31,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TheGame.Domain\TheGame.Domain.csproj" />
+    <ProjectReference Include="..\TheGame.ServiceDefaults\TheGame.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

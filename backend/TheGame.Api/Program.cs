@@ -16,12 +16,14 @@ public class Program
   public static async Task Main(string[] args)
   {
     var builder = WebApplication.CreateBuilder(args);
+    builder.AddServiceDefaults();
     builder.WebHost.UseDefaultServiceProvider(diOpts =>
     {
       diOpts.ValidateOnBuild = true;
       diOpts.ValidateScopes = true;
     });
 
+    // TODO switch to OpenAPI and Scalar
     // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
     builder.Services
       .AddEndpointsApiExplorer()
@@ -86,12 +88,13 @@ public class Program
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
       });
 
-    builder.AddGameApiOpenTelemtry();
-
     var app = builder.Build();
 
-    app.UseDefaultFiles();  // re-write path only. / to /index.html
-    app.UseStaticFiles();   // serve ui files from wwwroot
+    // TODO enable and configure exception handler
+    //app.UseExceptionHandler();
+    //app.UseStatusCodePages();
+
+    app.MapDefaultEndpoints();
 
     // Configure the HTTP request pipeline.
     if (isDevEnvironment)
@@ -107,17 +110,12 @@ public class Program
     app.UseHsts();
     app.UseHttpsRedirection();
 
-    app.UseHealthChecks("/api/health");
-
     app.UseAuthentication();
     app.UseAuthorization();
 
     app.MapGroup("")
       .RequireAuthorization()
       .AddGameApiRoutes();
-
-    // fallback to spa
-    app.MapFallbackToFile("/index.html");
 
     await app.RunAsync();
   }

@@ -37,7 +37,7 @@ public class ApiRoutesTests
     await using var uutApiApp = GetApiFactory();
     var client = uutApiApp.CreateClient();
 
-    var actualApiResponse = await client.GetAsync("/api/health");
+    var actualApiResponse = await client.GetAsync("/health");
 
     Assert.Equal(HttpStatusCode.OK, actualApiResponse.StatusCode);
 
