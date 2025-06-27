@@ -378,7 +378,6 @@ public class ApiRoutesTests
         {
           options.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddDebug()));
           options.EnableSensitiveDataLogging(true);
-          options.UseLazyLoadingProxies(true);
           options.UseInMemoryDatabase("TestGameDb");
         });
 

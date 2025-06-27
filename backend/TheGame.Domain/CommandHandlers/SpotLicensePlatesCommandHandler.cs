@@ -36,6 +36,7 @@ public sealed class SpotLicensePlatesCommandHandler(IGameDbContext gameDb,
       var activeGame = await gameDb.Games
         .Include(game => game.InvitedPlayers)
         .Include(game => game.GameLicensePlates)
+          .ThenInclude(plate => plate.LicensePlate)
         .Where(game => game.Id ==  request.GameId)
         .Where(game => game.CreatedByPlayerId == request.SpottedByPlayerId ||
           game.GamePlayerInvites.Any(invite => invite.PlayerId == request.SpottedByPlayerId && invite.InviteStatus == GamePlayerInviteStatus.Accepted))

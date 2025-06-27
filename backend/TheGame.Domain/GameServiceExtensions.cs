@@ -33,7 +33,6 @@ public static class GameServiceExtensions
         }));
         options.EnableSensitiveDataLogging(true);
 #endif
-        options.UseLazyLoadingProxies(true);
         options.UseAzureSql(connectionString ?? $"Name=ConnectionStrings:{GameDbContext.ConnectionStringName}",
           sqlServerOpts =>
           {

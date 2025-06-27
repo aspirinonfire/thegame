@@ -215,7 +215,6 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
     var actualGameAfterSpotRemoval = await RunAsScopedRequest(sp, spotRequestWithSpotRemoval);
     Assert.Equal(3, actualGameAfterSpotRemoval.GameScore.TotalScore);
 
-
     // re-add plate ~OR, ~WA, ~AL, +CA
     var spotRequestWithReAdd = new SpotLicensePlatesCommand([
       new SpottedPlate(Country.US, StateOrProvince.CA),
