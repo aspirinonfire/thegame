@@ -56,8 +56,6 @@ bin/
 obj/
 Debug/
 Release/
-efbundle*
-stack*.json
 
 # Docker stuff
 /backend/mssql_volume
@@ -68,4 +66,13 @@ stack*.json
 .vs
 backend/TheGame.Infra/stack.localdev.json
 
-/backend/TheGame.Pulumi/Pulumi.localdev.yaml
+# React Router
+.react-router/
+/build/
+.vscode
+
+# Playwright
+**/*/test-results/
+**/*/playwright-report/
+**/*/blob-report/
+**/*/playwright/.cache/

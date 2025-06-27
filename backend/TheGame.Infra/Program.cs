@@ -112,6 +112,11 @@ public static class Program
       .Build();
 
     var gameConfig = config.Get<TheGameConfig>();
+    if (gameConfig is null)
+    {
+      Console.WriteLine("game stack config is not set or invalid. Please ensure stack.localdev.json exists and is properly configured.");
+      Environment.Exit(-1);
+    }
 
     var configValidationErrors = gameConfig.GetValidationErrors();
     if (configValidationErrors.Count > 0)

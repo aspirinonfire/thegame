@@ -3,12 +3,13 @@ using Google.Apis.Auth.OAuth2.Responses;
 using MediatR;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using MockQueryable.NSubstitute;
+using MockQueryable;
 using NSubstitute.Extensions;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
@@ -367,7 +368,7 @@ public class ApiRoutesTests
       {
         // overwrite dbcontext with in-memory provider to eliminate direct sql server dependency.
         // the goal of these tests is to cover API pipeline implementations, not the business logic.
-        var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<GameDbContext>));
+        var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IDbContextOptionsConfiguration<GameDbContext>));
         if (descriptor != null)
         {
             services.Remove(descriptor);

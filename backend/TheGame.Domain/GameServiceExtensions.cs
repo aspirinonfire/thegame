@@ -34,12 +34,11 @@ public static class GameServiceExtensions
         options.EnableSensitiveDataLogging(true);
 #endif
         options.UseLazyLoadingProxies(true);
-        options.UseSqlServer(connectionString ?? $"Name=ConnectionStrings:{GameDbContext.ConnectionStringName}",
+        options.UseAzureSql(connectionString ?? $"Name=ConnectionStrings:{GameDbContext.ConnectionStringName}",
           sqlServerOpts =>
           {
             sqlServerOpts.CommandTimeout(15);
             sqlServerOpts.EnableRetryOnFailure(3, TimeSpan.FromSeconds(2), null);
-            sqlServerOpts.UseAzureSqlDefaults(true);
           });
       })
       .AddScoped<IGameDbContext>(isp => isp.GetRequiredService<GameDbContext>())

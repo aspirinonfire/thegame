@@ -30,9 +30,13 @@ public sealed class TheGameStack
       EnvironmentName = _gameConfig.AcaEnvName,
       Location = existingResources.ResourceGroupLocation,
 
-      Sku = new EnvironmentSkuPropertiesArgs()
+      WorkloadProfiles =
       {
-        Name = SkuName.Consumption
+        new WorkloadProfileArgs()
+        {
+          Name = "Consumption",
+          WorkloadProfileType = "Consumption"
+        }
       }
     });
 
