@@ -20,7 +20,7 @@ permissions:
 env:
   ARTIFACTS: artifacts
   DOCKERFILE: Dockerfile-pipelines
-  NODE_VERSION: 20
+  NODE_VERSION: 22
   PULUMI_PUBLISH_DIR: infra
   INFRA_BINARY: TheGame.Infra
   CONTAINER_REPO: ghcr.io
