@@ -16,6 +16,7 @@ on:
 permissions:
   id-token: write # write is required for requesting the JWT
   contents: read 
+  actions: read
 
 env:
   ARTIFACTS: artifacts
@@ -37,30 +38,14 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
 
-    - name: Download artifacts
-      uses: actions/github-script@v6
+    - name: Download & extract artifact
+      uses: actions/download-artifact@v4
       with:
-        script: |
-          let run_id = context.payload.workflow_run.id || context.payload.inputs.build_run_id;
-          let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            run_id: run_id,
-          });
-          let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
-            return artifact.name == "${{ env.ARTIFACTS }}"
-          })[0];
-          let download = await github.rest.actions.downloadArtifact({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            artifact_id: matchArtifact.id,
-            archive_format: 'zip',
-          });
-          let fs = require('fs');
-          fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/${{ env.ARTIFACTS }}.zip`, Buffer.from(download.data));
-
-    - name: Unzip build artifacts
-      run: unzip -d ${{ env.ARTIFACTS }} ${{ env.ARTIFACTS }}.zip
+        name: ${{ env.ARTIFACTS }}
+        path: ${{ env.ARTIFACTS }}
+        run-id: ${{ github.event.workflow_run.id || inputs.build_run_id }}
+        repository: ${{ github.repository }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: List build artifacts
       run: ls -lR ${{ env.ARTIFACTS }}
@@ -97,11 +82,6 @@ jobs:
         docker push ${{ env.CONTAINER_REPO }}/${{ github.repository_owner }}/${{ env.GAMEAPP_IMAGE_NAME }}:latest
 
     # Deploy infra
-    - name: Install pulumi
-      uses: pulumi/actions@v4
-      with:
-        pulumi-version: 3.127.0
-
     - name: Deploy Game Infra with Pulumi
       working-directory: ${{ env.PULUMI_PUBLISH_DIR }}
       run: ./${{ env.INFRA_BINARY }}
