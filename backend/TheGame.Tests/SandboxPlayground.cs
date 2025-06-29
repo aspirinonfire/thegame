@@ -1,6 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.ValueGeneration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Collections.Immutable;
+using System.Linq.Expressions;
 
 namespace TheGame.Tests
 {
@@ -13,36 +18,35 @@ namespace TheGame.Tests
     [Fact]
     public async Task WillHandleInvariantsGracefully()
     {
-      var services = new ServiceCollection()
-        .AddScoped<IGameRepository, GameRepository>();
+      var services = new ServiceCollection();
       
       AddTestDb(services);
 
       using var serviceProvider = services.BuildServiceProvider();
       using var scope = serviceProvider.CreateScope();
 
-      var gameRepository = scope.ServiceProvider.GetRequiredService<IGameRepository>();
-      
       var dbContext = scope.ServiceProvider.GetRequiredService<SandboxTestDbContext>();
       dbContext.Database.EnsureCreated();
 
-      var newGame = new SandboxTestGame(new SandboxTestGame.NewGame("Test Game"));
-      dbContext.Games.Add(newGame);
+      var newGame = new SandboxTestGame(new SandboxTestGame.NewGameData("Test Game"));
+      dbContext.Add(newGame);
 
       await dbContext.SaveChangesAsync();
+      dbContext.ChangeTracker.Clear();
 
-      var addedGame = await gameRepository.GetGameByIdAsync(1);
+      var addedGame = await dbContext.GamesForUpdates.FirstOrDefaultAsync(game => game.GameId == newGame.GameId);
 
       Assert.NotNull(addedGame);
 
       addedGame.UpdateSpots([
-        new SandboxTestGame.NewSpot("US", "California", DateTimeOffset.UtcNow),
-        new SandboxTestGame.NewSpot("US", "Texas", DateTimeOffset.UtcNow)
+        new SandboxTestGame.NewSpotData("US", "California", DateTimeOffset.UtcNow),
+        new SandboxTestGame.NewSpotData("US", "Texas", DateTimeOffset.UtcNow)
       ]);
 
       await dbContext.SaveChangesAsync();
+      dbContext.ChangeTracker.Clear();
 
-      var queriedGame = await dbContext.GamesQuery
+      var queriedGame = await dbContext.GamesReadonly
         .Include(game => game.Spots)
         .ToListAsync();
 
@@ -62,20 +66,15 @@ namespace TheGame.Tests
 
           options.EnableSensitiveDataLogging(true);
         });
-
-      services.AddScoped<IQueryableContext>(isp => isp.GetRequiredService<SandboxTestDbContext>());
     }
 
-    public interface IQueryableContext
+    public class SandboxTestDbContext(DbContextOptions<SandboxTestDbContext> options) : DbContext(options)
     {
-      IQueryable<IGame> GamesQuery { get; }
-      IQueryable<ISpot> SpotsQuery { get; }
-    }
-
-    public class SandboxTestDbContext(DbContextOptions<SandboxTestDbContext> options) : DbContext(options), IQueryableContext
-    {
-      public IQueryable<IGame> GamesQuery => Games.AsQueryable().AsNoTracking();
-      public IQueryable<ISpot> SpotsQuery => Spots.AsQueryable().AsNoTracking();
+      public IQueryable<IGame> GamesReadonly => Games.AsQueryable().AsNoTracking();
+      public IQueryable<SandboxTestGame> GamesForUpdates => Games
+        .Include(game => game.Spots);
+      
+      public IQueryable<SandboxTestSpot> SpotsReadonly => Spots.AsQueryable().AsNoTracking();
 
       internal DbSet<SandboxTestGame> Games { get; set; } = default!;
       internal DbSet<SandboxTestSpot> Spots { get; set; } = default!;
@@ -88,20 +87,55 @@ namespace TheGame.Tests
           game.Property(g => g.Name).IsRequired();
           game
             .HasMany(g => g.Spots)
-            .WithOne(s => s.ParentGame)
+            .WithOne()
             .HasForeignKey(s => s.ParentGameId)
             .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
 
           game.Navigation(e => e.Spots)
             .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+          ConfigureRowVersionColumn(game, g => g.RowVersion);
         });
 
         modelBuilder.Entity<SandboxTestSpot>(spot =>
         {
           spot.HasKey(s => new { s.ParentGameId, s.Country, s.StateOrProvince });
           spot.Property(s => s.SpottedOn).IsRequired();
+
+          ConfigureRowVersionColumn(spot, s => s.RowVersion);
         });
+      }
+
+      private void ConfigureRowVersionColumn<T>(EntityTypeBuilder<T> entityBuilder, Expression<Func<T, byte[]>> rowVersionPropSelector)
+        where T: class
+      {
+        var rowVersionProp = entityBuilder.Property(rowVersionPropSelector);
+
+        if (Database.IsInMemory())
+        {
+          rowVersionProp
+            .IsConcurrencyToken()
+            .ValueGeneratedOnAddOrUpdate()
+            .HasValueGenerator<InMemoryRowVersionGenerator>();
+        }
+        else
+        {
+          rowVersionProp.IsRowVersion();
+        }
+      }
+
+      internal sealed class InMemoryRowVersionGenerator : ValueGenerator<byte[]>
+      {
+        private static long _counter = DateTime.UtcNow.Ticks;
+
+        public override bool GeneratesTemporaryValues => false;
+
+        public override byte[] Next(EntityEntry entry)
+        {
+          var next = Interlocked.Increment(ref _counter);
+          return BitConverter.GetBytes(next);  // 8-byte little-endian
+        }
       }
     }
 
@@ -112,15 +146,10 @@ namespace TheGame.Tests
       long GameId { get; }
       string Name { get; }
       IReadOnlySet<SandboxTestSpot> Spots { get; }
+      byte[] RowVersion { get; }
     }
 
-    public interface IGameMutable : IGame
-    {
-      void EndGame();
-      void UpdateSpots(IReadOnlyCollection<SandboxTestGame.NewSpot> spots);
-    }
-
-    public class SandboxTestGame : IGameMutable
+    public class SandboxTestGame : IGame
     {
       public long GameId { get; protected set; }
 
@@ -133,9 +162,11 @@ namespace TheGame.Tests
 
       public DateTimeOffset? EndedOn { get; protected set; }
 
+      public byte[] RowVersion { get; protected set; } = default!;
+
       protected SandboxTestGame() { }
 
-      public SandboxTestGame(NewGame newGame) : this()
+      internal SandboxTestGame(NewGameData newGame) : this()
       {
         ArgumentException.ThrowIfNullOrEmpty(newGame?.Name);
 
@@ -143,28 +174,34 @@ namespace TheGame.Tests
         CreatedOn = DateTimeOffset.UtcNow;
       }
 
-      public void UpdateSpots(IReadOnlyCollection<NewSpot> spots)
+      public void UpdateSpots(IReadOnlyCollection<NewSpotData> newSpots)
       {
-        ArgumentNullException.ThrowIfNull(spots);
+        ArgumentNullException.ThrowIfNull(newSpots);
 
         if (EndedOn.HasValue)
         {
           throw new InvalidOperationException("Game has already ended.");
         }
 
-        var existingSpots = _spots
+        var existingSpotKeys = _spots
           .Select(s => (s.Country, s.StateOrProvince))
           .ToHashSet();
 
-        var newSpotKeys = spots.Select(ns => (ns.Country, ns.StateOrProvince)).ToHashSet();
+        var newSpotKeys = newSpots.Select(ns => (ns.Country, ns.StateOrProvince)).ToHashSet();
 
-        _spots.RemoveWhere(s => !newSpotKeys.Contains((s.Country, s.StateOrProvince)));
+        var toRemove = _spots
+          .Where(spot => !newSpotKeys.Contains((spot.Country, spot.StateOrProvince)))
+          .ToImmutableArray();
+        foreach (var spot in toRemove)
+        {
+          _spots.Remove(spot);
+        }
 
-        _spots.UnionWith(
-          spots
-            .Where(s => !existingSpots.Contains((s.Country, s.StateOrProvince)))
-            .Select(s => new SandboxTestSpot(
-              new SandboxTestSpot.NewSpot(GameId, s.Country, s.StateOrProvince, s.SpottedOn))));
+        _spots.RemoveWhere(_spots => !newSpotKeys.Contains((_spots.Country, _spots.StateOrProvince)));
+
+        _spots.UnionWith(newSpots
+          .Where(newSpot => !existingSpotKeys.Contains((newSpot.Country, newSpot.StateOrProvince)))
+          .Select(newSpot => new SandboxTestSpot(newSpot.ToNewSpot(GameId))));
       }
 
       public void EndGame()
@@ -177,57 +214,36 @@ namespace TheGame.Tests
         EndedOn = DateTimeOffset.UtcNow;
       }
 
-      public sealed record NewSpot(string Country, string StateOrProvince, DateTimeOffset SpottedOn);
+      public sealed record NewSpotData(string Country, string StateOrProvince, DateTimeOffset SpottedOn)
+      {
+        internal SandboxTestSpot.NewSpot ToNewSpot(long gameId) => new(gameId, Country, StateOrProvince, SpottedOn);
+      }
 
-      public sealed record NewGame(string Name);
+      public sealed record NewGameData(string Name);
     }
 
-    public interface ISpot
-    {
-      string Country { get; }
-      SandboxTestGame ParentGame { get; }
-      long ParentGameId { get; }
-      DateTimeOffset SpottedOn { get; }
-      string StateOrProvince { get; }
-    }
-
-    public class SandboxTestSpot : ISpot
+    public class SandboxTestSpot
     {
       public string Country { get; protected set; } = default!;
       public string StateOrProvince { get; protected set; } = default!;
       public DateTimeOffset SpottedOn { get; protected set; } = DateTimeOffset.UtcNow;
-
       public long ParentGameId { get; protected set; }
-      public SandboxTestGame ParentGame { get; protected set; } = default!;
+
+      public byte[] RowVersion { get; protected set; } = default!;
 
       protected SandboxTestSpot() { }
 
-      public SandboxTestSpot(NewSpot newSpot)
+      internal SandboxTestSpot(NewSpot newSpot)
       {
         ArgumentNullException.ThrowIfNull(newSpot);
 
-        ParentGameId = newSpot.gameId;
+        ParentGameId = newSpot.GameId;
         Country = newSpot.Country;
         StateOrProvince = newSpot.StateOrProvince;
         SpottedOn = newSpot.SpottedOn;
       }
 
-      public sealed record NewSpot(long gameId, string Country, string StateOrProvince, DateTimeOffset SpottedOn);
-    }
-
-    public interface IGameRepository
-    {
-      Task<IGameMutable?> GetGameByIdAsync(long gameId);
-    }
-
-    public sealed class GameRepository(SandboxTestDbContext dbContext) : IGameRepository
-    {
-      public async Task<IGameMutable?> GetGameByIdAsync(long gameId)
-      {
-        return await dbContext.Games
-          .Include(game => game.Spots)
-          .FirstOrDefaultAsync(g => g.GameId == gameId);
-      }
+      internal sealed record NewSpot(long GameId, string Country, string StateOrProvince, DateTimeOffset SpottedOn);
     }
   }
 }
