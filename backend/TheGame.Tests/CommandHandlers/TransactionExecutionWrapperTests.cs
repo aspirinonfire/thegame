@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
-using TheGame.Domain.CommandHandlers;
+using TheGame.Api.CommandHandlers;
 using TheGame.Domain.DomainModels;
 
 namespace TheGame.Tests.CommandHandlers;

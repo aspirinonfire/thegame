@@ -7,8 +7,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.PlayerIdentities;
+using TheGame.Domain.Utils;
 
-namespace TheGame.Domain.CommandHandlers;
+namespace TheGame.Api.CommandHandlers;
 
 public sealed record GetOrCreateNewPlayerCommand(NewPlayerIdentityRequest NewPlayerIdentityRequest) : IRequest<Result<GetOrCreatePlayerResult>>;
 

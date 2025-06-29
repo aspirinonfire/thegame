@@ -5,7 +5,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using TheGame.Domain.CommandHandlers;
+using TheGame.Api.CommandHandlers;
 using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.Utils;

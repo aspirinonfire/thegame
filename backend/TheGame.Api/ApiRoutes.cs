@@ -1,6 +1,4 @@
 using MediatR;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -11,7 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TheGame.Api.Auth;
-using TheGame.Domain.CommandHandlers;
+using TheGame.Api.CommandHandlers;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.Players;
 using TheGame.Domain.Utils;

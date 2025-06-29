@@ -18,7 +18,7 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using TheGame.Api;
 using TheGame.Api.Auth;
-using TheGame.Domain.CommandHandlers;
+using TheGame.Api.CommandHandlers;
 using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Players;
 

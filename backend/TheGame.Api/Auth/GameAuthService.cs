@@ -15,7 +15,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using TheGame.Domain.CommandHandlers;
+using TheGame.Api.CommandHandlers;
 using TheGame.Domain.DomainModels.PlayerIdentities;
 using TheGame.Domain.Utils;
 
