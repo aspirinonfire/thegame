@@ -128,7 +128,7 @@ public class ApiRoutesTests
       {
         var opts = sp.GetRequiredService<IOptions<GameSettings>>();
         var mediatr = sp.GetRequiredService<IMediator>();
-        var systemService = sp.GetRequiredService<ISystemService>();
+        var systemService = sp.GetRequiredService<TimeProvider>();
 
         var mockedAuthService = Substitute.ForPartsOf<GameAuthService>(NullLogger<GameAuthService>.Instance,
           mediatr,

@@ -40,7 +40,7 @@ public class GameAuthServiceTests
 
     var uutAuthService = new GameAuthService(NullLogger<GameAuthService>.Instance,
       Substitute.For<IMediator>(),
-      Substitute.For<ISystemService>(),
+      CommonMockedServices.GetMockedTimeProvider(),
       options);
 
     var actualToken = uutAuthService.GenerateApiJwtToken("provider name",

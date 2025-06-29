@@ -1,4 +1,5 @@
 using System;
+using System.Security.Cryptography;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Players;
 
@@ -17,7 +18,7 @@ public partial class PlayerIdentity : IAuditedRecord
 
   public long Id { get; protected set; }
 
-  public virtual Player? Player { get; protected set; }
+  public Player? Player { get; protected set; }
 
   public string ProviderName { get; protected set; } = default!;
 
@@ -31,7 +32,7 @@ public partial class PlayerIdentity : IAuditedRecord
 
   public DateTimeOffset? DateModified { get; }
 
-  public Result<Success> RotateRefreshToken(ISystemService systemService, ushort newTokenLenght, TimeSpan tokenAge)
+  public Result<Success> RotateRefreshToken(TimeProvider timeProvider, ushort newTokenLenght, TimeSpan tokenAge)
   {
     if (newTokenLenght < MinTokenByteLenght)
     {
@@ -43,8 +44,10 @@ public partial class PlayerIdentity : IAuditedRecord
       return new Failure(ErrorMessageProvider.InvalidNewTokenAgeError);
     }
 
-    RefreshToken = systemService.GenerateRandomBase64String(newTokenLenght);
-    RefreshTokenExpiration = systemService.DateTimeOffset.UtcNow.Add(tokenAge);
+    var randomBytes = RandomNumberGenerator.GetBytes(newTokenLenght);
+
+    RefreshToken = Convert.ToBase64String(randomBytes);
+    RefreshTokenExpiration = timeProvider.GetUtcNow().Add(tokenAge);
 
     return new Success();
   }

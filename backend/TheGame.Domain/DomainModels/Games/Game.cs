@@ -12,13 +12,13 @@ namespace TheGame.Domain.DomainModels.Games;
 
 public partial class Game : RootModel, IAuditedRecord
 {
-  public virtual IReadOnlySet<LicensePlate> LicensePlates { get; private set; } = default!;
+  public IReadOnlySet<LicensePlate> LicensePlates { get; private set; } = default!;
   protected HashSet<GameLicensePlate> _gameLicensePlates = [];
-  public virtual IReadOnlySet<GameLicensePlate> GameLicensePlates => _gameLicensePlates;
+  public IReadOnlySet<GameLicensePlate> GameLicensePlates => _gameLicensePlates;
 
-  public virtual IReadOnlySet<Player> InvitedPlayers { get; private set; } = default!;
+  public IReadOnlySet<Player> InvitedPlayers { get; private set; } = default!;
   protected HashSet<GamePlayer> _gamePlayerInvites = [];
-  public virtual IReadOnlySet<GamePlayer> GamePlayerInvites => _gamePlayerInvites;
+  public IReadOnlySet<GamePlayer> GamePlayerInvites => _gamePlayerInvites;
 
   public GameScore GameScore { get; protected set; } = new(ReadOnlyCollection<string>.Empty, 0);
 
@@ -30,7 +30,7 @@ public partial class Game : RootModel, IAuditedRecord
 
   public long CreatedByPlayerId { get; protected set; }
   protected Player _createdBy = default!;
-  public virtual Player CreatedBy
+  public Player CreatedBy
   {
     get => _createdBy;
     protected set => _createdBy = value;
@@ -44,7 +44,7 @@ public partial class Game : RootModel, IAuditedRecord
 
   public Game() { }
 
-  public virtual HashSet<Player> GetActiveGamePlayers()
+  public HashSet<Player> GetActiveGamePlayers()
   {
     return GamePlayerInvites
       .Where(gp => gp.InviteStatus == GamePlayerInviteStatus.Accepted)
@@ -67,7 +67,7 @@ public partial class Game : RootModel, IAuditedRecord
   }
 
   public virtual Result<Game> UpdateLicensePlateSpots(IGameLicensePlateFactory licensePlateSpotFactory,
-    ISystemService systemService,
+    TimeProvider timeProvider,
     IGameScoreCalculator scoreCalculator,
     IGameDbContext gameDbContext,
     GameLicensePlateSpots licensePlateSpots)
@@ -97,7 +97,7 @@ public partial class Game : RootModel, IAuditedRecord
     {
       var newSpotResult = licensePlateSpotFactory.CreateLicensePlateSpot(plateKey,
         licensePlateSpots.SpottedBy,
-        systemService.DateTimeOffset.UtcNow);
+        timeProvider.GetUtcNow());
       
       if (!newSpotResult.TryGetSuccessful(out var newSpot, out var spotFailure))
       {

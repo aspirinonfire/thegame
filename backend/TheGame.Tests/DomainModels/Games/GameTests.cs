@@ -44,7 +44,7 @@ public class GameTests
       isActive: true);
 
     var actualSpotResult = uut.UpdateLicensePlateSpots(licensePlateFactory,
-      CommonMockedServices.GetSystemService(),
+      CommonMockedServices.GetMockedTimeProvider(),
       calculator,
       Substitute.For<IGameDbContext>(),
       gameLpSpots);
@@ -94,7 +94,7 @@ public class GameTests
       isActive: true);
 
     var actualSpotResult = uut.UpdateLicensePlateSpots(licensePlateFactory,
-      CommonMockedServices.GetSystemService(),
+      CommonMockedServices.GetMockedTimeProvider(),
       calculator,
       Substitute.For<IGameDbContext>(),
       gameLpSpots);
@@ -129,7 +129,7 @@ public class GameTests
       .Returns(new GameScoreResult(0, [], 0));
 
     var actualSpotResult = uut.UpdateLicensePlateSpots(null!,
-      CommonMockedServices.GetSystemService(),
+      CommonMockedServices.GetMockedTimeProvider(),
       calculator,
       Substitute.For<IGameDbContext>(),
       gameLpSpots);
@@ -175,7 +175,7 @@ new MockLicensePlate(new (Country.US, StateOrProvince.CA)),
     uut.AddInvitedPlayer(existingSpottedBy);
 
     var actualSpotResult = uut.UpdateLicensePlateSpots(licensePlateFactory,
-      CommonMockedServices.GetSystemService(),
+      CommonMockedServices.GetMockedTimeProvider(),
       calculator,
       Substitute.For<IGameDbContext>(),
       gameLpSpots);
@@ -213,7 +213,7 @@ new MockLicensePlate(new (Country.US, StateOrProvince.CA)),
       isActive: false);
 
     var actualSpotResult = uut.UpdateLicensePlateSpots(licensePlateFactory,
-      CommonMockedServices.GetSystemService(),
+      CommonMockedServices.GetMockedTimeProvider(),
       calculator,
       Substitute.For<IGameDbContext>(),
       gameLpSpots);

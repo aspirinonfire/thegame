@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -24,7 +25,7 @@ public sealed record SpotLicensePlatesCommand(IReadOnlyCollection<SpottedPlate> 
 public sealed class SpotLicensePlatesCommandHandler(IGameDbContext gameDb,
   ITransactionExecutionWrapper transactionWrapper,
   IGameLicensePlateFactory gameLicensePlateFactory,
-  ISystemService systemService,
+  TimeProvider timeProvider,
   IGameScoreCalculator gameScoreCalculator,
   ILogger<SpotLicensePlatesCommandHandler> logger)
   : IRequestHandler<SpotLicensePlatesCommand, Result<OwnedOrInvitedGame>>
@@ -59,7 +60,7 @@ public sealed class SpotLicensePlatesCommandHandler(IGameDbContext gameDb,
       var updatedSpots = new GameLicensePlateSpots(spots, activeGame.Player);
 
       var updatedSpotsResult = activeGame.Game.UpdateLicensePlateSpots(gameLicensePlateFactory,
-        systemService,
+        timeProvider,
         gameScoreCalculator,
         gameDb,
         updatedSpots);

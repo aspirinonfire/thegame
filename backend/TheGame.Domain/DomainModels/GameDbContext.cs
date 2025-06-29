@@ -19,7 +19,7 @@ namespace TheGame.Domain.DomainModels;
 public class GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
   IMediator mediator,
   ILogger<GameDbContext> logger,
-  ISystemService systemService) : DbContext(dbContextOptions), IGameDbContext
+  TimeProvider timeProvider) : DbContext(dbContextOptions), IGameDbContext
 {
   public const string ConnectionStringName = "GameDB";
 
@@ -61,7 +61,7 @@ public class GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
   {
     HandleEnumerationEntities();
 
-    var saveTime = systemService.DateTimeOffset.Now;
+    var saveTime = timeProvider.GetUtcNow();
     HandleAuditedRecords(saveTime);
 
     // this query must be ran before calling base.SaveChangesAsync() to make sure we are querying the correct state.

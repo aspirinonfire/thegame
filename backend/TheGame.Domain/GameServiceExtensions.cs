@@ -41,7 +41,7 @@ public static class GameServiceExtensions
       })
       .AddScoped<IGameDbContext>(isp => isp.GetRequiredService<GameDbContext>())
       // Utils
-      .AddSingleton<ISystemService, SystemService>()
+      .AddSingleton(TimeProvider.System)
       .AddMediatR(cfg =>
       {
         cfg.RegisterServicesFromAssembly(typeof(GameServiceExtensions).Assembly);

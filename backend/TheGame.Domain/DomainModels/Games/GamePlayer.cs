@@ -7,10 +7,10 @@ namespace TheGame.Domain.DomainModels.Games;
 public partial class GamePlayer : IAuditedRecord
 {
   public long PlayerId { get; protected set; }
-  public virtual Player Player { get; protected set; } = default!;
+  public Player Player { get; protected set; } = default!;
 
   public long GameId { get; protected set; }
-  public virtual Game Game { get; protected set; } = default!;
+  public Game Game { get; protected set; } = default!;
 
   public Guid InvitationToken { get; protected set; } = default!;
   public GamePlayerInviteStatus InviteStatus { get; protected set; } = GamePlayerInviteStatus.Created;

@@ -8,14 +8,14 @@ public partial class GameLicensePlate
 {
   // required for N:M EF Config
   public long LicensePlateId { get; protected set; }
-  public virtual LicensePlate LicensePlate { get; protected set; } = default!;
+  public LicensePlate LicensePlate { get; protected set; } = default!;
 
   // required for N:M EF Config
   public long GameId { get; protected set; }
-  public virtual Game Game { get; protected set; } = default!;
+  public Game Game { get; protected set; } = default!;
 
   public long SpottedByPlayerId { get; protected set; }
-  public virtual Player SpottedBy { get; protected set; } = default!;
+  public Player SpottedBy { get; protected set; } = default!;
 
   public DateTimeOffset DateCreated { get; protected set;  }
 }
