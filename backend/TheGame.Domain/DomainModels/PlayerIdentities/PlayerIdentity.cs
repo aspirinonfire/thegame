@@ -18,7 +18,7 @@ public partial class PlayerIdentity : IAuditedRecord
 
   public long Id { get; protected set; }
 
-  public Player? Player { get; protected set; }
+  public Player Player { get; protected set; } = default!;
 
   public string ProviderName { get; protected set; } = default!;
 

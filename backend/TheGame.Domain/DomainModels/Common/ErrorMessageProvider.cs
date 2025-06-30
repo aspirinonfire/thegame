@@ -8,6 +8,7 @@ public static class ErrorMessageProvider
   public const string PlayerNotFoundError = "player_not_found";
   public const string ActiveGameNotFoundError = "active_game_not_found";
 
+  public const string AlreadyHasActiveGameError = "only_one_active_game_allowed";
   public const string InactiveGameError = "inactive_game";
   public const string FailedToAddSpotError = "failed_to_add_spot";
   public const string InvalidEndedOnDateError = "invalid_ended_on_date";

@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace TheGame.Domain.DomainModels.Players;
 
-public sealed record PlayerInfo(string PlayerName, long PlayerId);
+public sealed record PlayerInfo(string PlayerName, long? PlayerId);
 
 public interface IPlayerQueryProvider
 {

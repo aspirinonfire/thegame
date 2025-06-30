@@ -18,6 +18,15 @@ public partial class GamePlayer : IAuditedRecord
   public DateTimeOffset DateCreated { get; }
 
   public DateTimeOffset? DateModified { get; }
+
+  protected GamePlayer() { }
+
+  internal GamePlayer(Player playerToInvite) : this()
+  {
+    Player = playerToInvite;
+    InvitationToken = Guid.NewGuid();
+    InviteStatus = GamePlayerInviteStatus.Created;
+  }
 }
 
 public enum GamePlayerInviteStatus

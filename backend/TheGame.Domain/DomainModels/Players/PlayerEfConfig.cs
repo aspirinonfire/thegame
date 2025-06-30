@@ -20,11 +20,23 @@ class PlayerEfConfig : IEntityTypeConfiguration<Player>
       .UsePropertyAccessMode(PropertyAccessMode.Field)
       .HasField("_invitedGamePlayers");
 
+    builder
+      .HasMany(player => player.OwnedGames)
+      .WithOne(game => game.CreatedBy)
+      .HasForeignKey(game => game.CreatedByPlayerId)
+      .OnDelete(DeleteBehavior.Cascade);
+
+    builder
+      .Navigation(player => player.OwnedGames)
+      .UsePropertyAccessMode(PropertyAccessMode.Field)
+      .HasField("_ownedGames");
+
     // starting from dependent entity rather than principal (PlayerIdentity) to better separate concerns.
+    // player can be invited before signing up so identity is not guaratneed.
     builder
       .HasOne(player => player.PlayerIdentity)
       .WithOne(identity => identity.Player)
-      .IsRequired(true)
+      .IsRequired(false)
       .OnDelete(DeleteBehavior.Cascade);
   }
 }

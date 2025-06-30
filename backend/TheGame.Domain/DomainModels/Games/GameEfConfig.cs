@@ -50,18 +50,6 @@ class GameEfConfig : IEntityTypeConfiguration<Game>
             .IsRequired();
         });
 
-    // define CreatedBy nav props
-    builder
-      .HasOne(game => game.CreatedBy)
-      .WithMany()
-      .IsRequired()
-      .HasForeignKey(game => game.CreatedByPlayerId)
-      .OnDelete(DeleteBehavior.Cascade);
-
-    builder
-      .Navigation(game => game.CreatedBy)
-      .UsePropertyAccessMode(PropertyAccessMode.Field);
-
     // define game license plate nav props
     builder
       .HasMany(game => game.LicensePlates)

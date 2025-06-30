@@ -1,15 +1,13 @@
 ﻿using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TheGame.Domain.DomainModels;
-using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
+using TheGame.Domain.DomainModels.Players;
 using TheGame.Domain.Utils;
 
 namespace TheGame.Api.CommandHandlers;
@@ -22,48 +20,20 @@ public sealed record SpottedPlate(Country Country, StateOrProvince StateOrProvin
 public sealed record SpotLicensePlatesCommand(IReadOnlyCollection<SpottedPlate> SpottedPlates, long GameId, long SpottedByPlayerId) 
   : IRequest<Result<OwnedOrInvitedGame>>;
 
-public sealed class SpotLicensePlatesCommandHandler(IGameDbContext gameDb,
-  ITransactionExecutionWrapper transactionWrapper,
-  IGameLicensePlateFactory gameLicensePlateFactory,
-  TimeProvider timeProvider,
-  IGameScoreCalculator gameScoreCalculator,
+public sealed class SpotLicensePlatesCommandHandler(ITransactionExecutionWrapper transactionWrapper,
+  IGameDbContext gameDb,
+  IPlayerActionsFactory playerActionsFactory,
   ILogger<SpotLicensePlatesCommandHandler> logger)
   : IRequestHandler<SpotLicensePlatesCommand, Result<OwnedOrInvitedGame>>
 {
   public async Task<Result<OwnedOrInvitedGame>> Handle(SpotLicensePlatesCommand request, CancellationToken cancellationToken) =>
     await transactionWrapper.ExecuteInTransaction<OwnedOrInvitedGame>(async () =>
     {
-      logger.LogInformation("Validating command");
+      var playerActions = playerActionsFactory.CreatePlayerActions(request.SpottedByPlayerId);
 
-      var activeGame = await gameDb.Games
-        .Include(game => game.InvitedPlayers)
-        .Include(game => game.GameLicensePlates)
-          .ThenInclude(plate => plate.LicensePlate)
-        .Where(game => game.Id ==  request.GameId)
-        .Where(game => game.CreatedByPlayerId == request.SpottedByPlayerId ||
-          game.GamePlayerInvites.Any(invite => invite.PlayerId == request.SpottedByPlayerId && invite.InviteStatus == GamePlayerInviteStatus.Accepted))
-        .Select(game => new
-        {
-          Game = game,
-          Player = game.CreatedByPlayerId == request.SpottedByPlayerId ?
-            game.CreatedBy : game.InvitedPlayers.First(invite => invite.Id == request.SpottedByPlayerId)
-        })
-        .FirstOrDefaultAsync(cancellationToken);
+      var updatedSpots = request.SpottedPlates.Select(plate => plate.ToPlateKey()).ToList();
 
-      if (activeGame is null)
-      {
-        logger.LogError("Active game for player {playerId} not found. Execution cannot continue.", request.SpottedByPlayerId);
-        return new Failure(ErrorMessageProvider.ActiveGameNotFoundError);
-      }
-
-      var spots = request.SpottedPlates.Select(plate => plate.ToPlateKey()).ToList();
-      var updatedSpots = new GameLicensePlateSpots(spots, activeGame.Player);
-
-      var updatedSpotsResult = activeGame.Game.UpdateLicensePlateSpots(gameLicensePlateFactory,
-        timeProvider,
-        gameScoreCalculator,
-        gameDb,
-        updatedSpots);
+      var updatedSpotsResult = await playerActions.UpdateLicensePlateSpots(request.GameId, updatedSpots);
       
       if (!updatedSpotsResult.TryGetSuccessful(out var updatedGame, out var spotFailure))
       {
