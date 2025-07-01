@@ -1,8 +1,6 @@
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.Games.Events;
@@ -10,23 +8,23 @@ using TheGame.Domain.DomainModels.LicensePlates;
 
 namespace TheGame.Domain.DomainModels.Players;
 
-public interface IPlayerActions
+public interface IPlayerFactory
 {
   Result<Player> CreateNewPlayer(string playerName);
-  Task<Result<Game>> StartNewGame(string name);
-  Task<Result<Game>> EndGame(long gameId);
-  Task<Result<GamePlayer>> InvitePlayerToActiveGame(long gameId, string playerNameToInvite);
-  Task<Result<Game>> UpdateLicensePlateSpots(long gameId, IReadOnlyCollection<LicensePlate.PlateKey> licensePlateSpots);
+}
+
+public interface IPlayerActions
+{
+  Player Player { get; }
+  Result<Game> StartNewGame(string name);
+  Result<Game> EndGame(long gameId);
+  Result<GamePlayer> InvitePlayerToActiveGame(long gameId, string playerNameToInvite);
+  Result<Game> UpdateLicensePlateSpots(long gameId, IReadOnlyCollection<LicensePlate.PlateKey> licensePlateSpots);
 }
 
 public partial class Player
 {
-  internal sealed class PlayerActions(IGameDbContext gameDbContext,
-    IGameScoreCalculator scoreCalculator,
-    TimeProvider timeProvider,
-    IGameLicensePlateFactory licensePlateSpotFactory,
-    long actingPlayerId)
-      : IPlayerActions
+  internal sealed class  PlayerFactory(IGameDbContext gameDbContext) : IPlayerFactory
   {
     public Result<Player> CreateNewPlayer(string playerName)
     {
@@ -41,20 +39,20 @@ public partial class Player
 
       return newPlayer;
     }
+  }
 
-    public async Task<Result<Game>> StartNewGame(string name)
+  internal sealed class PlayerActions(IGameDbContext gameDbContext,
+    IGameScoreCalculator scoreCalculator,
+    IPlayerFactory playerFactory,
+    TimeProvider timeProvider,
+    IGameLicensePlateFactory licensePlateSpotFactory,
+    Player actingPlayer)
+      : IPlayerActions
+  {
+    public Player Player => actingPlayer;
+
+    public Result<Game> StartNewGame(string name)
     {
-      var actingPlayer = await gameDbContext.Players
-        .Include(p => p.OwnedGames)
-        .Include(p => p.InvitedGames)
-        .Where(p => p.Id == actingPlayerId)
-        .FirstOrDefaultAsync();
-
-      if (actingPlayer == null)
-      {
-        return new Failure(ErrorMessageProvider.PlayerNotFoundError);
-      }
-
       var hasActiveGame = actingPlayer.OwnedGames
         .Concat(actingPlayer.InvitedGames)
         .Any(game => game.IsActive);
@@ -73,25 +71,15 @@ public partial class Player
         CreatedBy = actingPlayer,
       };
 
-      gameDbContext.Games.Add(newGame);
+      gameDbContext.Add(newGame);
 
       actingPlayer.AddDomainEvent(new NewGameStartedEvent(newGame));
 
       return newGame;
     }
 
-    public async Task<Result<Game>> EndGame(long gameId)
+    public Result<Game> EndGame(long gameId)
     {
-      var actingPlayer = await gameDbContext.Players
-        .Include(p => p.OwnedGames)
-        .Where(p => p.Id == actingPlayerId)
-        .FirstOrDefaultAsync();
-
-      if (actingPlayer == null)
-      {
-        return new Failure(ErrorMessageProvider.PlayerNotFoundError);
-      }
-      
       var currentGame = actingPlayer.OwnedGames.FirstOrDefault(game => game.IsActive && game.Id == gameId);
       if (currentGame == null)
       {
@@ -100,7 +88,8 @@ public partial class Player
 
       if (currentGame.GameLicensePlates.Count == 0)
       {
-        gameDbContext.Games.Remove(currentGame);
+        // Remove game altogether if there are no license plates spotted
+        ((GameDbContext)gameDbContext).Games.Remove(currentGame);
       }
 
       var endedOn = currentGame.GameLicensePlates
@@ -116,20 +105,8 @@ public partial class Player
       return currentGame;
     }
 
-    public async Task<Result<GamePlayer>> InvitePlayerToActiveGame(long gameId, string playerNameToInvite)
+    public Result<GamePlayer> InvitePlayerToActiveGame(long gameId, string playerNameToInvite)
     {
-      var actingPlayer = await gameDbContext.Players
-        .Include(p => p.OwnedGames)
-          .ThenInclude(g => g.InvitedPlayers)
-        .Include(p => p.InvatedGamePlayers)
-        .Where(p => p.Id == actingPlayerId)
-        .FirstOrDefaultAsync();
-
-      if (actingPlayer == null)
-      {
-        return new Failure(ErrorMessageProvider.PlayerNotFoundError);
-      }
-
       var currentGame = actingPlayer.OwnedGames.FirstOrDefault(game => game.IsActive && game.Id == gameId);
       if (currentGame == null)
       {
@@ -140,7 +117,7 @@ public partial class Player
       {
         return new Failure(ErrorMessageProvider.PlayerAlreadyInvitedError);
       }
-      var playerToInviteResult = CreateNewPlayer(playerNameToInvite);
+      var playerToInviteResult = playerFactory.CreateNewPlayer(playerNameToInvite);
       if (!playerToInviteResult.TryGetSuccessful(out var playerToInvite, out var failure))
       {
         return failure;
@@ -152,30 +129,15 @@ public partial class Player
       return newPlayerInvite;
     }
 
-    public async Task<Result<Game>> UpdateLicensePlateSpots(long gameId, IReadOnlyCollection<LicensePlate.PlateKey> licensePlateSpots)
+    public Result<Game> UpdateLicensePlateSpots(long gameId, IReadOnlyCollection<LicensePlate.PlateKey> licensePlateSpots)
     {
-      var actingPlayer = await gameDbContext.Players
-        .Include(p => p.OwnedGames)
-          .ThenInclude(g => g.GameLicensePlates)
-            .ThenInclude(g => g.LicensePlate)
-        .Include(p => p.InvitedGames)
-          .ThenInclude(g => g.GameLicensePlates)
-            .ThenInclude(g => g.LicensePlate)
-        .Where(p => p.Id == actingPlayerId)
-        .FirstOrDefaultAsync();
-
-      if (actingPlayer == null)
-      {
-        return new Failure(ErrorMessageProvider.PlayerNotFoundError);
-      }
-
       var currentGame = actingPlayer.OwnedGames
         .Concat(actingPlayer.InvitedGames)
         .FirstOrDefault(game => game.IsActive && game.Id == gameId);
       
       if (currentGame == null)
       {
-        return new Failure(ErrorMessageProvider.InactiveGameInviteError);
+        return new Failure(ErrorMessageProvider.InactiveGameError);
       }
 
       var existingSpotsLookup = currentGame.GameLicensePlates
@@ -186,8 +148,6 @@ public partial class Player
         .Where(spot => !existingSpotsLookup.ContainsKey(spot))
         .ToList()
         .AsReadOnly();
-
-      var gameDbInstance = gameDbContext as GameDbContext;
 
       foreach (var plateKey in newSpots)
       {

@@ -10,7 +10,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
-using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.PlayerIdentities;
 using TheGame.Domain.DomainModels.Players;
 
@@ -23,10 +22,11 @@ public class GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
 {
   public const string ConnectionStringName = "GameDB";
 
-  public DbSet<LicensePlate> LicensePlates { get; set; } = default!;
-  public DbSet<Game> Games { get; set; } = default!;
   public DbSet<Player> Players { get; set; } = default!;
+  
   public DbSet<PlayerIdentity> PlayerIdentities { get; set; } = default!;
+
+  internal DbSet<Game> Games { get; set; } = default!;
 
   private readonly Queue<IDomainEvent> _domainEventsToPublish = [];
 

@@ -19,7 +19,7 @@ public partial class Game : IAuditedRecord
 
   public GameScore GameScore { get; internal set; } = new(ReadOnlyCollection<string>.Empty, 0);
 
-  public long Id { get; }
+  public long Id { get; protected set; }
 
   public string Name { get; internal set; } = default!;
 

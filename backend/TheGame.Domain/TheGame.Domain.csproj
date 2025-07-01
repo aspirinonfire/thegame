@@ -27,10 +27,11 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.6" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.6" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.6" />
+    <PackageReference Include="System.Linq.Async" Version="6.0.3" />
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="TheGame.Tests"/>
+    <InternalsVisibleTo Include="TheGame.Tests" />
   </ItemGroup>
 
 </Project>

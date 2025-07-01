@@ -19,9 +19,9 @@ public partial class PlayerIdentity
         ProviderName = newPlayerRequest.ProviderName,
       };
 
-      var playerActions = playerActionsFactory.CreatePlayerActions(-1);
+      var playerFactory = playerActionsFactory.CreatePlayerFactory();
 
-      var newPlayerResult = playerActions.CreateNewPlayer(newPlayerRequest.PlayerName);
+      var newPlayerResult = playerFactory.CreateNewPlayer(newPlayerRequest.PlayerName);
       if (!newPlayerResult.TryGetSuccessful(out var newPlayer, out var newPlayerFailure))
       {
         return newPlayerFailure;

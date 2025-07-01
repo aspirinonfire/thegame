@@ -1,8 +1,10 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TheGame.Domain.DomainModels;
+using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.Players;
 using TheGame.Domain.Utils;
@@ -18,9 +20,19 @@ public sealed class StartNewGameCommandHandler(IGameDbContext gameDb, IPlayerAct
     await transactionWrapper.ExecuteInTransaction<OwnedOrInvitedGame>(
       async () =>
       {
-        var playerActions = playerActionsFactory.CreatePlayerActions(request.OwnerPlayerId);
+        var playerQuery = gameDb.Players
+          .Where(player => player.Id == request.OwnerPlayerId);
 
-        var newGameResult = await playerActions.StartNewGame(request.GameName);
+        var playerActions = await playerActionsFactory
+          .GetPlayersWithActions(playerQuery)
+          .FirstOrDefaultAsync();
+
+        if (playerActions == null)
+        {
+          return new Failure(ErrorMessageProvider.PlayerNotFoundError);
+        }
+
+        var newGameResult = playerActions.StartNewGame(request.GameName);
         if (!newGameResult.TryGetSuccessful(out var newGame, out var newGameFailure))
         {
           logger.LogError(newGameFailure.GetException(), "New game cannot be started.");

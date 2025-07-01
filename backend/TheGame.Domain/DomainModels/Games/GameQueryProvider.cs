@@ -64,7 +64,7 @@ public class GameQueryProvider(IGameDbContext gameDbContext) : IGameQueryProvide
 {
   public IQueryable<OwnedOrInvitedGame> GetOwnedAndInvitedGamesQuery(long playerId)
   {
-    IQueryable<OwnedOrInvitedGame>? ownedAndInvitedGames = gameDbContext
+    IQueryable<OwnedOrInvitedGame>? ownedAndInvitedGames = ((GameDbContext)gameDbContext)
       .Games
       .AsNoTracking()
       .Where(game => game.CreatedBy.Id == playerId ||

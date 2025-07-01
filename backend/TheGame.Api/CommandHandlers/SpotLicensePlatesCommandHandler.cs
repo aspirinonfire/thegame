@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TheGame.Domain.DomainModels;
+using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.Players;
@@ -29,11 +30,21 @@ public sealed class SpotLicensePlatesCommandHandler(ITransactionExecutionWrapper
   public async Task<Result<OwnedOrInvitedGame>> Handle(SpotLicensePlatesCommand request, CancellationToken cancellationToken) =>
     await transactionWrapper.ExecuteInTransaction<OwnedOrInvitedGame>(async () =>
     {
-      var playerActions = playerActionsFactory.CreatePlayerActions(request.SpottedByPlayerId);
+      var playerQuery = gameDb.Players
+        .Where(player => player.Id == request.SpottedByPlayerId);
+
+      var playerActions = await playerActionsFactory
+        .GetPlayersWithActions(playerQuery)
+        .FirstOrDefaultAsync();
+
+      if (playerActions == null)
+      {
+        return new Failure(ErrorMessageProvider.PlayerNotFoundError);
+      }
 
       var updatedSpots = request.SpottedPlates.Select(plate => plate.ToPlateKey()).ToList();
 
-      var updatedSpotsResult = await playerActions.UpdateLicensePlateSpots(request.GameId, updatedSpots);
+      var updatedSpotsResult = playerActions.UpdateLicensePlateSpots(request.GameId, updatedSpots);
       
       if (!updatedSpotsResult.TryGetSuccessful(out var updatedGame, out var spotFailure))
       {

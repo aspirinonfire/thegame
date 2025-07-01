@@ -6,12 +6,15 @@ namespace TheGame.Tests.DomainModels.Games;
 
 public class MockGame : Game
 {
-  public MockGame(IEnumerable<GameLicensePlate>? licensePlates,
+  public MockGame(long gameId,
+    IEnumerable<GameLicensePlate>? licensePlates,
     Player createdBy,
     bool isActive,
     DateTimeOffset? endedOn = null,
     string name = "test game")
   {
+    Id = gameId;
+
     _gameLicensePlates = licensePlates?.ToHashSet() ?? [];
 
     CreatedBy = createdBy;
