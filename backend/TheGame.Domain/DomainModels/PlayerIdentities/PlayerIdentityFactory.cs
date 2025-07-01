@@ -9,7 +9,7 @@ public interface IPlayerIdentityFactory
 
 public partial class PlayerIdentity
 {
-  public class PlayerIdentityFactory(IGameDbContext dbContext, IPlayerFactory playerFactory) : IPlayerIdentityFactory
+  public class PlayerIdentityFactory(IGameDbContext dbContext, IPlayerActionsFactory playerActionsFactory) : IPlayerIdentityFactory
   {
     public Result<PlayerIdentity> CreatePlayerIdentity(NewPlayerIdentityRequest newPlayerRequest)
     {
@@ -18,6 +18,8 @@ public partial class PlayerIdentity
         ProviderIdentityId = newPlayerRequest.ProviderIdentityId,
         ProviderName = newPlayerRequest.ProviderName,
       };
+
+      var playerFactory = playerActionsFactory.CreatePlayerFactory();
 
       var newPlayerResult = playerFactory.CreateNewPlayer(newPlayerRequest.PlayerName);
       if (!newPlayerResult.TryGetSuccessful(out var newPlayer, out var newPlayerFailure))

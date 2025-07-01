@@ -18,9 +18,8 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using TheGame.Api;
 using TheGame.Api.Auth;
-using TheGame.Domain.CommandHandlers;
+using TheGame.Api.CommandHandlers;
 using TheGame.Domain.DomainModels;
-using TheGame.Domain.DomainModels.Players;
 
 namespace TheGame.Tests;
 
@@ -128,7 +127,7 @@ public class ApiRoutesTests
       {
         var opts = sp.GetRequiredService<IOptions<GameSettings>>();
         var mediatr = sp.GetRequiredService<IMediator>();
-        var systemService = sp.GetRequiredService<ISystemService>();
+        var systemService = sp.GetRequiredService<TimeProvider>();
 
         var mockedAuthService = Substitute.ForPartsOf<GameAuthService>(NullLogger<GameAuthService>.Instance,
           mediatr,

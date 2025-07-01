@@ -7,8 +7,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.PlayerIdentities;
+using TheGame.Domain.Utils;
 
-namespace TheGame.Domain.CommandHandlers;
+namespace TheGame.Api.CommandHandlers;
 
 public sealed record GetOrCreateNewPlayerCommand(NewPlayerIdentityRequest NewPlayerIdentityRequest) : IRequest<Result<GetOrCreatePlayerResult>>;
 
@@ -23,7 +24,7 @@ public sealed record GetOrCreatePlayerResult(bool IsNewIdentity,
 public sealed class GetOrCreateNewPlayerCommandHandler(IGameDbContext gameDb,
   IPlayerIdentityFactory playerIdentityFactory,
   ITransactionExecutionWrapper transactionWrapper,
-  ISystemService systemService,
+  TimeProvider timeProvider,
   ILogger<GetOrCreateNewPlayerCommand> logger)
   : IRequestHandler<GetOrCreateNewPlayerCommand, Result<GetOrCreatePlayerResult>>
 {
@@ -57,12 +58,12 @@ public sealed class GetOrCreateNewPlayerCommandHandler(IGameDbContext gameDb,
             }
 
             var isMissingRefreshToken = string.IsNullOrWhiteSpace(playerIdentity.RefreshToken);
-            var tokenExpiredOrAboutToExpire = playerIdentity.RefreshTokenExpiration.GetValueOrDefault().Add(TimeSpan.FromMinutes(5)) <= systemService.DateTimeOffset.UtcNow;
+            var tokenExpiredOrAboutToExpire = playerIdentity.RefreshTokenExpiration.GetValueOrDefault().Add(TimeSpan.FromMinutes(5)) <= timeProvider.GetUtcNow();
 
             if (isMissingRefreshToken || tokenExpiredOrAboutToExpire)
             {
               logger.LogInformation("Refresh token needs rotation.");
-              var tokenRefreshResult = playerIdentity.RotateRefreshToken(systemService,
+              var tokenRefreshResult = playerIdentity.RotateRefreshToken(timeProvider,
                 request.NewPlayerIdentityRequest.RefreshTokenByteCount,
                 TimeSpan.FromMinutes(request.NewPlayerIdentityRequest.RefreshTokenAgeMinutes));
 

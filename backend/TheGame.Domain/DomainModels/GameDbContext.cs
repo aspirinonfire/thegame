@@ -10,7 +10,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
-using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.PlayerIdentities;
 using TheGame.Domain.DomainModels.Players;
 
@@ -19,14 +18,15 @@ namespace TheGame.Domain.DomainModels;
 public class GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
   IMediator mediator,
   ILogger<GameDbContext> logger,
-  ISystemService systemService) : DbContext(dbContextOptions), IGameDbContext
+  TimeProvider timeProvider) : DbContext(dbContextOptions), IGameDbContext
 {
   public const string ConnectionStringName = "GameDB";
 
-  public DbSet<LicensePlate> LicensePlates { get; set; } = default!;
-  public DbSet<Game> Games { get; set; } = default!;
   public DbSet<Player> Players { get; set; } = default!;
+  
   public DbSet<PlayerIdentity> PlayerIdentities { get; set; } = default!;
+
+  internal DbSet<Game> Games { get; set; } = default!;
 
   private readonly Queue<IDomainEvent> _domainEventsToPublish = [];
 
@@ -61,7 +61,7 @@ public class GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
   {
     HandleEnumerationEntities();
 
-    var saveTime = systemService.DateTimeOffset.Now;
+    var saveTime = timeProvider.GetUtcNow();
     HandleAuditedRecords(saveTime);
 
     // this query must be ran before calling base.SaveChangesAsync() to make sure we are querying the correct state.

@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using TheGame.Api.CommandHandlers;
 using TheGame.Domain.DomainModels;
-using TheGame.Domain.DomainModels.Games;
 using TheGame.Tests.Fixtures;
 
 namespace TheGame.Tests.IntegrationTests;
@@ -29,7 +29,9 @@ public class GameQueryProviderIntegrationTests(MsSqlFixture msSqlFixture) : ICla
       commit;
       """;
 
-    var services = CommonMockedServices.GetGameServicesWithTestDevDb(msSqlFixture.GetConnectionString());
+    var services = CommonMockedServices
+      .GetGameServicesWithTestDevDb(msSqlFixture.GetConnectionString())
+      .AddScoped<IGameQueryProvider, GameQueryProvider>();
 
     var diOpts = new ServiceProviderOptions
     {
@@ -45,7 +47,7 @@ public class GameQueryProviderIntegrationTests(MsSqlFixture msSqlFixture) : ICla
 
     var uutQueryService = scope.ServiceProvider.GetRequiredService<IGameQueryProvider>();
 
-    var actualGames = await uutQueryService.GetOwnedAndInvitedGamesQuery(1).ToListAsync();
+    var actualGames = await uutQueryService.GetOwnedAndInvitedGamesQuery(1);
 
     var actualGame = Assert.Single(actualGames);
 

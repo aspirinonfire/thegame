@@ -18,8 +18,11 @@ public static class AssertResult
     successAssertions?.Invoke(successResult);
   }
 
-  public static void AssertIsSucceessful<TSuccess>(this Result<TSuccess> toAssert, Action<TSuccess>? successAssertions = null) =>
-    toAssert.AssertIsSucceessful(out _, successAssertions);
+  public static TSuccess AssertIsSucceessful<TSuccess>(this Result<TSuccess> toAssert, Action<TSuccess>? successAssertions = null)
+  {
+    toAssert.AssertIsSucceessful(out var success, successAssertions);
+    return success;
+  } 
 
   public static void AssertIsFailure<TSuccess>(this Result<TSuccess> toAssert,
     Action<Failure>? failureAssertions = null)

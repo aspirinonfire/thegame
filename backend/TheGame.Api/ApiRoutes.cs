@@ -1,6 +1,4 @@
 using MediatR;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -11,9 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TheGame.Api.Auth;
-using TheGame.Domain.CommandHandlers;
-using TheGame.Domain.DomainModels.Games;
-using TheGame.Domain.DomainModels.Players;
+using TheGame.Api.CommandHandlers;
 using TheGame.Domain.Utils;
 
 namespace TheGame.Api;
@@ -110,9 +106,9 @@ public static class ApiRoutes
         var playerId = GetPlayerIdFromHttpContext(ctx);
         var queryForActiveGamesOnly = isActive.GetValueOrDefault();
 
-        var allGames = await gameQueryProvider.GetOwnedAndInvitedGamesQuery(playerId)
+        var allGames = (await gameQueryProvider.GetOwnedAndInvitedGamesQuery(playerId))
           .Where(game => !queryForActiveGamesOnly || !game.EndedOn.HasValue)
-          .ToListAsync();
+          .ToArray();
       
         return Results.Ok(allGames);
       })

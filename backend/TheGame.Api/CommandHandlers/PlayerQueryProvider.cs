@@ -1,9 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using TheGame.Domain.DomainModels;
 
-namespace TheGame.Domain.DomainModels.Players;
+namespace TheGame.Api.CommandHandlers;
 
-public sealed record PlayerInfo(string PlayerName, long PlayerId);
+public sealed record PlayerInfo(string PlayerName, long? PlayerId);
 
 public interface IPlayerQueryProvider
 {

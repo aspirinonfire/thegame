@@ -4,8 +4,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using TheGame.Domain.DomainModels;
+using TheGame.Domain.Utils;
 
-namespace TheGame.Domain.CommandHandlers;
+namespace TheGame.Api.CommandHandlers;
 
 public interface ITransactionExecutionWrapper
 {

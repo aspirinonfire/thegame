@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Reflection;
-using TheGame.Domain.CommandHandlers;
 using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
@@ -42,8 +41,7 @@ public static class GameServiceExtensions
       })
       .AddScoped<IGameDbContext>(isp => isp.GetRequiredService<GameDbContext>())
       // Utils
-      .AddSingleton<ISystemService, SystemService>()
-      .AddScoped<ITransactionExecutionWrapper, TransactionExecutionWrapper>()
+      .AddSingleton(TimeProvider.System)
       .AddMediatR(cfg =>
       {
         cfg.RegisterServicesFromAssembly(typeof(GameServiceExtensions).Assembly);
@@ -54,11 +52,7 @@ public static class GameServiceExtensions
       })
       // Game domain services
       .AddScoped<IPlayerIdentityFactory, PlayerIdentity.PlayerIdentityFactory>()
-      .AddScoped<IPlayerFactory, Player.PlayerFactory>()
-      .AddScoped<IPlayerQueryProvider, PlayerQueryProvider>()
-      .AddScoped<IGameFactory, Game.GameFactory>()
-      .AddScoped<IGameQueryProvider,  GameQueryProvider>()
-      .AddScoped<IGamePlayerFactory, GamePlayer.GamePlayerFactory>()
+      .AddScoped<IPlayerActionsFactory, PlayerActionsFactory>()
       .AddScoped<IGameLicensePlateFactory, GameLicensePlate.LicensePlateSpotFactory>()
       .AddScoped<IGameScoreCalculator, GameScoreCalculator>();
 

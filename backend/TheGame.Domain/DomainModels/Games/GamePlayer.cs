@@ -7,10 +7,10 @@ namespace TheGame.Domain.DomainModels.Games;
 public partial class GamePlayer : IAuditedRecord
 {
   public long PlayerId { get; protected set; }
-  public virtual Player Player { get; protected set; } = default!;
+  public Player Player { get; protected set; } = default!;
 
   public long GameId { get; protected set; }
-  public virtual Game Game { get; protected set; } = default!;
+  public Game Game { get; protected set; } = default!;
 
   public Guid InvitationToken { get; protected set; } = default!;
   public GamePlayerInviteStatus InviteStatus { get; protected set; } = GamePlayerInviteStatus.Created;
@@ -18,6 +18,15 @@ public partial class GamePlayer : IAuditedRecord
   public DateTimeOffset DateCreated { get; }
 
   public DateTimeOffset? DateModified { get; }
+
+  protected GamePlayer() { }
+
+  internal GamePlayer(Player playerToInvite) : this()
+  {
+    Player = playerToInvite;
+    InvitationToken = Guid.NewGuid();
+    InviteStatus = GamePlayerInviteStatus.Created;
+  }
 }
 
 public enum GamePlayerInviteStatus

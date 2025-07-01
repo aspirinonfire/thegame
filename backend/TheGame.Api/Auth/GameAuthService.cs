@@ -15,7 +15,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using TheGame.Domain.CommandHandlers;
+using TheGame.Api.CommandHandlers;
 using TheGame.Domain.DomainModels.PlayerIdentities;
 using TheGame.Domain.Utils;
 
@@ -23,7 +23,7 @@ namespace TheGame.Api.Auth;
 
 public sealed record ApiTokens(bool IsNewIdentity, string AccessToken);
 
-public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr, ISystemService systemService, IOptions<GameSettings> gameSettings)
+public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr, TimeProvider timeProvider, IOptions<GameSettings> gameSettings)
 {
   public static SymmetricSecurityKey GetAccessTokenSigningKey(string jwtSecret) =>
     new (Encoding.UTF8.GetBytes(jwtSecret));
@@ -93,7 +93,7 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
     if (!string.IsNullOrEmpty(playerIdentity.RefreshToken) &&
       playerIdentity.RefreshTokenExpiration.HasValue)
     {
-      var cookieExpiration = playerIdentity.RefreshTokenExpiration.Value - systemService.DateTimeOffset.UtcNow;
+      var cookieExpiration = playerIdentity.RefreshTokenExpiration.Value - timeProvider.GetUtcNow();
 
       SetRefreshCookie(httpContext, playerIdentity.RefreshToken, cookieExpiration);
     }
@@ -159,7 +159,7 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
       return refreshFailure;
     }
 
-    var cookieExpiration = newRefreshToken.RefreshTokenExpiration - systemService.DateTimeOffset.UtcNow;
+    var cookieExpiration = newRefreshToken.RefreshTokenExpiration - timeProvider.GetUtcNow();
 
     SetRefreshCookie(httpContext, newRefreshToken.RefreshToken, cookieExpiration);
 

@@ -5,7 +5,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using TheGame.Domain.CommandHandlers;
+using TheGame.Api.CommandHandlers;
 using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.Utils;
@@ -26,7 +26,7 @@ public sealed record RotatePlayerIdentityRefreshTokenResult(string RefreshToken,
 
 public sealed class RotatePlayerIdentityRefreshTokenCommandHandler(IGameDbContext gameDb,
   ITransactionExecutionWrapper transactionWrapper,
-  ISystemService systemService,
+  TimeProvider timeProvider,
   ILogger<RotatePlayerIdentityRefreshTokenCommandHandler> logger)
   : IRequestHandler<RotatePlayerIdentityRefreshTokenCommand, Result<RotatePlayerIdentityRefreshTokenResult>>
 {
@@ -50,7 +50,7 @@ public sealed class RotatePlayerIdentityRefreshTokenCommandHandler(IGameDbContex
           return new Failure(ErrorMessageProvider.PlayerNotFoundError);
         }
 
-        var newTokenResult = playerIdentity.RotateRefreshToken(systemService,
+        var newTokenResult = playerIdentity.RotateRefreshToken(timeProvider,
           request.NewRefreshTokenByteCount,
           TimeSpan.FromMinutes(request.NewRefreshTokenAgeMinutes));
         if (!newTokenResult.TryGetSuccessful(out _, out var rotationFailure))
