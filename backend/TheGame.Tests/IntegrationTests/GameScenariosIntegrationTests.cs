@@ -52,7 +52,9 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
   [Fact]
   public async Task CanCreatePlayerStartNewGameAndSpotPlates()
   {
-    var services = CommonMockedServices.GetGameServicesWithTestDevDb(msSqlFixture.GetConnectionString());
+    var services = CommonMockedServices
+      .GetGameServicesWithTestDevDb(msSqlFixture.GetConnectionString())
+      .AddScoped<IGameQueryProvider, GameQueryProvider>();
 
     var diOpts = new ServiceProviderOptions
     {
@@ -95,7 +97,9 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
   [Fact]
   public async Task WillRemoveEmptyGameFromDatabaseWhenEnding()
   {
-    var services = CommonMockedServices.GetGameServicesWithTestDevDb(msSqlFixture.GetConnectionString());
+    var services = CommonMockedServices
+      .GetGameServicesWithTestDevDb(msSqlFixture.GetConnectionString())
+      .AddScoped<IGameQueryProvider, GameQueryProvider>();
 
     var diOpts = new ServiceProviderOptions
     {
@@ -134,7 +138,9 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
     var gameId = 0L;
     var playerId = 0L;
     var connectionString = msSqlFixture.GetConnectionString();
-    var services = CommonMockedServices.GetGameServicesWithTestDevDb(connectionString);
+    var services = CommonMockedServices
+      .GetGameServicesWithTestDevDb(msSqlFixture.GetConnectionString())
+      .AddScoped<IGameQueryProvider, GameQueryProvider>();
 
     var diOpts = new ServiceProviderOptions
     {

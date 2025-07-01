@@ -17,9 +17,9 @@ class PlayerEfConfig : IEntityTypeConfiguration<Player>
       .IsRequired();
 
     builder
-      .Navigation(player => player.InvatedGamePlayers)
+      .Navigation(player => player.GamePlayers)
       .UsePropertyAccessMode(PropertyAccessMode.Field)
-      .HasField("_invitedGamePlayers");
+      .HasField("_gamePlayers");
 
     builder
       .HasMany(player => player.OwnedGames)
@@ -60,18 +60,13 @@ class PlayerEfConfig : IEntityTypeConfiguration<Player>
 
           joinEntity
             .HasOne(gp => gp.Player)
-            .WithMany(player => player.InvatedGamePlayers)
+            .WithMany(player => player.GamePlayers)
             .OnDelete(DeleteBehavior.Restrict);
 
           joinEntity
             .HasOne(gp => gp.Game)
-            .WithMany(game => game.GamePlayerInvites)
+            .WithMany(game => game.GamePlayers)
             .OnDelete(DeleteBehavior.Restrict);
         });
-
-    var gamePlayerNav = builder.Navigation(player => player.InvatedGamePlayers);
-    gamePlayerNav
-      .UsePropertyAccessMode(PropertyAccessMode.Field)
-      .HasField("_invitedGamePlayers");
   }
 }

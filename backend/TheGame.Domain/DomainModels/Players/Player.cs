@@ -7,8 +7,8 @@ namespace TheGame.Domain.DomainModels.Players;
 
 public partial class Player : RootModel
 {
-  protected HashSet<GamePlayer> _invitedGamePlayers = [];
-  public IReadOnlySet<GamePlayer> InvatedGamePlayers => _invitedGamePlayers;
+  protected HashSet<GamePlayer> _gamePlayers = [];
+  public IReadOnlySet<GamePlayer> GamePlayers => _gamePlayers;
   internal IReadOnlySet<Game> InvitedGames { get; set; } = default!;
 
 

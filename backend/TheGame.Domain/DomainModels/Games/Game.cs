@@ -14,8 +14,8 @@ public partial class Game : IAuditedRecord
   public IReadOnlySet<GameLicensePlate> GameLicensePlates => _gameLicensePlates;
 
   public IReadOnlySet<Player> InvitedPlayers { get; private set; } = default!;
-  internal HashSet<GamePlayer> _gamePlayerInvites = [];
-  public IReadOnlySet<GamePlayer> GamePlayerInvites => _gamePlayerInvites;
+  internal HashSet<GamePlayer> _gamePlayers = [];
+  public IReadOnlySet<GamePlayer> GamePlayers => _gamePlayers;
 
   public GameScore GameScore { get; internal set; } = new(ReadOnlyCollection<string>.Empty, 0);
 

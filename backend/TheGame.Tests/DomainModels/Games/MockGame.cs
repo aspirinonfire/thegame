@@ -19,7 +19,7 @@ public class MockGame : Game
 
     CreatedBy = createdBy;
 
-    _gamePlayerInvites = []; 
+    _gamePlayers = []; 
 
     Name = name;
 
@@ -37,7 +37,7 @@ public class MockGame : Game
     Guid? inviteToken = null,
     GamePlayerInviteStatus? gamePlayerInviteStatus = null)
   {
-    _gamePlayerInvites.Add(new MockGamePlayer(player, this, inviteToken, gamePlayerInviteStatus));
+    _gamePlayers.Add(new MockGamePlayer(player, this, inviteToken, gamePlayerInviteStatus));
   }
 }
 

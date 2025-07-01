@@ -54,7 +54,7 @@ public partial class Player
     {
       var queryWithIncludes = playerQuery
         .Include(p => p.OwnedGames.Where(g => g.IsActive).Take(1))
-        .Include(p => p.InvatedGamePlayers.Where(igp => igp.Game.IsActive).Take(1));
+        .Include(p => p.GamePlayers.Where(igp => igp.Game.IsActive).Take(1));
 
       var actingPlayerResult = await GetActingPlayer(queryWithIncludes);
       if (!actingPlayerResult.TryGetSuccessful(out var actingPlayer, out var failure))
@@ -63,7 +63,7 @@ public partial class Player
       }
 
       var hasActiveGame = actingPlayer.OwnedGames
-        .Concat(actingPlayer.InvatedGamePlayers.Select(igp => igp.Game))
+        .Concat(actingPlayer.GamePlayers.Select(igp => igp.Game))
         .Any(game => game.IsActive);
 
       if (hasActiveGame)
@@ -153,7 +153,7 @@ public partial class Player
       }
       var newPlayerInvite = new GamePlayer(playerToInvite);
 
-      currentGame._gamePlayerInvites.Add(newPlayerInvite);
+      currentGame._gamePlayers.Add(newPlayerInvite);
 
       return newPlayerInvite;
     }
@@ -161,7 +161,7 @@ public partial class Player
     public async Task<Result<Game>> UpdateLicensePlateSpots(long gameId, IReadOnlyCollection<LicensePlate.PlateKey> licensePlateSpots)
     {
       var queryWithIncludes = playerQuery
-        .Include(p => p.InvatedGamePlayers.Where(gp => gp.GameId == gameId && gp.Game.IsActive))
+        .Include(p => p.GamePlayers.Where(gp => gp.GameId == gameId && gp.Game.IsActive))
           .ThenInclude(p => p.Game.GameLicensePlates)
               .ThenInclude(glp => glp.LicensePlate)
         .Include(p => p.OwnedGames.Where(g => g.Id == gameId && g.IsActive))
@@ -175,7 +175,7 @@ public partial class Player
       }
 
       var currentGame = actingPlayer.OwnedGames
-        .Concat(actingPlayer.InvatedGamePlayers.Select(igp => igp.Game))
+        .Concat(actingPlayer.GamePlayers.Select(igp => igp.Game))
         .FirstOrDefault(game => game.IsActive && game.Id == gameId);
       
       if (currentGame == null)
