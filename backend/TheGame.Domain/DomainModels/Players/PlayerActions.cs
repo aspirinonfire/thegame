@@ -1,6 +1,8 @@
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.Games.Events;
@@ -15,11 +17,10 @@ public interface IPlayerFactory
 
 public interface IPlayerActions
 {
-  Player Player { get; }
-  Result<Game> StartNewGame(string name);
-  Result<Game> EndGame(long gameId);
-  Result<GamePlayer> InvitePlayerToActiveGame(long gameId, string playerNameToInvite);
-  Result<Game> UpdateLicensePlateSpots(long gameId, IReadOnlyCollection<LicensePlate.PlateKey> licensePlateSpots);
+  Task<Result<Game>> StartNewGame(string name);
+  Task<Result<Game>> EndGame(long gameId);
+  Task<Result<GamePlayer>> InvitePlayerToActiveGame(long gameId, string playerNameToInvite);
+  Task<Result<Game>> UpdateLicensePlateSpots(long gameId, IReadOnlyCollection<LicensePlate.PlateKey> licensePlateSpots);
 }
 
 public partial class Player
@@ -46,15 +47,23 @@ public partial class Player
     IPlayerFactory playerFactory,
     TimeProvider timeProvider,
     IGameLicensePlateFactory licensePlateSpotFactory,
-    Player actingPlayer)
+    IQueryable<Player> playerQuery)
       : IPlayerActions
   {
-    public Player Player => actingPlayer;
-
-    public Result<Game> StartNewGame(string name)
+    public async Task<Result<Game>> StartNewGame(string name)
     {
+      var queryWithIncludes = playerQuery
+        .Include(p => p.OwnedGames.Where(g => g.IsActive).Take(1))
+        .Include(p => p.InvatedGamePlayers.Where(igp => igp.Game.IsActive).Take(1));
+
+      var actingPlayerResult = await GetActingPlayer(queryWithIncludes);
+      if (!actingPlayerResult.TryGetSuccessful(out var actingPlayer, out var failure))
+      {
+        return failure;
+      }
+
       var hasActiveGame = actingPlayer.OwnedGames
-        .Concat(actingPlayer.InvitedGames)
+        .Concat(actingPlayer.InvatedGamePlayers.Select(igp => igp.Game))
         .Any(game => game.IsActive);
 
       if (hasActiveGame)
@@ -78,8 +87,18 @@ public partial class Player
       return newGame;
     }
 
-    public Result<Game> EndGame(long gameId)
+    public async Task<Result<Game>> EndGame(long gameId)
     {
+      var queryWithIncludes = playerQuery
+        .Include(p => p.OwnedGames.Where(g => g.Id == gameId))
+          .ThenInclude(g => g.GameLicensePlates.OrderByDescending(glp => glp.DateCreated));
+
+      var actingPlayerResult = await GetActingPlayer(queryWithIncludes);
+      if (!actingPlayerResult.TryGetSuccessful(out var actingPlayer, out var failure))
+      {
+        return failure;
+      }
+
       var currentGame = actingPlayer.OwnedGames.FirstOrDefault(game => game.IsActive && game.Id == gameId);
       if (currentGame == null)
       {
@@ -105,8 +124,18 @@ public partial class Player
       return currentGame;
     }
 
-    public Result<GamePlayer> InvitePlayerToActiveGame(long gameId, string playerNameToInvite)
+    public async Task<Result<GamePlayer>> InvitePlayerToActiveGame(long gameId, string playerNameToInvite)
     {
+      var queryWithIncludes = playerQuery
+        .Include(p => p.OwnedGames.Where(g => g.Id == gameId))
+          .ThenInclude(p => p.InvitedPlayers.Where(ip => ip.Name == playerNameToInvite));
+
+      var actingPlayerResult = await GetActingPlayer(queryWithIncludes);
+      if (!actingPlayerResult.TryGetSuccessful(out var actingPlayer, out var playerFailure))
+      {
+        return playerFailure;
+      }
+
       var currentGame = actingPlayer.OwnedGames.FirstOrDefault(game => game.IsActive && game.Id == gameId);
       if (currentGame == null)
       {
@@ -129,10 +158,24 @@ public partial class Player
       return newPlayerInvite;
     }
 
-    public Result<Game> UpdateLicensePlateSpots(long gameId, IReadOnlyCollection<LicensePlate.PlateKey> licensePlateSpots)
+    public async Task<Result<Game>> UpdateLicensePlateSpots(long gameId, IReadOnlyCollection<LicensePlate.PlateKey> licensePlateSpots)
     {
+      var queryWithIncludes = playerQuery
+        .Include(p => p.InvatedGamePlayers.Where(gp => gp.GameId == gameId && gp.Game.IsActive))
+          .ThenInclude(p => p.Game.GameLicensePlates)
+              .ThenInclude(glp => glp.LicensePlate)
+        .Include(p => p.OwnedGames.Where(g => g.Id == gameId && g.IsActive))
+          .ThenInclude(ig => ig.GameLicensePlates)
+            .ThenInclude(glp => glp.LicensePlate);
+
+      var actingPlayerResult = await GetActingPlayer(queryWithIncludes);
+      if (!actingPlayerResult.TryGetSuccessful(out var actingPlayer, out var failure))
+      {
+        return failure;
+      }
+
       var currentGame = actingPlayer.OwnedGames
-        .Concat(actingPlayer.InvitedGames)
+        .Concat(actingPlayer.InvatedGamePlayers.Select(igp => igp.Game))
         .FirstOrDefault(game => game.IsActive && game.Id == gameId);
       
       if (currentGame == null)
@@ -194,6 +237,26 @@ public partial class Player
       }
 
       return currentGame;
+    }
+
+    private async Task<Result<Player>> GetActingPlayer(IQueryable<Player> playerQuery)
+    {
+      var players = await playerQuery.ToArrayAsync();
+      
+      if (players.Length == 0)
+      {
+        // TODO need better message here
+        return new Failure(ErrorMessageProvider.PlayerNotFoundError);
+      }
+      else if (players.Length > 1)
+      {
+        // TODO need better message here
+        return new Failure(ErrorMessageProvider.PlayerNotFoundError);
+      }
+      else
+      {
+        return players[0];
+      }
     }
   }
 }

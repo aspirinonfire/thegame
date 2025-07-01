@@ -33,9 +33,7 @@ public sealed class SpotLicensePlatesCommandHandler(ITransactionExecutionWrapper
       var playerQuery = gameDb.Players
         .Where(player => player.Id == request.SpottedByPlayerId);
 
-      var playerActions = await playerActionsFactory
-        .GetPlayersWithActions(playerQuery)
-        .FirstOrDefaultAsync();
+      var playerActions = playerActionsFactory.GetPlayerActions(playerQuery);
 
       if (playerActions == null)
       {
@@ -44,7 +42,7 @@ public sealed class SpotLicensePlatesCommandHandler(ITransactionExecutionWrapper
 
       var updatedSpots = request.SpottedPlates.Select(plate => plate.ToPlateKey()).ToList();
 
-      var updatedSpotsResult = playerActions.UpdateLicensePlateSpots(request.GameId, updatedSpots);
+      var updatedSpotsResult = await playerActions.UpdateLicensePlateSpots(request.GameId, updatedSpots);
       
       if (!updatedSpotsResult.TryGetSuccessful(out var updatedGame, out var spotFailure))
       {

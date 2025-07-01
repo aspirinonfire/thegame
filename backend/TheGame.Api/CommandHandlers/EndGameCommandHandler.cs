@@ -26,16 +26,14 @@ public sealed class EndGameCommandHandler(IGameDbContext gameDb,
         var playerQuery = gameDb.Players
           .Where(player => player.Id == request.OwnerPlayerId);
 
-        var playerActions = await playerActionsFactory
-          .GetPlayersWithActions(playerQuery)
-          .FirstOrDefaultAsync();
+        var playerActions = playerActionsFactory.GetPlayerActions(playerQuery);
 
         if (playerActions == null)
         {
           return new Failure(ErrorMessageProvider.PlayerNotFoundError);
         }
 
-        var endGameResult = playerActions.EndGame(request.GameId);
+        var endGameResult = await playerActions.EndGame(request.GameId);
         if (!endGameResult.TryGetSuccessful(out var endedGame, out var failure))
         {
           logger.LogError(failure.GetException(), "Failed to end game.");

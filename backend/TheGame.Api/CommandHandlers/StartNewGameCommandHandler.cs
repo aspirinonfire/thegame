@@ -23,16 +23,14 @@ public sealed class StartNewGameCommandHandler(IGameDbContext gameDb, IPlayerAct
         var playerQuery = gameDb.Players
           .Where(player => player.Id == request.OwnerPlayerId);
 
-        var playerActions = await playerActionsFactory
-          .GetPlayersWithActions(playerQuery)
-          .FirstOrDefaultAsync();
+        var playerActions = playerActionsFactory.GetPlayerActions(playerQuery);
 
         if (playerActions == null)
         {
           return new Failure(ErrorMessageProvider.PlayerNotFoundError);
         }
 
-        var newGameResult = playerActions.StartNewGame(request.GameName);
+        var newGameResult = await playerActions.StartNewGame(request.GameName);
         if (!newGameResult.TryGetSuccessful(out var newGame, out var newGameFailure))
         {
           logger.LogError(newGameFailure.GetException(), "New game cannot be started.");

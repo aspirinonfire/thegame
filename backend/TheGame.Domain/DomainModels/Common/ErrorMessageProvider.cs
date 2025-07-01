@@ -2,6 +2,7 @@
 
 public static class ErrorMessageProvider
 {
+  // TODO move to API
   public const string InvalidNewTokenError = "new_refresh_token_value_invalid";
   public const string InvalidNewTokenAgeError = "new_refresh_token_age_invalid";
 

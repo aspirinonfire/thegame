@@ -61,37 +61,31 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
       ValidateScopes = true,
     };
     using var sp = services.BuildServiceProvider(diOpts);
-    using var scope = sp.CreateScope();
 
-    var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-    var gameQryProvider = scope.ServiceProvider.GetRequiredService<IGameQueryProvider>();
+    var newPlayerIdentity = await RunAsScopedRequest(sp, 
+      new GetOrCreateNewPlayerCommand(
+        new NewPlayerIdentityRequest("test_provider",
+        "test_id_1",
+        "Test Player 1",
+        64,
+        5)));
 
-    // create new player with identity
-    var newIdentityRequest = new NewPlayerIdentityRequest("test_provider",
-      "test_id_1",
-      "Test Player 1",
-      64,
-      5);
-    var newPlayerIdentityCommandResult = await mediator.Send(new GetOrCreateNewPlayerCommand(newIdentityRequest));
-    newPlayerIdentityCommandResult.AssertIsSucceessful(out var actualNewPlayerIdentity);
+    var newGameResult = await RunAsScopedRequest(sp, 
+      new StartNewGameCommand("Test Game", newPlayerIdentity.PlayerId));
 
-    // start new game
-    var startNewGameCommandResult = await mediator.Send(new StartNewGameCommand("Test Game", actualNewPlayerIdentity.PlayerId));
-    startNewGameCommandResult.AssertIsSucceessful(out var actualNewGame);
-
-    // spot plates
-    var spotPlatesResult = await mediator.Send(new SpotLicensePlatesCommand(
+    var spotResult = await RunAsScopedRequest(sp,
+      new SpotLicensePlatesCommand(
       [
         new SpottedPlate(Country.US, StateOrProvince.CA),
         new SpottedPlate(Country.US, StateOrProvince.OR),
         new SpottedPlate(Country.CA, StateOrProvince.BC)
       ],
-      actualNewGame.GameId,
-      actualNewPlayerIdentity.PlayerId));
+      newGameResult.GameId,
+      newPlayerIdentity.PlayerId));
 
-    spotPlatesResult.AssertIsSucceessful();
-
-    var actualGames = await gameQryProvider.GetOwnedAndInvitedGamesQuery(actualNewPlayerIdentity.PlayerId).ToListAsync();
+    await using var scope = sp.CreateAsyncScope();
+    var gameQryProvider = scope.ServiceProvider.GetRequiredService<IGameQueryProvider>();
+    var actualGames = await gameQryProvider.GetOwnedAndInvitedGamesQuery(newPlayerIdentity.PlayerId).ToListAsync();
     var actualGame = Assert.Single(actualGames);
 
     Assert.Equal(3, actualGame.SpottedPlates.Count);
@@ -110,30 +104,26 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
       ValidateScopes = true,
     };
     using var sp = services.BuildServiceProvider(diOpts);
-    using var scope = sp.CreateScope();
-
-    var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-    var gameQryProvider = scope.ServiceProvider.GetRequiredService<IGameQueryProvider>();
 
     // create new player with identity
-    var newIdentityRequest = new NewPlayerIdentityRequest("test_provider",
-      "test_id_2",
-      "Test Player 2",
-      64,
-      5);
-    var newPlayerIdentityCommandResult = await mediator.Send(new GetOrCreateNewPlayerCommand(newIdentityRequest));
-    newPlayerIdentityCommandResult.AssertIsSucceessful(out var actualNewPlayerIdentity);
+    var newPlayerIdentityCommandResult = await RunAsScopedRequest(sp, 
+      new GetOrCreateNewPlayerCommand(
+        new NewPlayerIdentityRequest("test_provider",
+        "test_id_2",
+        "Test Player 2",
+        64,
+        5)));
 
-    // start new game
-    var startNewGameCommandResult = await mediator.Send(new StartNewGameCommand("Empty Game", actualNewPlayerIdentity.PlayerId));
-    startNewGameCommandResult.AssertIsSucceessful(out var actualNewGame);
+    var newGameCommandResult = await RunAsScopedRequest(sp, 
+      new StartNewGameCommand("Test Game 2", newPlayerIdentityCommandResult.PlayerId));
 
-    // end newly created game
-    var actualEndGameResult = await mediator.Send(new EndGameCommand(actualNewGame.GameId, actualNewPlayerIdentity.PlayerId));
-    actualEndGameResult.AssertIsSucceessful();
+    var actualEndGameResult = await RunAsScopedRequest(sp, 
+      new EndGameCommand(newGameCommandResult.GameId, newPlayerIdentityCommandResult.PlayerId));
 
-    var hasEmptyGame = await gameQryProvider.GetOwnedAndInvitedGamesQuery(actualNewPlayerIdentity.PlayerId)
-      .Where(game => game.GameId == actualNewGame.GameId)
+    await using var scope = sp.CreateAsyncScope();
+    var gameQryProvider = scope.ServiceProvider.GetRequiredService<IGameQueryProvider>();
+    var hasEmptyGame = await gameQryProvider.GetOwnedAndInvitedGamesQuery(newPlayerIdentityCommandResult.PlayerId)
+      .Where(game => game.GameId == newGameCommandResult.GameId)
       .AnyAsync();
 
     Assert.False(hasEmptyGame);
@@ -213,7 +203,7 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
     Assert.Equal(14, actualGameAfterReadd.GameScore.TotalScore);
   }
 
-  private async Task<T> RunAsScopedRequest<T>(IServiceProvider serviceProvider, IRequest<Result<T>> mediatorRequest)
+  private static async Task<T> RunAsScopedRequest<T>(IServiceProvider serviceProvider, IRequest<Result<T>> mediatorRequest)
   {
     await using var scope = serviceProvider.CreateAsyncScope();
     var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();

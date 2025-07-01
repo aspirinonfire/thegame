@@ -1,4 +1,5 @@
-﻿using TheGame.Domain.DomainModels;
+﻿using MockQueryable;
+using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.Games.Events;
@@ -13,7 +14,7 @@ namespace TheGame.Tests.DomainModels.Players;
 public class PlayerActionsTests
 {
   [Fact]
-  public void WillSpotNewPlate()
+  public async Task WillSpotNewPlateAsync()
   {
     var actingPlayer = new MockPlayer(1, "test");
     var testGame = new MockGame(1, [], actingPlayer, true);
@@ -44,9 +45,9 @@ public class PlayerActionsTests
       Substitute.For<IPlayerFactory>(),
       CommonMockedServices.GetMockedTimeProvider(),
       licensePlateFactory,
-      actingPlayer);
+      new [] { actingPlayer }.BuildMock());
 
-    var actualSpotResult = uut.UpdateLicensePlateSpots(1, gameLpSpots);
+    var actualSpotResult = await uut.UpdateLicensePlateSpots(1, gameLpSpots);
 
     var actualGame = actualSpotResult.AssertIsSucceessful();
 
@@ -63,7 +64,7 @@ public class PlayerActionsTests
   }
 
   [Fact]
-  public void WillUpdateScoreOnSpottedNewPlate()
+  public async Task WillUpdateScoreOnSpottedNewPlateAsync()
   {
     var actingPlayer = new MockPlayer(1, "test");
     var testGame = new MockGame(1, [], actingPlayer, true);
@@ -94,9 +95,9 @@ public class PlayerActionsTests
       Substitute.For<IPlayerFactory>(),
       CommonMockedServices.GetMockedTimeProvider(),
       licensePlateFactory,
-      actingPlayer);
+      new[] { actingPlayer }.BuildMock());
 
-    var actualSpotResult = uut.UpdateLicensePlateSpots(1, gameLpSpots);
+    var actualSpotResult = await uut.UpdateLicensePlateSpots(1, gameLpSpots);
 
     var actualUpdatedGame = actualSpotResult.AssertIsSucceessful();
     var actualAchievement = Assert.Single(actualUpdatedGame.GameScore.Achievements);
@@ -105,7 +106,7 @@ public class PlayerActionsTests
   }
 
   [Fact]
-  public void WillRemovePreviouslySpottedPlates()
+  public async Task WillRemovePreviouslySpottedPlatesAsync()
   {
     var existingSpot = new MockGameLicensePlate(
       new MockLicensePlate(new(Country.US, StateOrProvince.CA)),
@@ -127,9 +128,9 @@ public class PlayerActionsTests
       Substitute.For<IPlayerFactory>(),
       CommonMockedServices.GetMockedTimeProvider(),
       Substitute.For<IGameLicensePlateFactory>(),
-      actingPlayer);
+      new[] { actingPlayer }.BuildMock());
 
-    var actualSpotResult = uut.UpdateLicensePlateSpots(1, gameLpSpots);
+    var actualSpotResult = await uut.UpdateLicensePlateSpots(1, gameLpSpots);
 
     var actualGame = actualSpotResult.AssertIsSucceessful();
 
@@ -140,7 +141,7 @@ public class PlayerActionsTests
   }
 
   [Fact]
-  public void WillHandleAlreadySpottedPlate()
+  public async Task WillHandleAlreadySpottedPlateAsync()
   {
     var existingSpottedBy = new MockPlayer(2, "existing");
 
@@ -175,9 +176,9 @@ public class PlayerActionsTests
       Substitute.For<IPlayerFactory>(),
       CommonMockedServices.GetMockedTimeProvider(),
       Substitute.For<IGameLicensePlateFactory>(),
-      actingPlayer);
+      new[] { actingPlayer }.BuildMock());
 
-    var actualSpotResult = uut.UpdateLicensePlateSpots(1, gameLpSpots);
+    var actualSpotResult = await uut.UpdateLicensePlateSpots(1, gameLpSpots);
 
     var actualGame = actualSpotResult.AssertIsSucceessful();
 
@@ -188,7 +189,7 @@ public class PlayerActionsTests
   }
 
   [Fact]
-  public void WillReturnInactiveGameErrorOnSpottingPlateForHistoricGameRecord()
+  public async Task WillReturnInactiveGameErrorOnSpottingPlateForHistoricGameRecordAsync()
   {
     var actingPlayer = new MockPlayer(1, "test");
     var testGame = new MockGame(1, [], actingPlayer, false);
@@ -204,9 +205,9 @@ public class PlayerActionsTests
       Substitute.For<IPlayerFactory>(),
       CommonMockedServices.GetMockedTimeProvider(),
       Substitute.For<IGameLicensePlateFactory>(),
-      actingPlayer);
+      new[] { actingPlayer }.BuildMock());
 
-    var actualSpotResult = uut.UpdateLicensePlateSpots(1, gameLpSpots);
+    var actualSpotResult = await uut.UpdateLicensePlateSpots(1, gameLpSpots);
 
     actualSpotResult.AssertIsFailure(actualFailure => Assert.Equal(ErrorMessageProvider.InactiveGameError, actualFailure.ErrorMessage));
 
