@@ -12,16 +12,10 @@ public class MockPlayer : Player
     Id = playerId;
     Name = name;
     _ownedGames = [];
-    InvitedGames = new HashSet<Game>(0);
   }
 
   public void SetOwnedGames(HashSet<Game> newOwnedGames)
   {
     _ownedGames = newOwnedGames;
-  }
-
-  public void SetInvitedGames(HashSet<Game> newInvitedGames)
-  {
-    InvitedGames = newInvitedGames;
   }
 }

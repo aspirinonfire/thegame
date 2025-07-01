@@ -81,39 +81,5 @@ class GameEfConfig : IEntityTypeConfiguration<Game>
     gameLicensePlateNav
       .UsePropertyAccessMode(PropertyAccessMode.Field)
       .HasField("_gameLicensePlates");
-
-    // define game player nav props
-    builder
-      .HasMany(game => game.InvitedPlayers)
-      .WithMany(player => player.InvitedGames)
-      .UsingEntity<GamePlayer>(
-        joinEntity =>
-        {
-          joinEntity.HasKey(gp => new { gp.GameId, gp.PlayerId });
-
-          joinEntity
-            .Property(e => e.InvitationToken)
-            .IsRequired();
-
-          joinEntity
-            .Property(e => e.InviteStatus)
-            .IsRequired()
-            .HasConversion<string>();
-
-          joinEntity
-                .HasOne(gp => gp.Player)
-                .WithMany(player => player.InvatedGamePlayers)
-                .OnDelete(DeleteBehavior.Restrict);
-
-          joinEntity
-              .HasOne(gp => gp.Game)
-              .WithMany(game => game.GamePlayerInvites)
-              .OnDelete(DeleteBehavior.Restrict);
-        });
-
-    var gamePlayerNav = builder.Navigation(game => game.GamePlayerInvites);
-    gamePlayerNav
-      .UsePropertyAccessMode(PropertyAccessMode.Field)
-      .HasField("_gamePlayerInvites");
   }
 }
