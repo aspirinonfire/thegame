@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TheGame.Api.CommandHandlers;
 using TheGame.Domain.DomainModels;
-using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.PlayerIdentities;
 using TheGame.Tests.Fixtures;
@@ -85,7 +84,7 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
 
     await using var scope = sp.CreateAsyncScope();
     var gameQryProvider = scope.ServiceProvider.GetRequiredService<IGameQueryProvider>();
-    var actualGames = await gameQryProvider.GetOwnedAndInvitedGamesQuery(newPlayerIdentity.PlayerId).ToListAsync();
+    var actualGames = await gameQryProvider.GetOwnedAndInvitedGamesQuery(newPlayerIdentity.PlayerId);
     var actualGame = Assert.Single(actualGames);
 
     Assert.Equal(3, actualGame.SpottedPlates.Count);
@@ -122,9 +121,9 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
 
     await using var scope = sp.CreateAsyncScope();
     var gameQryProvider = scope.ServiceProvider.GetRequiredService<IGameQueryProvider>();
-    var hasEmptyGame = await gameQryProvider.GetOwnedAndInvitedGamesQuery(newPlayerIdentityCommandResult.PlayerId)
+    var hasEmptyGame = (await gameQryProvider.GetOwnedAndInvitedGamesQuery(newPlayerIdentityCommandResult.PlayerId))
       .Where(game => game.GameId == newGameCommandResult.GameId)
-      .AnyAsync();
+      .Any();
 
     Assert.False(hasEmptyGame);
   }

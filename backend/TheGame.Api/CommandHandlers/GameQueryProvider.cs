@@ -3,9 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Threading.Tasks;
+using TheGame.Domain.DomainModels;
+using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 
-namespace TheGame.Domain.DomainModels.Games;
+namespace TheGame.Api.CommandHandlers;
 
 public sealed record OwnedOrInvitedGame
 {
@@ -57,41 +61,55 @@ public sealed record SpottedGamePlate
 
 public interface IGameQueryProvider
 {
-  IQueryable<OwnedOrInvitedGame> GetOwnedAndInvitedGamesQuery(long playerId);
+  Task<IReadOnlyCollection<OwnedOrInvitedGame>> GetOwnedAndInvitedGamesQuery(long playerId);
 }
 
 public class GameQueryProvider(IGameDbContext gameDbContext) : IGameQueryProvider
 {
-  public IQueryable<OwnedOrInvitedGame> GetOwnedAndInvitedGamesQuery(long playerId)
+  // TODO this is inefficient, fix it with more targeted navigation properties or a more complex query
+  public async Task<IReadOnlyCollection<OwnedOrInvitedGame>> GetOwnedAndInvitedGamesQuery(long playerId)
   {
-    IQueryable<OwnedOrInvitedGame>? ownedAndInvitedGames = ((GameDbContext)gameDbContext)
-      .Games
-      .AsNoTracking()
-      .Where(game => game.CreatedBy.Id == playerId ||
-        game.GamePlayerInvites.Any(invite => invite.Player.Id == playerId))
-      .OrderByDescending(game => game.DateCreated)
-      .Select(game => new OwnedOrInvitedGame
-      {
-        IsOwner = game.CreatedBy.Id == playerId,
-        CreatedByPlayerName = game.CreatedBy.Name,
-        GameId = game.Id,
-        GameName = game.Name,
-        DateCreated = game.DateCreated,
-        DateModified = game.DateModified,
-        EndedOn = game.EndedOn,
-        GameScore = game.GameScore,
-        SpottedPlates = game.GameLicensePlates
-          .Select(spot => new SpottedGamePlate
-          {
-            Country = spot.LicensePlate.Country,
-            StateOrProvince = spot.LicensePlate.StateOrProvince,
-            SpottedOn = spot.DateCreated,
-            SpottedByPlayerId = spot.SpottedByPlayerId,
-            SpottedByPlayerName = spot.SpottedBy.Name
-          })
-          .ToList()
-      });
+    var toOwnedOrInvitedGameProjection = CreateGameToOwnedOrInvitedGameExpression(playerId);
 
-    return ownedAndInvitedGames;
+    var ownedGames = await gameDbContext.Players.AsNoTracking()
+      .Where(player => player.Id == playerId)
+      .SelectMany(player => player.OwnedGames)
+      .Select(toOwnedOrInvitedGameProjection)
+      .ToListAsync();
+
+    var invitedGames = await gameDbContext.Players.AsNoTracking()
+      .Where(player => player.Id == playerId)
+      .SelectMany(player => player.InvatedGamePlayers)
+      .Select(gamePlayer => gamePlayer.Game)
+      .Select(toOwnedOrInvitedGameProjection)
+      .ToListAsync();
+
+    return ownedGames
+      .Concat(invitedGames)
+      .OrderByDescending(game => game.DateCreated)
+      .ToArray();
   }
+
+  private static Expression<Func<Game, OwnedOrInvitedGame>> CreateGameToOwnedOrInvitedGameExpression(long playerId) =>
+    game => new OwnedOrInvitedGame
+    {
+      IsOwner = game.CreatedBy.Id == playerId,
+      CreatedByPlayerName = game.CreatedBy.Name,
+      GameId = game.Id,
+      GameName = game.Name,
+      DateCreated = game.DateCreated,
+      DateModified = game.DateModified,
+      EndedOn = game.EndedOn,
+      GameScore = game.GameScore,
+      SpottedPlates = game.GameLicensePlates
+        .Select(spot => new SpottedGamePlate
+        {
+          Country = spot.LicensePlate.Country,
+          StateOrProvince = spot.LicensePlate.StateOrProvince,
+          SpottedOn = spot.DateCreated,
+          SpottedByPlayerId = spot.SpottedByPlayerId,
+          SpottedByPlayerName = spot.SpottedBy.Name
+        })
+        .ToList()
+    };
 }

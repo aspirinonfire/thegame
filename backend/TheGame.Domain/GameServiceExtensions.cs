@@ -52,9 +52,7 @@ public static class GameServiceExtensions
       })
       // Game domain services
       .AddScoped<IPlayerIdentityFactory, PlayerIdentity.PlayerIdentityFactory>()
-      .AddScoped<IPlayerQueryProvider, PlayerQueryProvider>()
       .AddScoped<IPlayerActionsFactory, PlayerActionsFactory>()
-      .AddScoped<IGameQueryProvider,  GameQueryProvider>()
       .AddScoped<IGameLicensePlateFactory, GameLicensePlate.LicensePlateSpotFactory>()
       .AddScoped<IGameScoreCalculator, GameScoreCalculator>();
 

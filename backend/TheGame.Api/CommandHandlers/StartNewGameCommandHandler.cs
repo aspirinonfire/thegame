@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Common;
-using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.Players;
 using TheGame.Domain.Utils;
 

@@ -86,8 +86,11 @@ public class Program
     builder.Services
       .AddGameServices(additionalMediatrAssemblyToScan: typeof(Program).Assembly)
       .AddGameAuthenticationServices(builder.Configuration);
+
     builder.Services
-      .AddScoped<ITransactionExecutionWrapper, TransactionExecutionWrapper>();
+      .AddScoped<ITransactionExecutionWrapper, TransactionExecutionWrapper>()
+      .AddScoped<IPlayerQueryProvider, PlayerQueryProvider>()
+      .AddScoped<IGameQueryProvider, GameQueryProvider>();
 
     // Set json serializer options. Both configs must be set.
     // see https://stackoverflow.com/questions/76643787/how-to-make-enum-serialization-default-to-string-in-minimal-api-endpoints-and-sw

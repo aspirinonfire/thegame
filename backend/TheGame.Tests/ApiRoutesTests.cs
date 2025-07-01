@@ -20,7 +20,6 @@ using TheGame.Api;
 using TheGame.Api.Auth;
 using TheGame.Api.CommandHandlers;
 using TheGame.Domain.DomainModels;
-using TheGame.Domain.DomainModels.Players;
 
 namespace TheGame.Tests;
 
