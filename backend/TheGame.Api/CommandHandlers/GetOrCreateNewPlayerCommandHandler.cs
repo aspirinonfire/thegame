@@ -1,4 +1,3 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
@@ -11,39 +10,40 @@ using TheGame.Domain.Utils;
 
 namespace TheGame.Api.CommandHandlers;
 
-public sealed record GetOrCreateNewPlayerCommand(NewPlayerIdentityRequest NewPlayerIdentityRequest) : IRequest<Result<GetOrCreatePlayerResult>>;
-
-public sealed record GetOrCreatePlayerResult(bool IsNewIdentity,
-  long PlayerIdentityId,
-  long PlayerId,
-  string ProviderName,
-  string ProviderIdentityId,
-  string? RefreshToken,
-  DateTimeOffset? RefreshTokenExpiration);
+public sealed record GetOrCreateNewPlayerCommand(NewPlayerIdentityRequest NewPlayerIdentityRequest)
+{
+  public sealed record Result(bool IsNewIdentity,
+    long PlayerIdentityId,
+    long PlayerId,
+    string ProviderName,
+    string ProviderIdentityId,
+    string? RefreshToken,
+    DateTimeOffset? RefreshTokenExpiration);
+}
 
 public sealed class GetOrCreateNewPlayerCommandHandler(IGameDbContext gameDb,
   IPlayerIdentityFactory playerIdentityFactory,
   ITransactionExecutionWrapper transactionWrapper,
   TimeProvider timeProvider,
   ILogger<GetOrCreateNewPlayerCommand> logger)
-  : IRequestHandler<GetOrCreateNewPlayerCommand, Result<GetOrCreatePlayerResult>>
+    : ICommandHandler<GetOrCreateNewPlayerCommand, GetOrCreateNewPlayerCommand.Result>
 {
-    public async Task<Result<GetOrCreatePlayerResult>> Handle(GetOrCreateNewPlayerCommand request, CancellationToken cancellationToken) =>
-      await transactionWrapper.ExecuteInTransaction<GetOrCreatePlayerResult>(
+    public async Task<Result<GetOrCreateNewPlayerCommand.Result>> Execute(GetOrCreateNewPlayerCommand command, CancellationToken cancellationToken) =>
+      await transactionWrapper.ExecuteInTransaction<GetOrCreateNewPlayerCommand.Result>(
           async () =>
           {
             var playerIdentity = await gameDb.PlayerIdentities
               .Include(ident => ident.Player)
               .Where(ident =>
-                ident.ProviderName == request.NewPlayerIdentityRequest.ProviderName &&
-                ident.ProviderIdentityId == request.NewPlayerIdentityRequest.ProviderIdentityId)
+                ident.ProviderName == command.NewPlayerIdentityRequest.ProviderName &&
+                ident.ProviderIdentityId == command.NewPlayerIdentityRequest.ProviderIdentityId)
               .FirstOrDefaultAsync(cancellationToken);
 
             if (playerIdentity == null)
             {
               logger.LogInformation("Attempting to create new player with identity.");
 
-              var newIdentityResult = playerIdentityFactory.CreatePlayerIdentity(request.NewPlayerIdentityRequest);
+              var newIdentityResult = playerIdentityFactory.CreatePlayerIdentity(command.NewPlayerIdentityRequest);
               if (!newIdentityResult.TryGetSuccessful(out playerIdentity, out var failure))
               {
                 logger.LogError(failure.GetException(), "New player cannot be created.");
@@ -64,8 +64,8 @@ public sealed class GetOrCreateNewPlayerCommandHandler(IGameDbContext gameDb,
             {
               logger.LogInformation("Refresh token needs rotation.");
               var tokenRefreshResult = playerIdentity.RotateRefreshToken(timeProvider,
-                request.NewPlayerIdentityRequest.RefreshTokenByteCount,
-                TimeSpan.FromMinutes(request.NewPlayerIdentityRequest.RefreshTokenAgeMinutes));
+                command.NewPlayerIdentityRequest.RefreshTokenByteCount,
+                TimeSpan.FromMinutes(command.NewPlayerIdentityRequest.RefreshTokenAgeMinutes));
 
               if (!tokenRefreshResult.TryGetSuccessful(out _, out var refreshFailure))
               {
@@ -76,7 +76,7 @@ public sealed class GetOrCreateNewPlayerCommandHandler(IGameDbContext gameDb,
 
             await gameDb.SaveChangesAsync(cancellationToken);
 
-            return new GetOrCreatePlayerResult(false,
+            return new GetOrCreateNewPlayerCommand.Result(false,
                 playerIdentity.Id,
                 playerIdentity.Player!.Id,
                 playerIdentity.ProviderName,

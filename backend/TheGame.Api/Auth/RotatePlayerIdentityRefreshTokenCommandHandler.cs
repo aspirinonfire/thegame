@@ -1,5 +1,4 @@
-﻿using MediatR;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
@@ -15,23 +14,24 @@ namespace TheGame.Api.Auth;
 public sealed record RotatePlayerIdentityRefreshTokenCommand(long PlayerIdentityId,
   string CurrentRefreshToken,
   ushort NewRefreshTokenByteCount,
-  uint NewRefreshTokenAgeMinutes) : IRequest<Result<RotatePlayerIdentityRefreshTokenResult>>;
-
-public sealed record RotatePlayerIdentityRefreshTokenResult(string RefreshToken,
-  DateTimeOffset RefreshTokenExpiration,
-  long PlayerIdentityId,
-  long PlayerId,
-  string ProviderName,
-  string ProviderIdentityId);
+  uint NewRefreshTokenAgeMinutes)
+{
+  public sealed record Result(string RefreshToken,
+    DateTimeOffset RefreshTokenExpiration,
+    long PlayerIdentityId,
+    long PlayerId,
+    string ProviderName,
+    string ProviderIdentityId);
+}
 
 public sealed class RotatePlayerIdentityRefreshTokenCommandHandler(IGameDbContext gameDb,
   ITransactionExecutionWrapper transactionWrapper,
   TimeProvider timeProvider,
   ILogger<RotatePlayerIdentityRefreshTokenCommandHandler> logger)
-  : IRequestHandler<RotatePlayerIdentityRefreshTokenCommand, Result<RotatePlayerIdentityRefreshTokenResult>>
+    : ICommandHandler<RotatePlayerIdentityRefreshTokenCommand, RotatePlayerIdentityRefreshTokenCommand.Result>
 {
-  public async Task<Result<RotatePlayerIdentityRefreshTokenResult>> Handle(RotatePlayerIdentityRefreshTokenCommand request, CancellationToken cancellationToken) =>
-    await transactionWrapper.ExecuteInTransaction<RotatePlayerIdentityRefreshTokenResult>(
+  public async Task<Result<RotatePlayerIdentityRefreshTokenCommand.Result>> Execute(RotatePlayerIdentityRefreshTokenCommand command, CancellationToken cancellationToken) =>
+    await transactionWrapper.ExecuteInTransaction<RotatePlayerIdentityRefreshTokenCommand.Result>(
       async () =>
       {
         logger.LogInformation("Validating command...");
@@ -39,8 +39,8 @@ public sealed class RotatePlayerIdentityRefreshTokenCommandHandler(IGameDbContex
         var playerIdentity = await gameDb.PlayerIdentities
           .Include(ident => ident.Player)
           .Where(ident =>
-            ident.RefreshToken == request.CurrentRefreshToken &&
-            ident.Id == request.PlayerIdentityId &&
+            ident.RefreshToken == command.CurrentRefreshToken &&
+            ident.Id == command.PlayerIdentityId &&
             ident.Player != null)
           .FirstOrDefaultAsync(cancellationToken);
 
@@ -51,8 +51,8 @@ public sealed class RotatePlayerIdentityRefreshTokenCommandHandler(IGameDbContex
         }
 
         var newTokenResult = playerIdentity.RotateRefreshToken(timeProvider,
-          request.NewRefreshTokenByteCount,
-          TimeSpan.FromMinutes(request.NewRefreshTokenAgeMinutes));
+          command.NewRefreshTokenByteCount,
+          TimeSpan.FromMinutes(command.NewRefreshTokenAgeMinutes));
         if (!newTokenResult.TryGetSuccessful(out _, out var rotationFailure))
         {
           return rotationFailure;
@@ -60,7 +60,7 @@ public sealed class RotatePlayerIdentityRefreshTokenCommandHandler(IGameDbContex
 
         await gameDb.SaveChangesAsync(cancellationToken);
 
-        return new RotatePlayerIdentityRefreshTokenResult(playerIdentity.RefreshToken!,
+        return new RotatePlayerIdentityRefreshTokenCommand.Result(playerIdentity.RefreshToken!,
           playerIdentity.RefreshTokenExpiration.GetValueOrDefault(),
           playerIdentity.Id,
           playerIdentity.Player!.Id,

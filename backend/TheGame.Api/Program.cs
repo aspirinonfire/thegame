@@ -84,13 +84,16 @@ public class Program
       .ValidateOnStart();
 
     builder.Services
-      .AddGameServices(additionalMediatrAssemblyToScan: typeof(Program).Assembly)
+      .AddGameServices()
       .AddGameAuthenticationServices(builder.Configuration);
 
     builder.Services
       .AddScoped<ITransactionExecutionWrapper, TransactionExecutionWrapper>()
       .AddScoped<IPlayerQueryProvider, PlayerQueryProvider>()
       .AddScoped<IGameQueryProvider, GameQueryProvider>();
+
+      AddCommandHandlers(builder.Services);
+
 
     // Set json serializer options. Both configs must be set.
     // see https://stackoverflow.com/questions/76643787/how-to-make-enum-serialization-default-to-string-in-minimal-api-endpoints-and-sw
@@ -146,5 +149,28 @@ public class Program
       .AddGameApiRoutes();
 
     await app.RunAsync();
+  }
+
+  // TODO move to endpoints
+  public static IServiceCollection AddCommandHandlers(IServiceCollection services)
+  {
+    services
+      .AddScoped<
+        ICommandHandler<GetOrCreateNewPlayerCommand, GetOrCreateNewPlayerCommand.Result>,
+        GetOrCreateNewPlayerCommandHandler>()
+      .AddScoped<
+        ICommandHandler<RotatePlayerIdentityRefreshTokenCommand, RotatePlayerIdentityRefreshTokenCommand.Result>,
+        RotatePlayerIdentityRefreshTokenCommandHandler>()
+      .AddScoped<
+        ICommandHandler<StartNewGameCommand, OwnedOrInvitedGame>,
+        StartNewGameCommandHandler>()
+      .AddScoped<
+        ICommandHandler<EndGameCommand, OwnedOrInvitedGame>,
+        EndGameCommandHandler>()
+      .AddScoped<
+        ICommandHandler<SpotLicensePlatesCommand, OwnedOrInvitedGame>,
+        SpotLicensePlatesCommandHandler>();
+    
+    return services;
   }
 }

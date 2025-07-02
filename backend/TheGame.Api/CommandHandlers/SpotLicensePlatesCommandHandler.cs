@@ -1,5 +1,4 @@
-﻿using MediatR;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -12,25 +11,25 @@ using TheGame.Domain.Utils;
 
 namespace TheGame.Api.CommandHandlers;
 
+// TODO move to endpoint
 public sealed record SpottedPlate(Country Country, StateOrProvince StateOrProvince)
 {
   public LicensePlate.PlateKey ToPlateKey() => new(Country, StateOrProvince);
 }
 
-public sealed record SpotLicensePlatesCommand(IReadOnlyCollection<SpottedPlate> SpottedPlates, long GameId, long SpottedByPlayerId) 
-  : IRequest<Result<OwnedOrInvitedGame>>;
+public sealed record SpotLicensePlatesCommand(IReadOnlyCollection<SpottedPlate> SpottedPlates, long GameId, long SpottedByPlayerId);
 
 public sealed class SpotLicensePlatesCommandHandler(ITransactionExecutionWrapper transactionWrapper,
   IGameDbContext gameDb,
   IPlayerActionsFactory playerActionsFactory,
   ILogger<SpotLicensePlatesCommandHandler> logger)
-  : IRequestHandler<SpotLicensePlatesCommand, Result<OwnedOrInvitedGame>>
+    : ICommandHandler<SpotLicensePlatesCommand, OwnedOrInvitedGame>
 {
-  public async Task<Result<OwnedOrInvitedGame>> Handle(SpotLicensePlatesCommand request, CancellationToken cancellationToken) =>
+  public async Task<Result<OwnedOrInvitedGame>> Execute(SpotLicensePlatesCommand command, CancellationToken cancellationToken) =>
     await transactionWrapper.ExecuteInTransaction<OwnedOrInvitedGame>(async () =>
     {
       var playerQuery = gameDb.Players
-        .Where(player => player.Id == request.SpottedByPlayerId);
+        .Where(player => player.Id == command.SpottedByPlayerId);
 
       var playerActions = playerActionsFactory.GetPlayerActions(playerQuery);
 
@@ -39,9 +38,9 @@ public sealed class SpotLicensePlatesCommandHandler(ITransactionExecutionWrapper
         return new Failure(ErrorMessageProvider.PlayerNotFoundError);
       }
 
-      var updatedSpots = request.SpottedPlates.Select(plate => plate.ToPlateKey()).ToList();
+      var updatedSpots = command.SpottedPlates.Select(plate => plate.ToPlateKey()).ToList();
 
-      var updatedSpotsResult = await playerActions.UpdateLicensePlateSpots(request.GameId, updatedSpots);
+      var updatedSpotsResult = await playerActions.UpdateLicensePlateSpots(command.GameId, updatedSpots);
       
       if (!updatedSpotsResult.TryGetSuccessful(out var updatedGame, out var spotFailure))
       {
@@ -53,7 +52,7 @@ public sealed class SpotLicensePlatesCommandHandler(ITransactionExecutionWrapper
       
       logger.LogInformation("Successfully spotted license plates.");
 
-      return OwnedOrInvitedGame.FromGame(updatedGame, request.SpottedByPlayerId);
+      return OwnedOrInvitedGame.FromGame(updatedGame, command.SpottedByPlayerId);
     },
     nameof(SpotLicensePlatesCommand),
     logger,

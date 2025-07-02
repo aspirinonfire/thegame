@@ -1,4 +1,3 @@
-using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -8,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using TheGame.Api.Auth;
 using TheGame.Api.CommandHandlers;
-using TheGame.Domain.Utils;
 
 namespace TheGame.Api;
 
@@ -116,11 +115,17 @@ public static class ApiRoutes
 
     
     apiRoute
-      .MapPost("game", async (HttpContext ctx, IMediator mediator, [FromBody] StartNewGameRequest newGameRequest) =>
+      .MapPost("game",
+      async (HttpContext ctx,
+        [FromBody] StartNewGameRequest newGameRequest,
+        ICommandHandler<StartNewGameCommand, OwnedOrInvitedGame> startGameHandler,
+        CancellationToken cancellationToken) =>
       {
         var playerId = GetPlayerIdFromHttpContext(ctx);
       
-        var newGameResult = await mediator.Send(new StartNewGameCommand(newGameRequest.NewGameName, playerId));
+        var newGameResult = await startGameHandler.Execute(
+          new StartNewGameCommand(newGameRequest.NewGameName, playerId),
+          cancellationToken);
         if (!newGameResult.TryGetSuccessful(out var newGame, out var newGameFailure))
         {
           return Results.BadRequest(newGameFailure.ErrorMessage);
@@ -132,34 +137,45 @@ public static class ApiRoutes
 
     
     apiRoute
-      .MapPost("game/{gameId:long}/endgame", async (HttpContext ctx, IMediator mediator, [FromRoute] long gameId) =>
-      {
-        var playerId = GetPlayerIdFromHttpContext(ctx);
-        var endGameResult = await mediator.Send(new EndGameCommand(gameId, playerId));
-        if (!endGameResult.TryGetSuccessful(out var endedGame, out var endGameFailure))
+      .MapPost("game/{gameId:long}/endgame",
+        async (HttpContext ctx,
+          [FromRoute] long gameId,
+          ICommandHandler<EndGameCommand, OwnedOrInvitedGame> endGameHandler,
+          CancellationToken cancellationToken) =>
         {
-          return Results.BadRequest(endGameFailure.ErrorMessage);
-        }
+          var playerId = GetPlayerIdFromHttpContext(ctx);
+          var endGameResult = await endGameHandler.Execute(new EndGameCommand(gameId, playerId), cancellationToken);
+          if (!endGameResult.TryGetSuccessful(out var endedGame, out var endGameFailure))
+          {
+            return Results.BadRequest(endGameFailure.ErrorMessage);
+          }
 
-        return Results.Ok(endedGame);
-      })
-      .WithDescription("End active game for an authenticated player.");
+          return Results.Ok(endedGame);
+        })
+        .WithDescription("End active game for an authenticated player.");
 
     
     apiRoute
-      .MapPost("game/{gameId:long}/spotplates", async (HttpContext ctx, IMediator mediator, [FromRoute] long gameId, [FromBody] IReadOnlyCollection<SpottedPlate> spottedPlates) =>
-      {
-        var playerId = GetPlayerIdFromHttpContext(ctx);
-
-        var endGameResult = await mediator.Send(new SpotLicensePlatesCommand(spottedPlates, gameId, playerId));
-        if (!endGameResult.TryGetSuccessful(out var updateGame, out var endGameFailure))
+      .MapPost("game/{gameId:long}/spotplates",
+        async (HttpContext ctx,
+          [FromRoute] long gameId,
+          [FromBody] IReadOnlyCollection<SpottedPlate> spottedPlates,
+          ICommandHandler<SpotLicensePlatesCommand, OwnedOrInvitedGame> spotPlatesHandler,
+          CancellationToken cancellationToken) =>
         {
-          return Results.BadRequest(endGameFailure.ErrorMessage);
-        }
+          var playerId = GetPlayerIdFromHttpContext(ctx);
 
-        return Results.Ok(updateGame);
-      })
-      .WithDescription("Updated spotted license plates for an active game.");
+          var endGameResult = await spotPlatesHandler.Execute(
+            new SpotLicensePlatesCommand(spottedPlates, gameId, playerId),
+            cancellationToken);
+          if (!endGameResult.TryGetSuccessful(out var updateGame, out var endGameFailure))
+          {
+            return Results.BadRequest(endGameFailure.ErrorMessage);
+          }
+
+          return Results.Ok(updateGame);
+        })
+        .WithDescription("Updated spotted license plates for an active game.");
 
     return endpoints;
   }

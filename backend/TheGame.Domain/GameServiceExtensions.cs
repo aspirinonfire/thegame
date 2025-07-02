@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Reflection;
 using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
@@ -15,7 +14,6 @@ public static class GameServiceExtensions
 {
   public static IServiceCollection AddGameServices(this IServiceCollection services,
     string? connectionString = null,
-    Assembly? additionalMediatrAssemblyToScan = null,
     Action<ILoggingBuilder>? efLogger = null)
   {
     services
@@ -42,14 +40,6 @@ public static class GameServiceExtensions
       .AddScoped<IGameDbContext>(isp => isp.GetRequiredService<GameDbContext>())
       // Utils
       .AddSingleton(TimeProvider.System)
-      .AddMediatR(cfg =>
-      {
-        cfg.RegisterServicesFromAssembly(typeof(GameServiceExtensions).Assembly);
-        if (additionalMediatrAssemblyToScan != null)
-        {
-          cfg.RegisterServicesFromAssembly(additionalMediatrAssemblyToScan);
-        }
-      })
       // Game domain services
       .AddScoped<IPlayerIdentityFactory, PlayerIdentity.PlayerIdentityFactory>()
       .AddScoped<IPlayerActionsFactory, PlayerActionsFactory>()

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using TheGame.Api;
 using TheGame.Api.CommandHandlers;
 using TheGame.Domain;
 
@@ -17,11 +18,18 @@ public static class CommonMockedServices
     return sysSvc;
   }
 
-  public static IServiceCollection GetGameServicesWithTestDevDb(string connString) =>
-    new ServiceCollection()
+  public static IServiceCollection GetGameServicesWithTestDevDb(string connString)
+  {
+    var services = new ServiceCollection()
       .AddGameServices(connString,
-        typeof(TheGame.Api.Program).Assembly,
         efLogger => efLogger.AddDebug())
       .AddScoped<ITransactionExecutionWrapper, TransactionExecutionWrapper>()
-      .AddLogging(builder => builder.AddDebug());
+      .AddLogging(builder => builder.AddDebug())
+      .AddScoped<IGameQueryProvider, GameQueryProvider>();
+
+    Program.AddCommandHandlers(services);
+
+    return services;
+  }
+
 }

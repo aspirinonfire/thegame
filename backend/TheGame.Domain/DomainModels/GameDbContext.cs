@@ -1,4 +1,3 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -16,7 +15,6 @@ using TheGame.Domain.DomainModels.Players;
 namespace TheGame.Domain.DomainModels;
 
 public class GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
-  IMediator mediator,
   ILogger<GameDbContext> logger,
   TimeProvider timeProvider) : DbContext(dbContextOptions), IGameDbContext
 {
@@ -101,7 +99,8 @@ public class GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
     while (_domainEventsToPublish.Count > 0)
     {
       var domainEvent = _domainEventsToPublish.Dequeue();
-      await mediator.Publish(domainEvent, cancellationToken);
+
+      // TODO publish message using channels
     }
   }
   #endregion

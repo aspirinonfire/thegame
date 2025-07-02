@@ -2,7 +2,6 @@ using Google.Apis.Auth;
 using Google.Apis.Auth.OAuth2.Flows;
 using Google.Apis.Auth.OAuth2.Responses;
 using Google.Apis.Util.Store;
-using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -23,7 +22,11 @@ namespace TheGame.Api.Auth;
 
 public sealed record ApiTokens(bool IsNewIdentity, string AccessToken);
 
-public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr, TimeProvider timeProvider, IOptions<GameSettings> gameSettings)
+public class GameAuthService(ILogger<GameAuthService> logger,
+  ICommandHandler<GetOrCreateNewPlayerCommand, GetOrCreateNewPlayerCommand.Result> createNewPlayerHandler,
+  ICommandHandler<RotatePlayerIdentityRefreshTokenCommand, RotatePlayerIdentityRefreshTokenCommand.Result> rotateRefreshTokenHandler,
+  TimeProvider timeProvider,
+  IOptions<GameSettings> gameSettings)
 {
   public static SymmetricSecurityKey GetAccessTokenSigningKey(string jwtSecret) =>
     new (Encoding.UTF8.GetBytes(jwtSecret));
@@ -84,7 +87,7 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
       gameSettings.Value.Auth.Api.RefreshTokenAgeMinutes);
 
     var getOrCreatePlayerCommand = new GetOrCreateNewPlayerCommand(identityRequest);
-    var getOrCreatePlayerResult = await mediatr.Send(getOrCreatePlayerCommand);
+    var getOrCreatePlayerResult = await createNewPlayerHandler.Execute(getOrCreatePlayerCommand, CancellationToken.None);
     if (!getOrCreatePlayerResult.TryGetSuccessful(out var playerIdentity, out var commandFailure))
     {
       return commandFailure;
@@ -150,10 +153,12 @@ public class GameAuthService(ILogger<GameAuthService> logger, IMediator mediatr,
       return new Failure(InvalidRefreshParameters);
     }
 
-    var refreshTokenResult = await mediatr.Send(new RotatePlayerIdentityRefreshTokenCommand(playerId,
-      refreshCookieValue,
-      gameSettings.Value.Auth.Api.RefreshTokenByteCount,
-      gameSettings.Value.Auth.Api.RefreshTokenAgeMinutes));
+    var refreshTokenResult = await rotateRefreshTokenHandler.Execute(
+      new RotatePlayerIdentityRefreshTokenCommand(playerId,
+        refreshCookieValue,
+        gameSettings.Value.Auth.Api.RefreshTokenByteCount,
+        gameSettings.Value.Auth.Api.RefreshTokenAgeMinutes),
+      CancellationToken.None);
     if (!refreshTokenResult.TryGetSuccessful(out var newRefreshToken, out var refreshFailure))
     {
       return refreshFailure;
