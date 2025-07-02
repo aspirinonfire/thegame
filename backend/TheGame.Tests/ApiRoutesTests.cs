@@ -289,8 +289,8 @@ public class ApiRoutesTests
     {
       services.AddTransient(sp =>
       {
-        var mediatr = Substitute.For<ICommandHandler<RotatePlayerIdentityRefreshTokenCommand, RotatePlayerIdentityRefreshTokenCommand.Result>>();
-        mediatr
+        var handler = Substitute.For<ICommandHandler<RotatePlayerIdentityRefreshTokenCommand, RotatePlayerIdentityRefreshTokenCommand.Result>>();
+        handler
           .Execute(Arg.Any<RotatePlayerIdentityRefreshTokenCommand>(), Arg.Any<CancellationToken>())
           .Returns(new RotatePlayerIdentityRefreshTokenCommand.Result(
             "new_refresh_token",
@@ -300,7 +300,7 @@ public class ApiRoutesTests
             "test provider",
             "test provider ident id"));
 
-        return mediatr;
+        return handler;
       });
     });
 

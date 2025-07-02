@@ -205,9 +205,9 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
     where TResult : class
   {
     await using var scope = serviceProvider.CreateAsyncScope();
-    var mediator = scope.ServiceProvider.GetRequiredService<ICommandHandler<TCommand, TResult>>();
+    var handler = scope.ServiceProvider.GetRequiredService<ICommandHandler<TCommand, TResult>>();
 
-    var result = await mediator.Execute(command, CancellationToken.None);
+    var result = await handler.Execute(command, CancellationToken.None);
 
     result.AssertIsSucceessful(out var successfulResult);
 
