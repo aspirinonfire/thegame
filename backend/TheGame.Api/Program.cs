@@ -8,6 +8,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using TheGame.Api.Auth;
 using TheGame.Api.CommandHandlers;
+using TheGame.Api.Common.MessageBus;
 using TheGame.Domain;
 
 namespace TheGame.Api;
@@ -83,17 +84,19 @@ public class Program
       .ValidateDataAnnotations()
       .ValidateOnStart();
 
+    // Domain Services
+    builder.Services.AddGameServices();
+      
+    // API services
     builder.Services
-      .AddGameServices()
-      .AddGameAuthenticationServices(builder.Configuration);
-
-    builder.Services
+      .AddGameAuthenticationServices(builder.Configuration)
+      .AddInMemoryEventBus()
       .AddScoped<ITransactionExecutionWrapper, TransactionExecutionWrapper>()
       .AddScoped<IPlayerQueryProvider, PlayerQueryProvider>()
-      .AddScoped<IGameQueryProvider, GameQueryProvider>();
+      .AddScoped<IGameQueryProvider, GameQueryProvider>()
+      .AddHostedService<DomainMessagesWorker>();
 
-      AddCommandHandlers(builder.Services);
-
+    AddCommandHandlers(builder.Services);
 
     // Set json serializer options. Both configs must be set.
     // see https://stackoverflow.com/questions/76643787/how-to-make-enum-serialization-default-to-string-in-minimal-api-endpoints-and-sw
@@ -170,7 +173,9 @@ public class Program
       .AddScoped<
         ICommandHandler<SpotLicensePlatesCommand, OwnedOrInvitedGame>,
         SpotLicensePlatesCommandHandler>();
-    
+
+    services.AddScoped(typeof(IDomainMessageHandler<>), typeof(DomainMessageLogger<>));
+
     return services;
   }
 }
