@@ -1,5 +1,6 @@
 ﻿using Google.Apis.Auth;
 using Google.Apis.Auth.OAuth2.Responses;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -18,7 +19,9 @@ using System.Security.Claims;
 using TheGame.Api;
 using TheGame.Api.Auth;
 using TheGame.Api.CommandHandlers;
+using TheGame.Api.Common.MessageBus;
 using TheGame.Domain.DomainModels;
+using TheGame.Domain.DomainModels.Common;
 
 namespace TheGame.Tests;
 
@@ -383,6 +386,29 @@ public class ApiRoutesTests
     Assert.Equal(HttpStatusCode.BadRequest, actualAuthTokenResponseMessage.StatusCode);
   }
 
+  [Fact]
+  public async Task WillProcessEventMessageInBackgroundWorker()
+  {
+    var testMessage = new TestApiMessage();
+
+    var testHandler = Substitute.For<IDomainMessageHandler<TestApiMessage>>();
+
+    await using var uutApiApp = GetApiFactory(services =>
+    {
+      services.AddScoped(_ => testHandler);
+    });
+
+    var eventBus = uutApiApp.Services.GetRequiredService<IEventBus>();
+
+    await eventBus.PublishAsync(testMessage, CancellationToken.None);
+
+    await Task.Delay(100); // Allow some time for the background worker to process the message
+
+    await testHandler
+      .Received(1)
+      .Handle(testMessage, Arg.Any<CancellationToken>());
+  }
+
   private WebApplicationFactory<Program> GetApiFactory(Action<IServiceCollection>? registerServices = null) => new WebApplicationFactory<Program>()
     .WithWebHostBuilder(builder =>
     {
@@ -452,4 +478,6 @@ public class ApiRoutesTests
 
     return new JwtSecurityTokenHandler().WriteToken(jwtToken);
   }
+
+  public sealed record TestApiMessage() : IDomainEvent;
 }

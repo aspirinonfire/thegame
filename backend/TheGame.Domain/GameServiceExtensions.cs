@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using TheGame.Domain.DomainModels;
+using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.PlayerIdentities;
@@ -13,6 +14,7 @@ namespace TheGame.Domain;
 public static class GameServiceExtensions
 {
   public static IServiceCollection AddGameServices(this IServiceCollection services,
+    Func<IServiceProvider, IEventBus> eventBusFactory,
     string? connectionString = null,
     Action<ILoggingBuilder>? efLogger = null)
   {
@@ -38,6 +40,7 @@ public static class GameServiceExtensions
           });
       })
       .AddScoped<IGameDbContext>(isp => isp.GetRequiredService<GameDbContext>())
+      .AddSingleton(eventBusFactory)
       // Utils
       .AddSingleton(TimeProvider.System)
       // Game domain services

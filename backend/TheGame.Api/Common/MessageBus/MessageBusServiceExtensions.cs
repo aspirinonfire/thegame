@@ -7,8 +7,7 @@ public static class MessageBusServiceExtensions
   public static IServiceCollection AddInMemoryEventBus(this IServiceCollection services)
   {
     services
-      .AddSingleton<InMemoryMessageQueue>()
-      .AddSingleton<IEventBus, EventBus>()
+      .AddSingleton<ChannelsMessageQueue>()
       .AddSingleton<DomainMessagesProcessor>();
 
     return services;

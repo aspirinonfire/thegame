@@ -1,8 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
-using TheGame.Domain.DomainModels.Common;
 
-namespace TheGame.Api.Common.MessageBus;
+namespace TheGame.Domain.DomainModels.Common;
 
 public interface IDomainMessageHandler<in TDomainMessage>
   where TDomainMessage : IDomainEvent

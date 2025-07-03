@@ -10,6 +10,7 @@ using TheGame.Api.Auth;
 using TheGame.Api.CommandHandlers;
 using TheGame.Api.Common.MessageBus;
 using TheGame.Domain;
+using TheGame.Domain.DomainModels.Common;
 
 namespace TheGame.Api;
 
@@ -85,7 +86,11 @@ public class Program
       .ValidateOnStart();
 
     // Domain Services
-    builder.Services.AddGameServices();
+    builder.Services.AddGameServices(sp =>
+    {
+      var channelsQueue = sp.GetRequiredService<ChannelsMessageQueue>();
+      return new ChannelsEventBus(channelsQueue);
+    });
       
     // API services
     builder.Services

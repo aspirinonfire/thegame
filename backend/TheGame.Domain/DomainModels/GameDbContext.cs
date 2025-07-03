@@ -15,6 +15,7 @@ using TheGame.Domain.DomainModels.Players;
 namespace TheGame.Domain.DomainModels;
 
 public class GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
+  IEventBus eventBus,
   ILogger<GameDbContext> logger,
   TimeProvider timeProvider) : DbContext(dbContextOptions), IGameDbContext
 {
@@ -100,7 +101,7 @@ public class GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
     {
       var domainEvent = _domainEventsToPublish.Dequeue();
 
-      // TODO publish message using channels
+      await eventBus.PublishAsync(domainEvent, cancellationToken);
     }
   }
   #endregion

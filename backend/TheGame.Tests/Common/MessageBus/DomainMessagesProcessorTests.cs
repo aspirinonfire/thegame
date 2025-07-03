@@ -36,7 +36,7 @@ namespace TheGame.Tests.Common.MessageBus
 
       using var serviceProvider = services.BuildServiceProvider();
 
-      var messageQueue = new InMemoryMessageQueue(GetQueueOptions());
+      var messageQueue = new ChannelsMessageQueue(GetQueueOptions());
 
       var uutProcessor = new DomainMessagesProcessor(
         messageQueue,
@@ -73,7 +73,7 @@ namespace TheGame.Tests.Common.MessageBus
 
       using var serviceProvider = services.BuildServiceProvider();
 
-      var messageQueue = new InMemoryMessageQueue(GetQueueOptions());
+      var messageQueue = new ChannelsMessageQueue(GetQueueOptions());
 
       var uutProcessor = new DomainMessagesProcessor(
         messageQueue,
@@ -109,7 +109,7 @@ namespace TheGame.Tests.Common.MessageBus
 
       using var serviceProvider = services.BuildServiceProvider();
 
-      var messageQueue = new InMemoryMessageQueue(GetQueueOptions());
+      var messageQueue = new ChannelsMessageQueue(GetQueueOptions());
 
       var uutProcessor = new DomainMessagesProcessor(
         messageQueue,
@@ -148,7 +148,7 @@ namespace TheGame.Tests.Common.MessageBus
 
       using var serviceProvider = services.BuildServiceProvider();
 
-      var messageQueue = new InMemoryMessageQueue(GetQueueOptions());
+      var messageQueue = new ChannelsMessageQueue(GetQueueOptions());
 
       var uutProcessor = new DomainMessagesProcessor(
         messageQueue,

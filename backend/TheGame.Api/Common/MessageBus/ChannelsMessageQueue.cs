@@ -5,7 +5,7 @@ using TheGame.Domain.DomainModels.Common;
 
 namespace TheGame.Api.Common.MessageBus;
 
-public sealed class InMemoryMessageQueue : IDisposable
+public sealed class ChannelsMessageQueue : IDisposable
 {
   private readonly Channel<IDomainEvent> _channel;
 
@@ -13,7 +13,7 @@ public sealed class InMemoryMessageQueue : IDisposable
 
   public ChannelWriter<IDomainEvent> Writer => _channel.Writer;
 
-  public InMemoryMessageQueue(IOptions<GameSettings> apiSettings)
+  public ChannelsMessageQueue(IOptions<GameSettings> apiSettings)
   {
     _channel = Channel.CreateBounded<IDomainEvent>(
       new BoundedChannelOptions(apiSettings.Value.DomainEventsMessageBus.MaxQueueSize)

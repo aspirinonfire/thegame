@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using TheGame.Api;
 using TheGame.Api.CommandHandlers;
 using TheGame.Domain;
+using TheGame.Domain.DomainModels.Common;
 
 namespace TheGame.Tests.TestUtils;
 
@@ -18,10 +19,23 @@ public static class CommonMockedServices
     return sysSvc;
   }
 
-  public static IServiceCollection GetGameServicesWithTestDevDb(string connString)
+  public static IServiceCollection GetGameServicesWithTestDevDb(string connString,
+    Func<IServiceProvider, IEventBus>? busFactory = null)
   {
+    if (busFactory is null)
+    {
+      var busMock = Substitute.For<IEventBus>();
+      busMock
+        .PublishAsync(Arg.Any<IDomainEvent>(), Arg.Any<CancellationToken>())
+        .Returns(Task.CompletedTask);
+
+      busFactory = _ => busMock;
+    }
+
     var services = new ServiceCollection()
-      .AddGameServices(connString,
+      .AddGameServices(
+        busFactory,
+        connString,
         efLogger => efLogger.AddDebug())
       .AddScoped<ITransactionExecutionWrapper, TransactionExecutionWrapper>()
       .AddLogging(builder => builder.AddDebug())
