@@ -19,18 +19,24 @@ public static class CommonMockedServices
     return sysSvc;
   }
 
-  public static IServiceCollection GetGameServicesWithTestDevDb(string connString,
-    Func<IServiceProvider, IEventBus>? busFactory = null)
+  public static IServiceCollection GetGameServicesWithTestDevDb(string connString)
   {
-    if (busFactory is null)
+    Func<IServiceProvider, IEventBus> busFactory = sp =>
     {
+      var logger = sp.GetRequiredService<ILogger<IEventBus>>();
+
       var busMock = Substitute.For<IEventBus>();
       busMock
         .PublishAsync(Arg.Any<IDomainEvent>(), Arg.Any<CancellationToken>())
-        .Returns(Task.CompletedTask);
+        .Returns(Task.CompletedTask)
+        .AndDoes(callInfo =>
+        {
+          logger.LogInformation("Mocked event bus published event {EventType}",
+            callInfo.Arg<IDomainEvent>().GetType().Name);
+        });
 
-      busFactory = _ => busMock;
-    }
+      return busMock;
+    };
 
     var services = new ServiceCollection()
       .AddGameServices(
@@ -38,7 +44,11 @@ public static class CommonMockedServices
         connString,
         efLogger => efLogger.AddDebug())
       .AddScoped<ITransactionExecutionWrapper, TransactionExecutionWrapper>()
-      .AddLogging(builder => builder.AddDebug())
+      .AddLogging(builder =>
+      {
+        builder.SetMinimumLevel(LogLevel.Information);
+        builder.AddDebug();
+      })
       .AddScoped<IGameQueryProvider, GameQueryProvider>();
 
     Program.AddCommandHandlers(services);

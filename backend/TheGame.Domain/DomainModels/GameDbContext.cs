@@ -66,8 +66,7 @@ public class GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
     // this query must be ran before calling base.SaveChangesAsync() to make sure we are querying the correct state.
     var domainEvents = ChangeTracker
       .Entries()
-      .Where(e => e.Entity is IDomainModel &&
-        (e.State == EntityState.Added || e.State == EntityState.Modified))
+      .Where(e => e.Entity is IDomainModel)
       .SelectMany(e => ((IDomainModel)e.Entity).DomainEvents)
       .ToList()
       .AsReadOnly();

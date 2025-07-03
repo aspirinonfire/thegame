@@ -412,6 +412,12 @@ public class ApiRoutesTests
   private WebApplicationFactory<Program> GetApiFactory(Action<IServiceCollection>? registerServices = null) => new WebApplicationFactory<Program>()
     .WithWebHostBuilder(builder =>
     {
+      builder.ConfigureLogging(logBuilder =>
+      {
+        logBuilder.AddDebug();
+        logBuilder.SetMinimumLevel(LogLevel.Information);
+      });
+
       builder.ConfigureServices(services =>
       {
         // overwrite dbcontext with in-memory provider to eliminate direct sql server dependency.
