@@ -8,6 +8,8 @@ public sealed record GameSettings
   public required AuthSettings Auth { get; init; }
 
   public OtelConfig? Otel { get; init; }
+
+  public MessageBusSettings DomainEventsMessageBus { get; init; } = new();
 }
 
 public sealed record AuthSettings
@@ -51,4 +53,9 @@ public sealed record OtelConfig
 {
   public string? ExporterEndpoint { get; init; }
   public string? ExporterApiKey { get; init; }
+}
+
+public sealed record MessageBusSettings
+{
+  public int MaxQueueSize { get; init; } = 10;
 }

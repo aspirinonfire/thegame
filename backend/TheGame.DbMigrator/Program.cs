@@ -6,7 +6,9 @@ Console.WriteLine("Running EF Migrations");
 await Host.CreateDefaultBuilder(args)
   .ConfigureServices(services =>
   {
-    services.AddGameServices("this connecion will be replaces with efbundle --connection value");
+    services.AddGameServices(
+      sp => default!, // we don't need event bus for migrations
+      "this connecion will be replaces with efbundle --connection value");
   })
   .Build()
   .RunAsync();

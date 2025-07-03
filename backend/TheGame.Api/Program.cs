@@ -8,7 +8,9 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using TheGame.Api.Auth;
 using TheGame.Api.CommandHandlers;
+using TheGame.Api.Common.MessageBus;
 using TheGame.Domain;
+using TheGame.Domain.DomainModels.Common;
 
 namespace TheGame.Api;
 
@@ -83,14 +85,23 @@ public class Program
       .ValidateDataAnnotations()
       .ValidateOnStart();
 
+    // Domain Services
+    builder.Services.AddGameServices(sp =>
+    {
+      var channelsQueue = sp.GetRequiredService<ChannelsMessageQueue>();
+      return new ChannelsEventBus(channelsQueue);
+    });
+      
+    // API services
     builder.Services
-      .AddGameServices(additionalMediatrAssemblyToScan: typeof(Program).Assembly)
-      .AddGameAuthenticationServices(builder.Configuration);
-
-    builder.Services
+      .AddGameAuthenticationServices(builder.Configuration)
+      .AddInMemoryEventBus()
       .AddScoped<ITransactionExecutionWrapper, TransactionExecutionWrapper>()
       .AddScoped<IPlayerQueryProvider, PlayerQueryProvider>()
-      .AddScoped<IGameQueryProvider, GameQueryProvider>();
+      .AddScoped<IGameQueryProvider, GameQueryProvider>()
+      .AddHostedService<DomainMessagesWorker>();
+
+    AddCommandHandlers(builder.Services);
 
     // Set json serializer options. Both configs must be set.
     // see https://stackoverflow.com/questions/76643787/how-to-make-enum-serialization-default-to-string-in-minimal-api-endpoints-and-sw
@@ -146,5 +157,30 @@ public class Program
       .AddGameApiRoutes();
 
     await app.RunAsync();
+  }
+
+  // TODO move to endpoints
+  public static IServiceCollection AddCommandHandlers(IServiceCollection services)
+  {
+    services
+      .AddScoped<
+        ICommandHandler<GetOrCreateNewPlayerCommand, GetOrCreateNewPlayerCommand.Result>,
+        GetOrCreateNewPlayerCommandHandler>()
+      .AddScoped<
+        ICommandHandler<RotatePlayerIdentityRefreshTokenCommand, RotatePlayerIdentityRefreshTokenCommand.Result>,
+        RotatePlayerIdentityRefreshTokenCommandHandler>()
+      .AddScoped<
+        ICommandHandler<StartNewGameCommand, OwnedOrInvitedGame>,
+        StartNewGameCommandHandler>()
+      .AddScoped<
+        ICommandHandler<EndGameCommand, OwnedOrInvitedGame>,
+        EndGameCommandHandler>()
+      .AddScoped<
+        ICommandHandler<SpotLicensePlatesCommand, OwnedOrInvitedGame>,
+        SpotLicensePlatesCommandHandler>();
+
+    services.AddScoped(typeof(IDomainMessageHandler<>), typeof(DomainMessageLogger<>));
+
+    return services;
   }
 }

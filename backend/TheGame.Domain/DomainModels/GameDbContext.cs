@@ -1,4 +1,3 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -16,7 +15,7 @@ using TheGame.Domain.DomainModels.Players;
 namespace TheGame.Domain.DomainModels;
 
 public class GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
-  IMediator mediator,
+  IEventBus eventBus,
   ILogger<GameDbContext> logger,
   TimeProvider timeProvider) : DbContext(dbContextOptions), IGameDbContext
 {
@@ -67,8 +66,7 @@ public class GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
     // this query must be ran before calling base.SaveChangesAsync() to make sure we are querying the correct state.
     var domainEvents = ChangeTracker
       .Entries()
-      .Where(e => e.Entity is IDomainModel &&
-        (e.State == EntityState.Added || e.State == EntityState.Modified))
+      .Where(e => e.Entity is IDomainModel)
       .SelectMany(e => ((IDomainModel)e.Entity).DomainEvents)
       .ToList()
       .AsReadOnly();
@@ -101,7 +99,8 @@ public class GameDbContext(DbContextOptions<GameDbContext> dbContextOptions,
     while (_domainEventsToPublish.Count > 0)
     {
       var domainEvent = _domainEventsToPublish.Dequeue();
-      await mediator.Publish(domainEvent, cancellationToken);
+
+      await eventBus.PublishAsync(domainEvent, cancellationToken);
     }
   }
   #endregion

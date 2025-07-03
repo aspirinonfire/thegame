@@ -1,6 +1,6 @@
 ﻿using Google.Apis.Auth;
 using Google.Apis.Auth.OAuth2.Responses;
-using MediatR;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -19,7 +19,9 @@ using System.Security.Claims;
 using TheGame.Api;
 using TheGame.Api.Auth;
 using TheGame.Api.CommandHandlers;
+using TheGame.Api.Common.MessageBus;
 using TheGame.Domain.DomainModels;
+using TheGame.Domain.DomainModels.Common;
 
 namespace TheGame.Tests;
 
@@ -109,10 +111,11 @@ public class ApiRoutesTests
     {
       services.AddTransient(sp =>
       {
-        var mediatr = Substitute.For<IMediator>();
-        mediatr
-          .Send(Arg.Any<GetOrCreateNewPlayerCommand>())
-          .Returns(new GetOrCreatePlayerResult(true,
+        var createNewPlayerCommand =
+          Substitute.For<ICommandHandler<GetOrCreateNewPlayerCommand, GetOrCreateNewPlayerCommand.Result>>();
+        createNewPlayerCommand
+          .Execute(Arg.Any<GetOrCreateNewPlayerCommand>(), Arg.Any<CancellationToken>())
+          .Returns(new GetOrCreateNewPlayerCommand.Result(true,
             123,
             123,
             "test provider",
@@ -120,17 +123,39 @@ public class ApiRoutesTests
             "refresh_token",
             new DateTimeOffset(2024, 1, 13, 0, 0, 0, TimeSpan.Zero)));
 
-        return mediatr;
+        return createNewPlayerCommand;
+      });
+
+      services.AddTransient(sp =>
+      {
+        var createNewPlayerCommand =
+          Substitute.For<ICommandHandler<RotatePlayerIdentityRefreshTokenCommand, RotatePlayerIdentityRefreshTokenCommand.Result>>();
+        createNewPlayerCommand
+          .Execute(Arg.Any<RotatePlayerIdentityRefreshTokenCommand>(), Arg.Any<CancellationToken>())
+          .Returns(new RotatePlayerIdentityRefreshTokenCommand.Result("somerefreshtoken",
+            DateTimeOffset.UtcNow.AddMinutes(1),
+            123,
+            123,
+            "google",
+            "google-user-id"));
+
+        return createNewPlayerCommand;
       });
 
       services.AddScoped(sp =>
       {
         var opts = sp.GetRequiredService<IOptions<GameSettings>>();
-        var mediatr = sp.GetRequiredService<IMediator>();
         var systemService = sp.GetRequiredService<TimeProvider>();
 
+        var createNewPlayerHandler = sp
+          .GetRequiredService<ICommandHandler<GetOrCreateNewPlayerCommand, GetOrCreateNewPlayerCommand.Result>>();
+        
+        var rotateRefreshTokenHandler = sp
+          .GetRequiredService<ICommandHandler<RotatePlayerIdentityRefreshTokenCommand, RotatePlayerIdentityRefreshTokenCommand.Result>>();
+
         var mockedAuthService = Substitute.ForPartsOf<GameAuthService>(NullLogger<GameAuthService>.Instance,
-          mediatr,
+          createNewPlayerHandler,
+          rotateRefreshTokenHandler,
           systemService,
           opts);
 
@@ -199,10 +224,11 @@ public class ApiRoutesTests
     {
       services.AddTransient(sp =>
       {
-        var mediatr = Substitute.For<IMediator>();
-        mediatr
-          .Send(Arg.Any<RotatePlayerIdentityRefreshTokenCommand>())
-          .Returns(new RotatePlayerIdentityRefreshTokenResult(
+        var refreshTokenCommandHandler =
+          Substitute.For<ICommandHandler<RotatePlayerIdentityRefreshTokenCommand, RotatePlayerIdentityRefreshTokenCommand.Result>>();
+        refreshTokenCommandHandler
+          .Execute(Arg.Any<RotatePlayerIdentityRefreshTokenCommand>(), Arg.Any<CancellationToken>())
+          .Returns(new RotatePlayerIdentityRefreshTokenCommand.Result(
             "new_refresh_token",
             new DateTimeOffset(2024, 1, 13, 0, 0, 0, TimeSpan.Zero),
             playerId,
@@ -210,7 +236,7 @@ public class ApiRoutesTests
             "test provider",
             "test provider ident id"));
 
-        return mediatr;
+        return refreshTokenCommandHandler;
       });
     });
 
@@ -266,10 +292,10 @@ public class ApiRoutesTests
     {
       services.AddTransient(sp =>
       {
-        var mediatr = Substitute.For<IMediator>();
-        mediatr
-          .Send(Arg.Any<RotatePlayerIdentityRefreshTokenCommand>())
-          .Returns(new RotatePlayerIdentityRefreshTokenResult(
+        var handler = Substitute.For<ICommandHandler<RotatePlayerIdentityRefreshTokenCommand, RotatePlayerIdentityRefreshTokenCommand.Result>>();
+        handler
+          .Execute(Arg.Any<RotatePlayerIdentityRefreshTokenCommand>(), Arg.Any<CancellationToken>())
+          .Returns(new RotatePlayerIdentityRefreshTokenCommand.Result(
             "new_refresh_token",
             new DateTimeOffset(2024, 1, 13, 0, 0, 0, TimeSpan.Zero),
             playerId,
@@ -277,7 +303,7 @@ public class ApiRoutesTests
             "test provider",
             "test provider ident id"));
 
-        return mediatr;
+        return handler;
       });
     });
 
@@ -360,9 +386,42 @@ public class ApiRoutesTests
     Assert.Equal(HttpStatusCode.BadRequest, actualAuthTokenResponseMessage.StatusCode);
   }
 
+  [Fact]
+  public async Task WillProcessEventMessageInBackgroundWorker()
+  {
+    var testMessage = new TestApiMessage();
+
+    var invoked = new TaskCompletionSource();
+    var testHandler = Substitute.For<IDomainMessageHandler<TestApiMessage>>();
+    testHandler
+      .Handle(testMessage, Arg.Any<CancellationToken>())
+      .Returns(_ => Task.Run(invoked.SetResult));
+
+    await using var uutApiApp = GetApiFactory(services =>
+    {
+      services.AddScoped(_ => testHandler);
+    });
+
+    var eventBus = uutApiApp.Services.GetRequiredService<IEventBus>();
+
+    await eventBus.PublishAsync(testMessage, CancellationToken.None);
+
+    await invoked.Task.WaitAsync(TimeSpan.FromSeconds(1));
+
+    await testHandler
+      .Received(1)
+      .Handle(testMessage, Arg.Any<CancellationToken>());
+  }
+
   private WebApplicationFactory<Program> GetApiFactory(Action<IServiceCollection>? registerServices = null) => new WebApplicationFactory<Program>()
     .WithWebHostBuilder(builder =>
     {
+      builder.ConfigureLogging(logBuilder =>
+      {
+        logBuilder.AddDebug();
+        logBuilder.SetMinimumLevel(LogLevel.Information);
+      });
+
       builder.ConfigureServices(services =>
       {
         // overwrite dbcontext with in-memory provider to eliminate direct sql server dependency.
@@ -429,4 +488,6 @@ public class ApiRoutesTests
 
     return new JwtSecurityTokenHandler().WriteToken(jwtToken);
   }
+
+  public sealed record TestApiMessage() : IDomainEvent;
 }

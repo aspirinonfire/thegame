@@ -8,7 +8,7 @@ namespace TheGame.Api.Auth;
 
 public static class GameAuthenticationServiceExtensions
 {
-  public static void AddGameAuthenticationServices(this IServiceCollection services, ConfigurationManager configuration)
+  public static IServiceCollection AddGameAuthenticationServices(this IServiceCollection services, ConfigurationManager configuration)
   {
     var jwtSecret = configuration.GetValue<string>("Auth:Api:JwtSecret");
     var jwtAudience = configuration.GetValue<string>("Auth:Api:JwtAudience");
@@ -49,5 +49,7 @@ public static class GameAuthenticationServiceExtensions
     });
 
     services.AddScoped<GameAuthService>();
+
+    return services;
   }
 }

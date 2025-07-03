@@ -1,13 +1,13 @@
-﻿using MediatR;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using System.Threading;
 using System.Threading.Tasks;
+using TheGame.Api.Common.MessageBus;
 using TheGame.Domain.DomainModels.Common;
 
 namespace TheGame.Api.CommandHandlers;
 
-public sealed class DomainMessageLogger<TDomainMessage>(ILogger<DomainMessageLogger<TDomainMessage>> logger)
-  : INotificationHandler<TDomainMessage>
+public sealed class DomainMessageLogger<TDomainMessage>(ILogger<DomainMessageLogger<TDomainMessage>> logger) 
+  : IDomainMessageHandler<TDomainMessage>
     where TDomainMessage : IDomainEvent
 {
   public Task Handle(TDomainMessage notification, CancellationToken cancellationToken)

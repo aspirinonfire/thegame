@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using TheGame.Domain;
 using TheGame.Domain.DomainModels;
+using TheGame.Domain.DomainModels.Common;
 
 namespace TheGame.Tests;
 
@@ -11,7 +12,9 @@ public class GameServiceExtensionTests
   public void CanInstantiateGameServicesDI()
   {
     var services = new ServiceCollection()
-      .AddGameServices("test_conn_string");
+      .AddGameServices(
+        sp => Substitute.For<IEventBus>(),
+        "test_conn_string");
 
     var diOpts = new ServiceProviderOptions
     {

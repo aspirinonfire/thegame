@@ -1,7 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using TheGame.Api;
 using TheGame.Api.CommandHandlers;
 using TheGame.Domain;
+using TheGame.Domain.DomainModels.Common;
 
 namespace TheGame.Tests.TestUtils;
 
@@ -17,11 +19,41 @@ public static class CommonMockedServices
     return sysSvc;
   }
 
-  public static IServiceCollection GetGameServicesWithTestDevDb(string connString) =>
-    new ServiceCollection()
-      .AddGameServices(connString,
-        typeof(TheGame.Api.Program).Assembly,
+  public static IServiceCollection GetGameServicesWithTestDevDb(string connString)
+  {
+    Func<IServiceProvider, IEventBus> busFactory = sp =>
+    {
+      var logger = sp.GetRequiredService<ILogger<IEventBus>>();
+
+      var busMock = Substitute.For<IEventBus>();
+      busMock
+        .PublishAsync(Arg.Any<IDomainEvent>(), Arg.Any<CancellationToken>())
+        .Returns(Task.CompletedTask)
+        .AndDoes(callInfo =>
+        {
+          logger.LogInformation("Mocked event bus published event {EventType}",
+            callInfo.Arg<IDomainEvent>().GetType().Name);
+        });
+
+      return busMock;
+    };
+
+    var services = new ServiceCollection()
+      .AddGameServices(
+        busFactory,
+        connString,
         efLogger => efLogger.AddDebug())
       .AddScoped<ITransactionExecutionWrapper, TransactionExecutionWrapper>()
-      .AddLogging(builder => builder.AddDebug());
+      .AddLogging(builder =>
+      {
+        builder.SetMinimumLevel(LogLevel.Information);
+        builder.AddDebug();
+      })
+      .AddScoped<IGameQueryProvider, GameQueryProvider>();
+
+    Program.AddCommandHandlers(services);
+
+    return services;
+  }
+
 }

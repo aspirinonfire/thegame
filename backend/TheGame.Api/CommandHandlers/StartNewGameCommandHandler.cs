@@ -1,5 +1,4 @@
-﻿using MediatR;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,17 +9,19 @@ using TheGame.Domain.Utils;
 
 namespace TheGame.Api.CommandHandlers;
 
-public sealed record StartNewGameCommand(string GameName, long OwnerPlayerId) : IRequest<Result<OwnedOrInvitedGame>>;
+public sealed record StartNewGameCommand(string GameName, long OwnerPlayerId);
 
-public sealed class StartNewGameCommandHandler(IGameDbContext gameDb, IPlayerActionsFactory playerActionsFactory, ITransactionExecutionWrapper transactionWrapper, ILogger<StartNewGameCommandHandler> logger)
-  : IRequestHandler<StartNewGameCommand, Result<OwnedOrInvitedGame>>
+public sealed class StartNewGameCommandHandler(IGameDbContext gameDb,
+  IPlayerActionsFactory playerActionsFactory,
+  ITransactionExecutionWrapper transactionWrapper, ILogger<StartNewGameCommandHandler> logger)
+    : ICommandHandler<StartNewGameCommand, OwnedOrInvitedGame>
 {
-  public async Task<Result<OwnedOrInvitedGame>> Handle(StartNewGameCommand request, CancellationToken cancellationToken) =>
+  public async Task<Result<OwnedOrInvitedGame>> Execute(StartNewGameCommand command, CancellationToken cancellationToken) =>
     await transactionWrapper.ExecuteInTransaction<OwnedOrInvitedGame>(
       async () =>
       {
         var playerQuery = gameDb.Players
-          .Where(player => player.Id == request.OwnerPlayerId);
+          .Where(player => player.Id == command.OwnerPlayerId);
 
         var playerActions = playerActionsFactory.GetPlayerActions(playerQuery);
 
@@ -29,7 +30,7 @@ public sealed class StartNewGameCommandHandler(IGameDbContext gameDb, IPlayerAct
           return new Failure(ErrorMessageProvider.PlayerNotFoundError);
         }
 
-        var newGameResult = await playerActions.StartNewGame(request.GameName);
+        var newGameResult = await playerActions.StartNewGame(command.GameName);
         if (!newGameResult.TryGetSuccessful(out var newGame, out var newGameFailure))
         {
           logger.LogError(newGameFailure.GetException(), "New game cannot be started.");
@@ -40,7 +41,7 @@ public sealed class StartNewGameCommandHandler(IGameDbContext gameDb, IPlayerAct
 
         logger.LogInformation("New game started successully.");
 
-        return OwnedOrInvitedGame.FromGame(newGame, request.OwnerPlayerId);
+        return OwnedOrInvitedGame.FromGame(newGame, command.OwnerPlayerId);
       },
       nameof(StartNewGameCommand),
       logger,
