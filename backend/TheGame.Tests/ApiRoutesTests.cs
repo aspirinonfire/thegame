@@ -391,7 +391,11 @@ public class ApiRoutesTests
   {
     var testMessage = new TestApiMessage();
 
+    var invoked = new TaskCompletionSource();
     var testHandler = Substitute.For<IDomainMessageHandler<TestApiMessage>>();
+    testHandler
+      .Handle(testMessage, Arg.Any<CancellationToken>())
+      .Returns(_ => Task.Run(invoked.SetResult));
 
     await using var uutApiApp = GetApiFactory(services =>
     {
@@ -402,7 +406,7 @@ public class ApiRoutesTests
 
     await eventBus.PublishAsync(testMessage, CancellationToken.None);
 
-    await Task.Delay(100); // Allow some time for the background worker to process the message
+    await invoked.Task.WaitAsync(TimeSpan.FromSeconds(1));
 
     await testHandler
       .Received(1)
