@@ -76,3 +76,6 @@ backend/TheGame.Infra/stack.localdev.json
 **/*/playwright-report/
 **/*/blob-report/
 **/*/playwright/.cache/
+
+# Backend from master branch
+/backend/**/*

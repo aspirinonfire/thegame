@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button, Modal, ModalBody, ModalFooter, ModalHeader } from "flowbite-react";
 import type { LicensePlateSpot } from '~/game-core/models/LicensePlateSpot';
 import type { Territory } from '~/game-core/models/Territory';
@@ -15,7 +15,12 @@ interface PickerControls {
 export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, plateData }: PickerControls) => {
   const user = useAppStore(state => state.activeUser);
 
-  // TODO react-form
+  const [formChangePreview, setFormChangePreview] = useState<Map<string, boolean>>(new Map<string, boolean>());
+
+  useEffect(() => {
+    setFormChangePreview(new Map<string, boolean>());
+  }, [isShowPicker]);
+
   const plateByKeyLkp = plateData.reduce((lkp, plate) => {
     lkp[plate.key] = plate;
     return lkp;
@@ -60,20 +65,24 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
       ...formData
     };
 
+    const currentFormChanges = formChangePreview;
+
     const matchingPlate = updatedForm[territory.key];
     if (!!matchingPlate) {
       delete updatedForm[territory.key];
+      currentFormChanges.set(territory.key, false);
     } else {
       updatedForm[territory.key] = {
         key: territory.key,
         dateSpotted: new Date(),
         spottedBy: user?.name ?? "n/a"
       } as LicensePlateSpot;
+      currentFormChanges.set(territory.key, true);
     }
     
     setFormData(updatedForm);
     setSearchTerm(null);
-    searchInputRef.current?.focus();
+    setFormChangePreview(currentFormChanges);
   }
 
   function handelSaveNewSpots() {
@@ -147,12 +156,12 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
           autoFocus={true}
           ref={searchInputRef}
           id="default-search"
-          className="block w-full p-4 ps-10 text-xl placeholder:text-base text-gray-900 border border-gray-300 rounded-lg bg-gray-200 focus:ring-blue-500 focus:border-blue-500"
+          className="block w-full p-2 ps-10 placeholder:text-base text-gray-900 border border-gray-300 rounded-lg bg-gray-200 focus:ring-blue-500 focus:border-blue-500"
           placeholder="Name or abbreviation"
           onChange={event => setSearchTerm(event.target.value)}
           value={searchTerm || ""} />
         <button type="button"
-          className="text-white absolute end-2.5 bottom-2.5 bg-gray-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2"
+          className="text-white absolute end-2 bottom-1.25 bg-gray-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg text-sm px-3 py-1.5"
           onClick={event => setSearchTerm(null)}>
           Clear
         </button>
@@ -160,14 +169,27 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
     )
   }
 
+  function renderFormChangePreview() {
+    return <>
+      { formChangePreview.size > 0 &&
+        <div className="flex flex-row gap-1 text-xs text-gray-500 pt-2">
+        Updates: {[...formChangePreview].map(([key, value]) => {
+          return (<span key={key} className={!value ? "line-through" : ""}>{key}</span>)
+        })}
+      </div>
+      }
+    </>
+  }
+
   return (
     <>
       <Modal dismissible show={isShowPicker} onClose={handleClose} initialFocus={searchInputRef} size="xl">
         <ModalHeader className="[&>button]:hidden [&>h3]:grow">
           {renderSearch()}
+          {renderFormChangePreview()}
         </ModalHeader>
 
-        <ModalBody>
+        <ModalBody className={formChangePreview.size > 0 ? "pt-0" : "pt-1"}>
           <div className="flex flex-col gap-10">
             {renderCheckboxes()}
           </div>

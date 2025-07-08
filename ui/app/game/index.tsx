@@ -7,6 +7,7 @@ import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import LocalDateTime from "~/common-components/localDateTime";
+import { RollingNumber } from "./rolling-number";
 
 const GamePage = () => {
   const [user, activeGame, finishCurrentGame, spotNewPlates, startNewGame] =
@@ -51,7 +52,7 @@ const GamePage = () => {
       <>
         <div className={`flex flex-col gap-5 transition-all ${showPicker ? "blur-sm": ""}`}>
           <div className="flex flex-row items-center justify-between sm:justify-start gap-5">
-            <h1 className="text-xl sm:text-2xl" data-testid="current-score">Score: {activeGame?.score.totalScore}</h1>
+            <h1 className="text-xl sm:text-2xl" data-testid="current-score">Score: <RollingNumber value={activeGame?.score.totalScore ?? 0} /></h1>
             <div
               className="flex flex-row justify-center gap-3 animate-pulse text-sm text-amber-500"
               data-testid="current-milestones"
