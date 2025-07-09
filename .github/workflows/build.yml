@@ -24,7 +24,7 @@ env:
   API_TEST_SETTINGS_PLACEHOLDER_PATH: backend/TheGame.Tests/testsettings.json
   DOTNET_BUILD_CONFIG: Release
   # UI Settings
-  NODE_VERSION: 20
+  NODE_VERSION: 22
   UI_ROOT: ui
 
 jobs:
@@ -47,8 +47,7 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: |
-            8.0.x
-            6.0.x
+            9.0.x
 
       # Build and Test backend
       
@@ -97,7 +96,9 @@ jobs:
           /p:UseAppHost=false \
           --output ${{ github.workspace }}/${{ env.BACKEND_ROOT }}/${{ env.API_PUBLISH_DIR }}
 
-      # Build NextJS
+      # TODO build docker image without pushing
+
+      # Build UI APP
       - name: NPM install
         working-directory: ${{ env.UI_ROOT }}
         run: npm install
@@ -109,11 +110,19 @@ jobs:
           deployDate=$(date --iso-8601=seconds)
           echo "{\"deployDate\":\"$deployDate\",\"sha\":\"$calculateSha\"}" > ./public/version.json
 
-      - name: Build and export NextJS
+      - name: Build and export UI App
         working-directory: ${{ env.UI_ROOT }}
         run: npm run build
         env:
-          NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.GOOGLECLIENTID }}
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.GOOGLECLIENTID }}
+
+      - name: Install Playwright Browsers
+        working-directory: "ui"
+        run: npx playwright install --with-deps chromium
+      
+      - name: Run Playwright tests
+        working-directory: "ui"
+        run: npm run teste2eci
 
       # build db migrator to be used in deploy workflow
       - name: Install EF Core CLI
@@ -146,11 +155,12 @@ jobs:
           /p:PublishSingleFile=true \
           --output ${{ github.workspace }}/${{ env.BACKEND_ROOT }}/${{ env.API_PUBLISH_DIR }}/${{ env.PULUMI_PUBLISH_DIR}}
 
+      # TODO separate the publish step for the API and UI artifacts
       # Publish artifacts for deploy workflow
       - name: Combine artifacts
         working-directory: ${{ github.workspace }}/${{ env.BACKEND_ROOT }}/${{ env.API_PUBLISH_DIR }}
         run: |
-          mv ${{ github.workspace }}/${{ env.UI_ROOT }}/next_out ./wwwroot
+          mv ${{ github.workspace }}/${{ env.UI_ROOT }}/build/client ./wwwroot
           cp ${{ github.workspace }}/${{ env.BACKEND_ROOT }}/TheGame.Api/Dockerfile-pipelines .
 
       - name: Upload combined artifacts for deployment

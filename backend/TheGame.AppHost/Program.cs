@@ -55,8 +55,8 @@ var _ = builder
   .AddNpmApp("ui", uiRelativePath, uiDevCommand)
   .WithHttpEndpoint(port: uiExposedPort, targetPort: uiDevServerPort)
   // app config
-  .WithEnvironment("NEXT_PUBLIC_GOOGLE_CLIENT_ID", googleClientId)
-  .WithEnvironment("NEXT_PUBLIC_API_URL", api.GetEndpoint("http"))
+  .WithEnvironment("VITE_GOOGLE_CLIENT_ID", googleClientId)
+  .WithEnvironment("VITE_API_URL", api.GetEndpoint("http"))
   // service dependencies
   .WithReference(api)
   .WaitFor(api);
