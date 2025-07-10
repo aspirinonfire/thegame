@@ -28,9 +28,9 @@ public static class GameAuthenticationServiceExtensions
       })
       .AddJwtBearer(options =>
       {
-        options.RequireHttpsMetadata = true;
+        options.RequireHttpsMetadata = false; // TODO: set to true in production
         options.SaveToken = false;
-        options.TokenValidationParameters = GameAuthService.GetTokenValidationParams(jwtAudience, jwtSecret);
+        options.TokenValidationParameters = GameAuthService.GetTokenValidationParams(jwtAudience, jwtSecret, GameAuthService.ValidApiTokenIssuer);
         options.Validate();
       });
 

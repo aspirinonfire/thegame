@@ -1,10 +1,16 @@
-import { MapIcon, ClockIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
-import { Navbar, NavbarBrand, NavbarCollapse, NavbarLink, NavbarToggle } from "flowbite-react";
-import type { ElementType, ReactNode, SVGAttributes } from "react";
+import { MapIcon, ClockIcon, InformationCircleIcon, UserCircleIcon } from "@heroicons/react/24/outline";
+import { Dropdown, DropdownHeader, DropdownItem, Navbar, NavbarBrand, NavbarCollapse, NavbarLink, NavbarToggle, Spinner } from "flowbite-react";
+import type { ElementType } from "react";
 import { Link, useLocation } from "react-router";
+import { useAppStore } from "~/useAppStore";
+import { useGoogleAuthCode } from "~/useGoogleAuthCode";
 
 const AppNavbar = () => {
   const pathname = useLocation();
+
+  const activeUser = useAppStore(state => state.activeUser);
+
+  const { login, isProcessing, isGsiSdkReady } = useGoogleAuthCode();
 
   const navlink = (url: string, linkText: string, Icon: ElementType, exactMatch: boolean = false) => {
     const isActive = exactMatch ?
@@ -30,7 +36,29 @@ const AppNavbar = () => {
       <span className="text-lg text-gray-100 uppercase">License Plate Game</span>
     </NavbarBrand>
 
-    <NavbarToggle className="text-gray-400" />
+    <div className="flex flex-row justify-end gap-2 md:gap-0 md:flex-row-reverse">
+      <Dropdown
+        className="bg-gray-800 drop-shadow-lg text-gray-400 w-1/2 md:w-1/3"
+        arrowIcon={false}
+        inline
+        label={
+          <UserCircleIcon className="w-8 h-8 text-gray-400" />
+        }>
+
+        <DropdownHeader>
+          <span className="block text-sm text-gray-200">Hello, {activeUser?.player.playerName}</span>
+        </DropdownHeader>
+
+        <DropdownItem className="text-gray-400" onClick={login} disabled={isProcessing || !isGsiSdkReady}>
+          {isProcessing ?
+            <Spinner size="sm" color="alternative" /> :
+            isGsiSdkReady ? "Sign-in with Google" : "Setting up Google Sign-in..."}
+        </DropdownItem>
+
+      </Dropdown>
+
+      <NavbarToggle className="text-gray-400" />
+    </div>
 
     <NavbarCollapse>
       <div className="block md:flex md:flex-row md:gap-5 m-0 p-0">

@@ -61,7 +61,7 @@ public static class ApiRoutes
           apiTokens.AccessToken
         });
       })
-      .WithDescription("Validate Google ID Token and generate API tokens for accessing Game APIs.")
+      .WithDescription("Validate Google Auth Code and generate API tokens for accessing Game APIs.")
       .AllowAnonymous();
 
     apiRoute
@@ -116,26 +116,26 @@ public static class ApiRoutes
     
     apiRoute
       .MapPost("game",
-      async (HttpContext ctx,
-        [FromBody] StartNewGameRequest newGameRequest,
-        ICommandHandler<StartNewGameCommand, OwnedOrInvitedGame> startGameHandler,
-        CancellationToken cancellationToken) =>
-      {
-        var playerId = GetPlayerIdFromHttpContext(ctx);
-      
-        var newGameResult = await startGameHandler.Execute(
-          new StartNewGameCommand(newGameRequest.NewGameName, playerId),
-          cancellationToken);
-        if (!newGameResult.TryGetSuccessful(out var newGame, out var newGameFailure))
+        async (HttpContext ctx,
+          [FromBody] StartNewGameRequest newGameRequest,
+          ICommandHandler<StartNewGameCommand, OwnedOrInvitedGame> startGameHandler,
+          CancellationToken cancellationToken) =>
         {
-          return Results.BadRequest(newGameFailure.ErrorMessage);
-        }
+          var playerId = GetPlayerIdFromHttpContext(ctx);
+      
+          var newGameResult = await startGameHandler.Execute(
+            new StartNewGameCommand(newGameRequest.NewGameName, playerId),
+            cancellationToken);
+          if (!newGameResult.TryGetSuccessful(out var newGame, out var newGameFailure))
+          {
+            return Results.BadRequest(newGameFailure.ErrorMessage);
+          }
 
-        return Results.Ok(newGame);
-      })
-      .WithDescription("Start new game for an authenticated player.");
+          return Results.Ok(newGame);
+        })
+        .WithDescription("Start new game for an authenticated player.");
 
-    
+
     apiRoute
       .MapPost("game/{gameId:long}/endgame",
         async (HttpContext ctx,
@@ -154,7 +154,7 @@ public static class ApiRoutes
         })
         .WithDescription("End active game for an authenticated player.");
 
-    
+ 
     apiRoute
       .MapPost("game/{gameId:long}/spotplates",
         async (HttpContext ctx,

@@ -7,18 +7,18 @@ export function createEmptyAppState() {
     state: {
       activeGame: <Game | null>null,
       pastGames: <Game[]>[],
-      isMigratedFromNextJs: true
     }
   }
 };
 
 export function createNewGame() : Game {
   return {
-    createdBy: "Test",
+    createdByPlayerId: 123,
+    createdByPlayerName: "Test",
     dateCreated: new Date(),
-    id: new Date().getTime().toString(),
-    name: "test",
-    licensePlates: [],
+    gameId: new Date().getTime(),
+    gameName: "test",
+    spottedPlates: [],
     score: {
       totalScore: 0,
       milestones: []

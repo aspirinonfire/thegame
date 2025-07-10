@@ -74,8 +74,11 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
     } else {
       updatedForm[territory.key] = {
         key: territory.key,
-        dateSpotted: new Date(),
-        spottedBy: user?.name ?? "n/a"
+        country: territory.country,
+        stateOrProvince: territory.shortName,
+        spottedOn: new Date(),
+        spottedByPlayerId: user?.player?.playerId ?? -1,
+        spottedByPlayerName: user?.player?.playerName ?? "n/a"
       } as LicensePlateSpot;
       currentFormChanges.set(territory.key, true);
     }

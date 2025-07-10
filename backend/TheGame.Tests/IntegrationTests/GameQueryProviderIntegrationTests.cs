@@ -55,14 +55,15 @@ public class GameQueryProviderIntegrationTests(MsSqlFixture msSqlFixture) : ICla
     Assert.Equal("Test Game", actualGame.GameName);
     Assert.Equal(new DateTimeOffset(2024, 1, 2, 0, 0, 0, 0, TimeSpan.Zero), actualGame.DateCreated);
     Assert.True(actualGame.IsOwner);
-    Assert.Collection(actualGame.GameScore.Achievements,
+    Assert.Collection(actualGame.Score.Achievements,
       achievement1 => Assert.Equal("West Coast", achievement1),
       achievement2 => Assert.Equal("East Coast", achievement2));
-    Assert.Equal(100, actualGame.GameScore.TotalScore);
+    Assert.Equal(100, actualGame.Score.TotalScore);
 
     var actualSpottedPlate = Assert.Single(actualGame.SpottedPlates);
     Assert.Equal(new SpottedGamePlate
     {
+      Key = "US-AL",
       Country = Domain.DomainModels.LicensePlates.Country.US,
       StateOrProvince = Domain.DomainModels.LicensePlates.StateOrProvince.AL,
       SpottedByPlayerId = 1,

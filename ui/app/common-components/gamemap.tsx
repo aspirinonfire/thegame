@@ -25,7 +25,7 @@ const GameMap = (mapArguments: ActiveGameData | HistoricalGamesData) => {
       const isSpotted = mapArguments.plateSpots.filter(plate => plate.key == lkpKey)[0];
 
       // if plate has a spot date, then mark it as spotted
-      return !!isSpotted && !!isSpotted.dateSpotted ? "transition-all fill-amber-700" : unspottedState;
+      return !!isSpotted && !!isSpotted.spottedOn ? "transition-all fill-amber-700" : unspottedState;
     }
     else {
       // 0 no spots, 100 spotted in every game, 50 spotted half of the games
@@ -56,7 +56,7 @@ const GameMap = (mapArguments: ActiveGameData | HistoricalGamesData) => {
 
   function isChecked(key: string) {
     if (mapArguments.argType == "activeGame") {
-      return !!mapArguments.plateSpots.filter(plate => plate.key == key)[0]?.dateSpotted;
+      return !!mapArguments.plateSpots.filter(plate => plate.key == key)[0]?.spottedOn;
     } else {
       return !!mapArguments.spotsByStateLookup[key];
     }

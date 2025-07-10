@@ -28,13 +28,17 @@ public class GameAuthService(ILogger<GameAuthService> logger,
   TimeProvider timeProvider,
   IOptions<GameSettings> gameSettings)
 {
+  // TODO figure out correct way to set issuer (config vs api host, etc).
+  public const string ValidApiTokenIssuer = "this-is-valid-issuer";
+
   public static SymmetricSecurityKey GetAccessTokenSigningKey(string jwtSecret) =>
     new (Encoding.UTF8.GetBytes(jwtSecret));
 
-  public static TokenValidationParameters GetTokenValidationParams(string jwtAudience, string jwtSecret) =>
+  public static TokenValidationParameters GetTokenValidationParams(string jwtAudience, string jwtSecret, string jwtIssuer) =>
     new ()
     {
-      ValidateIssuer = false,
+      ValidateIssuer = true,
+      ValidIssuer = jwtIssuer,
       ValidateLifetime = true,
       ValidateAudience = true,
       ValidateIssuerSigningKey = true,
@@ -126,7 +130,8 @@ public class GameAuthService(ILogger<GameAuthService> logger,
     {
       // validate token
       var jwtValidationParams = GetTokenValidationParams(gameSettings.Value.Auth.Api.JwtAudience,
-        gameSettings.Value.Auth.Api.JwtSecret);
+        gameSettings.Value.Auth.Api.JwtSecret,
+        ValidApiTokenIssuer);
       
       // expired tokens are ok
       jwtValidationParams.ValidateLifetime = false;
@@ -270,6 +275,7 @@ public class GameAuthService(ILogger<GameAuthService> logger,
       claims: claims,
       notBefore: DateTime.UtcNow,
       expires: DateTime.UtcNow.AddMinutes(gameSettings.Value.Auth.Api.JwtTokenExpirationMin),
+      issuer: ValidApiTokenIssuer,
       audience: gameSettings.Value.Auth.Api.JwtAudience,
       signingCredentials: new SigningCredentials(
         GetAccessTokenSigningKey(gameSettings.Value.Auth.Api.JwtSecret),

@@ -22,7 +22,7 @@ public sealed record OwnedOrInvitedGame
   public DateTimeOffset? DateModified { get; init; }
   public DateTimeOffset? EndedOn { get; init; }
   public IReadOnlyCollection<SpottedGamePlate> SpottedPlates { get; init; } = [];
-  public GameScore GameScore { get; init; } = new GameScore(ReadOnlyCollection<string>.Empty, 0);
+  public GameScore Score { get; init; } = new GameScore(ReadOnlyCollection<string>.Empty, 0);
 
   public static OwnedOrInvitedGame FromGame(Game game, long playerId)
   {
@@ -41,10 +41,11 @@ public sealed record OwnedOrInvitedGame
       DateCreated = game.DateCreated,
       DateModified = game.DateModified,
       EndedOn = game.EndedOn,
-      GameScore = game.GameScore,
+      Score = game.GameScore,
       SpottedPlates = game.GameLicensePlates
         .Select(spot => new SpottedGamePlate
         {
+          Key = spot.LicensePlate.Country + "-" + spot.LicensePlate.StateOrProvince,
           Country = spot.LicensePlate.Country,
           StateOrProvince = spot.LicensePlate.StateOrProvince,
           SpottedOn = spot.DateCreated,
@@ -59,6 +60,8 @@ public sealed record OwnedOrInvitedGame
 
 public sealed record SpottedGamePlate
 {
+  public string Key { get; init; } = string.Empty;
+  
   public Country Country { get; init; }
   
   public StateOrProvince StateOrProvince { get; init; }

@@ -6,8 +6,8 @@ const HistoryPage = () => {
 
   const numberOfSpotsByPlateLkp = pastGames
     .reduce((lkp, game) => {
-      game.licensePlates
-        .filter(plate => !!plate.dateSpotted)
+      game.spottedPlates
+        .filter(plate => !!plate.spottedOn)
         .forEach(plate => {
           lkp[plate.key] = (lkp[plate.key] || 0) + 1;
         });

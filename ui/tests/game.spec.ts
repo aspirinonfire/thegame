@@ -60,11 +60,14 @@ test("will calculate score milestones for West Coast", async ({ browser }) => {
 
   const stateWithActiveGame = createEmptyAppState();
   stateWithActiveGame.state.activeGame = createNewGame();
-  stateWithActiveGame.state.activeGame.licensePlates = ["US-CA", "US-OR", "US-WA"]
+  stateWithActiveGame.state.activeGame.spottedPlates = ["US-CA", "US-OR", "US-WA"]
     .map(key => ({
       key,
-      dateSpotted: new Date(),
-      spottedBy: "Test"
+      country: key.split("-")[0],
+      stateOrProvince: key.split("-")[1],
+      spottedByPlayerId: 123,
+      spottedByPlayerName: "test",
+      spottedOn: new Date()
     }));
 
   await SetAppState(context, stateWithActiveGame);
@@ -96,7 +99,7 @@ test("will calculate score milestones for East Coast", async ({ browser }) => {
 
   const stateWithActiveGame = createEmptyAppState();
   stateWithActiveGame.state.activeGame = createNewGame();
-  stateWithActiveGame.state.activeGame.licensePlates = ["US-CT",
+  stateWithActiveGame.state.activeGame.spottedPlates = ["US-CT",
     "US-DE",
     "US-FL",
     "US-GA",
@@ -112,8 +115,11 @@ test("will calculate score milestones for East Coast", async ({ browser }) => {
     "US-VA"]
     .map(key => ({
       key,
-      dateSpotted: new Date(),
-      spottedBy: "Test"
+      country: key.split("-")[0],
+      stateOrProvince: key.split("-")[1],
+      spottedByPlayerId: 123,
+      spottedByPlayerName: "test",
+      spottedOn: new Date(),
     }));
 
   await SetAppState(context, stateWithActiveGame);
@@ -145,11 +151,14 @@ test("will calculate score milestones for Coast to Coast", async ({ browser }) =
 
   const stateWithActiveGame = createEmptyAppState();
   stateWithActiveGame.state.activeGame = createNewGame();
-  stateWithActiveGame.state.activeGame.licensePlates = ["US-CA", "US-AZ", "US-NM", "US-OK", "US-AR", "US-TN", "US-NC"]
+  stateWithActiveGame.state.activeGame.spottedPlates = ["US-CA", "US-AZ", "US-NM", "US-OK", "US-AR", "US-TN", "US-NC"]
     .map(key => ({
       key,
-      dateSpotted: new Date(),
-      spottedBy: "Test"
+      country: key.split("-")[0],
+      stateOrProvince: key.split("-")[1],
+      spottedByPlayerId: 123,
+      spottedByPlayerName: "test",
+      spottedOn: new Date(),
     }));
 
   await SetAppState(context, stateWithActiveGame);
@@ -181,11 +190,14 @@ test("will calculate score milestones for Coast to Coast and West Coast", async 
 
   const stateWithActiveGame = createEmptyAppState();
   stateWithActiveGame.state.activeGame = createNewGame();
-  stateWithActiveGame.state.activeGame.licensePlates = ["US-CA", "US-OR", "US-WA", "US-AZ", "US-NM", "US-OK", "US-AR", "US-TN", "US-NC"]
+  stateWithActiveGame.state.activeGame.spottedPlates = ["US-CA", "US-OR", "US-WA", "US-AZ", "US-NM", "US-OK", "US-AR", "US-TN", "US-NC"]
     .map(key => ({
       key,
-      dateSpotted: new Date(),
-      spottedBy: "Test"
+      country: key.split("-")[0],
+      stateOrProvince: key.split("-")[1],
+      spottedByPlayerId: 123,
+      spottedByPlayerName: "test",
+      spottedOn: new Date(),
     }));
 
   await SetAppState(context, stateWithActiveGame);
@@ -217,11 +229,14 @@ test("will calculate score milestones when everything is marked", async ({ brows
 
   const stateWithActiveGame = createEmptyAppState();
   stateWithActiveGame.state.activeGame = createNewGame();
-  stateWithActiveGame.state.activeGame.licensePlates = territories
+  stateWithActiveGame.state.activeGame.spottedPlates = territories
     .map(ter => ({
       key: ter.key,
-      dateSpotted: new Date(),
-      spottedBy: "Test"
+      country: ter.key.split("-")[0],
+      stateOrProvince: ter.key.split("-")[1],
+      spottedByPlayerId: 123,
+      spottedByPlayerName: "test",
+      spottedOn: new Date(),
     }));
 
   await SetAppState(context, stateWithActiveGame);

@@ -91,7 +91,7 @@ export default function CalculateScore(plateData: LicensePlateSpot[]): ScoreData
   }
 
   const allSpottedPlates = plateData
-    .filter(plate => !!plate.dateSpotted);
+    .filter(plate => !!plate.spottedOn);
 
   if (allSpottedPlates.length < 1) {
     return scoreData;

@@ -88,8 +88,8 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
     var actualGame = Assert.Single(actualGames);
 
     Assert.Equal(3, actualGame.SpottedPlates.Count);
-    Assert.NotNull(actualGame.GameScore);
-    Assert.NotEqual(0, actualGame.GameScore.TotalScore);
+    Assert.NotNull(actualGame.Score);
+    Assert.NotEqual(0, actualGame.Score.TotalScore);
   }
 
   [Fact]
@@ -171,7 +171,7 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
       gameId,
       playerId);
     var actualInitialSpotGameResult = await RunAsScopedRequest<SpotLicensePlatesCommand, OwnedOrInvitedGame>(sp, initialSpotRequest);
-    Assert.Equal(2, actualInitialSpotGameResult.GameScore.TotalScore);
+    Assert.Equal(2, actualInitialSpotGameResult.Score.TotalScore);
 
     // remove one plate ~OR, +WA, +AL, -CA
     var spotRequestWithSpotRemoval = new SpotLicensePlatesCommand(
@@ -183,7 +183,7 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
       gameId,
       playerId);
     var actualGameAfterSpotRemoval = await RunAsScopedRequest<SpotLicensePlatesCommand, OwnedOrInvitedGame>(sp, spotRequestWithSpotRemoval);
-    Assert.Equal(3, actualGameAfterSpotRemoval.GameScore.TotalScore);
+    Assert.Equal(3, actualGameAfterSpotRemoval.Score.TotalScore);
 
     // re-add plate ~OR, ~WA, ~AL, +CA
     var spotRequestWithReAdd = new SpotLicensePlatesCommand(
@@ -197,7 +197,7 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
       playerId);
     
     var actualGameAfterReadd = await RunAsScopedRequest<SpotLicensePlatesCommand, OwnedOrInvitedGame>(sp, spotRequestWithReAdd);
-    Assert.Equal(14, actualGameAfterReadd.GameScore.TotalScore);
+    Assert.Equal(14, actualGameAfterReadd.Score.TotalScore);
   }
 
   private static async Task<TResult> RunAsScopedRequest<TCommand, TResult>(IServiceProvider serviceProvider, TCommand command)

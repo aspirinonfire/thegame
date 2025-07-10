@@ -58,6 +58,7 @@ public class GameAuthServiceTests
     var testToken = new JwtSecurityToken(
       claims: [],
       notBefore: new DateTime(2024, 1, 13, 0, 0, 0, DateTimeKind.Utc),
+      issuer: GameAuthService.ValidApiTokenIssuer,
       expires: DateTime.UtcNow.AddMinutes(1),
       audience: _validGameSettings.Auth.Api.JwtAudience,
       signingCredentials: new SigningCredentials(
@@ -70,7 +71,8 @@ public class GameAuthServiceTests
     var tokenHandler = new JwtSecurityTokenHandler();
 
     var uutValidationParams = GameAuthService.GetTokenValidationParams(_validGameSettings.Auth.Api.JwtAudience,
-      _validGameSettings.Auth.Api.JwtSecret);
+      _validGameSettings.Auth.Api.JwtSecret,
+      GameAuthService.ValidApiTokenIssuer);
 
     var actualTokenClaims = tokenHandler.ValidateToken(tokenString, uutValidationParams, out _);
     Assert.NotNull(actualTokenClaims);
@@ -82,6 +84,7 @@ public class GameAuthServiceTests
     var testToken = new JwtSecurityToken(
       claims: [],
       notBefore: new DateTime(2024, 1, 13, 0, 0, 0, DateTimeKind.Utc),
+      issuer: GameAuthService.ValidApiTokenIssuer,
       expires: DateTime.UtcNow.AddHours(-1),
       audience: _validGameSettings.Auth.Api.JwtAudience,
       signingCredentials: new SigningCredentials(
@@ -94,7 +97,8 @@ public class GameAuthServiceTests
     var tokenHandler = new JwtSecurityTokenHandler();
 
     var uutValidationParams = GameAuthService.GetTokenValidationParams(_validGameSettings.Auth.Api.JwtAudience,
-      _validGameSettings.Auth.Api.JwtSecret);
+      _validGameSettings.Auth.Api.JwtSecret,
+      GameAuthService.ValidApiTokenIssuer);
     uutValidationParams.ValidateLifetime = false;
 
     var actualTokenClaims = tokenHandler.ValidateToken(tokenString, uutValidationParams, out _);
@@ -119,7 +123,8 @@ public class GameAuthServiceTests
     var tokenHandler = new JwtSecurityTokenHandler();
 
     var uutValidationParams = GameAuthService.GetTokenValidationParams(_validGameSettings.Auth.Api.JwtAudience,
-      _validGameSettings.Auth.Api.JwtSecret);
+      _validGameSettings.Auth.Api.JwtSecret,
+      GameAuthService.ValidApiTokenIssuer);
 
     Assert.Throws<SecurityTokenExpiredException>(() => tokenHandler.ValidateToken(tokenString, uutValidationParams, out _));
   }
@@ -142,7 +147,8 @@ public class GameAuthServiceTests
     var tokenHandler = new JwtSecurityTokenHandler();
 
     var uutValidationParams = GameAuthService.GetTokenValidationParams(_validGameSettings.Auth.Api.JwtAudience,
-      _validGameSettings.Auth.Api.JwtSecret);
+      _validGameSettings.Auth.Api.JwtSecret,
+      GameAuthService.ValidApiTokenIssuer);
 
     Assert.Throws<SecurityTokenInvalidAudienceException>(() => tokenHandler.ValidateToken(tokenString, uutValidationParams, out _));
   }
@@ -165,7 +171,8 @@ public class GameAuthServiceTests
     var tokenHandler = new JwtSecurityTokenHandler();
 
     var uutValidationParams = GameAuthService.GetTokenValidationParams(_validGameSettings.Auth.Api.JwtAudience,
-      _validGameSettings.Auth.Api.JwtSecret);
+      _validGameSettings.Auth.Api.JwtSecret,
+      GameAuthService.ValidApiTokenIssuer);
 
     Assert.Throws<SecurityTokenSignatureKeyNotFoundException>(() => tokenHandler.ValidateToken(tokenString, uutValidationParams, out _));
   }

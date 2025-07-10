@@ -1,4 +1,9 @@
-// TODO move to a standalone namespace for multi-user setup
+export interface PlayerInfo {
+  playerName: string,
+  playerId: number
+}
+
 export default interface UserAccount {
-  name: string;
+  isAuthenticated: boolean;
+  player: PlayerInfo
 }

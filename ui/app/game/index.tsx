@@ -61,7 +61,7 @@ const GamePage = () => {
             </div>
           </div>
           
-          <GameMap argType="activeGame" plateSpots={activeGame?.licensePlates ?? []} onMapClick={() => setShowPicker(true)} />
+          <GameMap argType="activeGame" plateSpots={activeGame?.spottedPlates ?? []} onMapClick={() => setShowPicker(true)} />
         </div>
 
         <div className={`flex flex-row grow justify-end items-center fixed bottom-0 right-5 ${showPicker ? 'hidden' : ''}`}>
@@ -78,7 +78,7 @@ const GamePage = () => {
         { !!activeGame ? (<PlatePicker
             isShowPicker={showPicker}
             setShowPicker={(isShown: boolean) => setShowPicker(isShown)}
-            plateData={activeGame?.licensePlates ?? []}
+            plateData={activeGame?.spottedPlates ?? []}
             saveNewPlateData={spotNewPlates} />) : null }
 
         <Modal show={showEndGame} size="sm" onClose={() => setShowEndGame(false)} popup>

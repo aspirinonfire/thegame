@@ -2,11 +2,13 @@ import type { LicensePlateSpot } from "./LicensePlateSpot";
 import type { ScoreData } from "./ScoreData";
 
 export interface Game {
-  id: string;
-  name: string;
-  createdBy: string;
+  gameId: number;
+  gameName: string;
+  createdByPlayerId: number;
+  createdByPlayerName: string;
   dateCreated: Date;
-  dateFinished?: Date;
-  licensePlates: LicensePlateSpot[];
+  dateModified?: Date;
+  endedOn?: Date;
+  spottedPlates: LicensePlateSpot[];
   score: ScoreData;
 }

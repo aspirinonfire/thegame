@@ -480,6 +480,7 @@ public class ApiRoutesTests
       // expiration must account for clock skew to be trully expired
       notBefore: DateTime.UtcNow.AddMinutes(-20),
       expires: DateTime.UtcNow.AddMinutes(-19),
+      issuer: GameAuthService.ValidApiTokenIssuer,
       audience: _testJwtAudience,
       signingCredentials: new SigningCredentials(
         GameAuthService.GetAccessTokenSigningKey(_testJwtSecret),

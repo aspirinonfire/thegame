@@ -1,5 +1,8 @@
 export interface LicensePlateSpot {
   key: string;
-  dateSpotted: Date | null;
-  spottedBy: string | null;
+  country: string;
+  stateOrProvince: string;
+  spottedOn: Date | null;
+  spottedByPlayerName: string | null;
+  spottedByPlayerId: number | null;
 }
