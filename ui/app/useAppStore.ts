@@ -196,6 +196,10 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
       return "No active game!";
     }
 
+    // TODO implement!!
+    const endedGame = await get().api.post<Game>(`game/${currentGame.gameId}/endgame`);
+    return;
+
     // use last spot as date finished
     const lastSpot = currentGame.spottedPlates
       .map(plate => plate.spottedOn)
@@ -220,32 +224,32 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
   },
 
   authenticateWithGoogleAuthCode: async (authCode: string) => {
-      const requestParams : RequestInit = {
-        cache: "no-cache",
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-        },
-        body: JSON.stringify(authCode),
-      };
-  
-      try {
-        const accessTokenResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/user/google/apitoken`, requestParams);
-  
-        const responseBody = await accessTokenResponse.json() as ApiTokenResponse;
-    
-        if (accessTokenResponse.status == 200) {
-          set({
-            apiAccessToken: responseBody.accessToken,
-          });
+    const requestParams : RequestInit = {
+      cache: "no-cache",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+      },
+      body: JSON.stringify(authCode),
+    };
 
-          return true;
-        }
-        // TODO generic error handling
-        console.error(`Failed to retrieve API token ${accessTokenResponse.status}: ${responseBody}`);
-      } catch (error) {
-        console.log(error);
+    try {
+      const accessTokenResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/user/google/apitoken`, requestParams);
+
+      const responseBody = await accessTokenResponse.json() as ApiTokenResponse;
+  
+      if (accessTokenResponse.status == 200) {
+        set({
+          apiAccessToken: responseBody.accessToken,
+        });
+
+        return true;
       }
+      // TODO generic error handling
+      console.error(`Failed to retrieve API token ${accessTokenResponse.status}: ${responseBody}`);
+    } catch (error) {
+      console.log(error);
+    }
 
     return false;
   },
@@ -302,7 +306,7 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
           status: 401,
           title: 'Failed to retrieve Access Token.',
           detail: 'Please contact IT Support for assistance.',
-          CorrelationId: '',
+          GameRequestCorrelationId: '',
           traceId: ''
         }
 
@@ -320,18 +324,15 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
         body: body ? JSON.stringify(body) : null
       });
 
-      // API errors return standard rfc9110 payload
       if (!apiResponse.ok) {
-        // const errorData: apiError = await apiResponse.json();
-        const errorData: apiError = {
-          status: apiResponse.status,
-          title: 'API request did not succeed.',
-          detail: 'Please contact IT Support for assistance.',
-          CorrelationId: '',
-          traceId: ''
-        };
-        get().api.enqueueError(errorData);
-        return errorData;
+        if (apiResponse.status == 401) {
+          // TODO handle auth errors - token refresh + retry and login banner
+        } else {
+          // API errors return standard rfc9110 payload
+          const errorData: apiError = await apiResponse.json();
+          get().api.enqueueError(errorData);
+          return errorData;
+        }
       }
     
       // Parse the response JSON into the expected TResponse type

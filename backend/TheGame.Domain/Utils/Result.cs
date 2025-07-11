@@ -10,6 +10,7 @@ public readonly struct Result<TSuccess>
   
   private readonly bool _isSuccess;
 
+  // TODO handle validation failures
   private Result(TSuccess? successValue, Failure? failureValue, bool isSuccess)
   {
     // the only way to access success/failure values is through TryGetSuccessful, which has appropriate checks

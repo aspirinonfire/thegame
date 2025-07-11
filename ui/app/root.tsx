@@ -11,7 +11,7 @@ import {
 import type { Route } from "./+types/root";
 import "./app.css";
 import { Button, ThemeConfig } from "flowbite-react";
-import AppNavbar from "./main-layout/app-navbar";
+import AppNavbar from "./main-layout/appNavbar";
 import { useAppStore } from "./useAppStore";
 import { useShallow } from "zustand/shallow";
 import { useEffect } from "react";
@@ -19,6 +19,8 @@ import LoadingWidget from "./common-components/loading";
 
 // force sw registration
 import './register-sw.client';
+import ErrorBoundary from "./main-layout/appErrorBoundary";
+import AppMessages from "./main-layout/appMessages";
 
 
 export const links: Route.LinksFunction = (): LinkDescriptor[] => {
@@ -63,12 +65,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body className="antialiased min-h-screen flex flex-col bg-gray-300">
         <ThemeConfig dark={false} />
-        <header className="bg-gray-300">
-          <div className="p-0">
-            <AppNavbar />
-          </div>
-        </header>
-        { hasInitialized ? children : <LoadingWidget/> }
+        {/* Error boundary for the entire app */}
+        <ErrorBoundary>
+          <header className="bg-gray-300">
+            <div className="p-0">
+              <AppNavbar />
+            </div>
+          </header>
+  
+          <main>
+            <AppMessages/>
+            {/* Error boundary for a selected view */}
+            <ErrorBoundary>
+              { hasInitialized ? children : <LoadingWidget/> }
+            </ErrorBoundary>
+          </main>
+        </ErrorBoundary>
+
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -82,36 +95,4 @@ export default function App() {
 
 export function HydrateFallback() {
   return <LoadingWidget/>
-}
-
-export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = "Oops!";
-  let details = "An unexpected error occurred.";
-  let stack: string | undefined;
-
-  if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error";
-    details =
-      error.status === 404
-        ? "The requested page could not be found."
-        : error.statusText || details;
-  } else if (import.meta.env.DEV && error && error instanceof Error) {
-    details = error.message;
-    stack = error.stack;
-  }
-
-  return (
-    <main className="flex flex-col gap-4 items-center justify-center p-5 min-h-[calc(100vh-20rem)] min-w-[calc(100dvw-5dvw)]">
-      <h1>{message}</h1>
-      <p>{details}</p>
-      {stack && (
-        <pre className="w-full p-4 overflow-x-auto">
-          <code>{stack}</code>
-        </pre>
-      )}
-      <Button size="xs" className="mt-10" onClick={() => window.location.href = '/'}>
-        Go back to Main Screen
-      </Button>
-    </main>
-  );
 }

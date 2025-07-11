@@ -2,7 +2,7 @@ export interface apiError {
   title: string;
   status: number;
   detail: string | null;
-  CorrelationId: string;
+  GameRequestCorrelationId: string;
   traceId: string;
   errors?: {
     [key: string]: string[];

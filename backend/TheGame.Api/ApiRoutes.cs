@@ -10,6 +10,7 @@ using System.Linq;
 using System.Threading;
 using TheGame.Api.Auth;
 using TheGame.Api.CommandHandlers;
+using TheGame.Api.Common;
 
 namespace TheGame.Api;
 
@@ -39,7 +40,7 @@ public static class ApiRoutes
 
         if (playerIdClaim?.Value == null || !long.TryParse(playerIdClaim.Value, out var playerId))
         {
-          return Results.BadRequest(InvalidPlayerIdClaimError);
+          throw new InvalidOperationException(InvalidPlayerIdClaimError);
         }
 
         invocationContext.HttpContext.Items[PlayerIdItemKey] = playerId;
@@ -50,16 +51,9 @@ public static class ApiRoutes
     apiRoute
       .MapPost("/user/google/apitoken", async (HttpContext ctx, GameAuthService authService, [FromBody] string credential) =>
       {
-        var apiTokenResult = await authService.AuthenticateWithGoogleAuthCode(credential, ctx);
-        if (!apiTokenResult.TryGetSuccessful(out var apiTokens, out var tokenFailure))
-        {
-          return Results.BadRequest(tokenFailure.ErrorMessage);
-        }
-
-        return Results.Ok(new
-        {
-          apiTokens.AccessToken
-        });
+        return await authService
+          .AuthenticateWithGoogleAuthCode(credential, ctx)
+          .ToHttpResponse(ctx);
       })
       .WithDescription("Validate Google Auth Code and generate API tokens for accessing Game APIs.")
       .AllowAnonymous();
@@ -73,16 +67,9 @@ public static class ApiRoutes
           .Split(" ")
           .LastOrDefault() ?? string.Empty;
 
-        var refreshResult = await authService.RefreshAccessToken(ctx, accessToken);
-        if (!refreshResult.TryGetSuccessful(out var refreshTokens, out var tokenFailure))
-        {
-          return Results.BadRequest(tokenFailure.ErrorMessage);
-        }
-
-        return Results.Ok(new
-        {
-          refreshTokens.AccessToken
-        });
+        return await authService
+          .RefreshAccessToken(ctx, accessToken)
+          .ToHttpResponse(ctx);
       })
       .WithDescription("Refresh Game API Token using Refresh Cookie")
       .AllowAnonymous();
@@ -122,16 +109,12 @@ public static class ApiRoutes
           CancellationToken cancellationToken) =>
         {
           var playerId = GetPlayerIdFromHttpContext(ctx);
-      
-          var newGameResult = await startGameHandler.Execute(
-            new StartNewGameCommand(newGameRequest.NewGameName, playerId),
-            cancellationToken);
-          if (!newGameResult.TryGetSuccessful(out var newGame, out var newGameFailure))
-          {
-            return Results.BadRequest(newGameFailure.ErrorMessage);
-          }
 
-          return Results.Ok(newGame);
+          return await startGameHandler
+            .Execute(
+              new StartNewGameCommand(newGameRequest.NewGameName, playerId),
+              cancellationToken)
+            .ToHttpResponse(ctx);
         })
         .WithDescription("Start new game for an authenticated player.");
 
@@ -144,13 +127,11 @@ public static class ApiRoutes
           CancellationToken cancellationToken) =>
         {
           var playerId = GetPlayerIdFromHttpContext(ctx);
-          var endGameResult = await endGameHandler.Execute(new EndGameCommand(gameId, playerId), cancellationToken);
-          if (!endGameResult.TryGetSuccessful(out var endedGame, out var endGameFailure))
-          {
-            return Results.BadRequest(endGameFailure.ErrorMessage);
-          }
-
-          return Results.Ok(endedGame);
+          return await endGameHandler
+            .Execute(
+              new EndGameCommand(gameId, playerId),
+              cancellationToken)
+            .ToHttpResponse(ctx);
         })
         .WithDescription("End active game for an authenticated player.");
 
@@ -165,15 +146,11 @@ public static class ApiRoutes
         {
           var playerId = GetPlayerIdFromHttpContext(ctx);
 
-          var endGameResult = await spotPlatesHandler.Execute(
-            new SpotLicensePlatesCommand(spottedPlates, gameId, playerId),
-            cancellationToken);
-          if (!endGameResult.TryGetSuccessful(out var updateGame, out var endGameFailure))
-          {
-            return Results.BadRequest(endGameFailure.ErrorMessage);
-          }
-
-          return Results.Ok(updateGame);
+          return await spotPlatesHandler
+            .Execute(
+              new SpotLicensePlatesCommand(spottedPlates, gameId, playerId),
+              cancellationToken)
+            .ToHttpResponse(ctx);
         })
         .WithDescription("Updated spotted license plates for an active game.");
 

@@ -8,6 +8,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using TheGame.Api.Auth;
 using TheGame.Api.CommandHandlers;
+using TheGame.Api.Common;
 using TheGame.Api.Common.MessageBus;
 using TheGame.Domain;
 using TheGame.Domain.DomainModels.Common;
@@ -105,13 +106,26 @@ public class Program
 
     // Set json serializer options. Both configs must be set.
     // see https://stackoverflow.com/questions/76643787/how-to-make-enum-serialization-default-to-string-in-minimal-api-endpoints-and-sw
-
-    // Minimal APIs
     builder.Services.ConfigureHttpJsonOptions(options =>
     {
       options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
       options.SerializerOptions.PropertyNameCaseInsensitive = true;
     });
+
+    // RFC 9110 error response shape
+    builder.Services.AddProblemDetails(opts =>
+    {
+      opts.CustomizeProblemDetails = (ctx) =>
+      {
+        if (string.IsNullOrEmpty(ctx.ProblemDetails.Detail))
+        {
+          ctx.ProblemDetails.Detail = "Please contact IT Support for assistance.";
+        }
+
+        ctx.ProblemDetails.Extensions[GameApiMiddleware.CorrelationIdKey] = ctx.HttpContext.RetrieveCorrelationId();
+      };
+    });
+
     // Swagger
     builder.Services
       .Configure<JsonOptions>(options =>
@@ -127,9 +141,9 @@ public class Program
       app.UseCors("ui");
     }
 
-    // TODO enable and configure exception handler
-    //app.UseExceptionHandler();
-    //app.UseStatusCodePages();
+    // TODO need to strip out sensitive info from response
+    app.UseExceptionHandler();
+    app.UseStatusCodePages();
 
     app.MapDefaultEndpoints();
 
@@ -151,6 +165,8 @@ public class Program
 
     app.UseAuthentication();
     app.UseAuthorization();
+
+    app.Use(GameApiMiddleware.CreateRequestCorrelationMiddleware());
 
     app.MapGroup("")
       .RequireAuthorization()

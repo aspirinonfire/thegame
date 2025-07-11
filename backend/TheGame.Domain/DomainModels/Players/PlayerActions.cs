@@ -91,7 +91,8 @@ public partial class Player
     {
       var queryWithIncludes = playerQuery
         .Include(p => p.OwnedGames.Where(g => g.Id == gameId))
-          .ThenInclude(g => g.GameLicensePlates.OrderByDescending(glp => glp.DateCreated));
+          .ThenInclude(g => g.GameLicensePlates.OrderByDescending(glp => glp.DateCreated))
+            .ThenInclude(glp => glp.LicensePlate);
 
       var actingPlayerResult = await GetActingPlayer(queryWithIncludes);
       if (!actingPlayerResult.TryGetSuccessful(out var actingPlayer, out var failure))
