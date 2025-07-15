@@ -4,7 +4,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using TheGame.Api;
 using TheGame.Api.Auth;
-using TheGame.Api.Endpoints.User;
 
 namespace TheGame.Tests.Auth;
 
@@ -39,8 +38,6 @@ public class GameAuthServiceTests
     options.Value.Returns(_validGameSettings);
 
     var uutAuthService = new GameAuthService(NullLogger<GameAuthService>.Instance,
-      Substitute.For<ICommandHandler<RotatePlayerIdentityRefreshTokenCommand, RotatePlayerIdentityRefreshTokenCommand.Result>>(),
-      CommonMockedServices.GetMockedTimeProvider(),
       options);
 
     var actualToken = uutAuthService.GenerateApiJwtToken("provider name",

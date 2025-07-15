@@ -21,6 +21,7 @@ public static class GoogleApiTokenEndpoint
     if (authResult.TryGetSuccessful(out var apiTokens, out _))
     {
       gameAuthService.SetRefreshCookie(ctx, apiTokens.RefreshTokenValue, apiTokens.RefreshTokenExpiresIn);
+      return Results.Ok(new { apiTokens.AccessToken });
     }
 
     return authResult.ToHttpResponse(ctx);

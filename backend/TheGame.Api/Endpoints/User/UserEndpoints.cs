@@ -35,8 +35,8 @@ public static class UserEndpoints
   {
     services
       .AddScoped<
-        ICommandHandler<RotatePlayerIdentityRefreshTokenCommand, RotatePlayerIdentityRefreshTokenCommand.Result>,
-        RotatePlayerIdentityRefreshTokenCommandHandler>()
+        ICommandHandler<RefreshAccessTokenCommand, RefreshAccessTokenCommand.Result>,
+        RefreshAccessTokenCommandHandler>()
       .AddScoped<
         ICommandHandler<GetOrCreateNewPlayerCommand, GetOrCreateNewPlayerCommand.Result>,
         GetOrCreateNewPlayerCommandHandler>()

@@ -8,25 +8,23 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using TheGame.Api.Endpoints.User;
 using TheGame.Domain.Utils;
 
 namespace TheGame.Api.Auth;
 
 public sealed record ApiTokens(bool IsNewIdentity, string AccessToken);
 
+public sealed record ValidatedAccessTokenValues(long PlayerId, string PlayerIdentityName, string PlayerIdentityId);
+
 public interface IGameAuthService
 {
   string GenerateApiJwtToken(string providerName, string providerIdentityId, long playerId, long playerIdentityId);
-  Task<Result<ApiTokens>> RefreshAccessToken(HttpContext httpContext, string accessToken);
+  Result<ValidatedAccessTokenValues> GetValidateExpiredAccessToken(string accessToken);
+  string RetrieveRefreshTokenValue(HttpContext httpContext);
   void SetRefreshCookie(HttpContext httpContext, string refreshTokenValue, TimeSpan tokenExpiration);
 }
 
 public class GameAuthService(ILogger<GameAuthService> logger,
-  ICommandHandler<RotatePlayerIdentityRefreshTokenCommand, RotatePlayerIdentityRefreshTokenCommand.Result> rotateRefreshTokenHandler,
-  TimeProvider timeProvider,
   IOptions<GameSettings> gameSettings) : IGameAuthService
 {
   // TODO figure out correct way to set issuer (config vs api host, etc).
@@ -56,19 +54,11 @@ public class GameAuthService(ILogger<GameAuthService> logger,
 
   public const string InvalidRefreshParameters = "access_refresh_parameters_invalid";
 
-  public virtual async Task<Result<ApiTokens>> RefreshAccessToken(HttpContext httpContext, string accessToken)
+  public Result<ValidatedAccessTokenValues> GetValidateExpiredAccessToken(string accessToken)
   {
-    var refreshCookieValue = httpContext.Request.Cookies
-      .Where(cookie => cookie.Key == ApiRefreshTokenCookieName)
-      .Select(cookie => cookie.Value)
-      .FirstOrDefault();
-
-    if (string.IsNullOrEmpty(refreshCookieValue) || string.IsNullOrWhiteSpace(accessToken))
-    {
-      return new Failure(InvalidRefreshParameters);
-    }
-
     long playerId = 0;
+    string? identityProvider;
+    string? identityId;
     try
     {
       // validate token
@@ -88,6 +78,10 @@ public class GameAuthService(ILogger<GameAuthService> logger,
       {
         long.TryParse(playerIdClaim, null, out playerId);
       }
+
+      identityProvider = tokenClaims.FindFirstValue(PlayerIdentityAuthority);
+
+      identityId = tokenClaims.FindFirstValue(PlayerIdentityUserId);
     }
     catch (Exception ex)
     {
@@ -101,27 +95,19 @@ public class GameAuthService(ILogger<GameAuthService> logger,
       return new Failure(InvalidRefreshParameters);
     }
 
-    var refreshTokenResult = await rotateRefreshTokenHandler.Execute(
-      new RotatePlayerIdentityRefreshTokenCommand(playerId,
-        refreshCookieValue,
-        gameSettings.Value.Auth.Api.RefreshTokenByteCount,
-        gameSettings.Value.Auth.Api.RefreshTokenAgeMinutes),
-      CancellationToken.None);
-    if (!refreshTokenResult.TryGetSuccessful(out var newRefreshToken, out var refreshFailure))
+    if (string.IsNullOrWhiteSpace(identityProvider))
     {
-      return refreshFailure;
+      logger.LogError("Player Identity provider value is invalid.");
+      return new Failure(InvalidRefreshParameters);
     }
 
-    var cookieExpiration = newRefreshToken.RefreshTokenExpiration - timeProvider.GetUtcNow();
+    if (string.IsNullOrWhiteSpace(identityId))
+    {
+      logger.LogError("Player Identity ID value is invalid.");
+      return new Failure(InvalidRefreshParameters);
+    }
 
-    SetRefreshCookie(httpContext, newRefreshToken.RefreshToken, cookieExpiration);
-
-    var apiToken = GenerateApiJwtToken(newRefreshToken.ProviderName,
-      newRefreshToken.ProviderIdentityId,
-      newRefreshToken.PlayerId,
-      newRefreshToken.PlayerIdentityId);
-
-    return new ApiTokens(false, apiToken);
+    return new ValidatedAccessTokenValues(playerId, identityProvider, identityId);
   }
 
   /// <summary>
@@ -132,7 +118,7 @@ public class GameAuthService(ILogger<GameAuthService> logger,
   /// <param name="playerId"></param>
   /// <param name="playerIdentityId"></param>
   /// <returns></returns>
-  public virtual string GenerateApiJwtToken(string providerName, string providerIdentityId, long playerId, long playerIdentityId)
+  public string GenerateApiJwtToken(string providerName, string providerIdentityId, long playerId, long playerIdentityId)
   {
     var claims = new List<Claim>
     {
@@ -173,4 +159,9 @@ public class GameAuthService(ILogger<GameAuthService> logger,
 
     httpContext.Response.Cookies.Append(ApiRefreshTokenCookieName, refreshTokenValue, refreshCookieOptions);
   }
+
+  public string RetrieveRefreshTokenValue(HttpContext httpContext) => httpContext.Request.Cookies
+      .Where(cookie => cookie.Key == ApiRefreshTokenCookieName)
+      .Select(cookie => cookie.Value)
+      .FirstOrDefault(string.Empty);
 }

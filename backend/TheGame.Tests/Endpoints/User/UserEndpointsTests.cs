@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MockQueryable;
+using NSubstitute;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Headers;
@@ -17,6 +19,7 @@ using TheGame.Api;
 using TheGame.Api.Auth;
 using TheGame.Api.Endpoints.User;
 using TheGame.Api.Endpoints.User.GoogleApiToken;
+using TheGame.Api.Endpoints.User.RefreshToken;
 using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Common;
 
@@ -120,8 +123,6 @@ public class UserEndpointsTests
       services.AddScoped(sp =>
       {
         var gameAuthSvc = Substitute.ForPartsOf<GameAuthService>(NullLogger<GameAuthService>.Instance,
-          Substitute.For<ICommandHandler<RotatePlayerIdentityRefreshTokenCommand, RotatePlayerIdentityRefreshTokenCommand.Result>>(),
-          CommonMockedServices.GetMockedTimeProvider(),
           Substitute.For<IOptions<GameSettings>>());
 
         return gameAuthSvc;
@@ -173,16 +174,14 @@ public class UserEndpointsTests
       services.AddTransient(sp =>
       {
         var refreshTokenCommandHandler =
-          Substitute.For<ICommandHandler<RotatePlayerIdentityRefreshTokenCommand, RotatePlayerIdentityRefreshTokenCommand.Result>>();
+          Substitute.For<ICommandHandler<RefreshAccessTokenCommand, RefreshAccessTokenCommand.Result>>();
         refreshTokenCommandHandler
-          .Execute(Arg.Any<RotatePlayerIdentityRefreshTokenCommand>(), Arg.Any<CancellationToken>())
-          .Returns(new RotatePlayerIdentityRefreshTokenCommand.Result(
+          .Execute(Arg.Any<RefreshAccessTokenCommand>(), Arg.Any<CancellationToken>())
+          .Returns(new RefreshAccessTokenCommand.Result(
+            "new_access_token",
             "new_refresh_token",
-            new DateTimeOffset(2024, 1, 13, 0, 0, 0, TimeSpan.Zero),
-            playerId,
-            playerId,
-            "test provider",
-            "test provider ident id"));
+            TimeSpan.FromSeconds(10)
+          ));
 
         return refreshTokenCommandHandler;
       });
@@ -240,16 +239,14 @@ public class UserEndpointsTests
     {
       services.AddTransient(sp =>
       {
-        var handler = Substitute.For<ICommandHandler<RotatePlayerIdentityRefreshTokenCommand, RotatePlayerIdentityRefreshTokenCommand.Result>>();
+        var handler = Substitute.For<ICommandHandler<RefreshAccessTokenCommand, RefreshAccessTokenCommand.Result>>();
         handler
-          .Execute(Arg.Any<RotatePlayerIdentityRefreshTokenCommand>(), Arg.Any<CancellationToken>())
-          .Returns(new RotatePlayerIdentityRefreshTokenCommand.Result(
+          .Execute(Arg.Any<RefreshAccessTokenCommand>(), Arg.Any<CancellationToken>())
+          .Returns(new RefreshAccessTokenCommand.Result(
+            "new_access_token",
             "new_refresh_token",
-            new DateTimeOffset(2024, 1, 13, 0, 0, 0, TimeSpan.Zero),
-            playerId,
-            playerId,
-            "test provider",
-            "test provider ident id"));
+            TimeSpan.FromSeconds(10)
+          ));
 
         return handler;
       });
@@ -385,6 +382,10 @@ public class UserEndpointsTests
           options.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddDebug()));
           options.EnableSensitiveDataLogging(true);
           options.UseInMemoryDatabase("TestGameDb");
+          options.ConfigureWarnings(warns =>
+          {
+            warns.Ignore(InMemoryEventId.TransactionIgnoredWarning);
+          });
         });
 
         registerServices?.Invoke(services);

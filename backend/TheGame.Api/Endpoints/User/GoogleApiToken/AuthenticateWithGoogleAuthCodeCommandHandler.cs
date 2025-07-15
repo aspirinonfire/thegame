@@ -27,6 +27,7 @@ public sealed record AuthenticateWithGoogleAuthCodeCommand(string AuthCode)
 }
 
 public class AuthenticateWithGoogleAuthCodeCommandHandler(IGameAuthService gameAuthService,
+  // TODO commands should not be chained!!
   ICommandHandler<GetOrCreateNewPlayerCommand, GetOrCreateNewPlayerCommand.Result> getOrCreatePlayerCommandHandler,
   TimeProvider timeProvider,
   IOptions<GameSettings> gameSettings,
