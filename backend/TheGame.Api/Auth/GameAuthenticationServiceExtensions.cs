@@ -48,7 +48,7 @@ public static class GameAuthenticationServiceExtensions
         .Build());
 
     services
-      .AddScoped<GameAuthService>();
+      .AddScoped<IGameAuthService, GameAuthService>();
 
     return services;
   }

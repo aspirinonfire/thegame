@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using TheGame.Api.Auth;
 using TheGame.Api.Common;
 using TheGame.Api.Endpoints.Game;
 using TheGame.Api.Endpoints.User;
@@ -51,6 +52,10 @@ public static class CommonMockedServices
       })
       .AddScoped<ITransactionExecutionWrapper, TransactionExecutionWrapper>()
       .AddScoped(typeof(IDomainMessageHandler<>), typeof(DomainMessageLogger<>))
+      .AddScoped(sp =>
+      {
+        return Substitute.For<IGameAuthService>();
+      })
       .AddUserEndpointServices()
       .AddGameEndpointServices();
 

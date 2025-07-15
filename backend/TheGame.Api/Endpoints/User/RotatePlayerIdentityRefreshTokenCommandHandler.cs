@@ -9,7 +9,7 @@ using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Common;
 using TheGame.Domain.Utils;
 
-namespace TheGame.Api.Auth;
+namespace TheGame.Api.Endpoints.User;
 
 public sealed record RotatePlayerIdentityRefreshTokenCommand(long PlayerIdentityId,
   string CurrentRefreshToken,

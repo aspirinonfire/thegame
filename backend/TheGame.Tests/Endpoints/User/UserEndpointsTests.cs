@@ -1,6 +1,4 @@
-﻿using Google.Apis.Auth;
-using Google.Apis.Auth.OAuth2.Responses;
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -10,7 +8,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MockQueryable;
-using NSubstitute.Extensions;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Headers;
@@ -103,86 +100,37 @@ public class UserEndpointsTests
   [Fact]
   public async Task WillAuthenticateNewPlayerWithWhenGoogleAuthCodeIsValid()
   {
-    var authCode = "auth-code";
-
-    var testGoogleIdToken = "google-id-token";
-
     await using var uutApiApp = GetApiFactory(services =>
     {
-      services.AddTransient(sp =>
+      services.AddScoped(sp =>
       {
-        var createNewPlayerCommand =
-          Substitute.For<ICommandHandler<GetOrCreateNewPlayerCommand, GetOrCreateNewPlayerCommand.Result>>();
-        createNewPlayerCommand
-          .Execute(Arg.Any<GetOrCreateNewPlayerCommand>(), Arg.Any<CancellationToken>())
-          .Returns(new GetOrCreateNewPlayerCommand.Result(true,
-            123,
-            123,
-            "test provider",
-            "test id",
-            "refresh_token",
-            new DateTimeOffset(2024, 1, 13, 0, 0, 0, TimeSpan.Zero)));
+        var cmdHandler = Substitute
+          .For<ICommandHandler<AuthenticateWithGoogleAuthCodeCommand, AuthenticateWithGoogleAuthCodeCommand.Result>>();
 
-        return createNewPlayerCommand;
-      });
+        cmdHandler
+          .Execute(Arg.Is<AuthenticateWithGoogleAuthCodeCommand>(cmd => cmd.AuthCode == "test-auth-code"), Arg.Any<CancellationToken>())
+          .Returns(new AuthenticateWithGoogleAuthCodeCommand.Result(false,
+            "test-access-token",
+            "test-refresh-token",
+            TimeSpan.FromSeconds(60)));
 
-      services.AddTransient(sp =>
-      {
-        var createNewPlayerCommand =
-          Substitute.For<ICommandHandler<RotatePlayerIdentityRefreshTokenCommand, RotatePlayerIdentityRefreshTokenCommand.Result>>();
-        createNewPlayerCommand
-          .Execute(Arg.Any<RotatePlayerIdentityRefreshTokenCommand>(), Arg.Any<CancellationToken>())
-          .Returns(new RotatePlayerIdentityRefreshTokenCommand.Result("somerefreshtoken",
-            DateTimeOffset.UtcNow.AddMinutes(1),
-            123,
-            123,
-            "google",
-            "google-user-id"));
-
-        return createNewPlayerCommand;
+        return cmdHandler;
       });
 
       services.AddScoped(sp =>
       {
-        var opts = sp.GetRequiredService<IOptions<GameSettings>>();
-        var systemService = sp.GetRequiredService<TimeProvider>();
+        var gameAuthSvc = Substitute.ForPartsOf<GameAuthService>(NullLogger<GameAuthService>.Instance,
+          Substitute.For<ICommandHandler<RotatePlayerIdentityRefreshTokenCommand, RotatePlayerIdentityRefreshTokenCommand.Result>>(),
+          CommonMockedServices.GetMockedTimeProvider(),
+          Substitute.For<IOptions<GameSettings>>());
 
-        var createNewPlayerHandler = sp
-          .GetRequiredService<ICommandHandler<GetOrCreateNewPlayerCommand, GetOrCreateNewPlayerCommand.Result>>();
-        
-        var rotateRefreshTokenHandler = sp
-          .GetRequiredService<ICommandHandler<RotatePlayerIdentityRefreshTokenCommand, RotatePlayerIdentityRefreshTokenCommand.Result>>();
-
-        var mockedAuthService = Substitute.ForPartsOf<GameAuthService>(NullLogger<GameAuthService>.Instance,
-          createNewPlayerHandler,
-          rotateRefreshTokenHandler,
-          systemService,
-          opts);
-
-        mockedAuthService
-          .Configure()
-          .ExchangeGoogleAuthCodeForTokens(authCode)
-          .Returns(new TokenResponse()
-          {
-            IdToken = testGoogleIdToken
-          });
-
-        mockedAuthService
-          .Configure()
-          .GetValidatedGoogleIdTokenPayload(testGoogleIdToken)
-          .Returns(new GoogleJsonWebSignature.Payload()
-          {
-            Subject = "test-user",
-            Name = "Test User"
-          });
-
-        return mockedAuthService;
+        return gameAuthSvc;
       });
     });
 
     var client = uutApiApp.CreateClient();
 
-    var actualAuthTokenResponseMessage = await client.PostAsJsonAsync("/api/user/google/apitoken", authCode);
+    var actualAuthTokenResponseMessage = await client.PostAsJsonAsync("/api/user/google/apitoken", "test-auth-code");
 
     Assert.Equal(HttpStatusCode.OK, actualAuthTokenResponseMessage.StatusCode);
 
@@ -211,7 +159,7 @@ public class UserEndpointsTests
     var actualResponse = await actualAuthTokenResponseMessage.Content.ReadFromJsonAsync<Dictionary<string, object>>();
     Assert.NotNull(actualResponse);
     var actualToken = Assert.Contains("accessToken", actualResponse);
-    Assert.NotNull(actualToken);
+    Assert.Equal("test-access-token", actualToken.ToString());
   }
 
   [Fact]
@@ -242,7 +190,7 @@ public class UserEndpointsTests
 
     await using var scope = uutApiApp.Services.CreateAsyncScope();
 
-    var gameAuthService = scope.ServiceProvider.GetRequiredService<GameAuthService>();
+    var gameAuthService = scope.ServiceProvider.GetRequiredService<IGameAuthService>();
     
     var currentAccessToken = gameAuthService.GenerateApiJwtToken("test provider",
       "test provider user id",
@@ -309,7 +257,7 @@ public class UserEndpointsTests
 
     await using var scope = uutApiApp.Services.CreateAsyncScope();
 
-    var gameAuthService = scope.ServiceProvider.GetRequiredService<GameAuthService>();
+    var gameAuthService = scope.ServiceProvider.GetRequiredService<IGameAuthService>();
 
     var currentAccessToken = GetExpiredApiAccessToken(playerId);
 
@@ -452,7 +400,7 @@ public class UserEndpointsTests
   {
     var scope = apiAppFactory.Services.CreateScope();
 
-    var gameAuthService = scope.ServiceProvider.GetRequiredService<GameAuthService>();
+    var gameAuthService = scope.ServiceProvider.GetRequiredService<IGameAuthService>();
 
     var authToken = gameAuthService.GenerateApiJwtToken("test provider",
       "test provider user id",

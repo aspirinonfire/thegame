@@ -8,7 +8,7 @@ namespace TheGame.Api.Endpoints.User.RefreshToken;
 
 public static class RefreshTokenEndpoint
 {
-  public readonly static Delegate Handler = async (HttpContext ctx, GameAuthService authService) =>
+  public readonly static Delegate Handler = async (HttpContext ctx, IGameAuthService authService) =>
   {
     // we cannot use GetTokenAsync because expired tokens are not saved in context
     var accessToken = ctx.Request.Headers.Authorization

@@ -5,7 +5,7 @@ using TheGame.Api.Endpoints.Game;
 using TheGame.Api.Endpoints.Game.CreateGame;
 using TheGame.Api.Endpoints.Game.EndGame;
 using TheGame.Api.Endpoints.Game.SpotPlates;
-using TheGame.Api.Endpoints.User.GoogleApiToken;
+using TheGame.Api.Endpoints.User;
 using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.LicensePlates;
 using TheGame.Domain.DomainModels.PlayerIdentities;

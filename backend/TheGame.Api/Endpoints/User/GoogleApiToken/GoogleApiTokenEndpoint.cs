@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Threading;
 using TheGame.Api.Auth;
 using TheGame.Api.Common;
 
@@ -8,10 +9,20 @@ namespace TheGame.Api.Endpoints.User.GoogleApiToken;
 
 public static class GoogleApiTokenEndpoint
 {
-  public readonly static Delegate Handler = async (HttpContext ctx, GameAuthService authService, [FromBody] string credential) =>
+  public readonly static Delegate Handler = async (HttpContext ctx,
+    ICommandHandler<AuthenticateWithGoogleAuthCodeCommand, AuthenticateWithGoogleAuthCodeCommand.Result> googleAuthCodeCommandHandler,
+    IGameAuthService gameAuthService,
+    CancellationToken cancellationToken,
+    [FromBody] string credential) =>
   {
-    return await authService
-      .AuthenticateWithGoogleAuthCode(credential, ctx)
-      .ToHttpResponse(ctx);
+    var authResult = await googleAuthCodeCommandHandler.Execute(new AuthenticateWithGoogleAuthCodeCommand(credential),
+      cancellationToken);
+    
+    if (authResult.TryGetSuccessful(out var apiTokens, out _))
+    {
+      gameAuthService.SetRefreshCookie(ctx, apiTokens.RefreshTokenValue, apiTokens.RefreshTokenExpiresIn);
+    }
+
+    return authResult.ToHttpResponse(ctx);
   };
 }
