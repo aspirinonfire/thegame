@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using TheGame.Domain.DomainModels;
 using TheGame.Domain.Utils;
 
-namespace TheGame.Api.CommandHandlers;
+namespace TheGame.Api.Common;
 
 public interface ITransactionExecutionWrapper
 {

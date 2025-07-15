@@ -14,7 +14,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using TheGame.Api.CommandHandlers;
+using TheGame.Api.Endpoints.User.GoogleApiToken;
 using TheGame.Domain.DomainModels.PlayerIdentities;
 using TheGame.Domain.Utils;
 

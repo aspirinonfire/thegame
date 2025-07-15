@@ -34,9 +34,9 @@ public static class GameAuthenticationServiceExtensions
         options.Validate();
       });
 
-    services.AddAuthorization(authZOptions =>
-    {
-      authZOptions.DefaultPolicy = new AuthorizationPolicyBuilder()
+    services
+      .AddAuthorizationBuilder()
+      .SetDefaultPolicy(new AuthorizationPolicyBuilder()
         // must use jwt bearer token
         .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
         // must be authenticated (valid, and unexpired token)
@@ -45,10 +45,10 @@ public static class GameAuthenticationServiceExtensions
         .RequireClaim(GameAuthService.PlayerIdentityUserId)
         // must have player id claim
         .RequireClaim(GameAuthService.PlayerIdClaimType)
-        .Build();
-    });
+        .Build());
 
-    services.AddScoped<GameAuthService>();
+    services
+      .AddScoped<GameAuthService>();
 
     return services;
   }

@@ -18,15 +18,15 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using TheGame.Api;
 using TheGame.Api.Auth;
-using TheGame.Api.CommandHandlers;
-using TheGame.Api.Common.MessageBus;
+using TheGame.Api.Endpoints.User;
+using TheGame.Api.Endpoints.User.GoogleApiToken;
 using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Common;
 
-namespace TheGame.Tests;
+namespace TheGame.Tests.Endpoints.User;
 
 [Trait(XunitTestProvider.Category, XunitTestProvider.Integration)]
-public class ApiRoutesTests
+public class UserEndpointsTests
 {
   private const string _testJwtSecret = "this is a jwt secret value for testing api routes!";
   private const string _testJwtAudience = "test audience";
@@ -208,10 +208,10 @@ public class ApiRoutesTests
     Assert.Contains("httponly", actualRefreshCookieValue);
     Assert.Contains("path=/api/user/refresh-token", actualRefreshCookieValue);
 
-    var actualResponse = await actualAuthTokenResponseMessage.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+    var actualResponse = await actualAuthTokenResponseMessage.Content.ReadFromJsonAsync<Dictionary<string, object>>();
     Assert.NotNull(actualResponse);
     var actualToken = Assert.Contains("accessToken", actualResponse);
-    Assert.NotEmpty(actualToken);
+    Assert.NotNull(actualToken);
   }
 
   [Fact]
@@ -257,7 +257,7 @@ public class ApiRoutesTests
 
     Assert.Equal(HttpStatusCode.OK, actualAuthTokenResponseMessage.StatusCode);
 
-    var actualResponse = await actualAuthTokenResponseMessage.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+    var actualResponse = await actualAuthTokenResponseMessage.Content.ReadFromJsonAsync<Dictionary<string, object>>();
     Assert.NotNull(actualResponse);
     var actualNewAccessToken = Assert.Contains("accessToken", actualResponse);
     Assert.NotEqual(currentAccessToken, actualNewAccessToken);
@@ -321,7 +321,7 @@ public class ApiRoutesTests
 
     Assert.Equal(HttpStatusCode.OK, actualAuthTokenResponseMessage.StatusCode);
 
-    var actualResponse = await actualAuthTokenResponseMessage.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+    var actualResponse = await actualAuthTokenResponseMessage.Content.ReadFromJsonAsync<Dictionary<string, object>>();
     Assert.NotNull(actualResponse);
     var actualNewAccessToken = Assert.Contains("accessToken", actualResponse);
     Assert.NotEqual(currentAccessToken, actualNewAccessToken);

@@ -7,9 +7,11 @@ using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using TheGame.Api.Auth;
-using TheGame.Api.CommandHandlers;
 using TheGame.Api.Common;
 using TheGame.Api.Common.MessageBus;
+using TheGame.Api.Endpoints;
+using TheGame.Api.Endpoints.Game;
+using TheGame.Api.Endpoints.User;
 using TheGame.Domain;
 using TheGame.Domain.DomainModels.Common;
 
@@ -79,7 +81,7 @@ public class Program
 
     var isDevEnvironment = builder.Environment.IsDevelopment();
 
-    // register game api services
+    // register game api services and configuration
     builder.Services
       .AddOptions<GameSettings>()
       .BindConfiguration("")
@@ -92,17 +94,16 @@ public class Program
       var channelsQueue = sp.GetRequiredService<ChannelsMessageQueue>();
       return new ChannelsEventBus(channelsQueue);
     });
-      
+
     // API services
     builder.Services
       .AddGameAuthenticationServices(builder.Configuration)
       .AddInMemoryEventBus()
+      .AddHostedService<DomainMessagesWorker>()
+      .AddScoped(typeof(IDomainMessageHandler<>), typeof(DomainMessageLogger<>))
       .AddScoped<ITransactionExecutionWrapper, TransactionExecutionWrapper>()
-      .AddScoped<IPlayerQueryProvider, PlayerQueryProvider>()
-      .AddScoped<IGameQueryProvider, GameQueryProvider>()
-      .AddHostedService<DomainMessagesWorker>();
-
-    AddCommandHandlers(builder.Services);
+      .AddUserEndpointServices()
+      .AddGameEndpointServices();
 
     // Set json serializer options. Both configs must be set.
     // see https://stackoverflow.com/questions/76643787/how-to-make-enum-serialization-default-to-string-in-minimal-api-endpoints-and-sw
@@ -168,35 +169,14 @@ public class Program
 
     app.Use(GameApiMiddleware.CreateRequestCorrelationMiddleware());
 
-    app.MapGroup("")
-      .RequireAuthorization()
-      .AddGameApiRoutes();
+    var apiRoutes = app
+      .MapGroup("api")
+      .RequireAuthorization();
+
+    apiRoutes
+      .MapUserEndpoints()
+      .MapGameEndpoints();
 
     await app.RunAsync();
-  }
-
-  // TODO move to endpoints
-  public static IServiceCollection AddCommandHandlers(IServiceCollection services)
-  {
-    services
-      .AddScoped<
-        ICommandHandler<GetOrCreateNewPlayerCommand, GetOrCreateNewPlayerCommand.Result>,
-        GetOrCreateNewPlayerCommandHandler>()
-      .AddScoped<
-        ICommandHandler<RotatePlayerIdentityRefreshTokenCommand, RotatePlayerIdentityRefreshTokenCommand.Result>,
-        RotatePlayerIdentityRefreshTokenCommandHandler>()
-      .AddScoped<
-        ICommandHandler<StartNewGameCommand, OwnedOrInvitedGame>,
-        StartNewGameCommandHandler>()
-      .AddScoped<
-        ICommandHandler<EndGameCommand, OwnedOrInvitedGame>,
-        EndGameCommandHandler>()
-      .AddScoped<
-        ICommandHandler<SpotLicensePlatesCommand, OwnedOrInvitedGame>,
-        SpotLicensePlatesCommandHandler>();
-
-    services.AddScoped(typeof(IDomainMessageHandler<>), typeof(DomainMessageLogger<>));
-
-    return services;
   }
 }

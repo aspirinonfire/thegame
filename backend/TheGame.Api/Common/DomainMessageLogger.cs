@@ -1,10 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Threading;
 using System.Threading.Tasks;
-using TheGame.Api.Common.MessageBus;
 using TheGame.Domain.DomainModels.Common;
 
-namespace TheGame.Api.CommandHandlers;
+namespace TheGame.Api.Common;
 
 public sealed class DomainMessageLogger<TDomainMessage>(ILogger<DomainMessageLogger<TDomainMessage>> logger) 
   : IDomainMessageHandler<TDomainMessage>

@@ -27,6 +27,6 @@ public class ResultTests
     Result<int> uutResult = new Failure("test");
 
     AssertResult.AssertIsFailure(uutResult,
-      actualFailureValue => Assert.Equal("test", actualFailureValue.ErrorMessage));
+      actualFailureValue => Assert.Equal("test", actualFailureValue.Error));
   }
 }

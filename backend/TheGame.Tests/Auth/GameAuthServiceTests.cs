@@ -4,7 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using TheGame.Api;
 using TheGame.Api.Auth;
-using TheGame.Api.CommandHandlers;
+using TheGame.Api.Endpoints.User.GoogleApiToken;
 
 namespace TheGame.Tests.Auth;
 

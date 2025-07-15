@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using TheGame.Api.CommandHandlers;
+using TheGame.Api.Endpoints.Game;
 using TheGame.Domain.DomainModels;
 using TheGame.Tests.Fixtures;
 

@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TheGame.Domain.DomainModels;
 
-namespace TheGame.Api;
+namespace TheGame.Api.Endpoints;
 
 public class ApiInfraHealthCheck (GameDbContext gameDbContext) : IHealthCheck
 {

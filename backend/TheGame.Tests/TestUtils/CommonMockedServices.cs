@@ -1,7 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using TheGame.Api;
-using TheGame.Api.CommandHandlers;
+using TheGame.Api.Common;
+using TheGame.Api.Endpoints.Game;
+using TheGame.Api.Endpoints.User;
 using TheGame.Domain;
 using TheGame.Domain.DomainModels.Common;
 
@@ -43,17 +44,16 @@ public static class CommonMockedServices
         busFactory,
         connString,
         efLogger => efLogger.AddDebug())
-      .AddScoped<ITransactionExecutionWrapper, TransactionExecutionWrapper>()
       .AddLogging(builder =>
       {
         builder.SetMinimumLevel(LogLevel.Information);
         builder.AddDebug();
       })
-      .AddScoped<IGameQueryProvider, GameQueryProvider>();
-
-    Program.AddCommandHandlers(services);
+      .AddScoped<ITransactionExecutionWrapper, TransactionExecutionWrapper>()
+      .AddScoped(typeof(IDomainMessageHandler<>), typeof(DomainMessageLogger<>))
+      .AddUserEndpointServices()
+      .AddGameEndpointServices();
 
     return services;
   }
-
 }

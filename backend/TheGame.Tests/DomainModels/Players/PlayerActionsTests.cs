@@ -209,7 +209,7 @@ public class PlayerActionsTests
 
     var actualSpotResult = await uut.UpdateLicensePlateSpots(1, gameLpSpots);
 
-    actualSpotResult.AssertIsFailure(actualFailure => Assert.Equal(ErrorMessageProvider.InactiveGameError, actualFailure.ErrorMessage));
+    actualSpotResult.AssertIsFailure(actualFailure => Assert.Equal(ErrorMessageProvider.InactiveGameError, actualFailure.Error));
 
     Assert.Empty(testGame.GameLicensePlates);
     Assert.Empty(actingPlayer.DomainEvents);

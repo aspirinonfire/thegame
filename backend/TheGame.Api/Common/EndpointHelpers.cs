@@ -1,14 +1,18 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using TheGame.Api.Auth;
 using TheGame.Domain.Utils;
 
 namespace TheGame.Api.Common;
 
 public static class EndpointHelpers
 {
+  public const string PlayerIdItemKey = "PlayerId";
+
   /// <summary>
   /// Transform <see cref="Result{FromSuccess}"/> to Http <see cref="Result{ToSuccess}"/>
   /// </summary>
@@ -55,23 +59,22 @@ public static class EndpointHelpers
     {
       return TypedResults.Ok(success);
     }
-    // TODO support validation failures
-    //else if (failure.TryGetValidationFailure(out var validationFailure))
-    //{
-    //  return TypedResults.ValidationProblem(
-    //    errors: validationFailure.ValidationFailures,
-    //    detail: "Please correct the errors and try again.",
-    //    extensions: new Dictionary<string, object?>()
-    //    {
-    //      [GameApiMiddleware.CorrelationIdKey] = correlationId
-    //    });
-    //}
+    else if (failure.TryGetValidationFailure(out var validationFailure))
+    {
+      return TypedResults.ValidationProblem(
+        errors: validationFailure.ValidationErrors,
+        detail: "Please correct the errors and try again.",
+        extensions: new Dictionary<string, object?>()
+        {
+          [GameApiMiddleware.CorrelationIdKey] = correlationId
+        });
+    }
     else
     {
       return Results.Problem(
         title: "An error occurred while processing your request.",
-        statusCode: (int)HttpStatusCode.InternalServerError,
-        detail: failure.ErrorMessage,
+        statusCode: (int)HttpStatusCode.BadRequest,
+        detail: failure.Error,
         extensions: new Dictionary<string, object?>()
         {
           [GameApiMiddleware.CorrelationIdKey] = correlationId
@@ -95,4 +98,20 @@ public static class EndpointHelpers
   /// <returns></returns>
   public static async Task<IResult> ToHttpResponse<TSuccess>(this Task<Result<TSuccess>> resultTask, HttpContext httpContext) => (await resultTask)
     .ToHttpResponse(httpContext);
+
+  /// <summary>
+  /// Extract Player ID from principal claims
+  /// </summary>
+  /// <param name="httpContext"></param>
+  /// <returns></returns>
+  /// <exception cref="InvalidOperationException">Thrown when claim is not present</exception>
+  public static Result<long> GetPlayerIdFromHttpContext(this HttpContext httpContext)
+  {
+    var playerIdClaim = httpContext.User.Claims
+      .FirstOrDefault(claim => claim.Type == GameAuthService.PlayerIdClaimType);
+
+    return playerIdClaim?.Value == null || !long.TryParse(playerIdClaim.Value, out var playerId) ?
+      new Failure("PlayerID claim was not found!") :
+      playerId;
+  }
 }

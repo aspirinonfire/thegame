@@ -10,7 +10,7 @@ public static class AssertResult
   {
     if (!toAssert.TryGetSuccessful(out var successResult, out var failure))
     {
-      Assert.Fail($"Expected successful result got failure: {failure?.ErrorMessage}");
+      Assert.Fail($"Expected successful result got failure: {failure?.Error}");
       throw new UnreachableException();
     }
 

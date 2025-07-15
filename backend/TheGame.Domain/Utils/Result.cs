@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using FluentValidation.Results;
+using System.Diagnostics.CodeAnalysis;
 
 namespace TheGame.Domain.Utils;
 
@@ -10,7 +11,6 @@ public readonly struct Result<TSuccess>
   
   private readonly bool _isSuccess;
 
-  // TODO handle validation failures
   private Result(TSuccess? successValue, Failure? failureValue, bool isSuccess)
   {
     // the only way to access success/failure values is through TryGetSuccessful, which has appropriate checks
@@ -22,6 +22,9 @@ public readonly struct Result<TSuccess>
   public static implicit operator Result<TSuccess>(TSuccess success) => new(success, default, true);
 
   public static implicit operator Result<TSuccess>(Failure failure) => new(default, failure, false);
+
+  public static implicit operator Result<TSuccess>(ValidationFailure validationFailure) =>
+    new(default, new Failure.Validation(validationFailure), false);
 
   /// <summary>
   /// Try Get Successful result

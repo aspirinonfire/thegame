@@ -2,7 +2,7 @@
 using System.Linq;
 using TheGame.Domain.DomainModels;
 
-namespace TheGame.Api.CommandHandlers;
+namespace TheGame.Api.Endpoints.User;
 
 public sealed record PlayerInfo(string PlayerName, long? PlayerId);
 
