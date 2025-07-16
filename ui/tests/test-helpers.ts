@@ -1,12 +1,12 @@
 import type { BrowserContext } from "@playwright/test";
+import type { GameHistory } from "~/appState/GameSlice";
 import type { Game } from "~/game-core/models/Game";
 
 export function createEmptyAppState() {
   return {
     version: 0,
     state: {
-      activeGame: <Game | null>null,
-      pastGames: <Game[]>[],
+      activeGame: <Game | null>null
     }
   }
 };
@@ -21,7 +21,7 @@ export function createNewGame() : Game {
     spottedPlates: [],
     score: {
       totalScore: 0,
-      milestones: []
+      achievements: []
     }
   }
 }

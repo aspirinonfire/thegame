@@ -8,10 +8,10 @@ export interface ApiSlice {
   enqueueError: (apiError: apiError) => void;
   dequeueError: () => apiError | null;
 
-  sendAuthenticatedRequest: <TBody, TResponse>(endpoint: string, method: string, body: TBody | null, includeCreds: boolean) => Promise<TResponse | apiError>;
-  sendUnauthenticatedRequest: <TBody, TResponse>(url: string, method: string, body: TBody | null, includeCreds: boolean) => Promise<TResponse | apiError>;
+  sendAuthenticatedRequest: <TResponse>(endpoint: string, method: string, body: any | null, includeCreds: boolean) => Promise<TResponse | apiError>;
+  sendUnauthenticatedRequest: <TResponse>(url: string, method: string, body: any | null, includeCreds: boolean) => Promise<TResponse | apiError>;
   get: <TResponse>(endpoint: string) => Promise<TResponse | apiError>;
-  post: <TResponse, TBody = void>(endpoint: string, body?: TBody) => Promise<TResponse | apiError>;
+  post: <TResponse>(endpoint: string, body?: any) => Promise<TResponse | apiError>;
 }
 
 export const createApiSlice: StateCreator<AppStore, [], [], ApiSlice> = (set, get) => ({
@@ -125,8 +125,8 @@ export const createApiSlice: StateCreator<AppStore, [], [], ApiSlice> = (set, ge
     return errorData;
   },
 
-  get: async <TResponse>(endpoint: string) => await get().sendAuthenticatedRequest<unknown, TResponse>(endpoint, "get", null, false),
+  get: async <TResponse>(endpoint: string) => await get().sendAuthenticatedRequest<TResponse>(endpoint, "get", null, false),
 
-  post: async <TBody, TResponse>(endpoint: string, body: TBody) => await get().sendAuthenticatedRequest<TBody, TResponse>(endpoint, "post", body, false)
+  post: async <TBody, TResponse>(endpoint: string, body: TBody) => await get().sendAuthenticatedRequest<TResponse>(endpoint, "post", body, false)
 });
 

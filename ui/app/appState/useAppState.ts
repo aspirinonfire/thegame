@@ -20,7 +20,6 @@ export const useAppState = create<AppStore>()(
       
       partialize: (state) => ({
         activeGame: state.activeGame,
-        pastGames: state.pastGames,
         apiAccessToken: state.apiAccessToken
       }),
 
