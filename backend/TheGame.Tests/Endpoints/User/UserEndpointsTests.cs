@@ -17,6 +17,7 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using TheGame.Api;
 using TheGame.Api.Auth;
+using TheGame.Api.Common;
 using TheGame.Api.Endpoints.User;
 using TheGame.Api.Endpoints.User.GoogleApiToken;
 using TheGame.Api.Endpoints.User.RefreshToken;
@@ -81,7 +82,7 @@ public class UserEndpointsTests
     {
       services.AddScoped(sp =>
       {
-        var mockQueryProvider = Substitute.For<IPlayerQueryProvider>();
+        var mockQueryProvider = Substitute.For<IPlayerService>();
         mockQueryProvider
           .GetPlayerInfoQuery(testPlayerId)
           .Returns(new[] { expectedTestPlayerInfo }.BuildMock());

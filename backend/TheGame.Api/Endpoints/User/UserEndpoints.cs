@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using TheGame.Api.Common;
 using TheGame.Api.Endpoints.User.GetUser;
 using TheGame.Api.Endpoints.User.GoogleApiToken;
 using TheGame.Api.Endpoints.User.RefreshToken;
@@ -38,12 +39,9 @@ public static class UserEndpoints
         ICommandHandler<RefreshAccessTokenCommand, RefreshAccessTokenCommand.Result>,
         RefreshAccessTokenCommandHandler>()
       .AddScoped<
-        ICommandHandler<GetOrCreateNewPlayerCommand, GetOrCreateNewPlayerCommand.Result>,
-        GetOrCreateNewPlayerCommandHandler>()
-      .AddScoped<
         ICommandHandler<AuthenticateWithGoogleAuthCodeCommand, AuthenticateWithGoogleAuthCodeCommand.Result>,
         AuthenticateWithGoogleAuthCodeCommandHandler>()
-      .AddScoped<IPlayerQueryProvider, PlayerQueryProvider>();
+      .AddScoped<IPlayerService, PlayerService>();
 
     return services;
   }

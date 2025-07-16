@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using TheGame.Api.Common;
 using TheGame.Api.Endpoints.Game.CreateGame;
 using TheGame.Api.Endpoints.Game.EndGame;
 using TheGame.Api.Endpoints.Game.GetGame;

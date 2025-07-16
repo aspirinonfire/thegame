@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using TheGame.Api;
+using TheGame.Api.Common;
 using TheGame.Api.Endpoints.Game;
 using TheGame.Api.Endpoints.Game.CreateGame;
 using TheGame.Api.Endpoints.Game.EndGame;
@@ -64,8 +64,8 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
     };
     using var sp = services.BuildServiceProvider(diOpts);
 
-    var newPlayerIdentity = await RunAsScopedRequest<GetOrCreateNewPlayerCommand, GetOrCreateNewPlayerCommand.Result>(sp, 
-      new GetOrCreateNewPlayerCommand(
+    var newPlayerIdentity = await CreatePlayerWithIdentity(sp, 
+      new GetOrCreatePlayerRequest(
         new NewPlayerIdentityRequest("test_provider",
         "test_id_1",
         "Test Player 1",
@@ -109,8 +109,8 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
     using var sp = services.BuildServiceProvider(diOpts);
 
     // create new player with identity
-    var newPlayerIdentityCommandResult = await RunAsScopedRequest<GetOrCreateNewPlayerCommand, GetOrCreateNewPlayerCommand.Result>(sp, 
-      new GetOrCreateNewPlayerCommand(
+    var newPlayerIdentityCommandResult = await CreatePlayerWithIdentity(sp, 
+      new GetOrCreatePlayerRequest(
         new NewPlayerIdentityRequest("test_provider",
         "test_id_2",
         "Test Player 2",
@@ -154,9 +154,9 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
       "Test Player 3",
       64,
       5);
-    var newPlayerIdentityCommandResult = await RunAsScopedRequest<GetOrCreateNewPlayerCommand, GetOrCreateNewPlayerCommand.Result>(
+    var newPlayerIdentityCommandResult = await CreatePlayerWithIdentity(
       sp,
-      new GetOrCreateNewPlayerCommand(newIdentityRequest));
+      new GetOrCreatePlayerRequest(newIdentityRequest));
     playerId = newPlayerIdentityCommandResult.PlayerId;
 
     // start new game
@@ -215,5 +215,15 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
     result.AssertIsSucceessful(out var successfulResult);
 
     return successfulResult;
+  }
+
+  private static async Task<GetOrCreatePlayerRequest.Result> CreatePlayerWithIdentity(IServiceProvider serviceProvider, GetOrCreatePlayerRequest request)
+  {
+    await using var scope = serviceProvider.CreateAsyncScope();
+    var playerService = scope.ServiceProvider.GetRequiredService<IPlayerService>();
+
+    var getOrAddPlayerResult = await playerService.GetOrCreatePlayer(request, CancellationToken.None);
+
+    return getOrAddPlayerResult.AssertIsSucceessful();
   }
 }

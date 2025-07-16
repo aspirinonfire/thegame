@@ -13,7 +13,7 @@ public interface ITransactionExecutionWrapper
   Task<Result<TSuccessResult>> ExecuteInTransaction<TSuccessResult>(Func<Task<Result<TSuccessResult>>> commandHandler,
     string commandName,
     ILogger logger,
-    CancellationToken? cancellationToken = null);
+    CancellationToken cancellationToken);
 }
 
 public sealed class TransactionExecutionWrapper(GameDbContext gameDb) : ITransactionExecutionWrapper
@@ -21,7 +21,7 @@ public sealed class TransactionExecutionWrapper(GameDbContext gameDb) : ITransac
   public async Task<Result<TSuccessResult>> ExecuteInTransaction<TSuccessResult>(Func<Task<Result<TSuccessResult>>> commandHandler,
     string commandName,
     ILogger logger,
-    CancellationToken? cancellationToken = default)
+    CancellationToken cancellationToken)
   {
     logger.LogInformation("Starting transaction for {commandName}", commandName);
 
@@ -29,7 +29,7 @@ public sealed class TransactionExecutionWrapper(GameDbContext gameDb) : ITransac
       .CreateExecutionStrategy()
       .ExecuteAsync(
         async (cToken) => await ExecuteOperation(gameDb, commandHandler, commandName, logger, cToken),
-        cancellationToken ?? CancellationToken.None);
+        cancellationToken);
   }
 
   public static async Task<Result<TSuccessResult>> ExecuteOperation<TSuccessResult>(IGameDbContext gameDb,

@@ -27,8 +27,7 @@ public sealed record AuthenticateWithGoogleAuthCodeCommand(string AuthCode)
 }
 
 public class AuthenticateWithGoogleAuthCodeCommandHandler(IGameAuthService gameAuthService,
-  // TODO commands should not be chained!!
-  ICommandHandler<GetOrCreateNewPlayerCommand, GetOrCreateNewPlayerCommand.Result> getOrCreatePlayerCommandHandler,
+  IPlayerService playerService,
   TimeProvider timeProvider,
   IOptions<GameSettings> gameSettings,
   ITransactionExecutionWrapper transactionWrapper,
@@ -45,7 +44,7 @@ public class AuthenticateWithGoogleAuthCodeCommandHandler(IGameAuthService gameA
     await transactionWrapper.ExecuteInTransaction<AuthenticateWithGoogleAuthCodeCommand.Result>(
       async () =>
       {
-        var tokenResult = await ExchangeGoogleAuthCodeForTokens(command.AuthCode);
+        var tokenResult = await ExchangeGoogleAuthCodeForTokens(command.AuthCode, cancellationToken);
         if (!tokenResult.TryGetSuccessful(out var googleTokens, out var tokenFailure))
         {
           return tokenFailure;
@@ -63,8 +62,8 @@ public class AuthenticateWithGoogleAuthCodeCommandHandler(IGameAuthService gameA
           gameSettings.Value.Auth.Api.RefreshTokenByteCount,
           gameSettings.Value.Auth.Api.RefreshTokenAgeMinutes);
 
-        var getOrCreatePlayerCommand = new GetOrCreateNewPlayerCommand(identityRequest);
-        var getOrCreatePlayerResult = await getOrCreatePlayerCommandHandler.Execute(getOrCreatePlayerCommand, CancellationToken.None);
+        var getOrCreatePlayerCommand = new GetOrCreatePlayerRequest(identityRequest);
+        var getOrCreatePlayerResult = await playerService.GetOrCreatePlayer(getOrCreatePlayerCommand, cancellationToken);
         if (!getOrCreatePlayerResult.TryGetSuccessful(out var playerIdentity, out var commandFailure))
         {
           return commandFailure;
@@ -86,7 +85,7 @@ public class AuthenticateWithGoogleAuthCodeCommandHandler(IGameAuthService gameA
       logger,
       cancellationToken);
 
-  public virtual async Task<Result<TokenResponse>> ExchangeGoogleAuthCodeForTokens(string authCode)
+  public async Task<Result<TokenResponse>> ExchangeGoogleAuthCodeForTokens(string authCode, CancellationToken cancellationToken)
   {
     if (string.IsNullOrWhiteSpace(authCode))
     {
@@ -108,7 +107,7 @@ public class AuthenticateWithGoogleAuthCodeCommandHandler(IGameAuthService gameA
       var tokenResponse = await authCodeFlow.ExchangeCodeForTokenAsync("userId",
       authCode,
       "postmessage",
-      CancellationToken.None);
+      cancellationToken);
 
       if (tokenResponse != null)
       {
@@ -130,7 +129,7 @@ public class AuthenticateWithGoogleAuthCodeCommandHandler(IGameAuthService gameA
   /// </summary>
   /// <param name="googleIdToken"></param>
   /// <returns></returns>
-  public virtual async Task<Result<GoogleJsonWebSignature.Payload>> GetValidatedGoogleIdTokenPayload(string googleIdToken)
+  public async Task<Result<GoogleJsonWebSignature.Payload>> GetValidatedGoogleIdTokenPayload(string googleIdToken)
   {
     if (string.IsNullOrEmpty(googleIdToken))
     {

@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using TheGame.Domain.Utils;
 
-namespace TheGame.Api;
+namespace TheGame.Api.Common;
 
 /// <summary>
 /// Command Handler
