@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿using Azure.Core;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -154,9 +155,9 @@ public class UserEndpointsTests
     var actualRefreshCookieValue = Assert.Contains(GameAuthService.ApiRefreshTokenCookieName, actualCookiesFromResponse);
     Assert.NotNull(actualRefreshCookieValue);
     Assert.Contains("secure", actualRefreshCookieValue);
-    Assert.Contains("samesite=strict", actualRefreshCookieValue);
+    Assert.Contains("samesite=none", actualRefreshCookieValue);
     Assert.Contains("httponly", actualRefreshCookieValue);
-    Assert.Contains("path=/api/user/refresh-token", actualRefreshCookieValue);
+    Assert.Contains("path=/", actualRefreshCookieValue);
 
     var actualResponse = await actualAuthTokenResponseMessage.Content.ReadFromJsonAsync<Dictionary<string, object>>();
     Assert.NotNull(actualResponse);
@@ -198,10 +199,14 @@ public class UserEndpointsTests
       playerId);
 
     var client = uutApiApp.CreateClient();
-    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", currentAccessToken);
     client.DefaultRequestHeaders.Add("Cookie", $"gameapi-refresh={currentRefreshToken}");
 
-    var actualAuthTokenResponseMessage = await client.PostAsync("/api/user/refresh-token", null);
+    using var content = JsonContent.Create(new
+    {
+      accessToken = currentAccessToken
+    });
+
+    var actualAuthTokenResponseMessage = await client.PostAsync("/api/user/refresh-token", content);
 
     Assert.Equal(HttpStatusCode.OK, actualAuthTokenResponseMessage.StatusCode);
 
@@ -260,10 +265,14 @@ public class UserEndpointsTests
     var currentAccessToken = GetExpiredApiAccessToken(playerId);
 
     var client = uutApiApp.CreateClient();
-    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", currentAccessToken);
     client.DefaultRequestHeaders.Add("Cookie", $"gameapi-refresh={currentRefreshToken}");
 
-    var actualAuthTokenResponseMessage = await client.PostAsync("/api/user/refresh-token", null);
+    using var content = JsonContent.Create(new
+    {
+      accessToken = currentAccessToken
+    });
+
+    var actualAuthTokenResponseMessage = await client.PostAsync("/api/user/refresh-token", content);
 
     Assert.Equal(HttpStatusCode.OK, actualAuthTokenResponseMessage.StatusCode);
 
