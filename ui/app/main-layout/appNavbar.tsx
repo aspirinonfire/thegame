@@ -2,15 +2,17 @@ import { MapIcon, ClockIcon, InformationCircleIcon, UserCircleIcon } from "@hero
 import { Dropdown, DropdownHeader, DropdownItem, Navbar, NavbarBrand, NavbarCollapse, NavbarLink, NavbarToggle, Spinner } from "flowbite-react";
 import type { ElementType } from "react";
 import { Link, useLocation } from "react-router";
+import { useShallow } from "zustand/shallow";
 import { useAppState } from "~/appState/useAppState";
-import { useGoogleAuthCode } from "~/useGoogleAuthCode";
 
 const AppNavbar = () => {
   const pathname = useLocation();
 
-  const activeUser = useAppState(state => state.activeUser);
-
-  const { login, isProcessing, isGsiSdkReady } = useGoogleAuthCode();
+  const [activeUser, isGsiSdkReady, authenticateWithGoogle, isProcessingLogin] = useAppState(useShallow(state => [
+    state.activeUser,
+    state.isGsiSdkReady,
+    state.authenticateWithGoogle,
+    state.isProcessingLogin]));
 
   const navlink = (url: string, linkText: string, Icon: ElementType, exactMatch: boolean = false) => {
     const isActive = exactMatch ?
@@ -49,8 +51,8 @@ const AppNavbar = () => {
           <span className="block text-sm text-gray-200">Hello, {activeUser?.player.playerName}</span>
         </DropdownHeader>
 
-        <DropdownItem className="text-gray-400" onClick={login} disabled={isProcessing || !isGsiSdkReady}>
-          {isProcessing ?
+        <DropdownItem className="text-gray-400" onClick={authenticateWithGoogle} disabled={isProcessingLogin || !isGsiSdkReady}>
+          {isProcessingLogin ?
             <Spinner size="sm" color="alternative" /> :
             isGsiSdkReady ? "Sign-in with Google" : "Setting up Google Sign-in..."}
         </DropdownItem>

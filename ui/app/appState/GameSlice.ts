@@ -4,11 +4,14 @@ import type { Game } from "~/game-core/models/Game";
 import type { LicensePlateSpot } from "~/game-core/models/LicensePlateSpot";
 import type { ScoreData } from "~/game-core/models/ScoreData";
 import type { AppStore } from "./AppStore";
+import type { PlayerInfo } from "~/appState/UserAccount";
+import { isApiError } from "~/appState/apiError";
 
 export interface GameSlice {
   activeGame: Game | null;
   pastGames: Game[];
 
+  retrievePlayerData: () => Promise<boolean>;
   startNewGame: (name: string) => Promise<Game | string>;
   spotNewPlates: (spottedPlates: LicensePlateSpot[]) => Promise<Game | string>;
   finishCurrentGame: () => Promise<string | void>;
@@ -18,6 +21,37 @@ export const createGameSlice: StateCreator<AppStore, [], [], GameSlice> = (set, 
   activeGame: null,
   pastGames: [],
 
+  retrievePlayerData: async () => {
+    const apiGet = get().get;
+    let isSuccessfulRetrieval = true;
+
+    const [playerResult, gamesResult] = await Promise.all([
+      apiGet<PlayerInfo>("user"),
+      apiGet<Game[]>("game?isActive=true")
+    ]);
+
+    if (isApiError(playerResult)) {
+      isSuccessfulRetrieval = false;
+    } else {
+      set({
+        activeUser: {
+          isAuthenticated: true,
+          player: playerResult
+        }
+      });
+    }
+
+    if (isApiError(gamesResult)) {
+      isSuccessfulRetrieval = false;
+    } else {
+      set({
+        activeGame: gamesResult[0]
+      });
+    }
+
+    return isSuccessfulRetrieval;
+  },
+  
   startNewGame: async (name: string) => {
     if (get().activeGame) {
       console.error("Only one active game is allowed!");

@@ -1,14 +1,45 @@
 import type { StateCreator } from "zustand";
-import { isApiError } from "~/common-components/apiError";
-import type UserAccount from "~/game-core/UserAccount";
+import { isApiError } from "~/appState/apiError";
+import type UserAccount from "~/appState/UserAccount";
 import type { ApiTokenResponse } from "./ApiTokenResponse";
 import type { AppStore } from "./AppStore";
+
+/**
+ * Minimal GIS type stubs (enough
+ * for strong TS safety without an
+ * external @types package)
+ */
+type CodeResponse = { code: string };
+
+interface CodeClient {
+  requestCode(): void;
+}
+
+export interface WindowWithGoogle extends Window {
+  google?: {
+    accounts: {
+      oauth2: {
+        initCodeClient(cfg: {
+          client_id: string;
+          scope?: string;
+          ux_mode?: 'popup' | 'redirect';
+          callback: (r: CodeResponse) => void;
+          error_callback?: (err: unknown) => void;
+        }): CodeClient;
+      };
+    };
+  };
+}
 
 export interface AppAuthSlice {
   activeUser: UserAccount | null;
   apiAccessToken: string | null;
+  isProcessingLogin: boolean;
+  isGsiSdkReady: boolean;
+  googleSdkClient: CodeClient | null;
 
-  authenticateWithGoogleAuthCode: (authCode: string) => Promise<boolean>;
+  authenticateWithGoogle: () => Promise<boolean>;
+  processGoogleAuthCode: (authCode: string) => Promise<boolean>;
   retrieveAccessToken: () => Promise<string | null>;
   refreshAccessToken: () => Promise<string | null>;
 }
@@ -16,8 +47,11 @@ export interface AppAuthSlice {
 export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = (set, get) => ({
   activeUser: null,
   apiAccessToken: null,
+  isProcessingLogin: false,
+  isGsiSdkReady: false,
+  googleSdkClient: null,
 
-  authenticateWithGoogleAuthCode: async (authCode) => {
+  processGoogleAuthCode: async (authCode: string) => {
     const accessTokenResponse = await get().sendUnauthenticatedRequest<string, ApiTokenResponse>(
       "user/google/apitoken",
       "POST",
@@ -34,6 +68,19 @@ export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = 
     }
 
     return false;
+  },
+
+  authenticateWithGoogle: async () => {
+    const googleSdkClient = get().googleSdkClient;
+    const isGsiSdkReady = get().isGsiSdkReady;
+    
+    if (!isGsiSdkReady || !googleSdkClient) {
+      return false;
+    }
+
+    googleSdkClient.requestCode();
+
+    return true;
   },
 
   retrieveAccessToken: async () => {

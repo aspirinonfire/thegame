@@ -1,8 +1,6 @@
 import type { StateCreator } from "zustand";
-import { isApiError } from "~/common-components/apiError";
-import type { Game } from "~/game-core/models/Game";
-import type { PlayerInfo } from "~/game-core/UserAccount";
 import type { AppStore } from "./AppStore";
+import type { WindowWithGoogle } from "./AppAuthSlice";
 
 // store rehydrate 'resolve' externally so we can resolve parent promise as part of the event
 export let rehydrationPromiseResolve: (() => void) | null = null;
@@ -13,17 +11,14 @@ export const rehydrationPromise = new Promise<void>(resolve => {
 export interface AppInitSlice {
   _hasStorageHydrated: boolean;
   isInitialized: boolean;
-  isGsiSdkReady: boolean;
 
   _setStorageHydrated: (state: boolean) => void;
   initialize: () => Promise<void>;
-  retrievePlayerData: () => Promise<boolean>;
 }
 
 export const createAppInitSlice: StateCreator<AppStore, [], [], AppInitSlice> = (set, get) => ({
   _hasStorageHydrated: false,
   isInitialized: false,
-  isGsiSdkReady: false,
 
   _setStorageHydrated: (state: boolean) => {
     set({ _hasStorageHydrated: true });
@@ -59,12 +54,51 @@ export const createAppInitSlice: StateCreator<AppStore, [], [], AppInitSlice> = 
       return;
     }
 
+    if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+      console.error("Google Client ID is missing. Auth is will not work!");
+      return;
+    }
+
     const existing = document.querySelector<HTMLScriptElement>(
       'script[src="https://accounts.google.com/gsi/client"]'
     );
     const script = existing ?? document.createElement('script');
 
-    const onLoad = () => set({ isGsiSdkReady: true });
+    const onLoad = () => {
+      const google = (window as WindowWithGoogle).google;
+      if (!google) {
+        console.error("Google SDK did not load!!");
+        return;
+      }
+
+      const client = google.accounts.oauth2.initCodeClient({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        scope: 'openid email profile',
+        ux_mode: 'popup',
+        callback: ({ code }) => {
+          get().processGoogleAuthCode(code)
+            .then(_ => {
+              return get().retrievePlayerData()
+            })
+            .finally(() => {
+              set({
+                isProcessingLogin: false
+              });
+            });
+        },
+        error_callback: (err) => {
+          set({
+            isProcessingLogin: false
+          });
+          console.error(err)  // handles user-closed popup etc.
+        },
+      });
+
+      set({
+        isGsiSdkReady: true,
+        googleSdkClient: client
+      });
+    };
     const onError = () => alert("Failed to load Google Sign-In SDK. Please try again later.");
 
     if (!existing) {
@@ -83,37 +117,6 @@ export const createAppInitSlice: StateCreator<AppStore, [], [], AppInitSlice> = 
         existing.addEventListener('error', onError, { once: true });
       }
     }
-  },
-
-  retrievePlayerData: async () => {
-    const apiGet = get().get;
-    let isSuccessfulRetrieval = true;
-
-    const [playerResult, gamesResult] = await Promise.all([
-      apiGet<PlayerInfo>("user"),
-      apiGet<Game[]>("game?isActive=true")
-    ]);
-
-    if (isApiError(playerResult)) {
-      isSuccessfulRetrieval = false;
-    } else {
-      set({
-        activeUser: {
-          isAuthenticated: true,
-          player: playerResult
-        }
-      });
-    }
-
-    if (isApiError(gamesResult)) {
-      isSuccessfulRetrieval = false;
-    } else {
-      set({
-        activeGame: gamesResult[0]
-      });
-    }
-
-    return isSuccessfulRetrieval;
-  }
+  }  
 });
 
