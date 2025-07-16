@@ -25,12 +25,12 @@ public static class RefreshTokenEndpoint
     var refreshResult = await refreshAccessTokenHandler.Execute(
       new RefreshAccessTokenCommand(accessToken, refreshCookieValue),
       cancellationToken);
-    if (refreshResult.TryGetSuccessful(out var newAccessValues, out _))
+    if (refreshResult.TryGetSuccessful(out var newAccessValues, out var failure))
     {
       authService.SetRefreshCookie(ctx, newAccessValues.RefreshTokenValue, newAccessValues.RefreshTokenExpiresIn);
       return Results.Ok(new { newAccessValues.AccessToken });
     }
 
-    return refreshResult.ToHttpResponse(ctx);
+    return failure.ToHttpResponse(ctx);
   };
 }

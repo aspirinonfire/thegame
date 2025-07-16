@@ -18,12 +18,12 @@ public static class GoogleApiTokenEndpoint
     var authResult = await googleAuthCodeCommandHandler.Execute(new AuthenticateWithGoogleAuthCodeCommand(credential),
       cancellationToken);
     
-    if (authResult.TryGetSuccessful(out var apiTokens, out _))
+    if (authResult.TryGetSuccessful(out var apiTokens, out var failure))
     {
       gameAuthService.SetRefreshCookie(ctx, apiTokens.RefreshTokenValue, apiTokens.RefreshTokenExpiresIn);
       return Results.Ok(new { apiTokens.AccessToken });
     }
 
-    return authResult.ToHttpResponse(ctx);
+    return failure.ToHttpResponse(ctx);
   };
 }

@@ -11,9 +11,9 @@ public static class GetUserEndpoint
   public readonly static Delegate Handler = async (HttpContext ctx, IPlayerService playerService, CancellationToken cancellationToken) =>
   {
     var playerIdResult = ctx.GetPlayerIdFromHttpContext();
-    if (!playerIdResult.TryGetSuccessful(out var playerId, out _))
+    if (!playerIdResult.TryGetSuccessful(out var playerId, out var failure))
     {
-      return playerIdResult.ToHttpResponse(ctx);
+      return failure.ToHttpResponse(ctx);
     }
 
     var player = await playerService

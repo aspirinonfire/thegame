@@ -13,11 +13,11 @@ public static class GetGameEndpoint
     [FromQuery(Name = "isActive")] bool? isActive) =>
   {
     var playerIdResult = ctx.GetPlayerIdFromHttpContext();
-    if (!playerIdResult.TryGetSuccessful(out var playerId, out _))
+    if (!playerIdResult.TryGetSuccessful(out var playerId, out var failure))
     {
-      return playerIdResult.ToHttpResponse(ctx);
+      return failure.ToHttpResponse(ctx);
     }
-    
+
     var queryForActiveGamesOnly = isActive.GetValueOrDefault();
 
     var allGames = (await gameQueryProvider.GetOwnedAndInvitedGamesQuery(playerId))

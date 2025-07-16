@@ -53,13 +53,21 @@ public static class EndpointHelpers
   /// <returns></returns>
   public static IResult ToHttpResponse<TSuccess>(this Result<TSuccess> result, HttpContext httpContext)
   {
-    var correlationId = httpContext.RetrieveCorrelationId();
-
     if (result.TryGetSuccessful(out var success, out var failure))
     {
       return TypedResults.Ok(success);
     }
-    else if (failure.TryGetValidationFailure(out var validationFailure))
+    else
+    {
+      return failure.ToHttpResponse(httpContext);
+    }
+  }
+
+  public static IResult ToHttpResponse(this Failure failure, HttpContext httpContext)
+  {
+    var correlationId = httpContext.RetrieveCorrelationId();
+
+    if (failure.TryGetValidationFailure(out var validationFailure))
     {
       return TypedResults.ValidationProblem(
         errors: validationFailure.ValidationErrors,
