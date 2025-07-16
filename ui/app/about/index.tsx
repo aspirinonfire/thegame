@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ExclamationCircleIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import type { Route } from "./+types";
 import LocalDateTime from "~/common-components/localDateTime";
-import { useAppStore } from "~/useAppStore";
+import { useAppState } from "~/appState/useAppState";
 
 export interface VersionInfo {
   deployDate: Date,
@@ -28,7 +28,7 @@ const AboutPage = ({
     sha: "unknown"
   });
 
-  const refreshApiAccessToken = useAppStore(s => s.api.refreshAccessToken);
+  const refreshApiAccessToken = useAppState(s => s.refreshAccessToken);
 
   useEffect(() => {
     loaderData.versionInfoProm

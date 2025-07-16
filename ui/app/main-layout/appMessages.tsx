@@ -2,14 +2,14 @@ import { useShallow } from "zustand/shallow";
 import { Button, Modal, ModalBody, ModalFooter, ModalHeader } from "flowbite-react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState } from "react";
-import { useAppStore } from "~/useAppStore";
+import { useAppState } from "~/appState/useAppState";
 
 /**
  * This component is responsible for show various app messages (eg. API errors, etc)
  */
 const AppMessages = () => {
-  const [error, dequeueError] = useAppStore(useShallow((s) => 
-    [s.apiErrors[0], s.api.dequeueError]));
+  const [error, dequeueError] = useAppState(useShallow((s) => 
+    [s.apiErrors[0], s.dequeueError]));
 
   const [open, setOpen] = useState(false)
 

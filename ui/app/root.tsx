@@ -12,7 +12,7 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { Button, ThemeConfig } from "flowbite-react";
 import AppNavbar from "./main-layout/appNavbar";
-import { useAppStore } from "./useAppStore";
+import { useAppState } from "./appState/useAppState";
 import { useShallow } from "zustand/shallow";
 import { useEffect } from "react";
 import LoadingWidget from "./common-components/loading";
@@ -42,7 +42,7 @@ export const links: Route.LinksFunction = (): LinkDescriptor[] => {
 };
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const [hasInitialized, initialize] = useAppStore(useShallow((state) => 
+  const [hasInitialized, initialize] = useAppState(useShallow((state) => 
     [state.isInitialized, state.initialize]));
 
   useEffect(() => {

@@ -1,8 +1,8 @@
 import GameMap from "~/common-components/gamemap";
-import { useAppStore } from "~/useAppStore";
+import { useAppState } from "~/appState/useAppState";
 
 const HistoryPage = () => {
-  const pastGames = useAppStore(state => state.pastGames);
+  const pastGames = useAppState(state => state.pastGames);
 
   const numberOfSpotsByPlateLkp = pastGames
     .reduce((lkp, game) => {

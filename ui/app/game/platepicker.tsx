@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Button, Modal, ModalBody, ModalFooter, ModalHeader } from "flowbite-react";
 import type { LicensePlateSpot } from '~/game-core/models/LicensePlateSpot';
 import type { Territory } from '~/game-core/models/Territory';
-import { useAppStore } from '~/useAppStore';
+import { useAppState } from '~/appState/useAppState';
 import { territories } from '~/game-core/gameConfiguration';
 
 interface PickerControls {
@@ -13,7 +13,7 @@ interface PickerControls {
 }
 
 export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, plateData }: PickerControls) => {
-  const user = useAppStore(state => state.activeUser);
+  const user = useAppState(state => state.activeUser);
 
   const [formChangePreview, setFormChangePreview] = useState<Map<string, boolean>>(new Map<string, boolean>());
 
