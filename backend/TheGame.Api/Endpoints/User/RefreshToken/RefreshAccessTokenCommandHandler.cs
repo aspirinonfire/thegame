@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FluentValidation.Results;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
@@ -30,6 +31,12 @@ public class RefreshAccessTokenCommandHandler(IGameDbContext gameDb,
     transactionWrapper.ExecuteInTransaction<RefreshAccessTokenCommand.Result>(
       async () =>
       {
+        if (string.IsNullOrEmpty(command.AccessToken) || string.IsNullOrEmpty(command.RefreshToken))
+        {
+          logger.LogError("Refresh or Access token are missing.");
+          return new ValidationFailure(nameof(command), "Refresh and Access Tokens are required!");
+        }
+
         var validAccessTokenResult = gameAuthService.GetValidateExpiredAccessToken(command.AccessToken);
         if (!validAccessTokenResult.TryGetSuccessful(out var accessTokenValues, out var tokenValidationFailure))
         {
@@ -47,7 +54,7 @@ public class RefreshAccessTokenCommandHandler(IGameDbContext gameDb,
             ident.ProviderIdentityId == accessTokenValues.PlayerIdentityId &&
             ident.RefreshToken == command.RefreshToken &&
             ident.RefreshTokenExpiration > currentTimestamp)
-          .FirstOrDefaultAsync();
+          .FirstOrDefaultAsync(cancellationToken);
 
         if (playerIdentity == null)
         {
@@ -64,6 +71,8 @@ public class RefreshAccessTokenCommandHandler(IGameDbContext gameDb,
           logger.LogError(refreshFailure.GetException(), "Failed to renew refresh token.");
           return refreshFailure;
         }
+
+        await gameDb.SaveChangesAsync(cancellationToken);
 
         var apiToken = gameAuthService.GenerateApiJwtToken(playerIdentity.ProviderName,
           playerIdentity.ProviderIdentityId,

@@ -45,7 +45,7 @@ public class GameAuthService(ILogger<GameAuthService> logger,
       ValidAudience = jwtAudience
     };
 
-  public const string ApiRefreshTokenCookieName = "gameapi-refresh";
+  public const string ApiRefreshTokenCookieName = "gameapi.refresh";
 
   public const string PlayerIdentityAuthority = "iden_authority";
   public const string PlayerIdentityUserId = "iden_user_id";
@@ -144,24 +144,20 @@ public class GameAuthService(ILogger<GameAuthService> logger,
 
   public void SetRefreshCookie(HttpContext httpContext, string refreshTokenValue, TimeSpan tokenExpiration)
   {
-    var refreshCookieOptions = new CookieBuilder()
-    {
-      Name = ApiRefreshTokenCookieName,
-      IsEssential = true,
-      HttpOnly = true,
-      // refresh cookie should be sent to this api path only!
-      Path = "/api/user/refresh-token",
-      MaxAge = tokenExpiration,
-      Expiration = tokenExpiration,
-      SameSite = SameSiteMode.Strict,
-      SecurePolicy = CookieSecurePolicy.Always
-    }.Build(httpContext);
-
-    httpContext.Response.Cookies.Append(ApiRefreshTokenCookieName, refreshTokenValue, refreshCookieOptions);
+    httpContext.Response.Cookies.Append(ApiRefreshTokenCookieName,
+      refreshTokenValue,
+      new CookieOptions()
+      {
+        HttpOnly = true,
+        IsEssential = true,
+        SameSite = SameSiteMode.None,
+        Secure = true,
+        MaxAge = tokenExpiration
+      });
   }
 
   public string RetrieveRefreshTokenValue(HttpContext httpContext) => httpContext.Request.Cookies
-      .Where(cookie => cookie.Key == ApiRefreshTokenCookieName)
-      .Select(cookie => cookie.Value)
-      .FirstOrDefault(string.Empty);
+    .Where(cookie => cookie.Key == ApiRefreshTokenCookieName)
+    .Select(cookie => cookie.Value)
+    .FirstOrDefault(string.Empty);
 }

@@ -47,7 +47,10 @@ interface AppActions {
     enqueueError: (apiError: apiError) => void;
     dequeueError: () => apiError | null;
     
-    sendAuthenticatedRequest: <TBody, TResponse>(endpoint: string, method: string, body: TBody | null) => Promise<TResponse | apiError>;
+    retrieveAccessToken: () => Promise<string | null>;
+    refreshAccessToken: () => Promise<string | null>;
+    sendAuthenticatedRequest: <TBody, TResponse>(endpoint: string, method: string, body: TBody | null, includeCreds: boolean) => Promise<TResponse | apiError>;
+    sendUnauthenticatedRequest: <TBody, TResponse>(url: string, method: string, body: TBody | null, includeCreds: boolean) => Promise<TResponse | apiError>;
     get: <TResponse>(endpoint: string) => Promise<TResponse | apiError>;
     post: <TResponse, TBody = void>(endpoint: string, body?: TBody) => Promise<TResponse | apiError>;
   }
@@ -224,31 +227,19 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
   },
 
   authenticateWithGoogleAuthCode: async (authCode: string) => {
-    const requestParams : RequestInit = {
-      cache: "no-cache",
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-      },
-      body: JSON.stringify(authCode),
-    };
+    const accessTokenResponse = await get().api.sendUnauthenticatedRequest<string, ApiTokenResponse>(
+      "user/google/apitoken",
+      "POST",
+      authCode,
+      true
+    )
 
-    try {
-      const accessTokenResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/user/google/apitoken`, requestParams);
+    if (!isApiError(accessTokenResponse)) {
+      set({
+        apiAccessToken: accessTokenResponse.accessToken,
+      });
 
-      const responseBody = await accessTokenResponse.json() as ApiTokenResponse;
-  
-      if (accessTokenResponse.status == 200) {
-        set({
-          apiAccessToken: responseBody.accessToken,
-        });
-
-        return true;
-      }
-      // TODO generic error handling
-      console.error(`Failed to retrieve API token ${accessTokenResponse.status}: ${responseBody}`);
-    } catch (error) {
-      console.log(error);
+      return true;
     }
 
     return false;
@@ -298,8 +289,67 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
       return allErrors[0];
     },
 
-    sendAuthenticatedRequest: async <TBody, TResponse>(endpoint: string, method: string, body: TBody | null) => {
-      const accessToken = get().apiAccessToken;
+    retrieveAccessToken: async () => {
+      return get().apiAccessToken;
+    },
+    
+    refreshAccessToken: async () => {
+      // TODO need to retrieve ID Token so we can confirm API and OAuth session are for the same identity.
+      // TODO consider merging with retrieveAccessToken. This will need tracking of token expiration so we can do silent refresh.
+      const currentAccessToken = get().apiAccessToken;
+
+      const refreshResponse = await get().api.sendUnauthenticatedRequest<any, ApiTokenResponse>("user/refresh-token",
+        "POST",
+        {
+          accessToken: currentAccessToken,
+          idToken: "id-token-here-wip",
+          identityProvider: "Google"
+        },
+        true
+      );
+
+      if (!isApiError(refreshResponse)) {
+        set({
+          apiAccessToken: refreshResponse.accessToken
+        });
+        return refreshResponse.accessToken;
+      }
+
+      return null;
+    },
+
+    sendUnauthenticatedRequest: async <TBody, TResponse>(endpoint: string, method: string, body: TBody | null, includeCreds: boolean) => {
+      const normalizedEndpointUrl = (endpoint || '').replace(/^\//, '');
+      const apiResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/${normalizedEndpointUrl}`, {
+        cache: "no-cache",
+        method: method,
+        body: body ? JSON.stringify(body) : null,
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+        },
+        credentials: includeCreds ? "include" : undefined
+      });
+
+      if (apiResponse.ok) {
+        // Parse the response JSON into the expected TResponse type
+        const data: TResponse = await apiResponse.json();
+        return data;
+      }
+
+      const errorData: apiError = {
+        status: apiResponse.status,
+        title: 'Failed to send request.',
+        detail: await apiResponse.text(),
+        GameRequestCorrelationId: '',
+        traceId: ''
+      }
+
+      get().api.enqueueError(errorData);
+      return errorData;
+    },
+
+    sendAuthenticatedRequest: async <TBody, TResponse>(endpoint: string, method: string, body: TBody | null, includeCreds: boolean) => {
+      let accessToken = await get().api.retrieveAccessToken();
       
       if (!accessToken) {
         const errorData: apiError = {
@@ -315,36 +365,61 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
         return errorData;
       }
 
-      const normalizedEndpointUrl = (endpoint || '').replace(/^\//, '');
-      const apiResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/${normalizedEndpointUrl}`, {
-        method: method,
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        },
-        body: body ? JSON.stringify(body) : null
-      });
+      const makeRequest = async (bearerToken: string) => {
+        const normalizedEndpointUrl = (endpoint || '').replace(/^\//, '');
+        const apiResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/${normalizedEndpointUrl}`, {
+          cache: "no-cache",
+          method: method,
+          headers: {
+            "Authorization": `Bearer ${bearerToken}`,
+            "Content-Type": "application/json; charset=utf-8",
+          },
+          body: body ? JSON.stringify(body) : null,
+          credentials: includeCreds ? "include" : undefined
+        });
 
-      if (!apiResponse.ok) {
-        if (apiResponse.status == 401) {
-          // TODO handle auth errors - token refresh + retry and login banner
-        } else {
-          // API errors return standard rfc9110 payload
-          const errorData: apiError = await apiResponse.json();
+        return apiResponse;
+      };
+
+      let apiResponse = await makeRequest(accessToken);
+
+      if (apiResponse.status == 401) {
+        accessToken = await get().api.refreshAccessToken();
+
+        if (!accessToken) {
+          const errorData: apiError = {
+            status: 401,
+            title: 'Failed to retrieve Access Token.',
+            detail: 'Please contact IT Support for assistance.',
+            GameRequestCorrelationId: '',
+            traceId: ''
+          }
+
           get().api.enqueueError(errorData);
+
           return errorData;
         }
+
+        apiResponse = await makeRequest(accessToken);
       }
-    
-      // Parse the response JSON into the expected TResponse type
-      const data: TResponse = await apiResponse.json();
-      return data;
+      
+      if (apiResponse.ok) {
+        // Parse the response JSON into the expected TResponse type
+        const data: TResponse = await apiResponse.json();
+        return data;
+      }
+      
+      // API errors return standard rfc9110 payload
+      const errorData: apiError = await apiResponse.json();
+      get().api.enqueueError(errorData);
+      return errorData;
     },
 
     get: async <TResponse>(endpoint: string) =>
-      await get().api.sendAuthenticatedRequest<unknown, TResponse>(endpoint, "get", null),
+      await get().api.sendAuthenticatedRequest<unknown, TResponse>(endpoint, "get", null, false),
 
     post: async <TBody, TResponse>(endpoint: string, body: TBody) =>
-      await get().api.sendAuthenticatedRequest<TBody, TResponse>(endpoint, "post", body) 
+      await get().api.sendAuthenticatedRequest<TBody, TResponse>(endpoint, "post", body, false) 
   }
 });
 

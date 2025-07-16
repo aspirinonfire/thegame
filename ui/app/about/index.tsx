@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ExclamationCircleIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import type { Route } from "./+types";
 import LocalDateTime from "~/common-components/localDateTime";
+import { useAppStore } from "~/useAppStore";
 
 export interface VersionInfo {
   deployDate: Date,
@@ -27,6 +28,8 @@ const AboutPage = ({
     sha: "unknown"
   });
 
+  const refreshApiAccessToken = useAppStore(s => s.api.refreshAccessToken);
+
   useEffect(() => {
     loaderData.versionInfoProm
       .then(resp => {
@@ -45,19 +48,19 @@ const AboutPage = ({
 
   }, []);
 
-  function handleDeleteGameData() {
+  const handleDeleteGameData = () => {
     setIsShowDeleteConfirmation(false);
     localStorage.clear();
     window.location.reload();
-  }
+  };
 
-  function handleShareApp() {
+  const handleShareApp = () => {
     const host = location.protocol.concat("//").concat(window.location.host);
     navigator.clipboard.writeText(host);
     setIsShowShareConfirmation(true);
-  }
+  };
 
-  async function restartApp() {
+  const restartApp = async () => {
     try {
       const keys = await window.caches.keys();
       await Promise.all(keys.map(key => caches.delete(key)));
@@ -69,7 +72,7 @@ const AboutPage = ({
     workers.forEach(worker => worker.unregister());
 
     window.location.reload();
-  }
+  };
 
   return <>
     <Card className="bg-gray-600">
@@ -99,6 +102,10 @@ const AboutPage = ({
       <div>
         <Button size="xs" color="gray" className="fixed bottom-0 left 0 mb-5 opacity-50" onClick={restartApp} >
           Reload App
+        </Button>
+
+        <Button size="xs" color="black" className="fixed bottom-0 left-40 mb-5 opacity-50" onClick={refreshApiAccessToken}>
+          Refresh Access
         </Button>
 
         <Button size="xs" color="failure" className="fixed bottom-0 right-0 m-5 opacity-50" onClick={() => setIsShowDeleteConfirmation(true)}>

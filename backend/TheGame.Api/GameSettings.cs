@@ -10,6 +10,8 @@ public sealed record GameSettings
   public OtelConfig? Otel { get; init; }
 
   public MessageBusSettings DomainEventsMessageBus { get; init; } = new();
+
+  public CorsSettings? Cors { get; init; }
 }
 
 public sealed record AuthSettings
@@ -58,4 +60,9 @@ public sealed record OtelConfig
 public sealed record MessageBusSettings
 {
   public int MaxQueueSize { get; init; } = 10;
+}
+
+public sealed record CorsSettings
+{
+  public string? UiHost { get; init; }
 }

@@ -38,7 +38,8 @@ public class Program
         {
           policy.WithOrigins(uiHost)
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
         });
       });
     }
