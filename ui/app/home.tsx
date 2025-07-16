@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
-import { useAppStore } from "./useAppStore";
+import { useAppState } from "./appState/useAppState";
 
 const HomePage = () => {
   let navigate = useNavigate();
-  let currentGame = useAppStore(state => state.activeGame);
+  let currentGame = useAppState(state => state.activeGame);
 
   useEffect(() => {
     if (currentGame) {

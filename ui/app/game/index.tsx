@@ -1,7 +1,7 @@
 import { Button, Modal, ModalBody, ModalHeader } from "flowbite-react";
 import { useShallow } from "zustand/shallow";
 import GameMap from "~/common-components/gamemap";
-import { useAppStore } from "~/useAppStore";
+import { useAppState } from "~/appState/useAppState";
 import PlatePicker from "./platepicker";
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
@@ -11,7 +11,7 @@ import { RollingNumber } from "./rolling-number";
 
 const GamePage = () => {
   const [user, activeGame, finishCurrentGame, spotNewPlates, startNewGame] =
-    useAppStore(useShallow(state => [
+    useAppState(useShallow(state => [
       state.activeUser,
       state.activeGame,
       state.finishCurrentGame,

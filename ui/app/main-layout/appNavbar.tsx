@@ -2,13 +2,13 @@ import { MapIcon, ClockIcon, InformationCircleIcon, UserCircleIcon } from "@hero
 import { Dropdown, DropdownHeader, DropdownItem, Navbar, NavbarBrand, NavbarCollapse, NavbarLink, NavbarToggle, Spinner } from "flowbite-react";
 import type { ElementType } from "react";
 import { Link, useLocation } from "react-router";
-import { useAppStore } from "~/useAppStore";
+import { useAppState } from "~/appState/useAppState";
 import { useGoogleAuthCode } from "~/useGoogleAuthCode";
 
 const AppNavbar = () => {
   const pathname = useLocation();
 
-  const activeUser = useAppStore(state => state.activeUser);
+  const activeUser = useAppState(state => state.activeUser);
 
   const { login, isProcessing, isGsiSdkReady } = useGoogleAuthCode();
 

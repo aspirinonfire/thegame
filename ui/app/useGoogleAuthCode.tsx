@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { useAppStore } from './useAppStore';
+import { useAppState } from './appState/useAppState';
 import { useShallow } from 'zustand/shallow';
 
 /**
@@ -33,7 +33,7 @@ export function useGoogleAuthCode() {
   // lazy one-time initialization of the Google Login
   const clientRef = useRef<CodeClient | null>(null);
 
-  const [isGsiSdkReady, processGoogleAuthCode, retrievePlayerData] = useAppStore(useShallow(state => [
+  const [isGsiSdkReady, processGoogleAuthCode, retrievePlayerData] = useAppState(useShallow(state => [
     state.isGsiSdkReady,
     state.authenticateWithGoogleAuthCode,
     state.retrievePlayerData
