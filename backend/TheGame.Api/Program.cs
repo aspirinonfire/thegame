@@ -99,10 +99,7 @@ public class Program
     // API services
     builder.Services
       .AddGameAuthenticationServices(builder.Configuration)
-      .AddInMemoryEventBus()
-      .AddHostedService<DomainMessagesWorker>()
-      .AddScoped(typeof(IDomainMessageHandler<>), typeof(DomainMessageLogger<>))
-      .AddScoped<ITransactionExecutionWrapper, TransactionExecutionWrapper>()
+      .AddGameApiCommonServices()
       .AddUserEndpointServices()
       .AddGameEndpointServices();
 

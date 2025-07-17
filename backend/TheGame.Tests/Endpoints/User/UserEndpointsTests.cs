@@ -20,6 +20,7 @@ using TheGame.Api;
 using TheGame.Api.Auth;
 using TheGame.Api.Common;
 using TheGame.Api.Endpoints.User;
+using TheGame.Api.Endpoints.User.GetUser;
 using TheGame.Api.Endpoints.User.GoogleApiToken;
 using TheGame.Api.Endpoints.User.RefreshToken;
 using TheGame.Domain.DomainModels;
@@ -54,7 +55,7 @@ public class UserEndpointsTests
     await using var uutApiApp = GetApiFactory();
     var client = uutApiApp.CreateClient();
 
-    var actualApiResponse = await client.GetAsync("/api/user");
+    var actualApiResponse = await client.GetAsync("/api/user/userData");
 
     Assert.Equal(HttpStatusCode.Unauthorized, actualApiResponse.StatusCode);
   }
@@ -68,16 +69,19 @@ public class UserEndpointsTests
     var client = uutApiApp.CreateClient();
     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", currentAccessToken);
 
-    var actualApiResponse = await client.GetAsync("/api/user");
+    var actualApiResponse = await client.GetAsync("/api/user/userData");
 
     Assert.Equal(HttpStatusCode.Unauthorized, actualApiResponse.StatusCode);
   }
 
   [Fact]
-  public async Task CanGetPlayerInfoForAuthenticatedUser()
+  public async Task CanGetPlayerDataForAuthenticatedUser()
   {
     var testPlayerId = 123;
-    var expectedTestPlayerInfo = new PlayerInfo("Test Player", testPlayerId);
+
+    var expectedUserData = new UserData(
+      new PlayerInfo("Test Player", testPlayerId),
+      []);
 
     await using var uutApiApp = GetApiFactory(services =>
     {
@@ -86,20 +90,32 @@ public class UserEndpointsTests
         var mockQueryProvider = Substitute.For<IPlayerService>();
         mockQueryProvider
           .GetPlayerInfoQuery(testPlayerId)
-          .Returns(new[] { expectedTestPlayerInfo }.BuildMock());
+          .Returns(new[] { expectedUserData.Player }.BuildMock());
 
         return mockQueryProvider;
+      });
+
+      services.AddScoped(sp =>
+      {
+        var gameQueryProvider = Substitute.For<IGameQueryProvider>();
+        gameQueryProvider
+          .GetOwnedAndInvitedGamesQuery(testPlayerId)
+          .Returns([]);
+
+        return gameQueryProvider;
       });
     });
 
     var client = CreateAuthenticatedClient(uutApiApp, testPlayerId);
 
-    var actualApiResponse = await client.GetAsync("/api/user");
+    var actualApiResponse = await client.GetAsync("/api/user/userData");
 
     Assert.Equal(HttpStatusCode.OK, actualApiResponse.StatusCode);
 
-    var actualPlayerInfo = await actualApiResponse.Content.ReadFromJsonAsync<PlayerInfo>();
-    Assert.Equal(expectedTestPlayerInfo, actualPlayerInfo);
+    var actualPlayerData = await actualApiResponse.Content.ReadFromJsonAsync<UserData>();
+    Assert.NotNull(actualPlayerData);
+    Assert.Equal(expectedUserData.Player, actualPlayerData.Player);
+    Assert.Empty(actualPlayerData.ActiveGames);
   }
 
   [Fact]

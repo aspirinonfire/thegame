@@ -1,26 +1,41 @@
 import GameMap from "~/common-components/gamemap";
 import { useAppState } from "~/appState/useAppState";
+import { useEffect, useState } from "react";
+import { type GameHistory } from "~/appState/GameSlice";
+import { Spinner } from "flowbite-react";
 
 const HistoryPage = () => {
-  const pastGames = useAppState(state => state.pastGames);
+  const getGameHistory = useAppState(state => state.retrieveGameHistory);
+  const [isRetrievingHistory, setIsRetrievingHistory] = useState(true);
+  const [gameHistory, setGameHistory] = useState<GameHistory>({
+    numberOfGames: 0,
+    spotStats: {}
+  });
 
-  const numberOfSpotsByPlateLkp = pastGames
-    .reduce((lkp, game) => {
-      game.spottedPlates
-        .filter(plate => !!plate.spottedOn)
-        .forEach(plate => {
-          lkp[plate.key] = (lkp[plate.key] || 0) + 1;
-        });
+  useEffect(() => {
+    getGameHistory()
+      .then(history => {
+        if (!!history) {
+          setGameHistory(history);
+        }
+      })
+      .finally(() => {
+        setIsRetrievingHistory(false);
+      });
+  }, []);
 
-      return lkp;
-    }, {} as {[key: string]: number});
+  const renderHistory = () => {
+    return <>
+      <h1 className="text-xl sm:text-2xl" data-testid="total-games-played">Total Games Played: {gameHistory.numberOfGames}</h1>
+      <GameMap argType="historicData"
+        totalNumberOfGames={ gameHistory.numberOfGames }
+        spotsByStateLookup={ gameHistory.spotStats } />
+    </>
+  }
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-xl sm:text-2xl" data-testid="total-games-played">Total Games Played: {pastGames.length}</h1>
-      <GameMap argType="historicData"
-        totalNumberOfGames={ pastGames.length}
-        spotsByStateLookup={ numberOfSpotsByPlateLkp } />
+      { isRetrievingHistory ? <Spinner size="xl" /> : renderHistory() }
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import type { StateCreator } from "zustand";
 import type { AppStore } from "./AppStore";
-import type { WindowWithGoogle } from "./AppAuthSlice";
+import { guestUser, type WindowWithGoogle } from "./AppAuthSlice";
 
 // store rehydrate 'resolve' externally so we can resolve parent promise as part of the event
 export let rehydrationPromiseResolve: (() => void) | null = null;
@@ -36,16 +36,11 @@ export const createAppInitSlice: StateCreator<AppStore, [], [], AppInitSlice> = 
 
     if (!get().apiAccessToken) {
       set({
-        activeUser: {
-          player: {
-            playerId: -1,
-            playerName: "Guest User",
-          },
-          isAuthenticated: false
-        }
+        activeUser: guestUser
       });
     } else {
-      await get().retrievePlayerData();
+      const isDataRetrieved = await get().retrievePlayerData();
+      console.log("User data initialized: ", isDataRetrieved);
     }
 
     set({ isInitialized: true });

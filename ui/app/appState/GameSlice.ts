@@ -1,94 +1,88 @@
 import type { StateCreator } from "zustand";
-import CalculateScore from "~/game-core/gameScoreCalculator";
 import type { Game } from "~/game-core/models/Game";
 import type { LicensePlateSpot } from "~/game-core/models/LicensePlateSpot";
-import type { ScoreData } from "~/game-core/models/ScoreData";
 import type { AppStore } from "./AppStore";
 import type { PlayerInfo } from "~/appState/UserAccount";
 import { isApiError } from "~/appState/apiError";
 
+export interface GameHistory {
+  numberOfGames: number,
+  spotStats: { [key: string]: number }
+}
+
 export interface GameSlice {
   activeGame: Game | null;
-  pastGames: Game[];
 
   retrievePlayerData: () => Promise<boolean>;
-  startNewGame: (name: string) => Promise<Game | string>;
-  spotNewPlates: (spottedPlates: LicensePlateSpot[]) => Promise<Game | string>;
-  finishCurrentGame: () => Promise<string | void>;
+  startNewGame: (name: string) => Promise<Game | null>;
+  spotNewPlates: (spottedPlates: LicensePlateSpot[]) => Promise<Game | null>;
+  finishCurrentGame: () => Promise<void | null>;
+  retrieveGameHistory: () => Promise<GameHistory | null>;
+}
+
+export interface PlayerData {
+  player: PlayerInfo | null,
+  activeGames: Game[]
 }
 
 export const createGameSlice: StateCreator<AppStore, [], [], GameSlice> = (set, get) => ({
   activeGame: null,
-  pastGames: [],
 
   retrievePlayerData: async () => {
     const apiGet = get().get;
-    let isSuccessfulRetrieval = true;
 
-    const [playerResult, gamesResult] = await Promise.all([
-      apiGet<PlayerInfo>("user"),
-      apiGet<Game[]>("game?isActive=true")
-    ]);
+    const playerData = await apiGet<PlayerData>("user/userData")
 
-    if (isApiError(playerResult)) {
-      isSuccessfulRetrieval = false;
-    } else {
-      set({
-        activeUser: {
-          isAuthenticated: true,
-          player: playerResult
-        }
-      });
+    if (isApiError(playerData) || !playerData.player) {
+      console.error("Failed to retrieve player data!");
+      return false
     }
+    
+    set({
+      activeUser: {
+        isAuthenticated: true,
+        player: playerData.player
+      },
+      activeGame: playerData.activeGames[0]
+    });
 
-    if (isApiError(gamesResult)) {
-      isSuccessfulRetrieval = false;
-    } else {
-      set({
-        activeGame: gamesResult[0]
-      });
-    }
-
-    return isSuccessfulRetrieval;
+    return true;
   },
   
   startNewGame: async (name: string) => {
     if (get().activeGame) {
       console.error("Only one active game is allowed!");
-      return "Only one active game is allowed!";
+      return null;
     }
 
-    const newGame = {
-      dateCreated: new Date(),
-      createdByPlayerId: get().activeUser?.player.playerId ?? -1,
-      createdByPlayerName: get().activeUser?.player.playerName ?? "N/A",
-      gameId: new Date().getTime(),
-      spottedPlates: [],
-      gameName: name,
-      score: <ScoreData>{
-        totalScore: 0,
-        milestones: []
-      }
+    const newGameRequest = {
+      newGameName: name
     };
 
-    set({
-      activeGame: newGame
-    });
+    const newGameResult = await get().post<Game>("game", newGameRequest);
 
-    return newGame;
+    if (isApiError(newGameResult)) {
+      return null;
+    }
+
+    set({
+      activeGame: newGameResult
+    })
+
+    return newGameResult;
   },
 
   spotNewPlates: async (spottedPlates) => {
     const currentGame = get().activeGame;
     if (!currentGame) {
       console.error("No Active Game!");
-      return "No active game!";
+      return null;
     }
 
-    const updatedGame = <Game>{
-      ...currentGame,
-      spottedPlates: spottedPlates,
-      score: CalculateScore(spottedPlates)
+    const updatedGame = await get().post<Game>(`game/${currentGame.gameId}/spotplates`, spottedPlates);
+
+    if (isApiError(updatedGame)) {
+      return null;
     };
 
     set({
@@ -102,34 +96,29 @@ export const createGameSlice: StateCreator<AppStore, [], [], GameSlice> = (set, 
     const currentGame = get().activeGame;
     if (!currentGame) {
       console.error("No Active Game!");
-      return "No active game!";
+      return null;
+    }
+    
+    const endedGameResult = await get().post<Game>(`game/${currentGame.gameId}/endgame`);
+    
+    if (isApiError(endedGameResult)) {
+      return null;
     }
 
-    // TODO implement!!
-    const endedGame = await get().post<Game>(`game/${currentGame.gameId}/endgame`);
+    set({
+      activeGame: null
+    });
+
     return;
-
-    //// use last spot as date finished
-    // const lastSpot = currentGame.spottedPlates
-    //   .map(plate => plate.spottedOn)
-    //   .filter(date => !!date)
-    //   .sort()
-    //   .at(-1);
-
-    // if (!!lastSpot) {
-    //   currentGame.endedOn = lastSpot;
-
-    //   const pastGames = get().pastGames;
-    //   pastGames.push(currentGame);
-
-    //   set({
-    //     pastGames: pastGames,
-    //   });
-    // }
-
-    // set({
-    //   activeGame: null
-    // });
   },
+
+  retrieveGameHistory: async () => {
+    const gameHistory = await get().get<GameHistory>("game/history");
+    if (isApiError(gameHistory)) {
+      return null;
+    }
+
+    return gameHistory;
+  }
 });
 

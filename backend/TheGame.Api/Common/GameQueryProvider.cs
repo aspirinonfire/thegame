@@ -9,7 +9,7 @@ using TheGame.Domain.DomainModels;
 using TheGame.Domain.DomainModels.Games;
 using TheGame.Domain.DomainModels.LicensePlates;
 
-namespace TheGame.Api.Endpoints.Game;
+namespace TheGame.Api.Common;
 
 public sealed record OwnedOrInvitedGame
 {
@@ -24,14 +24,14 @@ public sealed record OwnedOrInvitedGame
   public IReadOnlyCollection<SpottedGamePlate> SpottedPlates { get; init; } = [];
   public GameScore Score { get; init; } = new GameScore(ReadOnlyCollection<string>.Empty, 0);
 
-  public static OwnedOrInvitedGame FromGame(Domain.DomainModels.Games.Game game, long playerId)
+  public static OwnedOrInvitedGame FromGame(Game game, long playerId)
   {
     var ownedOrInvitedGame = _fromGameCompiledExpression(game);
     ownedOrInvitedGame.IsOwner = game.CreatedByPlayerId == playerId;
     return ownedOrInvitedGame;
   }
 
-  public static Expression<Func<Domain.DomainModels.Games.Game, OwnedOrInvitedGame>> CreateGameToOwnedOrInvitedGameExpression() =>
+  public static Expression<Func<Game, OwnedOrInvitedGame>> CreateGameToOwnedOrInvitedGameExpression() =>
     game => new OwnedOrInvitedGame
     {
       CreatedByPlayerId = game.CreatedBy.Id,
@@ -55,7 +55,7 @@ public sealed record OwnedOrInvitedGame
         .ToList()
     };
 
-  private readonly static Func<Domain.DomainModels.Games.Game, OwnedOrInvitedGame> _fromGameCompiledExpression = CreateGameToOwnedOrInvitedGameExpression().Compile();
+  private readonly static Func<Game, OwnedOrInvitedGame> _fromGameCompiledExpression = CreateGameToOwnedOrInvitedGameExpression().Compile();
 }
 
 public sealed record SpottedGamePlate

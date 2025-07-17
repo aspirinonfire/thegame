@@ -31,8 +31,16 @@ export interface WindowWithGoogle extends Window {
   };
 }
 
+export const guestUser: UserAccount = {
+  player: {
+    playerId: -1,
+    playerName: "Guest User",
+  },
+  isAuthenticated: false
+};
+
 export interface AppAuthSlice {
-  activeUser: UserAccount | null;
+  activeUser: UserAccount;
   apiAccessToken: string | null;
   isProcessingLogin: boolean;
   isGsiSdkReady: boolean;
@@ -45,14 +53,14 @@ export interface AppAuthSlice {
 }
 
 export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = (set, get) => ({
-  activeUser: null,
+  activeUser: guestUser,
   apiAccessToken: null,
   isProcessingLogin: false,
   isGsiSdkReady: false,
   googleSdkClient: null,
 
   processGoogleAuthCode: async (authCode: string) => {
-    const accessTokenResponse = await get().sendUnauthenticatedRequest<string, ApiTokenResponse>(
+    const accessTokenResponse = await get().sendUnauthenticatedRequest<ApiTokenResponse>(
       "user/google/apitoken",
       "POST",
       authCode,
@@ -92,17 +100,23 @@ export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = 
     // TODO consider merging with retrieveAccessToken. This will need tracking of token expiration so we can do silent refresh.
     const currentAccessToken = get().apiAccessToken;
 
-    const refreshResponse = await get().sendUnauthenticatedRequest<any, ApiTokenResponse>("user/refresh-token",
+    const refreshResponse = await get().sendUnauthenticatedRequest<ApiTokenResponse>("user/refresh-token",
       "POST",
       {
         accessToken: currentAccessToken,
         idToken: "id-token-here-wip",
         identityProvider: "Google"
       },
-      true
+      true,
+      async _ => { /* noop */ }
     );
 
-    if (!isApiError(refreshResponse)) {
+    if (isApiError(refreshResponse)) {
+      set({
+        apiAccessToken: null,
+        activeUser: guestUser
+      });
+    } else {
       set({
         apiAccessToken: refreshResponse.accessToken
       });

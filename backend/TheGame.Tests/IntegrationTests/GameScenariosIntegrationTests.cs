@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TheGame.Api.Common;
-using TheGame.Api.Endpoints.Game;
 using TheGame.Api.Endpoints.Game.CreateGame;
 using TheGame.Api.Endpoints.Game.EndGame;
 using TheGame.Api.Endpoints.Game.SpotPlates;

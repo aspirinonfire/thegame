@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TheGame.Api.Common;
 using TheGame.Api.Endpoints.Game.CreateGame;
 using TheGame.Api.Endpoints.Game.EndGame;
-using TheGame.Api.Endpoints.Game.GetGame;
+using TheGame.Api.Endpoints.Game.GetGameHistory;
 using TheGame.Api.Endpoints.Game.SpotPlates;
 
 namespace TheGame.Api.Endpoints.Game;
@@ -15,10 +15,6 @@ public static class GameEndpoints
   public static RouteGroupBuilder MapGameEndpoints(this RouteGroupBuilder apiRoutes)
   {
     var gameRoutes = apiRoutes.MapGroup("game");
-
-    gameRoutes
-      .MapGet("", GetGameEndpoint.Handler)
-      .WithDescription("Retrieve all games for an authenticated player.");
 
     gameRoutes
       .MapPost("", CreateGameEndpoint.Handler)
@@ -31,6 +27,10 @@ public static class GameEndpoints
     gameRoutes
       .MapPost("{gameId:long}/spotplates", SpotPlatesEndpoint.Handler)
       .WithDescription("Updated spotted license plates for an active game.");
+
+    gameRoutes
+      .MapGet("history", GetGameHistoryEndpoint.Handler)
+      .WithDescription("Retrieve game history stats");
 
     return apiRoutes;
   }
@@ -46,8 +46,7 @@ public static class GameEndpoints
       EndGameCommandHandler>()
     .AddScoped<
       ICommandHandler<SpotLicensePlatesCommand, OwnedOrInvitedGame>,
-      SpotLicensePlatesCommandHandler>()
-    .AddScoped<IGameQueryProvider, GameQueryProvider>();
+      SpotLicensePlatesCommandHandler>();
 
     return services;
   }

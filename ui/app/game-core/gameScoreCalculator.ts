@@ -83,7 +83,7 @@ function AreBordersConnected(startingFromBorder: string[],
 export default function CalculateScore(plateData: LicensePlateSpot[]): ScoreData {
   const scoreData: ScoreData = {
     totalScore: 0,
-    milestones: []
+    achievements: []
   };
 
   if (plateData === null) {
@@ -116,7 +116,7 @@ export default function CalculateScore(plateData: LicensePlateSpot[]): ScoreData
   for (const [modifier, territoriesInSet] of territoriesByModifiers) {
     const numOfSpottedPlatesWithCurrentModifier = markedPlatesByMilestones.get(modifier)?.size ?? 0;
     if (territoriesInSet.size === numOfSpottedPlatesWithCurrentModifier) {
-      scoreData.milestones.push(modifier);
+      scoreData.achievements.push(modifier);
       scoreData.totalScore += territoryModifierScoreLookup.get(modifier) ?? 10;
     }
   }
@@ -127,12 +127,12 @@ export default function CalculateScore(plateData: LicensePlateSpot[]): ScoreData
     markedPlatesKeys);
 
   if (hasCoastToCoastConnection) {
-    scoreData.milestones.push("Coast-to-Coast");
+    scoreData.achievements.push("Coast-to-Coast");
     scoreData.totalScore += territoryModifierScoreLookup.get("Coast-to-Coast") ?? 10;
   }
 
   if (territories.length === allSpottedPlates.length) {
-    scoreData.milestones.push("Globetrotter");
+    scoreData.achievements.push("Globetrotter");
     scoreData.totalScore += territoryModifierScoreLookup.get("Globetrotter") ?? 1000;
   }
 

@@ -4,5 +4,5 @@ export type ScoreMilestone = TerritoryModifier | "Coast-to-Coast" | "Globetrotte
 
 export interface ScoreData {
   totalScore: number;
-  milestones: ScoreMilestone[];
+  achievements: ScoreMilestone[];
 }

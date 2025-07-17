@@ -57,7 +57,7 @@ const GamePage = () => {
               className="flex flex-row justify-center gap-3 animate-pulse text-sm text-amber-500"
               data-testid="current-milestones"
               style={{ fontSize: ".7rem"}}>
-                { (activeGame?.score.milestones ?? []).map(ms =>(<div key={ms}>{ms}</div>)) }
+                { (activeGame?.score.achievements ?? []).map(ms =>(<div key={ms}>{ms}</div>)) }
             </div>
           </div>
           
