@@ -3,33 +3,7 @@ import { isApiError } from "~/appState/apiError";
 import type UserAccount from "~/appState/UserAccount";
 import type { ApiTokenResponse } from "./ApiTokenResponse";
 import type { AppStore } from "./AppStore";
-
-/**
- * Minimal GIS type stubs (enough
- * for strong TS safety without an
- * external @types package)
- */
-type CodeResponse = { code: string };
-
-interface CodeClient {
-  requestCode(): void;
-}
-
-export interface WindowWithGoogle extends Window {
-  google?: {
-    accounts: {
-      oauth2: {
-        initCodeClient(cfg: {
-          client_id: string;
-          scope?: string;
-          ux_mode?: 'popup' | 'redirect';
-          callback: (r: CodeResponse) => void;
-          error_callback?: (err: unknown) => void;
-        }): CodeClient;
-      };
-    };
-  };
-}
+import type { CodeClient } from "./GoogleAuthService";
 
 export const guestUser: UserAccount = {
   player: {
@@ -44,7 +18,7 @@ export interface AppAuthSlice {
   apiAccessToken: string | null;
   isProcessingLogin: boolean;
   isGsiSdkReady: boolean;
-  googleSdkClient: CodeClient | null;
+  googleSdkAuthCodeClient: CodeClient | null;
 
   authenticateWithGoogle: () => Promise<boolean>;
   signOut: () => void;
@@ -58,7 +32,7 @@ export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = 
   apiAccessToken: null,
   isProcessingLogin: false,
   isGsiSdkReady: false,
-  googleSdkClient: null,
+  googleSdkAuthCodeClient: null,
 
   processGoogleAuthCode: async (authCode: string) => {
     const accessTokenResponse = await get().sendUnauthenticatedRequest<ApiTokenResponse>(
@@ -68,19 +42,21 @@ export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = 
       true
     );
 
-    if (!isApiError(accessTokenResponse)) {
-      set({
-        apiAccessToken: accessTokenResponse.accessToken,
-      });
-
-      return true;
+    if (isApiError(accessTokenResponse)) {
+      // we have failed to exchange google auth code for app access token.
+      get().resetSessionState();
+      return false;
     }
 
-    return false;
+    set({
+      apiAccessToken: accessTokenResponse.accessToken,
+    });
+
+    return true;
   },
 
   authenticateWithGoogle: async () => {
-    const googleSdkClient = get().googleSdkClient;
+    const googleSdkClient = get().googleSdkAuthCodeClient;
     const isGsiSdkReady = get().isGsiSdkReady;
     
     if (!isGsiSdkReady || !googleSdkClient) {
@@ -97,15 +73,7 @@ export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = 
   },
   
   signOut: () => {
-    set({
-      activeUser: guestUser,
-      activeGame: null,
-      apiAccessToken: null,
-      gameHistory: {
-        numberOfGames: 0,
-        spotStats: {}
-      }
-    });
+    get().resetSessionState();
   },
 
   refreshAccessToken: async () => {
@@ -125,10 +93,12 @@ export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = 
     );
 
     if (isApiError(refreshResponse)) {
-      set({
-        apiAccessToken: null,
-        activeUser: guestUser
-      });
+      // We were not able to retrieve fresh access token because of bad request params.
+      // Otherwise, API is up and running and there's active and usable connection between API and UI.
+      // We will assume this session is no longer valid so we'll reset the state.
+      if (refreshResponse.status == 400) {
+        get().resetSessionState();
+      }
     } else {
       set({
         apiAccessToken: refreshResponse.accessToken

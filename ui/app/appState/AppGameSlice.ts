@@ -37,7 +37,7 @@ export const createGameSlice: StateCreator<AppStore, [], [], AppGameSlice> = (se
       newGameName: name
     };
 
-    const newGameResult = await get().post<Game>("game", newGameRequest);
+    const newGameResult = await get().apiPost<Game>("game", newGameRequest);
 
     if (isApiError(newGameResult)) {
       return null;
@@ -57,7 +57,7 @@ export const createGameSlice: StateCreator<AppStore, [], [], AppGameSlice> = (se
       return null;
     }
 
-    const updatedGame = await get().post<Game>(`game/${currentGame.gameId}/spotplates`, spottedPlates);
+    const updatedGame = await get().apiPost<Game>(`game/${currentGame.gameId}/spotplates`, spottedPlates);
 
     if (isApiError(updatedGame)) {
       return null;
@@ -77,7 +77,7 @@ export const createGameSlice: StateCreator<AppStore, [], [], AppGameSlice> = (se
       return null;
     }
     
-    const endedGameResult = await get().post<Game>(`game/${currentGame.gameId}/endgame`);
+    const endedGameResult = await get().apiPost<Game>(`game/${currentGame.gameId}/endgame`);
     
     if (isApiError(endedGameResult)) {
       return null;
@@ -91,7 +91,7 @@ export const createGameSlice: StateCreator<AppStore, [], [], AppGameSlice> = (se
   },
 
   retrieveGameHistory: async () => {
-    const gameHistory = await get().get<GameHistory>("game/history");
+    const gameHistory = await get().apiGet<GameHistory>("game/history");
     if (isApiError(gameHistory)) {
       return null;
     }

@@ -22,9 +22,9 @@ export interface AppApiSlice {
     includeCreds: boolean,
     onErrorCallback?: (response: Response) => Promise<void>) => Promise<TResponse | apiError>;
   
-  get: <TResponse>(endpoint: string) => Promise<TResponse | apiError>;
+  apiGet: <TResponse>(endpoint: string) => Promise<TResponse | apiError>;
   
-  post: <TResponse>(endpoint: string, body?: any) => Promise<TResponse | apiError>;
+  apiPost: <TResponse>(endpoint: string, body?: any) => Promise<TResponse | apiError>;
 }
 
 export const createApiSlice: StateCreator<AppStore, [], [], AppApiSlice> = (set, get) => ({
@@ -167,8 +167,8 @@ export const createApiSlice: StateCreator<AppStore, [], [], AppApiSlice> = (set,
     return errorData;
   },
 
-  get: async <TResponse>(endpoint: string) => await get().sendAuthenticatedRequest<TResponse>(endpoint, "get", null, false),
+  apiGet: async <TResponse>(endpoint: string) => await get().sendAuthenticatedRequest<TResponse>(endpoint, "get", null, false),
 
-  post: async <TBody, TResponse>(endpoint: string, body: TBody) => await get().sendAuthenticatedRequest<TResponse>(endpoint, "post", body, false)
+  apiPost: async <TBody, TResponse>(endpoint: string, body: TBody) => await get().sendAuthenticatedRequest<TResponse>(endpoint, "post", body, false)
 });
 
