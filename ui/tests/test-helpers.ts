@@ -1,5 +1,5 @@
 import type { BrowserContext, Page, Route } from "@playwright/test";
-import type { PlayerData } from "~/appState/GameSlice";
+import type { PlayerData } from "~/appState/AppGameSlice";
 import type { PlayerInfo } from "~/appState/UserAccount";
 import type { Game } from "~/game-core/models/Game";
 

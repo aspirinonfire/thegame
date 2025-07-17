@@ -47,6 +47,7 @@ export interface AppAuthSlice {
   googleSdkClient: CodeClient | null;
 
   authenticateWithGoogle: () => Promise<boolean>;
+  signOut: () => void;
   processGoogleAuthCode: (authCode: string) => Promise<boolean>;
   retrieveAccessToken: () => Promise<string | null>;
   refreshAccessToken: () => Promise<string | null>;
@@ -93,6 +94,18 @@ export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = 
 
   retrieveAccessToken: async () => {
     return get().apiAccessToken;
+  },
+  
+  signOut: () => {
+    set({
+      activeUser: guestUser,
+      activeGame: null,
+      apiAccessToken: null,
+      gameHistory: {
+        numberOfGames: 0,
+        spotStats: {}
+      }
+    });
   },
 
   refreshAccessToken: async () => {

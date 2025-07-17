@@ -2,7 +2,7 @@ import type { StateCreator } from "zustand";
 import type { apiError } from "~/appState/apiError";
 import type { AppStore } from "./AppStore";
 
-export interface ApiSlice {
+export interface AppApiSlice {
   apiErrors: apiError[];
 
   enqueueError: (apiError: apiError) => void;
@@ -27,7 +27,7 @@ export interface ApiSlice {
   post: <TResponse>(endpoint: string, body?: any) => Promise<TResponse | apiError>;
 }
 
-export const createApiSlice: StateCreator<AppStore, [], [], ApiSlice> = (set, get) => ({
+export const createApiSlice: StateCreator<AppStore, [], [], AppApiSlice> = (set, get) => ({
   apiErrors: [],
   enqueueError: (apiError: apiError) => {
     set((s) => ({ apiErrors: [...s.apiErrors, apiError] }));
@@ -48,7 +48,7 @@ export const createApiSlice: StateCreator<AppStore, [], [], ApiSlice> = (set, ge
     includeCreds: boolean,
     onErrorCallback?: (response: Response) => Promise<void>
   ) => {
-    const normalizedEndpointUrl = (endpoint || '').replace(/^\//, '');
+    const normalizedEndpointUrl = (endpoint || "").replace(/^\//, "");
     const apiResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/${normalizedEndpointUrl}`, {
       cache: "no-cache",
       method: method,
@@ -69,8 +69,8 @@ export const createApiSlice: StateCreator<AppStore, [], [], ApiSlice> = (set, ge
       status: apiResponse.status,
       title: 'Failed to send request.',
       detail: await apiResponse.text(),
-      GameRequestCorrelationId: '',
-      traceId: ''
+      GameRequestCorrelationId: "",
+      traceId: ""
     };
 
     if (onErrorCallback) {
@@ -94,17 +94,21 @@ export const createApiSlice: StateCreator<AppStore, [], [], ApiSlice> = (set, ge
     if (!accessToken) {
       const errorData: apiError = {
         status: 401,
-        title: 'Failed to retrieve Access Token.',
-        detail: 'Please contact IT Support for assistance.',
-        GameRequestCorrelationId: '',
-        traceId: ''
+        title: "Failed to retrieve Access Token.",
+        detail: "Please contact IT Support for assistance.",
+        GameRequestCorrelationId: "",
+        traceId: ""
       };
+
+      if (get().activeUser.isAuthenticated) {
+        get().enqueueError(errorData);
+      }
 
       return errorData;
     }
 
     const makeRequest = async (bearerToken: string) => {
-      const normalizedEndpointUrl = (endpoint || '').replace(/^\//, '');
+      const normalizedEndpointUrl = (endpoint || "").replace(/^\//, "");
       const apiResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/${normalizedEndpointUrl}`, {
         cache: "no-cache",
         method: method,
@@ -129,8 +133,8 @@ export const createApiSlice: StateCreator<AppStore, [], [], ApiSlice> = (set, ge
           status: 401,
           title: 'Failed to retrieve Access Token.',
           detail: 'Please contact IT Support for assistance.',
-          GameRequestCorrelationId: '',
-          traceId: ''
+          GameRequestCorrelationId: "",
+          traceId: ""
         };
 
         if (onErrorCallback) {

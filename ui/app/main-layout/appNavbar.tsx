@@ -1,18 +1,26 @@
 import { MapIcon, ClockIcon, InformationCircleIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 import { Dropdown, DropdownHeader, DropdownItem, Navbar, NavbarBrand, NavbarCollapse, NavbarLink, NavbarToggle, Spinner } from "flowbite-react";
 import type { ElementType } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { useShallow } from "zustand/shallow";
 import { useAppState } from "~/appState/useAppState";
 
 const AppNavbar = () => {
   const pathname = useLocation();
+  const navigate = useNavigate();
 
-  const [activeUser, isGsiSdkReady, authenticateWithGoogle, isProcessingLogin] = useAppState(useShallow(state => [
+  const [
+    activeUser,
+    isGsiSdkReady,
+    authenticateWithGoogle,
+    isProcessingLogin,
+    signOut
+  ] = useAppState(useShallow(state => [
     state.activeUser,
     state.isGsiSdkReady,
     state.authenticateWithGoogle,
-    state.isProcessingLogin]));
+    state.isProcessingLogin,
+    state.signOut]));
 
   const navlink = (url: string, linkText: string, Icon: ElementType, exactMatch: boolean = false) => {
     const isActive = exactMatch ?
@@ -30,6 +38,27 @@ const AppNavbar = () => {
           </span>
         </Link>
     </NavbarLink>
+  }
+
+  const renderAppSignIn = () => {
+    return <>
+      <DropdownItem className="text-gray-400" onClick={authenticateWithGoogle} disabled={ isProcessingLogin || !isGsiSdkReady }>
+        {isProcessingLogin ?
+          <Spinner size="sm" color="alternative" /> :
+          isGsiSdkReady ? "Sign-in with Google" : "Setting up Google Sign-in..."}
+      </DropdownItem>
+    </>
+  }
+
+  const renderAppSignOut = () => {
+    return <>
+      <DropdownItem className="text-gray-400" onClick={signOut} disabled={ isProcessingLogin }>
+        {isProcessingLogin ?
+          <Spinner size="sm" color="alternative" /> :
+          "Sign-out"
+        }
+      </DropdownItem>
+    </>
   }
 
   return <Navbar fluid className="gap-5 bg-gradient-to-t from-gray-800 to-gray-900 drop-shadow-lg pl-5 py-0">
@@ -51,12 +80,10 @@ const AppNavbar = () => {
           <span className="block text-sm text-gray-200">Hello, {activeUser?.player.playerName}</span>
         </DropdownHeader>
 
-        <DropdownItem className="text-gray-400" onClick={authenticateWithGoogle} disabled={isProcessingLogin || !isGsiSdkReady}>
-          {isProcessingLogin ?
-            <Spinner size="sm" color="alternative" /> :
-            isGsiSdkReady ? "Sign-in with Google" : "Setting up Google Sign-in..."}
-        </DropdownItem>
-
+        { activeUser.isAuthenticated ?
+          renderAppSignOut() :
+          renderAppSignIn() }
+      
       </Dropdown>
 
       <NavbarToggle className="text-gray-400" />

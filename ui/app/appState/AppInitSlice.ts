@@ -1,17 +1,26 @@
 import type { StateCreator } from "zustand";
 import type { AppStore } from "./AppStore";
 import { guestUser, type WindowWithGoogle } from "./AppAuthSlice";
+import { isApiError } from "./apiError";
+import type { PlayerInfo } from "./UserAccount";
+import type { Game } from "~/game-core/models/Game";
 
 // store rehydrate 'resolve' externally so we can resolve parent promise as part of the event
-export let rehydrationPromiseResolve: (() => void) | null = null;
-export const rehydrationPromise = new Promise<void>(resolve => {
+let rehydrationPromiseResolve: (() => void) | null = null;
+const rehydrationPromise = new Promise<void>(resolve => {
   rehydrationPromiseResolve = resolve;
 });
+
+export interface PlayerData {
+  player: PlayerInfo | null,
+  activeGames: Game[]
+}
 
 export interface AppInitSlice {
   _hasStorageHydrated: boolean;
   isInitialized: boolean;
 
+  retrievePlayerData: () => Promise<boolean>;
   _setStorageHydrated: (state: boolean) => void;
   initialize: () => Promise<void>;
 }
@@ -28,6 +37,27 @@ export const createAppInitSlice: StateCreator<AppStore, [], [], AppInitSlice> = 
       rehydrationPromiseResolve();
       rehydrationPromiseResolve = null;
     }
+  },
+
+  retrievePlayerData: async () => {
+    const apiGet = get().get;
+
+    const playerData = await apiGet<PlayerData>("user/userData")
+
+    if (isApiError(playerData) || !playerData.player) {
+      console.error("Failed to retrieve player data!");
+      return false
+    }
+    
+    set({
+      activeUser: {
+        isAuthenticated: true,
+        player: playerData.player
+      },
+      activeGame: playerData.activeGames[0]
+    });
+
+    return true;
   },
 
   initialize: async () => {
