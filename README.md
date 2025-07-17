@@ -1,10 +1,49 @@
-# The license plate game
+# The License Plate Game
 
-Find all license plates from each U.S. state and Canadian province.
+> Find all license plates from each U.S. state and Canadian province.
 
-### Implementation Details
-Frontend is built using [Next.js](https://nextjs.org/), [Tailwind](https://tailwindcss.com/), [Flowbite](https://flowbite.com/docs/getting-started/react/), and progressive web app ([PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)) technology, allowing users to install it as a standalone app on their phone for a seamless, app-like experience.
-The backend is built using [ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/introduction-to-aspnet-core?view=aspnetcore-8.0) and [EF Core](https://learn.microsoft.com/en-us/ef/core/).
-App is deployed to [Azure Container Apps](https://azure.microsoft.com/en-us/products/container-apps) and Azure SQL using GitHub Actions and [Pulumi](https://www.pulumi.com/).
+### Tech stack:
+* __Backend__: .net 9, Aspire, ASP Net Core Minimal APIs, EF Core, XUnit, Testcontainers
+* __UI__: React Router with Vite, Zustand, Tailwind, Flowbite, Vite PWA, Playwright
+* __Infra__: Azure Container Apps, Azure Static Web App, Azure SQL.
+* __CI/CD and IaC__: Github Actions, Pulumi
 
-See [Wiki page](https://github.com/aspirinonfire/thegame/wiki) for in-depth technical details.
+### Architecture
+__Design principals__:
+1. Single Responsibility Principal (SRP).
+1. Command-Query Segragation (CQS).
+1. Vertical Slices.
+1. Backed-for-frontend (BFF).
+1. Domain-Driven Design (DDD) with invariants protection via EF Core backing fields.
+
+### AuthN/AuthZ:
+1. Google OAuth to prove the user identity.
+1. API-generated access token (JWT) with Refresh Token (http-only cookie).
+1. Endpoints by default require valid JWT unless explicitely as as anonymous.
+
+Auth flow:
+```mermaid
+sequenceDiagram
+participant UI
+participant Google
+participant API
+
+UI -)+ Google: Initiate Login
+activate UI
+Google -) Google: Process Login<br/> and app perm prompts
+Google --)- UI: return Auth Code
+
+UI -)+ API: POST to /api/user/google/apitoken with AuthCode
+API -)+ Google: Exchange AuthCode<br/> for ID Token
+Google -) Google: Validate AuthCode
+Google --)- API: return ID Token
+API ->> API: Generate API-scoped<br/> Access and Refresh tokens
+API --)- UI: return access token (JWT)<br/>and refresh token (HTTP-only cookie)
+
+UI -)+ API: [GET/POST/...] to /api/** with JWT
+API -) API: Validate JWT<br/> and process request
+API --)- UI: return API response
+
+deactivate UI
+
+```
