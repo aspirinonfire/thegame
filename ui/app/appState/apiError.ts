@@ -1,4 +1,4 @@
-export interface apiError {
+export interface ApiError {
   title: string;
   status: number;
   detail: string | null;
@@ -9,6 +9,6 @@ export interface apiError {
   };
 }
 
-export function isApiError<TResponse>(result: TResponse | apiError): result is apiError {
-  return typeof(result as apiError).status === 'number' && (result as apiError).status >= 400;
+export function isApiError<TResponse>(result: TResponse | ApiError): result is ApiError {
+  return typeof(result as ApiError).status === 'number' && (result as ApiError).status >= 400;
 }

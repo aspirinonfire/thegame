@@ -1,35 +1,35 @@
 import type { StateCreator } from "zustand";
-import type { apiError } from "~/appState/apiError";
+import type { ApiError } from "~/appState/apiError";
 import type { AppStore } from "./AppStore";
 
 export interface AppApiSlice {
-  apiErrors: apiError[];
+  apiErrors: ApiError[];
 
-  enqueueError: (apiError: apiError) => void;
-  dequeueError: () => apiError | null;
+  enqueueError: (apiError: ApiError) => void;
+  dequeueError: () => ApiError | null;
 
   sendAuthenticatedRequest: <TResponse>(
     endpoint: string,
     method: string,
     body: any | null,
     includeCreds: boolean,
-    onErrorCallback?: (response: Response) => Promise<void>) => Promise<TResponse | apiError>;
+    onErrorCallback?: (response: Response) => Promise<void>) => Promise<TResponse | ApiError>;
   
   sendUnauthenticatedRequest: <TResponse>(
     url: string,
     method: string,
     body: any | null,
     includeCreds: boolean,
-    onErrorCallback?: (response: Response) => Promise<void>) => Promise<TResponse | apiError>;
+    onErrorCallback?: (response: Response) => Promise<void>) => Promise<TResponse | ApiError>;
   
-  apiGet: <TResponse>(endpoint: string) => Promise<TResponse | apiError>;
+  apiGet: <TResponse>(endpoint: string) => Promise<TResponse | ApiError>;
   
-  apiPost: <TResponse>(endpoint: string, body?: any) => Promise<TResponse | apiError>;
+  apiPost: <TResponse>(endpoint: string, body?: any) => Promise<TResponse | ApiError>;
 }
 
 export const createApiSlice: StateCreator<AppStore, [], [], AppApiSlice> = (set, get) => ({
   apiErrors: [],
-  enqueueError: (apiError: apiError) => {
+  enqueueError: (apiError: ApiError) => {
     set((s) => ({ apiErrors: [...s.apiErrors, apiError] }));
   },
 
@@ -65,7 +65,7 @@ export const createApiSlice: StateCreator<AppStore, [], [], AppApiSlice> = (set,
       return data;
     }
 
-    const errorData: apiError = {
+    const errorData: ApiError = {
       status: apiResponse.status,
       title: 'Failed to send request.',
       detail: await apiResponse.text(),
@@ -92,7 +92,7 @@ export const createApiSlice: StateCreator<AppStore, [], [], AppApiSlice> = (set,
     let accessToken = await get().retrieveAccessToken();
 
     if (!accessToken) {
-      const errorData: apiError = {
+      const errorData: ApiError = {
         status: 401,
         title: "Failed to retrieve Access Token.",
         detail: "Please contact IT Support for assistance.",
@@ -129,7 +129,7 @@ export const createApiSlice: StateCreator<AppStore, [], [], AppApiSlice> = (set,
       accessToken = await get().refreshAccessToken();
 
       if (!accessToken) {
-        const errorData: apiError = {
+        const errorData: ApiError = {
           status: 401,
           title: 'Failed to retrieve Access Token.',
           detail: 'Please contact IT Support for assistance.',
@@ -156,7 +156,7 @@ export const createApiSlice: StateCreator<AppStore, [], [], AppApiSlice> = (set,
     }
 
     // API errors return standard rfc9110 payload
-    const errorData: apiError = await apiResponse.json();
+    const errorData: ApiError = await apiResponse.json();
     
     if (onErrorCallback) {
       await onErrorCallback(apiResponse);
