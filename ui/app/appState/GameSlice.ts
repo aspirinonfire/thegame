@@ -33,6 +33,7 @@ export const createGameSlice: StateCreator<AppStore, [], [], GameSlice> = (set, 
     ]);
 
     if (isApiError(playerResult)) {
+      console.error("Failed to retrieve player data!");
       isSuccessfulRetrieval = false;
     } else {
       set({
@@ -44,6 +45,7 @@ export const createGameSlice: StateCreator<AppStore, [], [], GameSlice> = (set, 
     }
 
     if (isApiError(gamesResult)) {
+      console.error("Failed to retrieve game data!");
       isSuccessfulRetrieval = false;
     } else {
       set({

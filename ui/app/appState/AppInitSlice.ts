@@ -45,7 +45,8 @@ export const createAppInitSlice: StateCreator<AppStore, [], [], AppInitSlice> = 
         }
       });
     } else {
-      await get().retrievePlayerData();
+      const isDataRetrieved = await get().retrievePlayerData();
+      console.log("User data initialized: ", isDataRetrieved);
     }
 
     set({ isInitialized: true });

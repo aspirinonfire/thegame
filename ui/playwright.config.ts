@@ -11,18 +11,25 @@ import { defineConfig, devices } from '@playwright/test';
 const DEV  = !!process.env.PW_DEV;          // set by `npm run teste2edev`
 const PORT = DEV ? 3000 : 3030;             // 3030 = your preview port
 
+const appEnvVars = {
+  VITE_GOOGLE_CLIENT_ID: "test-client-id",
+  VITE_API_URL: "http://localhost"
+}
+
 const webServer = DEV ?
   {
     command: 'react-router dev --port 3000',
     url:     'http://localhost:3000',
     reuseExistingServer: true,
     timeout: 30_000,
+    env: appEnvVars
   } :
   {
     command: 'npm run prodpreview',
     url: 'http://localhost:3030',
     timeout: 120_000,
     reuseExistingServer: !process.env.CI,
+    env: appEnvVars
   }
 
 /**
