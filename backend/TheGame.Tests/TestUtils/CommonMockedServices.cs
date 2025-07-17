@@ -52,6 +52,7 @@ public static class CommonMockedServices
       })
       .AddScoped<ITransactionExecutionWrapper, TransactionExecutionWrapper>()
       .AddScoped(typeof(IDomainMessageHandler<>), typeof(DomainMessageLogger<>))
+      .AddScoped<IGameQueryProvider, GameQueryProvider>()
       .AddScoped(sp =>
       {
         return Substitute.For<IGameAuthService>();

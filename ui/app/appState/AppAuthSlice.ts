@@ -31,8 +31,16 @@ export interface WindowWithGoogle extends Window {
   };
 }
 
+export const guestUser: UserAccount = {
+  player: {
+    playerId: -1,
+    playerName: "Guest User",
+  },
+  isAuthenticated: false
+};
+
 export interface AppAuthSlice {
-  activeUser: UserAccount | null;
+  activeUser: UserAccount;
   apiAccessToken: string | null;
   isProcessingLogin: boolean;
   isGsiSdkReady: boolean;
@@ -45,7 +53,7 @@ export interface AppAuthSlice {
 }
 
 export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = (set, get) => ({
-  activeUser: null,
+  activeUser: guestUser,
   apiAccessToken: null,
   isProcessingLogin: false,
   isGsiSdkReady: false,
@@ -99,10 +107,16 @@ export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = 
         idToken: "id-token-here-wip",
         identityProvider: "Google"
       },
-      true
+      true,
+      async _ => { /* noop */ }
     );
 
-    if (!isApiError(refreshResponse)) {
+    if (isApiError(refreshResponse)) {
+      set({
+        apiAccessToken: null,
+        activeUser: guestUser
+      });
+    } else {
       set({
         apiAccessToken: refreshResponse.accessToken
       });

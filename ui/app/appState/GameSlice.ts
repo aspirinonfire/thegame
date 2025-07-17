@@ -20,40 +20,33 @@ export interface GameSlice {
   retrieveGameHistory: () => Promise<GameHistory | null>;
 }
 
+export interface PlayerData {
+  player: PlayerInfo | null,
+  activeGames: Game[]
+}
+
 export const createGameSlice: StateCreator<AppStore, [], [], GameSlice> = (set, get) => ({
   activeGame: null,
 
   retrievePlayerData: async () => {
     const apiGet = get().get;
-    let isSuccessfulRetrieval = true;
 
-    const [playerResult, gamesResult] = await Promise.all([
-      apiGet<PlayerInfo>("user"),
-      apiGet<Game[]>("game")
-    ]);
+    const playerData = await apiGet<PlayerData>("user/userData")
 
-    if (isApiError(playerResult)) {
+    if (isApiError(playerData) || !playerData.player) {
       console.error("Failed to retrieve player data!");
-      isSuccessfulRetrieval = false;
-    } else {
-      set({
-        activeUser: {
-          isAuthenticated: true,
-          player: playerResult
-        }
-      });
+      return false
     }
+    
+    set({
+      activeUser: {
+        isAuthenticated: true,
+        player: playerData.player
+      },
+      activeGame: playerData.activeGames[0]
+    });
 
-    if (isApiError(gamesResult)) {
-      console.error("Failed to retrieve game data!");
-      isSuccessfulRetrieval = false;
-    } else {
-      set({
-        activeGame: gamesResult[0]
-      });
-    }
-
-    return isSuccessfulRetrieval;
+    return true;
   },
   
   startNewGame: async (name: string) => {

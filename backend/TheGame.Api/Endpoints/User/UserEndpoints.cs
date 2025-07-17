@@ -16,8 +16,8 @@ public static class UserEndpoints
     var userRoutes = apiRoutes.MapGroup("user");
 
     userRoutes
-      .MapGet("", GetUserEndpoint.Handler)
-      .WithDescription("Get user details for authenticated player.");
+      .MapGet("userData", GetUserDataEndpoint.Handler)
+      .WithDescription("Get user data for authenticated player.");
 
     userRoutes
       .MapPost("google/apitoken", GoogleApiTokenEndpoint.Handler)

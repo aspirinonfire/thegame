@@ -1,4 +1,5 @@
 import type { BrowserContext, Page, Route } from "@playwright/test";
+import type { PlayerData } from "~/appState/GameSlice";
 import type { PlayerInfo } from "~/appState/UserAccount";
 import type { Game } from "~/game-core/models/Game";
 
@@ -82,18 +83,17 @@ export async function CreateBaseAppWithInitData(context: BrowserContext,
     playerName: "Test Player"
   };
 
-  mockSingleApiRequest(page,
-    "*/**/api/user",
-    "GET",
-    { json: testUser }
-  );
-
   const gameToInitWith = !!initGame ? [initGame] : [];
 
   mockSingleApiRequest(page,
-    "*/**/api/game",
+    "*/**/api/user/userData",
     "GET",
-    { json: gameToInitWith }
+    { 
+      json: <PlayerData>{
+        player: testUser,
+        activeGames: gameToInitWith
+      }
+    }
   );
 
   return page;
