@@ -1,7 +1,7 @@
 import type { StateCreator } from "zustand";
 import type { AppStore } from "./AppStore";
 import { guestUser } from "./AppAuthSlice";
-import { isApiError } from "./apiError";
+import { isApiError } from "./ApiError";
 import type { PlayerInfo } from "./UserAccount";
 import type { Game } from "~/game-core/models/Game";
 import { InitializeGoogleAuthCodeClient } from "./GoogleAuthService";

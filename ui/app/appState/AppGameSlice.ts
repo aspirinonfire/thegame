@@ -3,7 +3,7 @@ import type { Game } from "~/game-core/models/Game";
 import type { LicensePlateSpot } from "~/game-core/models/LicensePlateSpot";
 import type { AppStore } from "./AppStore";
 import type { PlayerInfo } from "~/appState/UserAccount";
-import { isApiError } from "~/appState/apiError";
+import { isApiError } from "~/appState/ApiError";
 
 export interface GameHistory {
   numberOfGames: number,

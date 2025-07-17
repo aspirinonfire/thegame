@@ -16,6 +16,7 @@ export interface WindowWithGoogle extends Window {
         initCodeClient(cfg: {
           client_id: string;
           scope?: string;
+          auto_select: boolean;
           ux_mode?: 'popup' | 'redirect';
           callback: (r: CodeResponse) => void;
           error_callback?: (err: unknown) => void;
@@ -39,6 +40,7 @@ export function InitializeGoogleAuthCodeClient(
     client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
     scope: 'openid email profile',
     ux_mode: 'popup',
+    auto_select: true,
     callback: ({ code }) => onRetrievedCode(code),
     error_callback: (err) => onError(err),
   });

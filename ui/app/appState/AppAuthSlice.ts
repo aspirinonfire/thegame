@@ -1,5 +1,5 @@
 import type { StateCreator } from "zustand";
-import { isApiError } from "~/appState/apiError";
+import { isApiError } from "~/appState/ApiError";
 import type UserAccount from "~/appState/UserAccount";
 import type { ApiTokenResponse } from "./ApiTokenResponse";
 import type { AppStore } from "./AppStore";

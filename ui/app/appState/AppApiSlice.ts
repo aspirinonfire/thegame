@@ -1,5 +1,5 @@
 import type { StateCreator } from "zustand";
-import type { ApiError } from "~/appState/apiError";
+import type { ApiError } from "~/appState/ApiError";
 import type { AppStore } from "./AppStore";
 
 export interface AppApiSlice {
