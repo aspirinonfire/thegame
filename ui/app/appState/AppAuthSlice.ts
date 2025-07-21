@@ -39,6 +39,8 @@ export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = 
   googleSdkIdCodeClient: null,
 
   processGoogleAuthCode: async (authCode: string) => {
+    // TODO needs CSRF protection
+
     const accessTokenResponse = await get().sendUnauthenticatedRequest<ApiTokenResponse>(
       "user/google/apitoken",
       "POST",
@@ -80,10 +82,7 @@ export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = 
       return null;
     }
 
-    // TODO return token from temp state variable!
-    idClient.prompt();
-
-    return null;
+    return await idClient.prompt();
   },
 
   retrieveAccessToken: async () => {

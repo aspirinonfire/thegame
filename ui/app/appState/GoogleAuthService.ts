@@ -15,12 +15,13 @@ export interface CodeClientConfiguration {
   scope?: string;
   auto_select: boolean;
   ux_mode?: "popup" | "redirect";
+  login_hint?: string,
   callback: (r: CodeResponse) => void;
   error_callback?: (err: unknown) => void;
 }
 
 export interface IdClient {
-  prompt(): void;
+  prompt(): Promise<string | null>;
 }
 
 export interface IdTokenCredential {
@@ -79,9 +80,12 @@ export function InitializeGoogleAuthCodeClient(
   });
 };
 
-export function InitializeGoogleIdTokenClient(
-  onSuccess: (r: IdTokenCredential) => void
-) : IdClient | null {
+const idTokenQueue: {
+  resolve: (token: string | null) => void;
+  timer: ReturnType<typeof setTimeout>;
+}[] = [];
+
+export function InitializeGoogleIdTokenClient() : IdClient | null {
   const google = (window as WindowWithGoogle).google;
   if (!google) {
     console.error("Google SDK did not load!!");
@@ -96,24 +100,41 @@ export function InitializeGoogleIdTokenClient(
     use_fedcm_for_button: true,
     color_scheme: "dark",
     ux_mode: "popup",
-    callback: (r) => onSuccess(r),
+    callback: (idTokenResponse) => {
+      let job = idTokenQueue.shift();
+      while (!!job) {
+        clearTimeout(job.timer);
+        job.resolve(idTokenResponse?.credential);
+        job = idTokenQueue.shift();
+      }
+    }
   });
 
   return {
     prompt: () => {
-      // important! this removes one-tap cooldown in case user clicks outside of popup.
-      (window as any).cookieStore?.delete("g_state");
-      google.accounts.id.prompt((noti: any) => {
-        // Dev Note: uncomment to for One-Tap debugging
-        // console.log({
-        //   isDismissed: noti?.isDismissedMoment(),
-        //   dismissReason: noti?.getDismissedReason(),
-        //   isDisplayed: noti?.isDisplayed(),
-        //   notDisplayedReason: noti?.getNotDisplayedReason(),
-        //   isSkipped: noti?.isSkippedMoment(),
-        //   skippedReason: noti?.getSkippedReason()
-        // });
+      const idTokenProm = new Promise<string | null>(resolve => {
+        // push to internal queue to be resolved in callback defined in initialize
+        idTokenQueue.push({
+          resolve: resolve,
+          timer: setTimeout(() => resolve(null), 10_000)
+        });
+
+        // important! this removes one-tap cooldown in case user clicks outside of popup.
+        document.cookie = `g_state={"i_l":0}`;
+        google.accounts.id.prompt((noti: any) => {
+          // Dev Note: uncomment to for One-Tap debugging
+          // console.log({
+          //   isDismissed: noti?.isDismissedMoment(),
+          //   dismissReason: noti?.getDismissedReason(),
+          //   isDisplayed: noti?.isDisplayed(),
+          //   notDisplayedReason: noti?.getNotDisplayedReason(),
+          //   isSkipped: noti?.isSkippedMoment(),
+          //   skippedReason: noti?.getSkippedReason()
+          // });
+        });
       });
+
+      return idTokenProm;
     }
   };
 };

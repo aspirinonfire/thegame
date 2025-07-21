@@ -6,19 +6,12 @@ import type { PlayerInfo } from "./UserAccount";
 import type { Game } from "~/game-core/models/Game";
 import { InitializeGoogleAuthCodeClient, InitializeGoogleIdTokenClient } from "./GoogleAuthService";
 
-// store rehydrate 'resolve' externally so we can resolve parent promise as part of the event
-let rehydrationPromiseResolve: (() => void) | null = null;
-const rehydrationPromise = new Promise<void>(resolve => {
-  rehydrationPromiseResolve = resolve;
-});
-
 export interface PlayerData {
   player: PlayerInfo | null,
   activeGames: Game[]
 }
 
 export interface AppInitSlice {
-  _hasStorageHydrated: boolean;
   isInitialized: boolean;
 
   retrievePlayerData: () => Promise<boolean>;
@@ -27,142 +20,142 @@ export interface AppInitSlice {
   resetSessionState: () => void;
 }
 
-export const createAppInitSlice: StateCreator<AppStore, [], [], AppInitSlice> = (set, get) => ({
-  _hasStorageHydrated: false,
-  isInitialized: false,
+export const createAppInitSlice: StateCreator<AppStore, [], [], AppInitSlice> = (set, get) => {
+  // store rehydrate 'resolve' externally so we can resolve parent promise as part of the event
+  let rehydrationPromiseResolve: (() => void) | null = null;
+  const rehydrationPromise = new Promise<void>(resolve => {
+    rehydrationPromiseResolve = resolve;
+  });
 
-  _setStorageHydrated: (state: boolean) => {
-    set({ _hasStorageHydrated: true });
+  return {
+    isInitialized: false,
 
-    // resolve rehydrate promise if applicable
-    if (state && rehydrationPromiseResolve) {
-      rehydrationPromiseResolve();
-      rehydrationPromiseResolve = null;
-    }
-  },
+    _setStorageHydrated: (state: boolean) => {
+      // resolve rehydrate promise if applicable
+      if (state && rehydrationPromiseResolve) {
+        rehydrationPromiseResolve();
+        rehydrationPromiseResolve = null;
+      }
+    },
 
-  retrievePlayerData: async () => {
-    const playerData = await get().apiGet<PlayerData>("user/userData")
+    retrievePlayerData: async () => {
+      const playerData = await get().apiGet<PlayerData>("user/userData")
 
-    if (isApiError(playerData) || !playerData.player) {
-      console.error("Failed to retrieve player data!");
-      return false
-    }
-    
-    set({
-      activeUser: {
-        isAuthenticated: true,
-        player: playerData.player
-      },
-      activeGame: playerData.activeGames[0]
-    });
-
-    return true;
-  },
-
-  initialize: async () => {
-    // Wait for rehydration before initializing
-    await rehydrationPromise;
-
-    if (!get().apiAccessToken) {
+      if (isApiError(playerData) || !playerData.player) {
+        console.error("Failed to retrieve player data!");
+        return false
+      }
+      
       set({
-        activeUser: guestUser
-      });
-    } else {
-      const isDataRetrieved = await get().retrievePlayerData();
-      console.log("User data initialized: ", isDataRetrieved);
-    }
-
-    set({ isInitialized: true });
-
-    if (get().isGsiSdkReady) {
-      return;
-    }
-
-    if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
-      console.error("Google Client ID is missing. Auth is will not work!");
-      return;
-    }
-
-    // TODO simplify this mess!
-    const existing = document.querySelector<HTMLScriptElement>(
-      'script[src="https://accounts.google.com/gsi/client"]'
-    );
-    const script = existing ?? document.createElement('script');
-
-    const onLoad = () => {
-      const authCodeClient = InitializeGoogleAuthCodeClient(
-        async code => {
-          get().processGoogleAuthCode(code)
-            .then(_ => {
-              return get().retrievePlayerData()
-            })
-            .finally(() => {
-              set({
-                isProcessingLogin: false
-              });
-            });
+        activeUser: {
+          isAuthenticated: true,
+          player: playerData.player
         },
-        async err => {
-          set({
-            isProcessingLogin: false
-          });
-          console.error(err)  // handles user-closed popup etc.
-        }
-      );
-
-      if (!authCodeClient) {
-        return;
-      }
-
-      const idTokenClient = InitializeGoogleIdTokenClient(
-        (cred) => {
-          // TODO store valid token in temp state variable!
-          console.log("idtoken cb: ", cred?.credential)
-        }
-      );
-
-      if (!idTokenClient) {
-        return;
-      }
-
-      set({
-        isGsiSdkReady: true,
-        googleSdkAuthCodeClient: authCodeClient,
-        googleSdkIdCodeClient: idTokenClient
+        activeGame: playerData.activeGames[0]
       });
-    };
-    
-    const onError = () => alert("Failed to load Google Sign-In SDK. Please try again later.");
 
-    if (!existing) {
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.addEventListener('load', onLoad, { once: true });
-      script.addEventListener('error', onError, { once: true });
-      document.head.appendChild(script);
-    } else {
-      // tag was already there but might have loaded while we weren’t listening
-      if ((window as any).google) {
-        onLoad();
+      return true;
+    },
+
+    initialize: async () => {
+      // Wait for rehydration before initializing
+      await rehydrationPromise;
+
+      if (!get().apiAccessToken) {
+        set({
+          activeUser: guestUser
+        });
+      } else {
+        const isDataRetrieved = await get().retrievePlayerData();
+        console.log("User data initialized: ", isDataRetrieved);
       }
-      else {
-        existing.addEventListener('load', onLoad, { once: true });
-        existing.addEventListener('error', onError, { once: true });
+
+      set({ isInitialized: true });
+
+      if (get().isGsiSdkReady) {
+        return;
       }
+
+      if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+        console.error("Google Client ID is missing. Auth is will not work!");
+        return;
+      }
+
+      // TODO simplify this mess!
+      const existing = document.querySelector<HTMLScriptElement>(
+        'script[src="https://accounts.google.com/gsi/client"]'
+      );
+      const script = existing ?? document.createElement('script');
+
+      const onLoad = () => {
+        const authCodeClient = InitializeGoogleAuthCodeClient(
+          async code => {
+            get().processGoogleAuthCode(code)
+              .then(_ => {
+                return get().retrievePlayerData()
+              })
+              .finally(() => {
+                set({
+                  isProcessingLogin: false
+                });
+              });
+          },
+          async err => {
+            set({
+              isProcessingLogin: false
+            });
+            console.error(err)  // handles user-closed popup etc.
+          }
+        );
+
+        if (!authCodeClient) {
+          return;
+        }
+
+        const idTokenClient = InitializeGoogleIdTokenClient();
+
+        if (!idTokenClient) {
+          return;
+        }
+
+        set({
+          isGsiSdkReady: true,
+          googleSdkAuthCodeClient: authCodeClient,
+          googleSdkIdCodeClient: idTokenClient
+        });
+      };
+      
+      const onError = () => alert("Failed to load Google Sign-In SDK. Please try again later.");
+
+      if (!existing) {
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.async = true;
+        script.addEventListener('load', onLoad, { once: true });
+        script.addEventListener('error', onError, { once: true });
+        document.head.appendChild(script);
+      } else {
+        // tag was already there but might have loaded while we weren’t listening
+        if ((window as any).google) {
+          onLoad();
+        }
+        else {
+          existing.addEventListener('load', onLoad, { once: true });
+          existing.addEventListener('error', onError, { once: true });
+        }
+      }
+    },
+
+    resetSessionState: () => {
+      set({
+        activeUser: guestUser,
+        activeGame: null,
+        apiAccessToken: null,
+        gameHistory: {
+          numberOfGames: 0,
+          spotStats: {}
+        }
+      });
     }
-  },
-
-  resetSessionState: () => {
-    set({
-      activeUser: guestUser,
-      activeGame: null,
-      apiAccessToken: null,
-      gameHistory: {
-        numberOfGames: 0,
-        spotStats: {}
-      }
-    });
   }
-});
+}
 
