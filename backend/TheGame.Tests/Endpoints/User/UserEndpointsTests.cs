@@ -119,7 +119,7 @@ public class UserEndpointsTests
   }
 
   [Fact]
-  public async Task WillAuthenticateNewPlayerWithWhenGoogleAuthCodeIsValid()
+  public async Task WillAuthenticateNewPlayerWithWhenGoogleIdTokenIsValid()
   {
     await using var uutApiApp = GetApiFactory(services =>
     {
@@ -129,8 +129,8 @@ public class UserEndpointsTests
           .For<ICommandHandler<AuthenticateWithIdTokenCommand, AuthenticateWithIdTokenCommand.Result>>();
 
         cmdHandler
-          .Execute(Arg.Is<AuthenticateWithIdTokenCommand>(cmd => cmd.IdToken == "test-auth-code"), Arg.Any<CancellationToken>())
-          .Returns(new AuthenticateWithIdTokenCommand.Result(false,
+          .Execute(Arg.Is<AuthenticateWithIdTokenCommand>(cmd => cmd.IdToken == "id-token"), Arg.Any<CancellationToken>())
+          .Returns(new AuthenticateWithIdTokenCommand.Result(true,
             "test-access-token",
             "test-refresh-token",
             TimeSpan.FromSeconds(60)));
@@ -149,7 +149,7 @@ public class UserEndpointsTests
 
     var client = uutApiApp.CreateClient();
 
-    var actualAuthTokenResponseMessage = await client.PostAsJsonAsync("/api/user/google/apitoken", "test-auth-code");
+    var actualAuthTokenResponseMessage = await client.PostAsJsonAsync("/api/user/google/apitoken", "id-token");
 
     Assert.Equal(HttpStatusCode.OK, actualAuthTokenResponseMessage.StatusCode);
 
