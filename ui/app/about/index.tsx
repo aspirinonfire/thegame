@@ -1,6 +1,6 @@
 import { Button, Card, Modal, ModalBody, ModalHeader } from "flowbite-react";
 import { useEffect, useState } from "react";
-import { ExclamationCircleIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, ExclamationCircleIcon, LockClosedIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import type { Route } from "./+types";
 import LocalDateTime from "~/common-components/localDateTime";
 import { useAppState } from "~/appState/useAppState";
@@ -91,7 +91,7 @@ const AboutPage = ({
         </div>
         <div className="leading-relaxed mt-5 text-xs">
           <p>
-            Made with React, Tailwind, Flowbite, coffee, ducktape, and WD-40
+            Made with React, Flowbite, ASP Net Core, coffee, ducktape, and WD-40
           </p>
           <p className="text-gray-400 pt-5">
             App deploy date: <LocalDateTime isoDateTime={versionInfo.deployDate} format="MMMM D, YYYY" />. Commit: {versionInfo.sha}
@@ -101,10 +101,12 @@ const AboutPage = ({
 
       <div>
         <Button size="xs" color="gray" className="fixed bottom-0 left 0 mb-5 opacity-50" onClick={restartApp} >
+          <ArrowPathIcon className="mr-1 h-4 w-4" />
           Reload App
         </Button>
 
         <Button size="xs" color="black" className="fixed bottom-0 left-40 mb-5 opacity-50" onClick={refreshApiAccessToken}>
+          <LockClosedIcon className="mr-1 h-4 w-4" />
           Refresh Access
         </Button>
 

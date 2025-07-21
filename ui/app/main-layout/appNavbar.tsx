@@ -1,24 +1,20 @@
 import { MapIcon, ClockIcon, InformationCircleIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 import { Dropdown, DropdownHeader, DropdownItem, Navbar, NavbarBrand, NavbarCollapse, NavbarLink, NavbarToggle, Spinner } from "flowbite-react";
 import type { ElementType } from "react";
-import { Link, useLocation, useNavigate } from "react-router";
+import { Link, useLocation } from "react-router";
 import { useShallow } from "zustand/shallow";
 import { useAppState } from "~/appState/useAppState";
+import GoogleSignInButton from "~/common-components/googleSignInButton";
 
 const AppNavbar = () => {
   const pathname = useLocation();
-  const navigate = useNavigate();
 
   const [
     activeUser,
-    isGsiSdkReady,
-    authenticateWithGoogle,
     isProcessingLogin,
     signOut
   ] = useAppState(useShallow(state => [
     state.activeUser,
-    state.isGsiSdkReady,
-    state.authenticateWithGoogle,
     state.isProcessingLogin,
     state.signOut]));
 
@@ -40,12 +36,23 @@ const AppNavbar = () => {
     </NavbarLink>
   }
 
+  const onClickHandler = () => {
+    // TODO close dropdown
+  };
+
   const renderAppSignIn = () => {
     return <>
-      <DropdownItem className="text-gray-400" onClick={authenticateWithGoogle} disabled={ isProcessingLogin || !isGsiSdkReady }>
-        {isProcessingLogin ?
-          <Spinner size="sm" color="alternative" /> :
-          isGsiSdkReady ? "Sign-in with Google" : "Setting up Google Sign-in..."}
+      <DropdownItem className="text-gray-400" disabled={ isProcessingLogin }>
+        {
+          isProcessingLogin ?
+            <Spinner size="sm" color="alternative" /> :
+            <GoogleSignInButton
+              type="standard"
+              theme="outline"
+              text="continue_with"
+              click_listener={onClickHandler}
+              shape="rectangular" />
+        }
       </DropdownItem>
     </>
   }
@@ -82,7 +89,8 @@ const AppNavbar = () => {
 
         { activeUser.isAuthenticated ?
           renderAppSignOut() :
-          renderAppSignIn() }
+          renderAppSignIn()
+        }
       
       </Dropdown>
 

@@ -22,6 +22,7 @@ export interface CodeClientConfiguration {
 
 export interface IdClient {
   prompt(): Promise<string | null>;
+  renderLoginButtonWithCredHandler: (parent: HTMLElement, btnConfig: GsiButtonConfiguration) => Promise<string | null>;
 }
 
 export interface IdTokenCredential {
@@ -39,10 +40,22 @@ export interface IdConfiguration {
   nonce?: string;
   itp_support?: boolean;
   login_hint?: string;
+  prompt_parent_id?: string;
   use_fedcm_for_prompt?: boolean;
   use_fedcm_for_button?: boolean;
   allowed_parent_origin?: string | string[]
   callback: (r: IdTokenCredential) => void;
+}
+
+export interface GsiButtonConfiguration {
+  type: "icon" | "standard",
+  theme?: "outline" | "filled_blue" | "filled_black",
+  size?: "small" | "medium" | "large",
+  text?: "signin_with" | "signup_with" | "continue_with" | "signin",
+  shape?: "rectangular" | "pill" | "circle" | "square",
+  logo_alignment?: "left" | "center"
+  width?: string,
+  click_listener?: (e: any) => void
 }
 
 export interface WindowWithGoogle extends Window {
@@ -55,6 +68,7 @@ export interface WindowWithGoogle extends Window {
       id:  {
         initialize(cfg: IdConfiguration) : void;
         prompt: (notification: any) => void;
+        renderButton: (parent: HTMLElement, btnConfig: GsiButtonConfiguration) => void;
       }
     };
   };
@@ -98,8 +112,10 @@ export function InitializeGoogleIdTokenClient() : IdClient | null {
     button_auto_select: true,
     use_fedcm_for_prompt: true,
     use_fedcm_for_button: true,
+    itp_support: true,
     color_scheme: "dark",
     ux_mode: "popup",
+    prompt_parent_id: "app-header",
     callback: (idTokenResponse) => {
       let job = idTokenQueue.shift();
       while (!!job) {
@@ -118,23 +134,52 @@ export function InitializeGoogleIdTokenClient() : IdClient | null {
           resolve: resolve,
           timer: setTimeout(() => resolve(null), 10_000)
         });
-
-        // important! this removes one-tap cooldown in case user clicks outside of popup.
-        document.cookie = `g_state={"i_l":0}`;
+        
         google.accounts.id.prompt((noti: any) => {
-          // Dev Note: uncomment to for One-Tap debugging
-          // console.log({
-          //   isDismissed: noti?.isDismissedMoment(),
-          //   dismissReason: noti?.getDismissedReason(),
-          //   isDisplayed: noti?.isDisplayed(),
-          //   notDisplayedReason: noti?.getNotDisplayedReason(),
-          //   isSkipped: noti?.isSkippedMoment(),
-          //   skippedReason: noti?.getSkippedReason()
-          // });
+          if (noti?.getDismissedReason() == "credential_returned") {
+            let job = idTokenQueue.shift();
+            while (!!job) {
+              clearTimeout(job.timer);
+              job.resolve(null);
+              job = idTokenQueue.shift();
+            }
+          } else {
+            // TODO show login button when prompt fails
+            
+            console.log({
+              isDismissed: noti?.isDismissedMoment(),
+              dismissReason: noti?.getDismissedReason(),
+              isDisplayed: noti?.isDisplayed(),
+              notDisplayedReason: noti?.getNotDisplayedReason(),
+              isSkipped: noti?.isSkippedMoment(),
+              skippedReason: noti?.getSkippedReason()
+            });
+          }
         });
       });
 
       return idTokenProm;
+    },
+    
+    renderLoginButtonWithCredHandler: (parent, btnCfg) => {
+      return new Promise<string | null>(resolve => {
+        const btnConfigWithListener: GsiButtonConfiguration = {
+          ...btnCfg,
+          click_listener: (e) => {
+            btnCfg.click_listener?.apply(null, e);
+            
+            // Push to internal queue as soon as user clicks the button.
+            // Promise will be resolved in callback defined in initialize.
+            // Wait is bit longer (compared to prompt implementation) to give user time to interract with popup
+            idTokenQueue.push({
+              resolve: resolve,
+              timer: setTimeout(() => resolve(null), 60_000)
+            });
+          }
+        };
+
+        google.accounts.id.renderButton(parent, btnConfigWithListener);
+      });
     }
   };
 };

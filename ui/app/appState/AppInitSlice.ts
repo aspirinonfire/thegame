@@ -4,7 +4,7 @@ import { guestUser } from "./AppAuthSlice";
 import { isApiError } from "./ApiError";
 import type { PlayerInfo } from "./UserAccount";
 import type { Game } from "~/game-core/models/Game";
-import { InitializeGoogleAuthCodeClient, InitializeGoogleIdTokenClient } from "./GoogleAuthService";
+import { InitializeGoogleIdTokenClient } from "./GoogleAuthService";
 
 export interface PlayerData {
   player: PlayerInfo | null,
@@ -88,30 +88,6 @@ export const createAppInitSlice: StateCreator<AppStore, [], [], AppInitSlice> = 
       const script = existing ?? document.createElement('script');
 
       const onLoad = () => {
-        const authCodeClient = InitializeGoogleAuthCodeClient(
-          async code => {
-            get().processGoogleAuthCode(code)
-              .then(_ => {
-                return get().retrievePlayerData()
-              })
-              .finally(() => {
-                set({
-                  isProcessingLogin: false
-                });
-              });
-          },
-          async err => {
-            set({
-              isProcessingLogin: false
-            });
-            console.error(err)  // handles user-closed popup etc.
-          }
-        );
-
-        if (!authCodeClient) {
-          return;
-        }
-
         const idTokenClient = InitializeGoogleIdTokenClient();
 
         if (!idTokenClient) {
@@ -120,7 +96,6 @@ export const createAppInitSlice: StateCreator<AppStore, [], [], AppInitSlice> = 
 
         set({
           isGsiSdkReady: true,
-          googleSdkAuthCodeClient: authCodeClient,
           googleSdkIdCodeClient: idTokenClient
         });
       };

@@ -67,7 +67,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <ThemeConfig dark={false} />
         {/* Error boundary for the entire app */}
         <ErrorBoundary>
-          <header className="bg-gray-300">
+          <header className="bg-gray-300" id="app-header">
             <div className="p-0">
               <AppNavbar />
             </div>

@@ -18,13 +18,11 @@ export interface AppAuthSlice {
   apiAccessToken: string | null;
   isProcessingLogin: boolean;
   isGsiSdkReady: boolean;
-  googleSdkAuthCodeClient: CodeClient | null;
   googleSdkIdCodeClient: IdClient | null;
 
-  authenticateWithGoogle: () => Promise<boolean>;
-  processGoogleAuthCode: (authCode: string) => Promise<boolean>;
   signOut: () => void;
 
+  exchangeIdTokenForApiAccessToken: (idToken: string) => Promise<boolean>;
   retrieveGoogleIdToken: () => Promise<string | null>;
   retrieveAccessToken: () => Promise<string | null>;
   refreshAccessToken: () => Promise<string | null>;
@@ -38,15 +36,23 @@ export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = 
   googleSdkAuthCodeClient: null,
   googleSdkIdCodeClient: null,
 
-  processGoogleAuthCode: async (authCode: string) => {
+  exchangeIdTokenForApiAccessToken: async (idToken) => {
+    set({
+      isProcessingLogin: true
+    });
+
     // TODO needs CSRF protection
 
     const accessTokenResponse = await get().sendUnauthenticatedRequest<ApiTokenResponse>(
       "user/google/apitoken",
       "POST",
-      authCode,
+      idToken,
       true
     );
+
+    set({
+      isProcessingLogin: false
+    });
 
     if (isApiError(accessTokenResponse)) {
       // we have failed to exchange google auth code for app access token.
@@ -57,19 +63,6 @@ export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = 
     set({
       apiAccessToken: accessTokenResponse.accessToken,
     });
-
-    return true;
-  },
-
-  authenticateWithGoogle: async () => {
-    const codeClient = get().googleSdkAuthCodeClient;
-    const isGsiSdkReady = get().isGsiSdkReady;
-    
-    if (!isGsiSdkReady || !codeClient) {
-      return false;
-    }
-
-    codeClient.requestCode();
 
     return true;
   },

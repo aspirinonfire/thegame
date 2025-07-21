@@ -126,11 +126,11 @@ public class UserEndpointsTests
       services.AddScoped(sp =>
       {
         var cmdHandler = Substitute
-          .For<ICommandHandler<AuthenticateWithGoogleAuthCodeCommand, AuthenticateWithGoogleAuthCodeCommand.Result>>();
+          .For<ICommandHandler<AuthenticateWithIdTokenCommand, AuthenticateWithIdTokenCommand.Result>>();
 
         cmdHandler
-          .Execute(Arg.Is<AuthenticateWithGoogleAuthCodeCommand>(cmd => cmd.AuthCode == "test-auth-code"), Arg.Any<CancellationToken>())
-          .Returns(new AuthenticateWithGoogleAuthCodeCommand.Result(false,
+          .Execute(Arg.Is<AuthenticateWithIdTokenCommand>(cmd => cmd.IdToken == "test-auth-code"), Arg.Any<CancellationToken>())
+          .Returns(new AuthenticateWithIdTokenCommand.Result(false,
             "test-access-token",
             "test-refresh-token",
             TimeSpan.FromSeconds(60)));
