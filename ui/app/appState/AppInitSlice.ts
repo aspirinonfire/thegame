@@ -4,7 +4,7 @@ import { guestUser } from "./AppAuthSlice";
 import { isApiError } from "./ApiError";
 import type { PlayerInfo } from "./UserAccount";
 import type { Game } from "~/game-core/models/Game";
-import { InitializeGoogleAuthCodeClient } from "./GoogleAuthService";
+import { InitializeGoogleAuthCodeClient, InitializeGoogleIdTokenClient } from "./GoogleAuthService";
 
 // store rehydrate 'resolve' externally so we can resolve parent promise as part of the event
 let rehydrationPromiseResolve: (() => void) | null = null;
@@ -84,6 +84,7 @@ export const createAppInitSlice: StateCreator<AppStore, [], [], AppInitSlice> = 
       return;
     }
 
+    // TODO simplify this mess!
     const existing = document.querySelector<HTMLScriptElement>(
       'script[src="https://accounts.google.com/gsi/client"]'
     );
@@ -114,11 +115,24 @@ export const createAppInitSlice: StateCreator<AppStore, [], [], AppInitSlice> = 
         return;
       }
 
+      const idTokenClient = InitializeGoogleIdTokenClient(
+        (cred) => {
+          // TODO store valid token in temp state variable!
+          console.log("idtoken cb: ", cred?.credential)
+        }
+      );
+
+      if (!idTokenClient) {
+        return;
+      }
+
       set({
         isGsiSdkReady: true,
-        googleSdkAuthCodeClient: authCodeClient
+        googleSdkAuthCodeClient: authCodeClient,
+        googleSdkIdCodeClient: idTokenClient
       });
     };
+    
     const onError = () => alert("Failed to load Google Sign-In SDK. Please try again later.");
 
     if (!existing) {

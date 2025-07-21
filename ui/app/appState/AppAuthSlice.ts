@@ -3,7 +3,7 @@ import { isApiError } from "~/appState/ApiError";
 import type UserAccount from "~/appState/UserAccount";
 import type { ApiTokenResponse } from "./ApiTokenResponse";
 import type { AppStore } from "./AppStore";
-import type { CodeClient } from "./GoogleAuthService";
+import type { CodeClient, IdClient } from "./GoogleAuthService";
 
 export const guestUser: UserAccount = {
   player: {
@@ -19,10 +19,13 @@ export interface AppAuthSlice {
   isProcessingLogin: boolean;
   isGsiSdkReady: boolean;
   googleSdkAuthCodeClient: CodeClient | null;
+  googleSdkIdCodeClient: IdClient | null;
 
   authenticateWithGoogle: () => Promise<boolean>;
-  signOut: () => void;
   processGoogleAuthCode: (authCode: string) => Promise<boolean>;
+  signOut: () => void;
+
+  retrieveGoogleIdToken: () => Promise<string | null>;
   retrieveAccessToken: () => Promise<string | null>;
   refreshAccessToken: () => Promise<string | null>;
 }
@@ -33,6 +36,7 @@ export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = 
   isProcessingLogin: false,
   isGsiSdkReady: false,
   googleSdkAuthCodeClient: null,
+  googleSdkIdCodeClient: null,
 
   processGoogleAuthCode: async (authCode: string) => {
     const accessTokenResponse = await get().sendUnauthenticatedRequest<ApiTokenResponse>(
@@ -56,16 +60,30 @@ export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = 
   },
 
   authenticateWithGoogle: async () => {
-    const googleSdkClient = get().googleSdkAuthCodeClient;
+    const codeClient = get().googleSdkAuthCodeClient;
     const isGsiSdkReady = get().isGsiSdkReady;
     
-    if (!isGsiSdkReady || !googleSdkClient) {
+    if (!isGsiSdkReady || !codeClient) {
       return false;
     }
 
-    googleSdkClient.requestCode();
+    codeClient.requestCode();
 
     return true;
+  },
+
+  retrieveGoogleIdToken: async () => {
+    const idClient = get().googleSdkIdCodeClient;
+    const isGsiSdkReady = get().isGsiSdkReady;
+    
+    if (!isGsiSdkReady || !idClient) {
+      return null;
+    }
+
+    // TODO return token from temp state variable!
+    idClient.prompt();
+
+    return null;
   },
 
   retrieveAccessToken: async () => {
@@ -77,15 +95,15 @@ export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = 
   },
 
   refreshAccessToken: async () => {
-    // TODO need to retrieve ID Token so we can confirm API and OAuth session are for the same identity.
     // TODO consider merging with retrieveAccessToken. This will need tracking of token expiration so we can do silent refresh.
     const currentAccessToken = get().apiAccessToken;
+    const idToken = await get().retrieveGoogleIdToken();
 
     const refreshResponse = await get().sendUnauthenticatedRequest<ApiTokenResponse>("user/refresh-token",
       "POST",
       {
         accessToken: currentAccessToken,
-        idToken: "id-token-here-wip",
+        idToken: idToken,
         identityProvider: "Google"
       },
       true,
