@@ -94,14 +94,14 @@ export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = 
   },
 
   refreshAccessToken: async () => {
-    // TODO consider merging with retrieveAccessToken. This will need tracking of token expiration so we can do silent refresh.
-    const currentAccessToken = get().apiAccessToken;
     const idToken = await get().retrieveGoogleIdToken();
+    if (!idToken) {
+      // TODO show login button
+    }
 
     const refreshResponse = await get().sendUnauthenticatedRequest<ApiTokenResponse>("user/refresh-token",
       "POST",
       {
-        accessToken: currentAccessToken,
         idToken: idToken,
         identityProvider: "Google"
       },

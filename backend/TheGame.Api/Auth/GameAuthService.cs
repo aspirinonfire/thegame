@@ -8,7 +8,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using TheGame.Domain.Utils;
 
 namespace TheGame.Api.Auth;
 
@@ -19,7 +18,6 @@ public sealed record ValidatedAccessTokenValues(long PlayerId, string PlayerIden
 public interface IGameAuthService
 {
   string GenerateApiJwtToken(string providerName, string providerIdentityId, long playerId, long playerIdentityId);
-  Result<ValidatedAccessTokenValues> GetValidateExpiredAccessToken(string accessToken);
   string RetrieveRefreshTokenValue(HttpContext httpContext);
   void SetRefreshCookie(HttpContext httpContext, string refreshTokenValue, TimeSpan tokenExpiration);
 }
@@ -52,63 +50,7 @@ public class GameAuthService(ILogger<GameAuthService> logger,
   public const string PlayerIdentityIdClaimType = "player_identiy_id";
   public const string PlayerIdClaimType = "player_id";
 
-  public const string InvalidRefreshParameters = "access_refresh_parameters_invalid";
-
-  public Result<ValidatedAccessTokenValues> GetValidateExpiredAccessToken(string accessToken)
-  {
-    long playerId = 0;
-    string? identityProvider;
-    string? identityId;
-    try
-    {
-      // validate token
-      var jwtValidationParams = GetTokenValidationParams(gameSettings.Value.Auth.Api.JwtAudience,
-        gameSettings.Value.Auth.Api.JwtSecret,
-        ValidApiTokenIssuer);
-
-      // expired tokens are ok
-      jwtValidationParams.ValidateLifetime = false;
-
-      var tokenClaims = new JwtSecurityTokenHandler()
-        .ValidateToken(accessToken, jwtValidationParams, out _);
-
-      // extract player id claim
-      var playerIdClaim = tokenClaims.FindFirstValue(PlayerIdClaimType);
-      if (!string.IsNullOrWhiteSpace(playerIdClaim))
-      {
-        long.TryParse(playerIdClaim, null, out playerId);
-      }
-
-      identityProvider = tokenClaims.FindFirstValue(PlayerIdentityAuthority);
-
-      identityId = tokenClaims.FindFirstValue(PlayerIdentityUserId);
-    }
-    catch (Exception ex)
-    {
-      logger.LogError(ex, "Failed to validate access token.");
-      return new Failure(InvalidRefreshParameters);
-    }
-
-    if (playerId < 1)
-    {
-      logger.LogError("PlayerId claim value is invalid.");
-      return new Failure(InvalidRefreshParameters);
-    }
-
-    if (string.IsNullOrWhiteSpace(identityProvider))
-    {
-      logger.LogError("Player Identity provider value is invalid.");
-      return new Failure(InvalidRefreshParameters);
-    }
-
-    if (string.IsNullOrWhiteSpace(identityId))
-    {
-      logger.LogError("Player Identity ID value is invalid.");
-      return new Failure(InvalidRefreshParameters);
-    }
-
-    return new ValidatedAccessTokenValues(playerId, identityProvider, identityId);
-  }
+  public const string InvalidRefreshParameters = "access_refresh_parameters_invalid";  
 
   /// <summary>
   /// Generate API token using JWT format. This token is expected to be used during Game API authentication.
