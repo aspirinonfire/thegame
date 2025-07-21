@@ -1,18 +1,18 @@
 import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import { createAppInitSlice } from "./AppInitSlice";
-import { createApiSlice } from "./ApiSlice";
+import { createApiSlice as createAppApiSlice } from "./AppApiSlice";
 import { createAppAuthSlice } from "./AppAuthSlice";
-import { createGameSlice } from "./GameSlice";
+import { createGameSlice as createAppGameSlice } from "./AppGameSlice";
 import type { AppStore } from "./AppStore";
 
 export const useAppState = create<AppStore>()(
   devtools(
     persist((...args) => ({
-      ...createApiSlice(...args),
+      ...createAppApiSlice(...args),
       ...createAppAuthSlice(...args),
       ...createAppInitSlice(...args),
-      ...createGameSlice(...args)
+      ...createAppGameSlice(...args)
     }),
     {
       name: "Game UI",

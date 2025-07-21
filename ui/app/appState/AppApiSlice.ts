@@ -1,35 +1,35 @@
 import type { StateCreator } from "zustand";
-import type { apiError } from "~/appState/apiError";
+import type { ApiError } from "~/appState/ApiError";
 import type { AppStore } from "./AppStore";
 
-export interface ApiSlice {
-  apiErrors: apiError[];
+export interface AppApiSlice {
+  apiErrors: ApiError[];
 
-  enqueueError: (apiError: apiError) => void;
-  dequeueError: () => apiError | null;
+  enqueueError: (apiError: ApiError) => void;
+  dequeueError: () => ApiError | null;
 
   sendAuthenticatedRequest: <TResponse>(
     endpoint: string,
     method: string,
     body: any | null,
     includeCreds: boolean,
-    onErrorCallback?: (response: Response) => Promise<void>) => Promise<TResponse | apiError>;
+    onErrorCallback?: (response: Response) => Promise<void>) => Promise<TResponse | ApiError>;
   
   sendUnauthenticatedRequest: <TResponse>(
     url: string,
     method: string,
     body: any | null,
     includeCreds: boolean,
-    onErrorCallback?: (response: Response) => Promise<void>) => Promise<TResponse | apiError>;
+    onErrorCallback?: (response: Response) => Promise<void>) => Promise<TResponse | ApiError>;
   
-  get: <TResponse>(endpoint: string) => Promise<TResponse | apiError>;
+  apiGet: <TResponse>(endpoint: string) => Promise<TResponse | ApiError>;
   
-  post: <TResponse>(endpoint: string, body?: any) => Promise<TResponse | apiError>;
+  apiPost: <TResponse>(endpoint: string, body?: any) => Promise<TResponse | ApiError>;
 }
 
-export const createApiSlice: StateCreator<AppStore, [], [], ApiSlice> = (set, get) => ({
+export const createApiSlice: StateCreator<AppStore, [], [], AppApiSlice> = (set, get) => ({
   apiErrors: [],
-  enqueueError: (apiError: apiError) => {
+  enqueueError: (apiError: ApiError) => {
     set((s) => ({ apiErrors: [...s.apiErrors, apiError] }));
   },
 
@@ -48,7 +48,7 @@ export const createApiSlice: StateCreator<AppStore, [], [], ApiSlice> = (set, ge
     includeCreds: boolean,
     onErrorCallback?: (response: Response) => Promise<void>
   ) => {
-    const normalizedEndpointUrl = (endpoint || '').replace(/^\//, '');
+    const normalizedEndpointUrl = (endpoint || "").replace(/^\//, "");
     const apiResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/${normalizedEndpointUrl}`, {
       cache: "no-cache",
       method: method,
@@ -65,12 +65,12 @@ export const createApiSlice: StateCreator<AppStore, [], [], ApiSlice> = (set, ge
       return data;
     }
 
-    const errorData: apiError = {
+    const errorData: ApiError = {
       status: apiResponse.status,
       title: 'Failed to send request.',
       detail: await apiResponse.text(),
-      GameRequestCorrelationId: '',
-      traceId: ''
+      GameRequestCorrelationId: "",
+      traceId: ""
     };
 
     if (onErrorCallback) {
@@ -92,19 +92,23 @@ export const createApiSlice: StateCreator<AppStore, [], [], ApiSlice> = (set, ge
     let accessToken = await get().retrieveAccessToken();
 
     if (!accessToken) {
-      const errorData: apiError = {
+      const errorData: ApiError = {
         status: 401,
-        title: 'Failed to retrieve Access Token.',
-        detail: 'Please contact IT Support for assistance.',
-        GameRequestCorrelationId: '',
-        traceId: ''
+        title: "Failed to retrieve Access Token.",
+        detail: "Please contact IT Support for assistance.",
+        GameRequestCorrelationId: "",
+        traceId: ""
       };
+
+      if (get().activeUser.isAuthenticated) {
+        get().enqueueError(errorData);
+      }
 
       return errorData;
     }
 
     const makeRequest = async (bearerToken: string) => {
-      const normalizedEndpointUrl = (endpoint || '').replace(/^\//, '');
+      const normalizedEndpointUrl = (endpoint || "").replace(/^\//, "");
       const apiResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/${normalizedEndpointUrl}`, {
         cache: "no-cache",
         method: method,
@@ -125,12 +129,12 @@ export const createApiSlice: StateCreator<AppStore, [], [], ApiSlice> = (set, ge
       accessToken = await get().refreshAccessToken();
 
       if (!accessToken) {
-        const errorData: apiError = {
+        const errorData: ApiError = {
           status: 401,
           title: 'Failed to retrieve Access Token.',
           detail: 'Please contact IT Support for assistance.',
-          GameRequestCorrelationId: '',
-          traceId: ''
+          GameRequestCorrelationId: "",
+          traceId: ""
         };
 
         if (onErrorCallback) {
@@ -152,7 +156,7 @@ export const createApiSlice: StateCreator<AppStore, [], [], ApiSlice> = (set, ge
     }
 
     // API errors return standard rfc9110 payload
-    const errorData: apiError = await apiResponse.json();
+    const errorData: ApiError = await apiResponse.json();
     
     if (onErrorCallback) {
       await onErrorCallback(apiResponse);
@@ -163,8 +167,8 @@ export const createApiSlice: StateCreator<AppStore, [], [], ApiSlice> = (set, ge
     return errorData;
   },
 
-  get: async <TResponse>(endpoint: string) => await get().sendAuthenticatedRequest<TResponse>(endpoint, "get", null, false),
+  apiGet: async <TResponse>(endpoint: string) => await get().sendAuthenticatedRequest<TResponse>(endpoint, "get", null, false),
 
-  post: async <TBody, TResponse>(endpoint: string, body: TBody) => await get().sendAuthenticatedRequest<TResponse>(endpoint, "post", body, false)
+  apiPost: async <TBody, TResponse>(endpoint: string, body: TBody) => await get().sendAuthenticatedRequest<TResponse>(endpoint, "post", body, false)
 });
 

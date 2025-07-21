@@ -39,8 +39,8 @@ public static class UserEndpoints
         ICommandHandler<RefreshAccessTokenCommand, RefreshAccessTokenCommand.Result>,
         RefreshAccessTokenCommandHandler>()
       .AddScoped<
-        ICommandHandler<AuthenticateWithGoogleAuthCodeCommand, AuthenticateWithGoogleAuthCodeCommand.Result>,
-        AuthenticateWithGoogleAuthCodeCommandHandler>()
+        ICommandHandler<AuthenticateWithIdTokenCommand, AuthenticateWithIdTokenCommand.Result>,
+        AuthenticateWithIdTokenCommandHandler>()
       .AddScoped<IPlayerService, PlayerService>();
 
     return services;

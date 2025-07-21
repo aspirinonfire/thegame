@@ -1,6 +1,6 @@
-import type { ApiSlice } from "./ApiSlice";
+import type { AppApiSlice } from "./AppApiSlice";
 import type { AppAuthSlice } from "./AppAuthSlice";
 import type { AppInitSlice } from "./AppInitSlice";
-import type { GameSlice } from "./GameSlice";
+import type { AppGameSlice } from "./AppGameSlice";
 
-export declare type AppStore = AppInitSlice & ApiSlice & AppAuthSlice & GameSlice;
+export declare type AppStore = AppInitSlice & AppApiSlice & AppAuthSlice & AppGameSlice;

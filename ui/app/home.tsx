@@ -3,8 +3,8 @@ import { useNavigate } from "react-router";
 import { useAppState } from "./appState/useAppState";
 
 const HomePage = () => {
-  let navigate = useNavigate();
-  let currentGame = useAppState(state => state.activeGame);
+  const navigate = useNavigate();
+  const currentGame = useAppState(state => state.activeGame);
 
   useEffect(() => {
     if (currentGame) {

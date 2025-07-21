@@ -1,6 +1,6 @@
 import test, { expect } from "@playwright/test";
 import { CreateBaseAppWithInitData, CreateEmptyBaseApp, createNewGame, mockSingleApiRequest } from "./test-helpers";
-import type { GameHistory } from "~/appState/GameSlice";
+import type { GameHistory } from "~/appState/AppGameSlice";
 
 test("has title", async ({ context }) => {
   const page = await CreateEmptyBaseApp(context);

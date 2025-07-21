@@ -7,7 +7,7 @@ using TheGame.Api.Common;
 
 namespace TheGame.Api.Endpoints.User.RefreshToken;
 
-public sealed record RefreshTokenDto(string AccessToken, string IdToken, string IdentityProvider);
+public sealed record RefreshTokenDto(string IdToken, string IdentityProvider);
 
 public static class RefreshTokenEndpoint
 {
@@ -20,7 +20,7 @@ public static class RefreshTokenEndpoint
     var refreshCookieValue = authService.RetrieveRefreshTokenValue(ctx);
 
     var refreshResult = await refreshAccessTokenHandler.Execute(
-      new RefreshAccessTokenCommand(refreshTokenDto.AccessToken, refreshCookieValue),
+      new RefreshAccessTokenCommand(refreshTokenDto.IdToken, refreshCookieValue),
       cancellationToken);
     
     if (refreshResult.TryGetSuccessful(out var newAccessValues, out var failure))

@@ -1,28 +1,28 @@
 import GameMap from "~/common-components/gamemap";
 import { useAppState } from "~/appState/useAppState";
 import { useEffect, useState } from "react";
-import { type GameHistory } from "~/appState/GameSlice";
-import { Spinner } from "flowbite-react";
+import { useShallow } from "zustand/shallow";
+import LoadingWidget from "~/common-components/loading";
+import ResolveWithMinimumDelay from "~/common-components/debouncedResolver";
 
 const HistoryPage = () => {
-  const getGameHistory = useAppState(state => state.retrieveGameHistory);
+  const [retrieveGameHistory, gameHistory, isAuthenticated] = useAppState(useShallow(state =>
+    [
+      state.retrieveGameHistory,
+      state.gameHistory,
+      state.activeUser.isAuthenticated
+    ]));
+  
   const [isRetrievingHistory, setIsRetrievingHistory] = useState(true);
-  const [gameHistory, setGameHistory] = useState<GameHistory>({
-    numberOfGames: 0,
-    spotStats: {}
-  });
 
   useEffect(() => {
-    getGameHistory()
-      .then(history => {
-        if (!!history) {
-          setGameHistory(history);
-        }
-      })
+    setIsRetrievingHistory(true);
+
+    ResolveWithMinimumDelay(retrieveGameHistory())
       .finally(() => {
         setIsRetrievingHistory(false);
       });
-  }, []);
+  }, [isAuthenticated]);
 
   const renderHistory = () => {
     return <>
@@ -35,7 +35,7 @@ const HistoryPage = () => {
 
   return (
     <div className="flex flex-col gap-5">
-      { isRetrievingHistory ? <Spinner size="xl" /> : renderHistory() }
+      { isRetrievingHistory ? <LoadingWidget/> : renderHistory() }
     </div>
   )
 }

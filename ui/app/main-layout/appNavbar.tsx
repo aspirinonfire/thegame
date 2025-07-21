@@ -4,15 +4,19 @@ import type { ElementType } from "react";
 import { Link, useLocation } from "react-router";
 import { useShallow } from "zustand/shallow";
 import { useAppState } from "~/appState/useAppState";
+import GoogleSignInButton from "~/common-components/googleSignInButton";
 
 const AppNavbar = () => {
   const pathname = useLocation();
 
-  const [activeUser, isGsiSdkReady, authenticateWithGoogle, isProcessingLogin] = useAppState(useShallow(state => [
+  const [
+    activeUser,
+    isProcessingLogin,
+    signOut
+  ] = useAppState(useShallow(state => [
     state.activeUser,
-    state.isGsiSdkReady,
-    state.authenticateWithGoogle,
-    state.isProcessingLogin]));
+    state.isProcessingLogin,
+    state.signOut]));
 
   const navlink = (url: string, linkText: string, Icon: ElementType, exactMatch: boolean = false) => {
     const isActive = exactMatch ?
@@ -30,6 +34,38 @@ const AppNavbar = () => {
           </span>
         </Link>
     </NavbarLink>
+  }
+
+  const onClickHandler = () => {
+    // TODO close dropdown
+  };
+
+  const renderAppSignIn = () => {
+    return <>
+      <DropdownItem className="text-gray-400" disabled={ isProcessingLogin }>
+        {
+          isProcessingLogin ?
+            <Spinner size="sm" color="alternative" /> :
+            <GoogleSignInButton
+              type="standard"
+              theme="outline"
+              text="continue_with"
+              click_listener={onClickHandler}
+              shape="rectangular" />
+        }
+      </DropdownItem>
+    </>
+  }
+
+  const renderAppSignOut = () => {
+    return <>
+      <DropdownItem className="text-gray-400" onClick={signOut} disabled={ isProcessingLogin }>
+        {isProcessingLogin ?
+          <Spinner size="sm" color="alternative" /> :
+          "Sign-out"
+        }
+      </DropdownItem>
+    </>
   }
 
   return <Navbar fluid className="gap-5 bg-gradient-to-t from-gray-800 to-gray-900 drop-shadow-lg pl-5 py-0">
@@ -51,12 +87,11 @@ const AppNavbar = () => {
           <span className="block text-sm text-gray-200">Hello, {activeUser?.player.playerName}</span>
         </DropdownHeader>
 
-        <DropdownItem className="text-gray-400" onClick={authenticateWithGoogle} disabled={isProcessingLogin || !isGsiSdkReady}>
-          {isProcessingLogin ?
-            <Spinner size="sm" color="alternative" /> :
-            isGsiSdkReady ? "Sign-in with Google" : "Setting up Google Sign-in..."}
-        </DropdownItem>
-
+        { activeUser.isAuthenticated ?
+          renderAppSignOut() :
+          renderAppSignIn()
+        }
+      
       </Dropdown>
 
       <NavbarToggle className="text-gray-400" />
