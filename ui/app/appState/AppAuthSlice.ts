@@ -18,12 +18,11 @@ export interface AppAuthSlice {
   apiAccessToken: string | null;
   isProcessingLogin: boolean;
   isGsiSdkReady: boolean;
-  googleSdkIdCodeClient: IdClient | null;
+  googleCodeClient: CodeClient | null;
 
   signOut: () => void;
 
-  exchangeIdTokenForApiAccessToken: (idToken: string) => Promise<boolean>;
-  retrieveGoogleIdToken: () => Promise<string | null>;
+  processGoogleAuthCode: (authCode: string) => Promise<boolean>;
   retrieveAccessToken: () => Promise<string | null>;
   refreshAccessToken: () => Promise<string | null>;
 }
@@ -34,19 +33,17 @@ export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = 
   isProcessingLogin: false,
   isGsiSdkReady: false,
   googleSdkAuthCodeClient: null,
-  googleSdkIdCodeClient: null,
+  googleCodeClient: null,
 
-  exchangeIdTokenForApiAccessToken: async (idToken) => {
+  processGoogleAuthCode: async (authCode) => {
     set({
       isProcessingLogin: true
     });
 
-    // TODO needs CSRF protection
-
     const accessTokenResponse = await get().sendUnauthenticatedRequest<ApiTokenResponse>(
       "user/google/apitoken",
       "POST",
-      idToken,
+      authCode,
       true
     );
 
@@ -67,17 +64,6 @@ export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = 
     return true;
   },
 
-  retrieveGoogleIdToken: async () => {
-    const idClient = get().googleSdkIdCodeClient;
-    const isGsiSdkReady = get().isGsiSdkReady;
-    
-    if (!isGsiSdkReady || !idClient) {
-      return null;
-    }
-
-    return await idClient.prompt();
-  },
-
   retrieveAccessToken: async () => {
     return get().apiAccessToken;
   },
@@ -87,18 +73,14 @@ export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = 
   },
 
   refreshAccessToken: async () => {
-    const idToken = await get().retrieveGoogleIdToken();
-    if (!idToken) {
-      // TODO show login button
-    }
+    const accessToken = get().apiAccessToken;
 
     const refreshResponse = await get().sendUnauthenticatedRequest<ApiTokenResponse>("user/refresh-token",
       "POST",
       {
-        idToken: idToken,
-        identityProvider: "Google"
+        accessToken: accessToken,
       },
-      true,
+      true, // required for refresh token cookie to be sent and set
       async _ => { /* noop */ }
     );
 

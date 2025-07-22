@@ -13,7 +13,7 @@ using TheGame.Domain.Utils;
 
 namespace TheGame.Api.Endpoints.User.RefreshToken;
 
-public sealed record RefreshAccessTokenCommand(string GoogleIdToken,
+public sealed record RefreshAccessTokenCommand(string AccessToken,
   string RefreshToken)
 {
   public sealed record Result(string AccessToken, string RefreshTokenValue, TimeSpan RefreshTokenExpiresIn);
@@ -32,16 +32,16 @@ public class RefreshAccessTokenCommandHandler(IGameDbContext gameDb,
     transactionWrapper.ExecuteInTransaction<RefreshAccessTokenCommand.Result>(
       async () =>
       {
-        if (string.IsNullOrEmpty(command.GoogleIdToken) || string.IsNullOrEmpty(command.RefreshToken))
+        if (string.IsNullOrEmpty(command.AccessToken) || string.IsNullOrEmpty(command.RefreshToken))
         {
           logger.LogError("Refresh or Id token is missing.");
           return new ValidationFailure(nameof(command), "Refresh and Id Tokens are required!");
         }
 
-        var validAccessTokenResult = await googleAuthService.GetValidatedGoogleIdTokenPayload(command.GoogleIdToken);
-        if (!validAccessTokenResult.TryGetSuccessful(out var googleIdTokenPayload, out var tokenValidationFailure))
+        var validAccessTokenResult = gameAuthService.GetValidateExpiredAccessToken(command.AccessToken);
+        if (!validAccessTokenResult.TryGetSuccessful(out var accessTokenValues, out var tokenValidationFailure))
         {
-          logger.LogError(tokenValidationFailure.GetException(), "Id token is invalid.");
+          logger.LogError(tokenValidationFailure.GetException(), "Access token is invalid.");
           return tokenValidationFailure;
         }
 
@@ -50,7 +50,9 @@ public class RefreshAccessTokenCommandHandler(IGameDbContext gameDb,
         var playerIdentity = await gameDb.PlayerIdentities
           .Include(ident => ident.Player)
           .Where(ident =>
-            ident.ProviderIdentityId == googleIdTokenPayload.Subject &&
+            ident.Player.Id == accessTokenValues.PlayerId &&
+            ident.ProviderName == accessTokenValues.PlayerIdentityName &&
+            ident.ProviderIdentityId == accessTokenValues.PlayerIdentityId &&
             ident.RefreshToken == command.RefreshToken &&
             ident.RefreshTokenExpiration > currentTimestamp)
           .FirstOrDefaultAsync(cancellationToken);

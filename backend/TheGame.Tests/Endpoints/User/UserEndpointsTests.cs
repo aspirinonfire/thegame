@@ -119,18 +119,18 @@ public class UserEndpointsTests
   }
 
   [Fact]
-  public async Task WillAuthenticateNewPlayerWithWhenGoogleIdTokenIsValid()
+  public async Task WillAuthenticateNewPlayerWithWhenGoogleAuthCodeIsValid()
   {
     await using var uutApiApp = GetApiFactory(services =>
     {
       services.AddScoped(sp =>
       {
         var cmdHandler = Substitute
-          .For<ICommandHandler<AuthenticateWithIdTokenCommand, AuthenticateWithIdTokenCommand.Result>>();
+          .For<ICommandHandler<AuthenticateWithAuthCodeCommand, AuthenticateWithAuthCodeCommand.Result>>();
 
         cmdHandler
-          .Execute(Arg.Is<AuthenticateWithIdTokenCommand>(cmd => cmd.IdToken == "id-token"), Arg.Any<CancellationToken>())
-          .Returns(new AuthenticateWithIdTokenCommand.Result(true,
+          .Execute(Arg.Is<AuthenticateWithAuthCodeCommand>(cmd => cmd.AuthCode == "test-auth-code"), Arg.Any<CancellationToken>())
+          .Returns(new AuthenticateWithAuthCodeCommand.Result(true,
             "test-access-token",
             "test-refresh-token",
             TimeSpan.FromSeconds(60)));
@@ -149,7 +149,7 @@ public class UserEndpointsTests
 
     var client = uutApiApp.CreateClient();
 
-    var actualAuthTokenResponseMessage = await client.PostAsJsonAsync("/api/user/google/apitoken", "id-token");
+    var actualAuthTokenResponseMessage = await client.PostAsJsonAsync("/api/user/google/apitoken", "test-auth-code");
 
     Assert.Equal(HttpStatusCode.OK, actualAuthTokenResponseMessage.StatusCode);
 
@@ -182,16 +182,18 @@ public class UserEndpointsTests
   }
 
   [Fact]
-  public async Task WillRefreshTokenWithGoogleIdTokenAndValidRefreshCookie()
+  public async Task WillRefreshTokenWithValidAccessTokenAndRefreshCookie()
   {
     var currentRefreshToken = "current_refresh";
+    var playerId = 123L;
 
     await using var uutApiApp = GetApiFactory(services =>
     {
       services.AddTransient(sp =>
       {
-        var handler = Substitute.For<ICommandHandler<RefreshAccessTokenCommand, RefreshAccessTokenCommand.Result>>();
-        handler
+        var refreshTokenCommandHandler =
+          Substitute.For<ICommandHandler<RefreshAccessTokenCommand, RefreshAccessTokenCommand.Result>>();
+        refreshTokenCommandHandler
           .Execute(Arg.Any<RefreshAccessTokenCommand>(), Arg.Any<CancellationToken>())
           .Returns(new RefreshAccessTokenCommand.Result(
             "new_access_token",
@@ -199,7 +201,7 @@ public class UserEndpointsTests
             TimeSpan.FromSeconds(10)
           ));
 
-        return handler;
+        return refreshTokenCommandHandler;
       });
     });
 
@@ -207,12 +209,17 @@ public class UserEndpointsTests
 
     var gameAuthService = scope.ServiceProvider.GetRequiredService<IGameAuthService>();
 
+    var currentAccessToken = gameAuthService.GenerateApiJwtToken("test provider",
+      "test provider user id",
+      playerId,
+      playerId);
+
     var client = uutApiApp.CreateClient();
     client.DefaultRequestHeaders.Add("Cookie", $"gameapi-refresh={currentRefreshToken}");
 
     using var content = JsonContent.Create(new
     {
-      idToken = "google-id-token"
+      accessToken = currentAccessToken
     });
 
     var actualAuthTokenResponseMessage = await client.PostAsync("/api/user/refresh-token", content);
@@ -222,6 +229,7 @@ public class UserEndpointsTests
     var actualResponse = await actualAuthTokenResponseMessage.Content.ReadFromJsonAsync<Dictionary<string, object>>();
     Assert.NotNull(actualResponse);
     var actualNewAccessToken = Assert.Contains("accessToken", actualResponse);
+    Assert.NotEqual(currentAccessToken, actualNewAccessToken);
 
     var actualCookiesFromResponse = actualAuthTokenResponseMessage.Headers
       .Where(header => header.Key == "Set-Cookie")
@@ -241,6 +249,67 @@ public class UserEndpointsTests
     var actualNewRefreshCookieValue = Assert.Contains(GameAuthService.ApiRefreshTokenCookieName, actualCookiesFromResponse);
     Assert.NotNull(actualNewRefreshCookieValue);
     Assert.Contains("new_refresh_token;", actualNewRefreshCookieValue);
+  }
+
+  [Fact]
+  public async Task WillRefreshTokenWithExpiredAccessTokenAndValidRefreshCookie()
+  {
+    var currentRefreshToken = "current_refresh";
+    var playerId = 123L;
+
+    await using var uutApiApp = GetApiFactory(services =>
+    {
+      services.AddTransient(sp =>
+      {
+        var handler = Substitute.For<ICommandHandler<RefreshAccessTokenCommand, RefreshAccessTokenCommand.Result>>();
+        handler
+          .Execute(Arg.Any<RefreshAccessTokenCommand>(), Arg.Any<CancellationToken>())
+          .Returns(new RefreshAccessTokenCommand.Result(
+            "new_access_token",
+            "new_refresh_token",
+            TimeSpan.FromSeconds(10)
+          ));
+        return handler;
+      });
+    });
+    await using var scope = uutApiApp.Services.CreateAsyncScope();
+
+    var gameAuthService = scope.ServiceProvider.GetRequiredService<IGameAuthService>();
+
+    var currentAccessToken = GetExpiredApiAccessToken(playerId);
+
+    var client = uutApiApp.CreateClient();
+    client.DefaultRequestHeaders.Add("Cookie", $"gameapi-refresh={currentRefreshToken}");
+
+    using var content = JsonContent.Create(new
+    {
+      accessToken = currentAccessToken
+    });
+
+    var actualAuthTokenResponseMessage = await client.PostAsync("/api/user/refresh-token", content);
+
+    var actualResponse = await actualAuthTokenResponseMessage.Content.ReadFromJsonAsync<Dictionary<string, object>>();
+    Assert.NotNull(actualResponse);
+    
+    var actualNewAccessToken = Assert.Contains("accessToken", actualResponse);
+    Assert.NotEqual(currentAccessToken, actualNewAccessToken);
+
+    var actualCookiesFromResponse = actualAuthTokenResponseMessage.Headers
+      .Where(header => header.Key == "Set-Cookie")
+      .SelectMany(header => header.Value)
+      .Select(cookie =>
+      {
+        var cookieParts = cookie.Split("=");
+        return new
+        {
+          Name = cookieParts[0],
+          Value = string.Join("=", cookieParts[1..])
+        };
+      })
+      .ToDictionary(x => x.Name, x => x.Value);
+    
+    var actualNewRefreshCookieValue = Assert.Contains(GameAuthService.ApiRefreshTokenCookieName, actualCookiesFromResponse);
+    Assert.DoesNotContain("current_refresh", actualNewRefreshCookieValue);
   }
 
   [Fact]
@@ -326,7 +395,7 @@ public class UserEndpointsTests
         var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IDbContextOptionsConfiguration<GameDbContext>));
         if (descriptor != null)
         {
-            services.Remove(descriptor);
+          services.Remove(descriptor);
         }
 
         services.AddDbContext<GameDbContext>(options =>

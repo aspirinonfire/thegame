@@ -17,25 +17,31 @@ namespace TheGame.Api.Endpoints.User.GoogleApiToken;
 /// This method expects Authorization Code which is exchanged for ID Token since its payload contains everything required to generate valid player identity.
 /// Currently, no additional user information is required so Access Token is not needed.
 /// </remarks>
-public sealed record AuthenticateWithIdTokenCommand(string IdToken)
+public sealed record AuthenticateWithAuthCodeCommand(string AuthCode)
 {
   public sealed record Result(bool IsNewIdentity, string AccessToken, string RefreshTokenValue, TimeSpan RefreshTokenExpiresIn);
 }
 
-public class AuthenticateWithIdTokenCommandHandler(IGameAuthService gameAuthService,
+public class AuthenticateWithAuthCodeCommandHandler(IGameAuthService gameAuthService,
   IPlayerService playerService,
   TimeProvider timeProvider,
   IOptions<GameSettings> gameSettings,
   IGoogleAuthService googleAuthService,
   ITransactionExecutionWrapper transactionWrapper,
-  ILogger<AuthenticateWithIdTokenCommandHandler> logger)
-  : ICommandHandler<AuthenticateWithIdTokenCommand, AuthenticateWithIdTokenCommand.Result>
+  ILogger<AuthenticateWithAuthCodeCommandHandler> logger)
+  : ICommandHandler<AuthenticateWithAuthCodeCommand, AuthenticateWithAuthCodeCommand.Result>
 {
-  public async Task<Result<AuthenticateWithIdTokenCommand.Result>> Execute(AuthenticateWithIdTokenCommand command, CancellationToken cancellationToken) =>
-    await transactionWrapper.ExecuteInTransaction<AuthenticateWithIdTokenCommand.Result>(
+  public async Task<Result<AuthenticateWithAuthCodeCommand.Result>> Execute(AuthenticateWithAuthCodeCommand command, CancellationToken cancellationToken) =>
+    await transactionWrapper.ExecuteInTransaction<AuthenticateWithAuthCodeCommand.Result>(
       async () =>
       {
-        var googleIdentityResult = await googleAuthService.GetValidatedGoogleIdTokenPayload(command.IdToken);
+        var googleTokenResult = await googleAuthService.ExchangeGoogleAuthCodeForTokens(command.AuthCode, cancellationToken);
+        if (!googleTokenResult.TryGetSuccessful(out var token, out var authCodeFailure))
+        {
+          return authCodeFailure;
+        }
+
+        var googleIdentityResult = await googleAuthService.GetValidatedGoogleIdTokenPayload(token.IdToken);
         if (!googleIdentityResult.TryGetSuccessful(out var idTokenPayload, out var tokenValidationFailure))
         {
           return tokenValidationFailure;
@@ -61,12 +67,12 @@ public class AuthenticateWithIdTokenCommandHandler(IGameAuthService gameAuthServ
 
         var refreshTokenExpiresIn = playerIdentity.RefreshTokenExpiration - timeProvider.GetUtcNow();
 
-        return new AuthenticateWithIdTokenCommand.Result(playerIdentity.IsNewIdentity,
+        return new AuthenticateWithAuthCodeCommand.Result(playerIdentity.IsNewIdentity,
           apiToken,
           playerIdentity.RefreshToken,
           refreshTokenExpiresIn);
       },
-      nameof(AuthenticateWithIdTokenCommand),
+      nameof(AuthenticateWithAuthCodeCommand),
       logger,
       cancellationToken);
 }

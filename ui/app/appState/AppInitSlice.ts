@@ -4,7 +4,7 @@ import { guestUser } from "./AppAuthSlice";
 import { isApiError } from "./ApiError";
 import type { PlayerInfo } from "./UserAccount";
 import type { Game } from "~/game-core/models/Game";
-import { InitializeGoogleIdTokenClient } from "./GoogleAuthService";
+import { type WindowWithGoogle } from "./GoogleAuthService";
 
 export interface PlayerData {
   player: PlayerInfo | null,
@@ -88,15 +88,40 @@ export const createAppInitSlice: StateCreator<AppStore, [], [], AppInitSlice> = 
       const script = existing ?? document.createElement('script');
 
       const onLoad = () => {
-        const idTokenClient = InitializeGoogleIdTokenClient();
+        const google = (window as WindowWithGoogle).google;
 
-        if (!idTokenClient) {
+        if (!google) {
+          console.error("Google SDK did not load!!");
           return;
         }
 
+        const client = google.accounts.oauth2.initCodeClient({
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+          scope: 'openid email profile',
+          ux_mode: 'popup',
+          auto_select: true,
+          callback: ({ code }) => {
+            get().processGoogleAuthCode(code)
+              .then(_ => {
+                return get().retrievePlayerData()
+              })
+              .finally(() => {
+                set({
+                  isProcessingLogin: false
+                });
+              });
+          },
+          error_callback: (err) => {
+            set({
+              isProcessingLogin: false
+            });
+            console.error(err)  // handles user-closed popup etc.
+          },
+        });
+
         set({
           isGsiSdkReady: true,
-          googleSdkIdCodeClient: idTokenClient
+          googleCodeClient: client
         });
       };
       
