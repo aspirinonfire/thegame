@@ -42,10 +42,10 @@ public sealed class CryptoHelper : ICryptoHelper
       using var gcm = new AesGcm(DeriveHkdfKey(secret, keyInfo, 32), _tagSizeInBytes);
       gcm.Encrypt(aesNonce, jsonBytes, cipherText, tag);
 
-      var packed = new byte[_aesGsmNonceLen + _tagSizeInBytes + cipherText.Length];
+      var packed = new byte[_aesGsmNonceLen + _tagSizeInBytes + cipherText.Length].AsSpan();
       aesNonce.CopyTo(packed);
-      tag.CopyTo(packed.AsSpan()[_aesGsmNonceLen..]);
-      cipherText.CopyTo(packed.AsSpan()[(_aesGsmNonceLen + _tagSizeInBytes)..]);
+      tag.CopyTo(packed[_aesGsmNonceLen..]);
+      cipherText.CopyTo(packed[(_aesGsmNonceLen + _tagSizeInBytes)..]);
 
       return Base64Url.EncodeToString(packed);
     }
