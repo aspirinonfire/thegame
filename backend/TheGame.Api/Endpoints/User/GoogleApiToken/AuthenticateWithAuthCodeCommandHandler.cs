@@ -17,25 +17,31 @@ namespace TheGame.Api.Endpoints.User.GoogleApiToken;
 /// This method expects Authorization Code which is exchanged for ID Token since its payload contains everything required to generate valid player identity.
 /// Currently, no additional user information is required so Access Token is not needed.
 /// </remarks>
-public sealed record AuthenticateWithIdTokenCommand(string IdToken)
+public sealed record AuthenticateWithAuthCodeCommand(string AuthCode)
 {
   public sealed record Result(bool IsNewIdentity, string AccessToken, string RefreshTokenValue, TimeSpan RefreshTokenExpiresIn);
 }
 
-public class AuthenticateWithIdTokenCommandHandler(IGameAuthService gameAuthService,
+public class AuthenticateWithAuthCodeCommandHandler(IGameAuthService gameAuthService,
   IPlayerService playerService,
   TimeProvider timeProvider,
   IOptions<GameSettings> gameSettings,
   IGoogleAuthService googleAuthService,
   ITransactionExecutionWrapper transactionWrapper,
-  ILogger<AuthenticateWithIdTokenCommandHandler> logger)
-  : ICommandHandler<AuthenticateWithIdTokenCommand, AuthenticateWithIdTokenCommand.Result>
+  ILogger<AuthenticateWithAuthCodeCommandHandler> logger)
+  : ICommandHandler<AuthenticateWithAuthCodeCommand, AuthenticateWithAuthCodeCommand.Result>
 {
-  public async Task<Result<AuthenticateWithIdTokenCommand.Result>> Execute(AuthenticateWithIdTokenCommand command, CancellationToken cancellationToken) =>
-    await transactionWrapper.ExecuteInTransaction<AuthenticateWithIdTokenCommand.Result>(
+  public async Task<Result<AuthenticateWithAuthCodeCommand.Result>> Execute(AuthenticateWithAuthCodeCommand command, CancellationToken cancellationToken) =>
+    await transactionWrapper.ExecuteInTransaction<AuthenticateWithAuthCodeCommand.Result>(
       async () =>
       {
-        var googleIdentityResult = await googleAuthService.GetValidatedGoogleIdTokenPayload(command.IdToken);
+        var googleTokenResult = await googleAuthService.ExchangeGoogleAuthCodeForTokens(command.AuthCode, cancellationToken);
+        if (!googleTokenResult.TryGetSuccessful(out var token, out var authCodeFailure))
+        {
+          return authCodeFailure;
+        }
+
+        var googleIdentityResult = await googleAuthService.GetValidatedGoogleIdTokenPayload(token.IdToken);
         if (!googleIdentityResult.TryGetSuccessful(out var idTokenPayload, out var tokenValidationFailure))
         {
           return tokenValidationFailure;
@@ -49,24 +55,31 @@ public class AuthenticateWithIdTokenCommandHandler(IGameAuthService gameAuthServ
 
         var getOrCreatePlayerCommand = new GetOrCreatePlayerRequest(identityRequest);
         var getOrCreatePlayerResult = await playerService.GetOrCreatePlayer(getOrCreatePlayerCommand, cancellationToken);
-        if (!getOrCreatePlayerResult.TryGetSuccessful(out var playerIdentity, out var commandFailure))
+        if (!getOrCreatePlayerResult.TryGetSuccessful(out var playerIdentity, out var createPlayerFailure))
         {
-          return commandFailure;
+          return createPlayerFailure;
         }
+
+        var newRefreshTokenResult = gameAuthService.GenerateRefreshToken();
+        if (!newRefreshTokenResult.TryGetSuccessful(out var refreshToken, out var refreshTokenFailure))
+        {
+          return refreshTokenFailure;
+        }
+
+        var refreshTokenExpiresIn = DateTimeOffset.FromUnixTimeSeconds(refreshToken.ExpireUnixSeconds) - timeProvider.GetUtcNow();
 
         var apiToken = gameAuthService.GenerateApiJwtToken(playerIdentity.ProviderName,
           playerIdentity.ProviderIdentityId,
           playerIdentity.PlayerId,
-          playerIdentity.PlayerIdentityId);
+          playerIdentity.PlayerIdentityId,
+          refreshToken.RefreshTokenId);
 
-        var refreshTokenExpiresIn = playerIdentity.RefreshTokenExpiration - timeProvider.GetUtcNow();
-
-        return new AuthenticateWithIdTokenCommand.Result(playerIdentity.IsNewIdentity,
+        return new AuthenticateWithAuthCodeCommand.Result(playerIdentity.IsNewIdentity,
           apiToken,
-          playerIdentity.RefreshToken,
+          refreshToken.RefreshTokenValue,
           refreshTokenExpiresIn);
       },
-      nameof(AuthenticateWithIdTokenCommand),
+      nameof(AuthenticateWithAuthCodeCommand),
       logger,
       cancellationToken);
 }

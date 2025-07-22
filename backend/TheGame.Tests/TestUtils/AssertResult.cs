@@ -24,8 +24,7 @@ public static class AssertResult
     return success;
   } 
 
-  public static void AssertIsFailure<TSuccess>(this Result<TSuccess> toAssert,
-    Action<Failure>? failureAssertions = null)
+  public static void AssertIsFailure<TSuccess>(this Result<TSuccess> toAssert, Action<Failure>? failureAssertions)
   {
     if (toAssert.TryGetSuccessful(out var successResult, out var failure))
     {
@@ -33,5 +32,15 @@ public static class AssertResult
     }
 
     failureAssertions?.Invoke(failure);
+  }
+
+  public static Failure AssertIsFailure<TSuccess>(this Result<TSuccess> toAssert)
+  {
+    if (toAssert.TryGetSuccessful(out var successResult, out var failure))
+    {
+      Assert.Fail($"Expected failure result got success: {successResult}");
+    }
+
+    return failure;
   }
 }

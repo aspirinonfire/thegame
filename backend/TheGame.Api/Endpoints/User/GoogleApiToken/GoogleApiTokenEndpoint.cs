@@ -10,12 +10,12 @@ namespace TheGame.Api.Endpoints.User.GoogleApiToken;
 public static class GoogleApiTokenEndpoint
 {
   public readonly static Delegate Handler = async (HttpContext ctx,
-    ICommandHandler<AuthenticateWithIdTokenCommand, AuthenticateWithIdTokenCommand.Result> googleAuthCodeCommandHandler,
+    ICommandHandler<AuthenticateWithAuthCodeCommand, AuthenticateWithAuthCodeCommand.Result> googleAuthCodeCommandHandler,
     IGameAuthService gameAuthService,
     CancellationToken cancellationToken,
-    [FromBody] string credential) =>
+    [FromBody] string authCode) =>
   {
-    var authResult = await googleAuthCodeCommandHandler.Execute(new AuthenticateWithIdTokenCommand(credential),
+    var authResult = await googleAuthCodeCommandHandler.Execute(new AuthenticateWithAuthCodeCommand(authCode),
       cancellationToken);
     
     if (authResult.TryGetSuccessful(out var apiTokens, out var failure))

@@ -30,7 +30,7 @@ public static class GameAuthenticationServiceExtensions
       {
         options.RequireHttpsMetadata = false; // TODO: set to true in production
         options.SaveToken = false;
-        options.TokenValidationParameters = GameAuthService.GetTokenValidationParams(jwtAudience, jwtSecret, GameAuthService.ValidApiTokenIssuer);
+        options.TokenValidationParameters = GameAuthService.GetTokenValidationParams(jwtAudience, jwtSecret, jwtAudience);
         options.Validate();
       });
 
@@ -49,7 +49,8 @@ public static class GameAuthenticationServiceExtensions
 
     services
       .AddScoped<IGameAuthService, GameAuthService>()
-      .AddScoped<IGoogleAuthService, GoogleAuthService>();
+      .AddScoped<IGoogleAuthService, GoogleAuthService>()
+      .AddSingleton<ICryptoHelper, CryptoHelper>();
 
     return services;
   }

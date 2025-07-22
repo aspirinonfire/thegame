@@ -4,17 +4,20 @@ import type { ElementType } from "react";
 import { Link, useLocation } from "react-router";
 import { useShallow } from "zustand/shallow";
 import { useAppState } from "~/appState/useAppState";
-import GoogleSignInButton from "~/common-components/googleSignInButton";
 
 const AppNavbar = () => {
   const pathname = useLocation();
 
   const [
     activeUser,
+    isGsiSdkReady,
+    googleCodeClient,
     isProcessingLogin,
     signOut
   ] = useAppState(useShallow(state => [
     state.activeUser,
+    state.isGsiSdkReady,
+    state.googleCodeClient,
     state.isProcessingLogin,
     state.signOut]));
 
@@ -36,23 +39,14 @@ const AppNavbar = () => {
     </NavbarLink>
   }
 
-  const onClickHandler = () => {
-    // TODO close dropdown
-  };
-
   const renderAppSignIn = () => {
     return <>
-      <DropdownItem className="text-gray-400" disabled={ isProcessingLogin }>
-        {
-          isProcessingLogin ?
+      <DropdownItem onClick={() => googleCodeClient?.requestCode()}
+        disabled={isProcessingLogin || !isGsiSdkReady}
+        className="text-gray-400">
+          {isProcessingLogin ?
             <Spinner size="sm" color="alternative" /> :
-            <GoogleSignInButton
-              type="standard"
-              theme="outline"
-              text="continue_with"
-              click_listener={onClickHandler}
-              shape="rectangular" />
-        }
+            isGsiSdkReady ? "Sign-in with Google" : "Setting up Google Sign-in..."}
       </DropdownItem>
     </>
   }

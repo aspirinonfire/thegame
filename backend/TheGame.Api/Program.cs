@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
@@ -13,7 +14,7 @@ using TheGame.Api.Endpoints;
 using TheGame.Api.Endpoints.Game;
 using TheGame.Api.Endpoints.User;
 using TheGame.Domain;
-using TheGame.Domain.DomainModels.Common;
+using TheGame.Domain.DomainModels;
 
 namespace TheGame.Api;
 
@@ -30,6 +31,8 @@ public class Program
     });
 
     string? uiHost = builder.Configuration["cors:uiHost"];
+    var isDevEnvironment = builder.Environment.IsDevelopment();
+
     if (!string.IsNullOrWhiteSpace(uiHost))
     {
       builder.Services.AddCors(options =>
@@ -80,7 +83,6 @@ public class Program
       .AddHealthChecks()
       .AddCheck<ApiInfraHealthCheck>(nameof(ApiInfraHealthCheck));
 
-    var isDevEnvironment = builder.Environment.IsDevelopment();
 
     // register game api services and configuration
     builder.Services
@@ -174,6 +176,19 @@ public class Program
     apiRoutes
       .MapUserEndpoints()
       .MapGameEndpoints();
+
+    // run ef migrations automatically in dev mode
+    if (isDevEnvironment)
+    {
+      using var scope = app.Services.CreateScope();
+
+      var dbCtx = scope.ServiceProvider.GetRequiredService<GameDbContext>();
+
+      if (dbCtx.Database.IsRelational())
+      {
+        await dbCtx.Database.MigrateAsync();
+      }
+    }
 
     await app.RunAsync();
   }

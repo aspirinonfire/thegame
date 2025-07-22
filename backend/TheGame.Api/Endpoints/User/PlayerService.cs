@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,9 +17,7 @@ public sealed record GetOrCreatePlayerRequest(NewPlayerIdentityRequest NewPlayer
     long PlayerIdentityId,
     long PlayerId,
     string ProviderName,
-    string ProviderIdentityId,
-    string RefreshToken,
-    DateTimeOffset RefreshTokenExpiration);
+    string ProviderIdentityId);
 }
 
 public interface IPlayerService
@@ -32,7 +29,6 @@ public interface IPlayerService
 
 public sealed class PlayerService(IGameDbContext gameDb,
   IPlayerIdentityFactory playerIdentityFactory,
-  TimeProvider timeProvider,
   ILogger<GetOrCreatePlayerRequest> logger) : IPlayerService
 {
   public IQueryable<PlayerInfo> GetPlayerInfoQuery(long playerId)
@@ -74,31 +70,12 @@ public sealed class PlayerService(IGameDbContext gameDb,
       logger.LogInformation("Found an existing player with identity.");
     }
 
-    var isMissingRefreshToken = string.IsNullOrWhiteSpace(playerIdentity.RefreshToken);
-    var tokenExpiredOrAboutToExpire = playerIdentity.RefreshTokenExpiration.GetValueOrDefault().Add(TimeSpan.FromMinutes(5)) <= timeProvider.GetUtcNow();
-
-    if (isMissingRefreshToken || tokenExpiredOrAboutToExpire)
-    {
-      logger.LogInformation("Refresh token needs rotation.");
-      var tokenRefreshResult = playerIdentity.RotateRefreshToken(timeProvider,
-        request.NewPlayerIdentityRequest.RefreshTokenByteCount,
-        TimeSpan.FromMinutes(request.NewPlayerIdentityRequest.RefreshTokenAgeMinutes));
-
-      if (!tokenRefreshResult.TryGetSuccessful(out _, out var refreshFailure))
-      {
-        logger.LogError(refreshFailure.GetException(), "Failed to renew refresh token.");
-        return refreshFailure;
-      }
-    }
-
     await gameDb.SaveChangesAsync(cancellationToken);
 
     return new GetOrCreatePlayerRequest.Result(isNewIdentity,
       playerIdentity.Id,
-      playerIdentity.Player!.Id,
+      playerIdentity.Player.Id,
       playerIdentity.ProviderName,
-      playerIdentity.ProviderIdentityId,
-      playerIdentity.RefreshToken!,
-      playerIdentity.RefreshTokenExpiration.GetValueOrDefault());
+      playerIdentity.ProviderIdentityId);
   }
 }

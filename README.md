@@ -47,3 +47,8 @@ API --)- UI: return API response
 deactivate UI
 
 ```
+
+### Dev Notes
+EF Migrations
+`dotnet ef migrations add <Migration-Name> --project .\TheGame.Domain --startup-project .\TheGame.Api`
+Migrations will be applied automatically in dev. See `TheGame.Api.Program`.
