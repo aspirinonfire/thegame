@@ -24,8 +24,9 @@ namespace TheGame.Domain.DomainModels.PlayerIdentities
         .IsRequired();
 
       builder
-        .Property(iden => iden.RefreshToken)
-        .IsRequired(false);
+        .Property(iden => iden.IsDisabled)
+        .IsRequired(true)
+        .HasDefaultValue(false);
     }
   }
 }

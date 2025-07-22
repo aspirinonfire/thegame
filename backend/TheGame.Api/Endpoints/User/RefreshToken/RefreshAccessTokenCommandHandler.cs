@@ -1,7 +1,6 @@
 ﻿using FluentValidation.Results;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System;
 using System.Linq;
 using System.Threading;
@@ -21,9 +20,7 @@ public sealed record RefreshAccessTokenCommand(string AccessToken,
 
 public class RefreshAccessTokenCommandHandler(IGameDbContext gameDb,
   IGameAuthService gameAuthService,
-  IGoogleAuthService googleAuthService,
   TimeProvider timeProvider,
-  IOptions<GameSettings> gameSettings,
   ITransactionExecutionWrapper transactionWrapper,
   ILogger<RefreshAccessTokenCommandHandler> logger)
   : ICommandHandler<RefreshAccessTokenCommand, RefreshAccessTokenCommand.Result>
@@ -38,11 +35,31 @@ public class RefreshAccessTokenCommandHandler(IGameDbContext gameDb,
           return new ValidationFailure(nameof(command), "Refresh and Id Tokens are required!");
         }
 
-        var validAccessTokenResult = gameAuthService.GetValidateExpiredAccessToken(command.AccessToken);
-        if (!validAccessTokenResult.TryGetSuccessful(out var accessTokenValues, out var tokenValidationFailure))
+        var validAccessTokenResult = gameAuthService.GetAccessTokenPayload(command.AccessToken);
+        if (!validAccessTokenResult.TryGetSuccessful(out var accessTokenPayload, out var tokenValidationFailure))
         {
           logger.LogError(tokenValidationFailure.GetException(), "Access token is invalid.");
           return tokenValidationFailure;
+        }
+
+        var refreshTokenPayloadResult = gameAuthService.ExtractRefreshTokenPayload(command.RefreshToken);
+        if (!refreshTokenPayloadResult.TryGetSuccessful(out var refreshTokenPayload, out var currentRefreshTokenFailure))
+        {
+          logger.LogError(currentRefreshTokenFailure.GetException(), "Failed to extract refresh token payload.");
+          return currentRefreshTokenFailure;
+        }
+
+        var refreshExpired = timeProvider.GetUtcNow() > DateTimeOffset.FromUnixTimeSeconds(refreshTokenPayload.ExpiresIn);
+        if (refreshExpired)
+        {
+          logger.LogError("Refresh token expired.");
+          return new Failure("Invalid Access Or Refresh Token.");
+        }
+
+        if (accessTokenPayload.RefreshTokenId != refreshTokenPayload.RefreshTokenId)
+        {
+          logger.LogError("Refresh token ID mismatch.");
+          return new Failure("Invalid Access Or Refresh Token.");
         }
 
         var currentTimestamp = timeProvider.GetUtcNow();
@@ -50,40 +67,36 @@ public class RefreshAccessTokenCommandHandler(IGameDbContext gameDb,
         var playerIdentity = await gameDb.PlayerIdentities
           .Include(ident => ident.Player)
           .Where(ident =>
-            ident.Player.Id == accessTokenValues.PlayerId &&
-            ident.ProviderName == accessTokenValues.PlayerIdentityName &&
-            ident.ProviderIdentityId == accessTokenValues.PlayerIdentityId &&
-            ident.RefreshToken == command.RefreshToken &&
-            ident.RefreshTokenExpiration > currentTimestamp)
+            !ident.IsDisabled &&
+            ident.Player.Id == accessTokenPayload.PlayerId &&
+            ident.ProviderName == accessTokenPayload.PlayerIdentityName &&
+            ident.ProviderIdentityId == accessTokenPayload.PlayerIdentityId)
           .FirstOrDefaultAsync(cancellationToken);
 
         if (playerIdentity == null)
         {
-          logger.LogError("User Identity not found or refresh token has expired");
+          logger.LogError("User Identity not found or is disabled");
           return new Failure("Failed to find player identity");
-        }
-
-        var tokenRefreshResult = playerIdentity.RotateRefreshToken(timeProvider,
-          gameSettings.Value.Auth.Api.RefreshTokenByteCount,
-          TimeSpan.FromMinutes(gameSettings.Value.Auth.Api.RefreshTokenAgeMinutes));
-
-        if (!tokenRefreshResult.TryGetSuccessful(out _, out var refreshFailure))
-        {
-          logger.LogError(refreshFailure.GetException(), "Failed to renew refresh token.");
-          return refreshFailure;
         }
 
         await gameDb.SaveChangesAsync(cancellationToken);
 
+        var newRefreshTokenResult = gameAuthService.GenerateRefreshToken();
+        if (!newRefreshTokenResult.TryGetSuccessful(out var refreshToken, out var newRefreshTokenFailure))
+        {
+          return newRefreshTokenFailure;
+        }
+
+        var refreshExpiresIn = DateTimeOffset.FromUnixTimeSeconds(refreshToken.ExpireUnixSeconds) - timeProvider.GetUtcNow();
+
         var apiToken = gameAuthService.GenerateApiJwtToken(playerIdentity.ProviderName,
           playerIdentity.ProviderIdentityId,
           playerIdentity.Player.Id,
-          playerIdentity.Player.PlayerIdentityId.GetValueOrDefault());
-
-        var refreshExpiresIn = playerIdentity.RefreshTokenExpiration.GetValueOrDefault() - currentTimestamp;
+          playerIdentity.Player.PlayerIdentityId.GetValueOrDefault(),
+          refreshToken.RefreshTokenId);
 
         return new RefreshAccessTokenCommand.Result(apiToken,
-          playerIdentity.RefreshToken!,
+          refreshToken.RefreshTokenValue,
           refreshExpiresIn);
       },
       nameof(RefreshAccessTokenCommand),

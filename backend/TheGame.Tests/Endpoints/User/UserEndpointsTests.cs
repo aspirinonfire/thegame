@@ -34,6 +34,7 @@ public class UserEndpointsTests
   private const string _testJwtSecret = "this is a jwt secret value for testing api routes!";
   private const string _testJwtAudience = "test audience";
   private const ushort _testJwtExpirationMin = 1;
+  private const string _refreshTokenId = "refresh-token-id";
 
   [Fact]
   public async Task CanRunHealthCheckRouteWithoutAuthentication()
@@ -63,7 +64,7 @@ public class UserEndpointsTests
   [Fact]
   public async Task WillReturn401ForExpiredAccessTokenWhenAccessingApiRoutes()
   {
-    var currentAccessToken = GetExpiredApiAccessToken(1);
+    var currentAccessToken = GetExpiredApiAccessToken(1, _refreshTokenId);
 
     await using var uutApiApp = GetApiFactory();
     var client = uutApiApp.CreateClient();
@@ -106,7 +107,7 @@ public class UserEndpointsTests
       });
     });
 
-    var client = CreateAuthenticatedClient(uutApiApp, testPlayerId);
+    var client = CreateAuthenticatedClient(uutApiApp, testPlayerId, _refreshTokenId);
 
     var actualApiResponse = await client.GetAsync("/api/user/userData");
 
@@ -138,13 +139,11 @@ public class UserEndpointsTests
         return cmdHandler;
       });
 
-      services.AddScoped(sp =>
-      {
-        var gameAuthSvc = Substitute.ForPartsOf<GameAuthService>(NullLogger<GameAuthService>.Instance,
-          Substitute.For<IOptions<GameSettings>>());
-
-        return gameAuthSvc;
-      });
+      services.AddScoped<IGameAuthService>(sp => Substitute.ForPartsOf<GameAuthService>(Substitute.For<ICryptoHelper>(),
+        CommonMockedServices.GetMockedTimeProvider(),
+        NullLogger<GameAuthService>.Instance,
+        Substitute.For<IOptions<GameSettings>>()
+        ));
     });
 
     var client = uutApiApp.CreateClient();
@@ -186,7 +185,7 @@ public class UserEndpointsTests
   {
     var currentRefreshToken = "current_refresh";
     var playerId = 123L;
-
+    
     await using var uutApiApp = GetApiFactory(services =>
     {
       services.AddTransient(sp =>
@@ -212,7 +211,8 @@ public class UserEndpointsTests
     var currentAccessToken = gameAuthService.GenerateApiJwtToken("test provider",
       "test provider user id",
       playerId,
-      playerId);
+      playerId,
+      _refreshTokenId);
 
     var client = uutApiApp.CreateClient();
     client.DefaultRequestHeaders.Add("Cookie", $"gameapi-refresh={currentRefreshToken}");
@@ -276,7 +276,7 @@ public class UserEndpointsTests
 
     var gameAuthService = scope.ServiceProvider.GetRequiredService<IGameAuthService>();
 
-    var currentAccessToken = GetExpiredApiAccessToken(playerId);
+    var currentAccessToken = GetExpiredApiAccessToken(playerId, _refreshTokenId);
 
     var client = uutApiApp.CreateClient();
     client.DefaultRequestHeaders.Add("Cookie", $"gameapi-refresh={currentRefreshToken}");
@@ -418,7 +418,7 @@ public class UserEndpointsTests
       builder.UseSetting("Auth:Api:JwtTokenExpirationMin", $"{_testJwtExpirationMin}");
     });
 
-  private static HttpClient CreateAuthenticatedClient(WebApplicationFactory<Program> apiAppFactory, long playerId)
+  private static HttpClient CreateAuthenticatedClient(WebApplicationFactory<Program> apiAppFactory, long playerId, string refreshTokenId)
   {
     var scope = apiAppFactory.Services.CreateScope();
 
@@ -427,7 +427,8 @@ public class UserEndpointsTests
     var authToken = gameAuthService.GenerateApiJwtToken("test provider",
       "test provider user id",
       playerId,
-      playerId);
+      playerId,
+      refreshTokenId);
 
     var httpClient = apiAppFactory.CreateClient();
     httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", authToken);
@@ -435,22 +436,20 @@ public class UserEndpointsTests
     return httpClient;
   }
 
-  private static string GetExpiredApiAccessToken(long playerId)
+  private static string GetExpiredApiAccessToken(long playerId, string refreshTokenId)
   {
-    var claims = new List<Claim>
-    {
-      new(GameAuthService.PlayerIdentityAuthority, "test provider", ClaimValueTypes.String),
-      new(GameAuthService.PlayerIdentityUserId, "test provider user id", ClaimValueTypes.String),
-      new(GameAuthService.PlayerIdClaimType, $"{playerId}", ClaimValueTypes.String),
-      new(GameAuthService.PlayerIdentityIdClaimType, $"{playerId}", ClaimValueTypes.String),
-    };
+    var claims = GameAuthService.CreateAccessTokenClaims("test provider",
+      "test provider user id",
+      playerId,
+      playerId,
+      refreshTokenId);
 
     var jwtToken = new JwtSecurityToken(
       claims: claims,
       // expiration must account for clock skew to be trully expired
       notBefore: DateTime.UtcNow.AddMinutes(-20),
       expires: DateTime.UtcNow.AddMinutes(-19),
-      issuer: GameAuthService.ValidApiTokenIssuer,
+      issuer: _testJwtAudience,
       audience: _testJwtAudience,
       signingCredentials: new SigningCredentials(
         GameAuthService.GetAccessTokenSigningKey(_testJwtSecret),

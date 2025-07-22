@@ -4,6 +4,7 @@ using TheGame.Api.Auth;
 using TheGame.Api.Common;
 using TheGame.Api.Endpoints.Game;
 using TheGame.Api.Endpoints.User;
+using TheGame.Api.Endpoints.User.RefreshToken;
 using TheGame.Domain;
 using TheGame.Domain.DomainModels.Common;
 
@@ -54,13 +55,25 @@ public static class CommonMockedServices
       .AddScoped(typeof(IDomainMessageHandler<>), typeof(DomainMessageLogger<>))
       .AddScoped<IGameQueryProvider, GameQueryProvider>()
       .AddScoped(sp => Substitute.For<IGoogleAuthService>())
-      .AddScoped(sp =>
-      {
-        return Substitute.For<IGameAuthService>();
-      })
+      .AddScoped(sp => Substitute.For<IGameAuthService>())
+      .AddSingleton(sp => Substitute.For<ICryptoHelper>())
       .AddUserEndpointServices()
       .AddGameEndpointServices();
 
     return services;
+  }
+
+  public static ITransactionExecutionWrapper CreatePassthroughExecutionWrapper()
+  {
+    var wrapper = Substitute.For<ITransactionExecutionWrapper>();
+    wrapper
+      .ExecuteInTransaction(
+        Arg.Any<Func<Task<Result<RefreshAccessTokenCommand.Result>>>>(),
+        Arg.Any<string>(),
+        Arg.Any<ILogger>(),
+        Arg.Any<CancellationToken>())
+      .Returns(async callInfo => await callInfo.ArgAt<Func<Task<Result<RefreshAccessTokenCommand.Result>>>>(0)());
+
+    return wrapper;
   }
 }

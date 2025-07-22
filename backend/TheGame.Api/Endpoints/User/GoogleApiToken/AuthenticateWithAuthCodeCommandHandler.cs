@@ -55,21 +55,28 @@ public class AuthenticateWithAuthCodeCommandHandler(IGameAuthService gameAuthSer
 
         var getOrCreatePlayerCommand = new GetOrCreatePlayerRequest(identityRequest);
         var getOrCreatePlayerResult = await playerService.GetOrCreatePlayer(getOrCreatePlayerCommand, cancellationToken);
-        if (!getOrCreatePlayerResult.TryGetSuccessful(out var playerIdentity, out var commandFailure))
+        if (!getOrCreatePlayerResult.TryGetSuccessful(out var playerIdentity, out var createPlayerFailure))
         {
-          return commandFailure;
+          return createPlayerFailure;
         }
+
+        var newRefreshTokenResult = gameAuthService.GenerateRefreshToken();
+        if (!newRefreshTokenResult.TryGetSuccessful(out var refreshToken, out var refreshTokenFailure))
+        {
+          return refreshTokenFailure;
+        }
+
+        var refreshTokenExpiresIn = DateTimeOffset.FromUnixTimeSeconds(refreshToken.ExpireUnixSeconds) - timeProvider.GetUtcNow();
 
         var apiToken = gameAuthService.GenerateApiJwtToken(playerIdentity.ProviderName,
           playerIdentity.ProviderIdentityId,
           playerIdentity.PlayerId,
-          playerIdentity.PlayerIdentityId);
-
-        var refreshTokenExpiresIn = playerIdentity.RefreshTokenExpiration - timeProvider.GetUtcNow();
+          playerIdentity.PlayerIdentityId,
+          refreshToken.RefreshTokenId);
 
         return new AuthenticateWithAuthCodeCommand.Result(playerIdentity.IsNewIdentity,
           apiToken,
-          playerIdentity.RefreshToken,
+          refreshToken.RefreshTokenValue,
           refreshTokenExpiresIn);
       },
       nameof(AuthenticateWithAuthCodeCommand),
