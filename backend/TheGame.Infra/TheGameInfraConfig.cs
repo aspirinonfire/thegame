@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace TheGame.Infra;
 
-public sealed record TheGameConfig
+public sealed record TheGameInfraConfig
 {
   public const string GhcrPatSecretName = "ghcr-pat";
   public const string GoogleClientSecretName = "google-client-secret";

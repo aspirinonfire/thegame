@@ -1,0 +1,28 @@
+{
+  "ProjectName": null,
+  "StackName": null,
+  "AzureNativeVersion": null,
+  "AzureAdVersion": null,
+  "BackendBlobStorageUrl": null,
+
+  "SubscriptionId": null,
+  "ResourceGroupName": null,
+
+  "DbServerName": null,
+  "DbName": null,
+  "DbSku": null,
+
+  "AcaEnvName": null,
+  "AcaName": null,
+  "GhcrUrl": null,
+  "GhcrUsername": null,
+  "GhcrPat": null,
+  "GameImage": null,
+
+  "GoogleClientId": null,
+  "GoogleClientSecret": null,
+  "JwtSecret": null,
+  "JwtAudience": null,
+  "JwtTokenExpirationMin": null,
+  "RefreshTokenAgeMinutes": null
+}

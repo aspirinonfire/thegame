@@ -25,7 +25,6 @@ public sealed record AuthenticateWithAuthCodeCommand(string AuthCode)
 public class AuthenticateWithAuthCodeCommandHandler(IGameAuthService gameAuthService,
   IPlayerService playerService,
   TimeProvider timeProvider,
-  IOptions<GameSettings> gameSettings,
   IGoogleAuthService googleAuthService,
   ITransactionExecutionWrapper transactionWrapper,
   ILogger<AuthenticateWithAuthCodeCommandHandler> logger)
@@ -49,9 +48,7 @@ public class AuthenticateWithAuthCodeCommandHandler(IGameAuthService gameAuthSer
 
         var identityRequest = new NewPlayerIdentityRequest("Google",
           idTokenPayload.Subject,
-          idTokenPayload.Name,
-          gameSettings.Value.Auth.Api.RefreshTokenByteCount,
-          gameSettings.Value.Auth.Api.RefreshTokenAgeMinutes);
+          idTokenPayload.Name);
 
         var getOrCreatePlayerCommand = new GetOrCreatePlayerRequest(identityRequest);
         var getOrCreatePlayerResult = await playerService.GetOrCreatePlayer(getOrCreatePlayerCommand, cancellationToken);

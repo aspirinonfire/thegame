@@ -38,6 +38,4 @@ public partial class PlayerIdentity
 
 public sealed record NewPlayerIdentityRequest(string ProviderName,
   string ProviderIdentityId,
-  string PlayerName,
-  ushort RefreshTokenByteCount,
-  uint RefreshTokenAgeMinutes);
+  string PlayerName);

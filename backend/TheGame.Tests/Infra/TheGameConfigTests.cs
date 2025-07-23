@@ -5,7 +5,7 @@ namespace TheGame.Tests.Infra;
 [Trait(XunitTestProvider.Category, XunitTestProvider.Unit)]
 public class TheGameConfigTests
 {
-  private readonly static TheGameConfig _validConfig = new()
+  private readonly static TheGameInfraConfig _validConfig = new()
   {
     ProjectName = "test project",
     StackName = "test stack",

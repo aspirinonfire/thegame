@@ -13,9 +13,9 @@ namespace TheGame.Infra;
 // see: https://archive.pulumi.com/t/14250948/hello-any-reason-why-i-would-be-recieving-this-error-on-pulu#511b0f4a-cd53-45ca-b894-3d059fd346a4
 public sealed class TheGameStack
 {
-  private readonly TheGameConfig _gameConfig;
+  private readonly TheGameInfraConfig _gameConfig;
 
-  public TheGameStack(TheGameConfig gameConfig)
+  public TheGameStack(TheGameInfraConfig gameConfig)
   {
     _gameConfig = gameConfig;
   }
@@ -107,7 +107,7 @@ public sealed class TheGameStack
           {
             Server = _gameConfig.GhcrUrl,
             Username = _gameConfig.GhcrUsername,
-            PasswordSecretRef = TheGameConfig.GhcrPatSecretName,
+            PasswordSecretRef = TheGameInfraConfig.GhcrPatSecretName,
           }
         },
         ActiveRevisionsMode = ActiveRevisionsMode.Single,
@@ -116,17 +116,17 @@ public sealed class TheGameStack
         {
           new SecretArgs()
           {
-            Name = TheGameConfig.GhcrPatSecretName,
+            Name = TheGameInfraConfig.GhcrPatSecretName,
             Value = _gameConfig.GhcrPat
           },
           new SecretArgs()
           {
-            Name = TheGameConfig.GoogleClientSecretName,
+            Name = TheGameInfraConfig.GoogleClientSecretName,
             Value = _gameConfig.GoogleClientSecret,
           },
           new SecretArgs()
           {
-            Name = TheGameConfig.JwtSecretName,
+            Name = TheGameInfraConfig.JwtSecretName,
             Value = _gameConfig.JwtSecret,
           }
         }
@@ -168,12 +168,12 @@ public sealed class TheGameStack
               new EnvironmentVarArgs()
               {
                 Name = "Auth__Google__ClientSecret",
-                SecretRef = TheGameConfig.GoogleClientSecretName
+                SecretRef = TheGameInfraConfig.GoogleClientSecretName
               },
               new EnvironmentVarArgs()
               {
                 Name = "Auth__Api__JwtSecret",
-                SecretRef = TheGameConfig.JwtSecretName
+                SecretRef = TheGameInfraConfig.JwtSecretName
               },
               new EnvironmentVarArgs()
               {

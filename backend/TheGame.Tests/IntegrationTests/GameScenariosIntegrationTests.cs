@@ -34,9 +34,7 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
 
     var newIdentityRequest = new NewPlayerIdentityRequest("test_provider",
       "test_id",
-      "Test Player",
-      64,
-      5);
+      "Test Player");
     var newPlayerIdentityResult = playerIdentFac.CreatePlayerIdentity(newIdentityRequest);
     newPlayerIdentityResult.AssertIsSucceessful();
 
@@ -67,9 +65,7 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
       new GetOrCreatePlayerRequest(
         new NewPlayerIdentityRequest("test_provider",
         "test_id_1",
-        "Test Player 1",
-        64,
-        5)));
+        "Test Player 1")));
 
     var newGameResult = await RunAsScopedRequest<StartNewGameCommand, OwnedOrInvitedGame>(sp, 
       new StartNewGameCommand("Test Game", newPlayerIdentity.PlayerId));
@@ -112,9 +108,7 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
       new GetOrCreatePlayerRequest(
         new NewPlayerIdentityRequest("test_provider",
         "test_id_2",
-        "Test Player 2",
-        64,
-        5)));
+        "Test Player 2")));
 
     var newGameCommandResult = await RunAsScopedRequest<StartNewGameCommand, OwnedOrInvitedGame>(sp, 
       new StartNewGameCommand("Test Game 2", newPlayerIdentityCommandResult.PlayerId));
@@ -150,9 +144,7 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
     // create new player with identity
     var newIdentityRequest = new NewPlayerIdentityRequest("test_provider",
       "test_id_3",
-      "Test Player 3",
-      64,
-      5);
+      "Test Player 3");
     var newPlayerIdentityCommandResult = await CreatePlayerWithIdentity(
       sp,
       new GetOrCreatePlayerRequest(newIdentityRequest));

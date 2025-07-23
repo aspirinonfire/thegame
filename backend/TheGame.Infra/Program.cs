@@ -104,14 +104,14 @@ public static class Program
     Environment.Exit(0);
   }
 
-  private static TheGameConfig GetValidatedInfraConfig()
+  private static TheGameInfraConfig GetValidatedInfraConfig()
   {
     var config = new ConfigurationBuilder()
       .AddJsonFile("stack.localdev.json", true)
       .AddEnvironmentVariables()
       .Build();
 
-    var gameConfig = config.Get<TheGameConfig>();
+    var gameConfig = config.Get<TheGameInfraConfig>();
     if (gameConfig is null)
     {
       Console.WriteLine("game stack config is not set or invalid. Please ensure stack.localdev.json exists and is properly configured.");
