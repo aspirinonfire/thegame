@@ -23,6 +23,9 @@ env:
   DOCKERFILE: Dockerfile-pipelines
   NODE_VERSION: 22
   PULUMI_PUBLISH_DIR: infra
+  API_PUBLISH_DIR: api
+  UI_PUBLISH_DIR: ui
+  EFBUNDLE_BIN: efbundle
   INFRA_BINARY: TheGame.Infra
   CONTAINER_REPO: ghcr.io
   GAMEAPP_IMAGE_NAME: thegame-everything
@@ -52,11 +55,8 @@ jobs:
 
     - name: Prepare artifacts for deployment
       run: |
-        mv ${{ env.ARTIFACTS }}/${{ env.DOCKERFILE }} .
-        mv ${{ env.ARTIFACTS }}/efbundle .
-        mv ${{ env.ARTIFACTS }}/${{ env.PULUMI_PUBLISH_DIR }} .
-        chmod 744 ./efbundle
-        chmod 744 ./${{ env.PULUMI_PUBLISH_DIR }}/${{ env.INFRA_BINARY }}
+        chmod 744 ${{ env.ARTIFACTS }}/${{ env.EFBUNDLE_BIN }}
+        chmod 744 ${{ env.ARTIFACTS }}/${{ env.PULUMI_PUBLISH_DIR }}/${{ env.INFRA_BINARY }}
 
     # establish identity context for the deployment run (https://www.gatevnotes.com/passwordless-authentication-github-actions-to-microsoft-azure/)
     # this implementation uses github token exchange for service principal identity defined in entra
@@ -78,13 +78,13 @@ jobs:
     - name: Build and Push docker image
       run: |
         docker login --username ${{ github.repository_owner }} --password ${{ secrets.GHCR_PAT }} ${{ env.CONTAINER_REPO }}
-        docker build ${{ env.ARTIFACTS }} --file ${{ env.DOCKERFILE }} --tag ${{ env.CONTAINER_REPO }}/${{ github.repository_owner }}/${{ env.GAMEAPP_IMAGE_NAME }}:latest
+        docker build ${{ env.ARTIFACTS }}/${{ env.API_PUBLISH_DIR }} --file ${{ env.ARTIFACTS }}/${{ env.API_PUBLISH_DIR }}/${{ env.DOCKERFILE }} --tag ${{ env.CONTAINER_REPO }}/${{ github.repository_owner }}/${{ env.GAMEAPP_IMAGE_NAME }}:latest
         docker push ${{ env.CONTAINER_REPO }}/${{ github.repository_owner }}/${{ env.GAMEAPP_IMAGE_NAME }}:latest
 
     # Deploy infra
     - name: Deploy Game Infra with Pulumi
-      working-directory: ${{ env.PULUMI_PUBLISH_DIR }}
-      run: ./${{ env.INFRA_BINARY }}
+      working-directory: ${{ env.ARTIFACTS }}/${{ env.PULUMI_PUBLISH_DIR }}
+      run: ./${{ env.INFRA_BINARY }} deploy
       env:
         # We cannot use az login as service principal for pulumi azure native auth
         ARM_USE_OIDC: 'true'
@@ -92,35 +92,35 @@ jobs:
         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-        ProjectName: ${{ vars.PROJECTNAME }}
-        StackName: ${{ vars.STACKNAME }}
-        AzureNativeVersion: ${{ vars.AZURENATIVEVERSION }}
-        AzureAdVersion: ${{ vars.AZUREADVERSION }}
-        BackendBlobStorageUrl: ${{ vars.BACKENDBLOBSTORAGEURL }}
+        PulumiConfig__StackName: ${{ vars.STACKNAME }}
+        PulumiConfig__BackendBlobStorageUrl: ${{ vars.BACKENDBLOBSTORAGEURL }}
 
-        SubscriptionId: ${{ vars.SUBSCRIPTIONID }}
-        ResourceGroupName: ${{ vars.RESOURCEGROUPNAME }}
+        ExistingResources__SubscriptionId: ${{ vars.SUBSCRIPTIONID }}
+        ExistingResources__ResourceGroupName: ${{ vars.RESOURCEGROUPNAME }}
 
-        DbServerName: ${{ vars.DBSERVERNAME }}
-        DbName: ${{ vars.DBNAME }}
+        StaticWebApp__AppName: ${{ vars.SWAAPPNAME }}
 
-        AcaEnvName: ${{ vars.ACAENVNAME }}
-        AcaName: ${{ vars.ACANAME }}
-        GhcrUrl: ${{ env.CONTAINER_REPO }}
-        GhcrUsername: ${{ github.repository_owner }}
-        GhcrPat: ${{ secrets.GHCR_PAT }}
-        GameImage: ${{ env.GAMEAPP_IMAGE_NAME }}:latest
+        AzureSqlServer__DbServerName: ${{ vars.DBSERVERNAME }}
+        AzureSqlServer__DbName: ${{ vars.DBNAME }}
 
-        GoogleClientId: ${{ vars.GOOGLECLIENTID }}
-        GoogleClientSecret: ${{ secrets.GOOGLECLIENTSECRET }}
-        JwtSecret: ${{ secrets.JWTSECRET }}
-        JwtAudience: ${{ vars.JWTAUDIENCE }}
-        JwtTokenExpirationMin: ${{ vars.JWTTOKENEXPIRATIONMIN }}
+        ContainerApp__AcaEnvName: ${{ vars.ACAENVNAME }}
+        ContainerApp__AcaName: ${{ vars.ACANAME }}
+        ContainerApp__GhcrUrl: ${{ env.CONTAINER_REPO }}
+        ContainerApp__GhcrUsername: ${{ github.repository_owner }}
+        ContainerApp__GhcrPat: ${{ secrets.GHCR_PAT }}
+        ContainerApp__GameImage: ${{ env.GAMEAPP_IMAGE_NAME }}:latest
+
+        GameApi__GoogleClientId: ${{ vars.GOOGLECLIENTID }}
+        GameApi__GoogleClientSecret: ${{ secrets.GOOGLECLIENTSECRET }}
+        GameApi__JwtSecret: ${{ secrets.JWTSECRET }}
+        GameApi__JwtAudience: ${{ vars.JWTAUDIENCE }}
+        GameApi__JwtTokenExpirationMin: ${{ vars.JWTTOKENEXPIRATIONMIN }}
    
     # execute migrator
     # note:
     # 1. Firewall rules are not required because target database allows azure service access.
     # 2. Authentication must be set to "Active Directory Default" in connection string to make it work with az login
     - name: Run DB migrations
-      run: ./efbundle --verbose --connection "Server=tcp:${{ vars.DBSERVERNAME }}.database.windows.net,1433;Initial Catalog=${{ vars.DBNAME }};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=Active Directory Default;"
+      run: ${{ env.ARTIFACTS }}/${{ env.EFBUNDLE_BIN }} --verbose --connection "Server=tcp:${{ vars.DBSERVERNAME }}.database.windows.net,1433;Initial Catalog=${{ vars.DBNAME }};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=Active Directory Default;"
    
+  # TODO deploy UI

@@ -1,28 +1,41 @@
 {
-  "ProjectName": null,
-  "StackName": null,
-  "AzureNativeVersion": null,
-  "AzureAdVersion": null,
-  "BackendBlobStorageUrl": null,
+  "PulumiConfig": {
+    "ProjectName": "TheGame",
+    "StackName": "<stack name>",
+    "AzureNativeVersion": "3.5.1",
+    "AzureAdVersion": "6.5.1",
+    "BackendBlobStorageUrl": "azblob://infra?storage_account=storthegamedev"
+  },
 
-  "SubscriptionId": null,
-  "ResourceGroupName": null,
+  "ExistingResources": {
+    "SubscriptionId": "447ee582-405f-4886-bd66-a4131c51a44b",
+    "ResourceGroupName": "rg-thegame-dev"
+  },
 
-  "DbServerName": null,
-  "DbName": null,
-  "DbSku": null,
+  "StaticWebApp": {
+    "AppName": "swa-thegame",
+    "Sku": "Free"
+  },
 
-  "AcaEnvName": null,
-  "AcaName": null,
-  "GhcrUrl": null,
-  "GhcrUsername": null,
-  "GhcrPat": null,
-  "GameImage": null,
+  "AzureSqlServer": {
+    "DbServerName": "db-thegame-dev",
+    "DbName": "sqldb-thegame-dev"
+  },
 
-  "GoogleClientId": null,
-  "GoogleClientSecret": null,
-  "JwtSecret": null,
-  "JwtAudience": null,
-  "JwtTokenExpirationMin": null,
-  "RefreshTokenAgeMinutes": null
+  "ContainerApp": {
+    "AcaEnvName": "cae-thegame-dev",
+    "AcaName": "aca-thegame-dev",
+    "GhcrUrl": "ghcr.io",
+    "GhcrUsername": "aspirinonfire",
+    "GhcrPat": "<gh pat>",
+    "GameImage": "thegame-everything:latest"
+  },
+
+  "GameApi": {
+    "GoogleClientId": "<client id>",
+    "GoogleClientSecret": "<client secret>",
+    "JwtSecret": "<jwt secret>",
+    "JwtAudience": "TheGame.Api-aca-dev",
+    "JwtTokenExpirationMin": 10
+  }
 }

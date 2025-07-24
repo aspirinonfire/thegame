@@ -11,10 +11,10 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.6" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.6" />
-    <PackageReference Include="Pulumi" Version="3.84.0" />
-    <PackageReference Include="Pulumi.Automation" Version="3.84.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.7" />
+    <PackageReference Include="Pulumi" Version="3.85.1" />
+    <PackageReference Include="Pulumi.Automation" Version="3.85.1" />
     <PackageReference Include="Pulumi.AzureAD" Version="6.5.1" />
     <PackageReference Include="Pulumi.AzureNative" Version="3.5.1" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
