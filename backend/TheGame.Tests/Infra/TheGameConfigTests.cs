@@ -1,36 +1,57 @@
-﻿using TheGame.Infra;
+﻿using TheGame.Infra.AppConfiguration;
 
 namespace TheGame.Tests.Infra;
 
 [Trait(XunitTestProvider.Category, XunitTestProvider.Unit)]
 public class TheGameConfigTests
 {
-  private readonly static TheGameConfig _validConfig = new()
+  private readonly static TheGameInfraConfig _validConfig = new()
   {
-    ProjectName = "test project",
-    StackName = "test stack",
-    AzureNativeVersion = "1",
-    AzureAdVersion = "1",
-    BackendBlobStorageUrl = "azblob://container?storage_account=testaccount",
+    PulumiConfig = new()
+    {
+      ProjectName = "test project",
+      StackName = "test stack",
+      AzureNativeVersion = "1",
+      AzureAdVersion = "1",
+      BackendBlobStorageUrl = "azblob://container?storage_account=testaccount",
+    },
 
-    SubscriptionId = "sub",
-    ResourceGroupName = "res",
+    ExistingResources = new()
+    {
+      SubscriptionId = "sub",
+      ResourceGroupName = "res",
+    },
 
-    DbServerName = "dbserver",
-    DbName = "dbname",
+    StaticWebApp = new()
+    {
+      AppName = "test-ui",
+      Sku = "Free"
+    },
 
-    AcaEnvName = "env",
-    AcaName = "aca",
-    GhcrUrl = "https://ghcr.io",
-    GhcrUsername = "test username",
-    GhcrPat = "pat",
-    GameImage = "some/image:latest",
+    AzureSqlServer = new()
+    {
+      DbServerName = "dbserver",
+      DbName = "dbname"
+    },
 
-    GoogleClientId = "client id",
-    GoogleClientSecret = "secret",
-    JwtSecret = "test string long enough to be used as signature secret",
-    JwtAudience = "test audience",
-    JwtTokenExpirationMin = 10
+    ContainerApp = new()
+    {
+      AcaEnvName = "env",
+      AcaName = "aca",
+      GhcrUrl = "https://ghcr.io",
+      GhcrUsername = "test username",
+      GhcrPat = "pat",
+      GameImage = "some/image:latest",
+    },
+
+    GameApi = new()
+    {
+      GoogleClientId = "client id",
+      GoogleClientSecret = "secret",
+      JwtSecret = "test string long enough to be used as signature secret",
+      JwtAudience = "test audience",
+      JwtTokenExpirationMin = 10
+    }
   };
 
   [Fact]
@@ -48,7 +69,10 @@ public class TheGameConfigTests
   {
     var uutConfig = _validConfig with
     {
-      ProjectName = null!
+      PulumiConfig = _validConfig.PulumiConfig with
+      {
+        ProjectName = null!
+      },
     };
 
     var actualValidationErrors = uutConfig.GetValidationErrors();
@@ -62,8 +86,11 @@ public class TheGameConfigTests
   {
     var uutConfig = _validConfig with
     {
-      ProjectName = null!,
-      StackName = null!,
+      PulumiConfig = _validConfig.PulumiConfig with
+      {
+        ProjectName = null!,
+        StackName = null!,
+      }
     };
 
     var actualValidationErrors = uutConfig.GetValidationErrors();
@@ -78,7 +105,10 @@ public class TheGameConfigTests
   {
     var uutConfig = _validConfig with
     {
-      BackendBlobStorageUrl = "azblob://<container>?storage_account=<testaccount>"
+      PulumiConfig = _validConfig.PulumiConfig with
+      {
+        BackendBlobStorageUrl = "azblob://<container>?storage_account=<testaccount>"
+      }
     };
 
     var actualValidationErrors = uutConfig.GetValidationErrors();
@@ -92,7 +122,10 @@ public class TheGameConfigTests
   {
     var uutConfig = _validConfig with
     {
-      JwtSecret = "too short"
+      GameApi = _validConfig.GameApi with
+      {
+        JwtSecret = "too short"
+      }
     };
 
     var actualValidationErrors = uutConfig.GetValidationErrors();

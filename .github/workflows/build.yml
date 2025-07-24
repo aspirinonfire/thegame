@@ -13,19 +13,22 @@ on:
   workflow_dispatch:
 
 env:
+  DOTNET_BUILD_CONFIG: Release
+  MIGRATOR_PROJECT: TheGame.DbMigrator
+  DBCONTEXT_PROJECT: TheGame.Domain
+  ARTIFACTS_DIR: to_deploy
   # API Settings
   BACKEND_ROOT: backend
   API_PROJECT_TO_PUBLISH: TheGame.Api/TheGame.Api.csproj
-  MIGRATOR_PROJECT: TheGame.DbMigrator
-  DBCONTEXT_PROJECT: TheGame.Domain
-  API_PUBLISH_DIR: publish_artifacts
+  API_PUBLISH_DIR: api
+  # Infra
   PULUMI_PROJECT_TO_PUBLISH: TheGame.Infra/TheGame.Infra.csproj
-  PULUMI_PUBLISH_DIR: infra
   API_TEST_SETTINGS_PLACEHOLDER_PATH: backend/TheGame.Tests/testsettings.json
-  DOTNET_BUILD_CONFIG: Release
+  PULUMI_PUBLISH_DIR: infra
   # UI Settings
   NODE_VERSION: 22
   UI_ROOT: ui
+  UI_PUBLISH_DIR: ui
 
 jobs:
   # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
@@ -84,7 +87,7 @@ jobs:
           --collect 'XPlat Code Coverage' \
           --settings './coverlet.runsettings'
 
-      - name: Publish dotnet solution
+      - name: Publish API
         working-directory: ${{ env.BACKEND_ROOT }}
         run: |
           dotnet publish ${{ env.API_PROJECT_TO_PUBLISH }} \
@@ -94,7 +97,7 @@ jobs:
           --nologo \
           --verbosity normal \
           /p:UseAppHost=false \
-          --output ${{ github.workspace }}/${{ env.BACKEND_ROOT }}/${{ env.API_PUBLISH_DIR }}
+          --output ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/${{ env.API_PUBLISH_DIR }}
 
       # TODO build docker image without pushing
 
@@ -124,6 +127,11 @@ jobs:
         working-directory: "ui"
         run: npm run teste2eci
 
+      - name: Stage UI Artifacts
+        working-directory: ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}
+        run: |
+          mv ${{ github.workspace }}/${{ env.UI_ROOT }}/build/client ${{env.UI_PUBLISH_DIR}}
+
       # build db migrator to be used in deploy workflow
       - name: Install EF Core CLI
         run: |
@@ -141,7 +149,7 @@ jobs:
           --runtime linux-x64 \
           --self-contained \
           --force \
-          --output ${{ env.API_PUBLISH_DIR }}/efbundle
+          --output ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/efbundle
 
       # Publish IaC artifacts (Pulumi).
       - name: Publish Pulumi runner
@@ -153,21 +161,14 @@ jobs:
           --runtime linux-x64 \
           --self-contained \
           /p:PublishSingleFile=true \
-          --output ${{ github.workspace }}/${{ env.BACKEND_ROOT }}/${{ env.API_PUBLISH_DIR }}/${{ env.PULUMI_PUBLISH_DIR}}
+          --output ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/${{ env.PULUMI_PUBLISH_DIR}}
 
-      # TODO separate the publish step for the API and UI artifacts
       # Publish artifacts for deploy workflow
-      - name: Combine artifacts
-        working-directory: ${{ github.workspace }}/${{ env.BACKEND_ROOT }}/${{ env.API_PUBLISH_DIR }}
-        run: |
-          mv ${{ github.workspace }}/${{ env.UI_ROOT }}/build/client ./wwwroot
-          cp ${{ github.workspace }}/${{ env.BACKEND_ROOT }}/TheGame.Api/Dockerfile-pipelines .
-
       - name: Upload combined artifacts for deployment
         uses: actions/upload-artifact@v4
         with:
           name: 'artifacts'
-          path: ${{ github.workspace }}/${{ env.BACKEND_ROOT }}/${{ env.API_PUBLISH_DIR }}
+          path: ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}
           if-no-files-found: 'error'
           retention-days: 1
           overwrite: true

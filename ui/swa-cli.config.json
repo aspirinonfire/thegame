@@ -1,0 +1,15 @@
+{
+  "$schema": "https://aka.ms/azure/static-web-apps-cli/schema",
+  "configurations": {
+    "cd.next.poc": {
+      "appLocation": ".",
+      "outputLocation": "build/client",
+      "appBuildCommand": "npm run build",
+      "run": "npm run dev",
+      "appDevserverUrl": "http://localhost:3000",
+      "subscriptionId": "447ee582-405f-4886-bd66-a4131c51a44b",
+      "appName": "thegame-ui-poc",
+      "resourceGroup": "rg-thegame-dev"
+    }
+  }
+}

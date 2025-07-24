@@ -36,9 +36,6 @@ public sealed record ApiAuthSettings
   public required ushort JwtTokenExpirationMin { get; init; }
 
   [Required]
-  public required ushort RefreshTokenByteCount { get; init; }
-
-  [Required]
   public required uint RefreshTokenAgeMinutes { get; init; }
 }
 

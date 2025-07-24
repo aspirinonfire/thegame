@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TheGame.Infra.AppConfiguration;
 
 namespace TheGame.Infra;
 
@@ -11,13 +12,20 @@ public static class Program
 {
   public static async Task Main(string[] args)
   {
-    Console.WriteLine("setting up pulumi program and backend...");
-    var gameConfig = GetValidatedInfraConfig();
+    // Initialized Pulumi program configuration
+    var action = args.FirstOrDefault("preview").ToLowerInvariant();
+    Console.WriteLine($"Executing {action}...");
+    
+    var infraConfig = GetValidatedInfraConfig();
+    Console.WriteLine("Config was successfully read and validated.");
 
-    var program = PulumiFn.Create(async () => await new TheGameStack(gameConfig).SetupProgram());
+    Console.WriteLine($"Setting up Pulumi project {infraConfig.PulumiConfig.ProjectName}...");
+
+    var gameInfraStack = new TheGameStack(infraConfig);
+    var program = PulumiFn.Create(gameInfraStack.SetupProgram);
 
     Console.WriteLine("initializing stack...");
-    var stackArgs = new InlineProgramArgs(gameConfig.ProjectName, gameConfig.StackName, program)
+    var stackArgs = new InlineProgramArgs(infraConfig.PulumiConfig.ProjectName, infraConfig.PulumiConfig.StackName, program)
     {
       EnvironmentVariables = new Dictionary<string, string?>()
       {
@@ -25,18 +33,16 @@ public static class Program
       }
     };
 
-    // TODO replace it with Azure Blob Storage
     stackArgs.ProjectSettings!.Backend = new ProjectBackend()
     {
-      Url = gameConfig.BackendBlobStorageUrl
+      Url = infraConfig.PulumiConfig.BackendBlobStorageUrl
     };
 
     var stack = await LocalWorkspace.CreateOrSelectStackAsync(stackArgs);
-    Console.WriteLine("stack initialized.");
 
     Console.WriteLine("installing plugins...");
-    await stack.Workspace.InstallPluginAsync("azure-native", gameConfig.AzureNativeVersion);
-    await stack.Workspace.InstallPluginAsync("azuread", gameConfig.AzureAdVersion);
+    await stack.Workspace.InstallPluginAsync("azure-native", infraConfig.PulumiConfig.AzureNativeVersion);
+    await stack.Workspace.InstallPluginAsync("azuread", infraConfig.PulumiConfig.AzureAdVersion);
     Console.WriteLine("azure-native and azuread plugins installed");
 
     Console.WriteLine("refreshing stack...");
@@ -46,24 +52,12 @@ public static class Program
     });
     Console.WriteLine("refresh complete.");
 
-    var action = args.FirstOrDefault();
-    if (action == "destory")
+    if (action == "preview")
     {
-      Console.WriteLine("destroying stack...");
-      await stack.DestroyAsync(new DestroyOptions
-      {
-        Debug = true,
-        LogToStdErr = true,
-        OnStandardOutput = Console.WriteLine,
-        OnStandardError = Console.WriteLine,
-      });
-      Console.WriteLine("stack destroy complete.");
-    }
-    else if (action == "preview")
-    {
+      Console.WriteLine("Generating preview...");
       var previewResult = await stack.PreviewAsync(new PreviewOptions()
       {
-        Debug = true,
+        Debug = false,
         LogToStdErr = true,
         OnStandardOutput = Console.WriteLine,
         OnStandardError = Console.WriteLine,
@@ -78,12 +72,13 @@ public static class Program
         }
       }
     }
-    else
+    else if (action == "deploy")
     {
-      Console.WriteLine("updating stack...");
+      // deploy
+      Console.WriteLine("Deploying stack updates...");
       var result = await stack.UpAsync(new UpOptions
       {
-        Debug = true,
+        Debug = false,
         LogToStdErr = true,
         OnStandardOutput = Console.WriteLine,
         OnStandardError = Console.WriteLine
@@ -98,20 +93,46 @@ public static class Program
         }
       }
     }
+    else if (action == "destroy")
+    {
+      // deploy
+      Console.WriteLine("Destroying stack...");
+      var result = await stack.DestroyAsync(new DestroyOptions
+      {
+        Debug = false,
+        LogToStdErr = true,
+        OnStandardOutput = Console.WriteLine,
+        OnStandardError = Console.WriteLine
+      });
+
+      if (result.Summary.ResourceChanges != null)
+      {
+        Console.WriteLine("destroy summary:");
+        foreach (var change in result.Summary.ResourceChanges)
+        {
+          Console.WriteLine($"    {change.Key}: {change.Value}");
+        }
+      }
+    }
+    else
+    {
+      Console.WriteLine($"Unknown action {action}");
+      Environment.Exit(-1);
+    }
 
     Console.WriteLine("Done.");
 
     Environment.Exit(0);
   }
 
-  private static TheGameConfig GetValidatedInfraConfig()
+  private static TheGameInfraConfig GetValidatedInfraConfig()
   {
     var config = new ConfigurationBuilder()
       .AddJsonFile("stack.localdev.json", true)
       .AddEnvironmentVariables()
       .Build();
 
-    var gameConfig = config.Get<TheGameConfig>();
+    var gameConfig = config.Get<TheGameInfraConfig>();
     if (gameConfig is null)
     {
       Console.WriteLine("game stack config is not set or invalid. Please ensure stack.localdev.json exists and is properly configured.");

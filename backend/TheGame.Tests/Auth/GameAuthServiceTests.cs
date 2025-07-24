@@ -20,7 +20,6 @@ public class GameAuthServiceTests
         JwtAudience = "test_aud",
         JwtSecret = "my_very_very_long_test_secret_123!",
         RefreshTokenAgeMinutes = 5,
-        RefreshTokenByteCount = 64,
         JwtTokenExpirationMin = 1
       },
       Google = new ApiGoogleSettings()
