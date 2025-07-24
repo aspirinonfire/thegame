@@ -34,4 +34,10 @@
     <ProjectReference Include="..\TheGame.ServiceDefaults\TheGame.ServiceDefaults.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Dockerfile-pipelines">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
