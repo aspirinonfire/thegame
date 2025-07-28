@@ -33,7 +33,7 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-22.04
-    if: ${{ (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push') || github.event.workflow_run.event == 'workflow_dispatch' }}
+    if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || github.event_name == 'workflow_dispatch' }}
     environment: dev
     steps:
     - name: Setup node.js environment
