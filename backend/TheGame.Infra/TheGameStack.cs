@@ -32,12 +32,12 @@ public sealed class TheGameStack(TheGameInfraConfig infraConfig)
       // 1) Make the key an env‑var (same‑job scope)
       var envFile = Environment.GetEnvironmentVariable("GITHUB_ENV");
       if (!string.IsNullOrWhiteSpace(envFile))
-        File.AppendAllText(envFile, $"GAME_API_URL={cfg.Ingress.Fqdn}{Environment.NewLine}");
+        File.AppendAllText(envFile, $"GAME_API_URL=https://{cfg.Ingress.Fqdn}{Environment.NewLine}");
 
       // 2) Also expose it as a step output (so other jobs can consume it)
       var outFile = Environment.GetEnvironmentVariable("GITHUB_OUTPUT");
       if (!string.IsNullOrWhiteSpace(outFile))
-        File.AppendAllText(outFile, $"game_api_url={cfg.Ingress.Fqdn}{Environment.NewLine}");
+        File.AppendAllText(outFile, $"game_api_url=https://{cfg.Ingress.Fqdn}{Environment.NewLine}");
 
       return Task.CompletedTask;
     });
