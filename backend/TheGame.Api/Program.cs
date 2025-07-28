@@ -147,8 +147,6 @@ public class Program
 
     app.MapDefaultEndpoints();
 
-    app.MapHealthChecks("/health");
-
     // Configure the HTTP request pipeline.
     if (isDevEnvironment)
     {
