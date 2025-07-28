@@ -116,8 +116,10 @@ jobs:
       - name: Build and export UI App
         working-directory: ${{ env.UI_ROOT }}
         run: npm run build
+        # placeholder values to be replated during deploy workflow
         env:
-          VITE_GOOGLE_CLIENT_ID: ${{ vars.GOOGLECLIENTID }}
+          VITE_GOOGLE_CLIENT_ID: "__VITE_GOOGLE_CLIENT_ID__"
+          VITE_API_URL: "__VITE_API_URL__"
 
       - name: Install Playwright Browsers
         working-directory: "ui"
