@@ -101,7 +101,7 @@ jobs:
           /p:UseAppHost=false \
           --output ${{ github.workspace }}/_temp/${{ env.API_PUBLISH_DIR }}
 
-      - name: Builder Docker image
+      - name: Build Docker image
         working-directory: ${{ env.BACKEND_ROOT }}
         run: |
           docker build \
