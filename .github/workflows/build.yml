@@ -21,6 +21,7 @@ env:
   BACKEND_ROOT: backend
   API_PROJECT_TO_PUBLISH: TheGame.Api/TheGame.Api.csproj
   API_PUBLISH_DIR: api
+  GAMEAPP_IMAGE_NAME: thegame-api
   # Infra
   PULUMI_PROJECT_TO_PUBLISH: TheGame.Infra/TheGame.Infra.csproj
   API_TEST_SETTINGS_PLACEHOLDER_PATH: backend/TheGame.Tests/testsettings.json
@@ -97,9 +98,19 @@ jobs:
           --nologo \
           --verbosity normal \
           /p:UseAppHost=false \
-          --output ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/${{ env.API_PUBLISH_DIR }}
+          --output ${{ github.workspace }}/_temp/${{ env.API_PUBLISH_DIR }}
 
-      # TODO build docker image without pushing
+      - name: Builder Docker image
+        run: |
+          docker build \
+          --file ${{ env.BACKEND_ROOT }}/Dockerfile-pipelines \
+          --tag ${{ env.GAMEAPP_IMAGE_NAME }} \
+          ${{ github.workspace }}/_temp/${{ env.API_PUBLISH_DIR }}
+
+      - name: Save and compress Docker image
+        run: |
+          mkdir -p ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/${{ env.API_PUBLISH_DIR }}
+          docker save ${{ env.GAMEAPP_IMAGE_NAME }} | gzip > ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/${{ env.API_PUBLISH_DIR }}/${{ env.GAMEAPP_IMAGE_NAME }}.tar.gz
 
       # Build UI APP
       - name: NPM install

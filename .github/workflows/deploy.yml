@@ -28,7 +28,7 @@ env:
   EFBUNDLE_BIN: efbundle
   INFRA_BINARY: TheGame.Infra
   CONTAINER_REPO: ghcr.io
-  GAMEAPP_IMAGE_NAME: thegame-everything
+  GAMEAPP_IMAGE_NAME: thegame-api
 
 jobs:
   deploy:
@@ -77,11 +77,18 @@ jobs:
           az account show
           az group list
  
-    # TODO: tag management
-    - name: Build and Push docker image
+    - name: Decompress tar.gz into tar image
+      run: |
+        gzip -d ${{ env.ARTIFACTS }}/${{ env.API_PUBLISH_DIR }}/${{ env.GAMEAPP_IMAGE_NAME}}.tar.gz
+
+    - name: Load docker image
+      run: |
+        docker load --input ${{ env.ARTIFACTS }}/${{ env.API_PUBLISH_DIR }}/${{ env.GAMEAPP_IMAGE_NAME}}.tar
+
+    - name: 'Tag and Push Docker image'
       run: |
         docker login --username ${{ github.repository_owner }} --password ${{ secrets.GHCR_PAT }} ${{ env.CONTAINER_REPO }}
-        docker build ${{ env.ARTIFACTS }}/${{ env.API_PUBLISH_DIR }} --file ${{ env.ARTIFACTS }}/${{ env.API_PUBLISH_DIR }}/${{ env.DOCKERFILE }} --tag ${{ env.CONTAINER_REPO }}/${{ github.repository_owner }}/${{ env.GAMEAPP_IMAGE_NAME }}:latest
+        docker tag ${{ env.GAMEAPP_IMAGE_NAME }} ${{ env.CONTAINER_REPO }}/${{ github.repository_owner }}/${{ env.GAMEAPP_IMAGE_NAME }}:latest
         docker push ${{ env.CONTAINER_REPO }}/${{ github.repository_owner }}/${{ env.GAMEAPP_IMAGE_NAME }}:latest
 
     # Deploy infra
