@@ -83,7 +83,6 @@ public class Program
       .AddHealthChecks()
       .AddCheck<ApiInfraHealthCheck>(nameof(ApiInfraHealthCheck));
 
-
     // register game api services and configuration
     builder.Services
       .AddOptions<GameSettings>()

@@ -28,18 +28,21 @@ env:
   EFBUNDLE_BIN: efbundle
   INFRA_BINARY: TheGame.Infra
   CONTAINER_REPO: ghcr.io
-  GAMEAPP_IMAGE_NAME: thegame-everything
+  GAMEAPP_IMAGE_NAME: thegame-api
 
 jobs:
   deploy:
     runs-on: ubuntu-22.04
-    if: ${{ (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push') || github.event.workflow_run.event == 'workflow_dispatch' }}
+    if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || github.event_name == 'workflow_dispatch' }}
     environment: dev
     steps:
     - name: Setup node.js environment
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
+
+    - name: Install SWA CLI
+      run: npm install -g @azure/static-web-apps-cli@latest
 
     - name: Download & extract artifact
       uses: actions/download-artifact@v4
@@ -74,15 +77,23 @@ jobs:
           az account show
           az group list
  
-    # TODO: tag management
-    - name: Build and Push docker image
+    - name: Decompress tar.gz into tar image
+      run: |
+        gzip -d ${{ env.ARTIFACTS }}/${{ env.API_PUBLISH_DIR }}/${{ env.GAMEAPP_IMAGE_NAME}}.tar.gz
+
+    - name: Load docker image
+      run: |
+        docker load --input ${{ env.ARTIFACTS }}/${{ env.API_PUBLISH_DIR }}/${{ env.GAMEAPP_IMAGE_NAME}}.tar
+
+    - name: 'Tag and Push Docker image'
       run: |
         docker login --username ${{ github.repository_owner }} --password ${{ secrets.GHCR_PAT }} ${{ env.CONTAINER_REPO }}
-        docker build ${{ env.ARTIFACTS }}/${{ env.API_PUBLISH_DIR }} --file ${{ env.ARTIFACTS }}/${{ env.API_PUBLISH_DIR }}/${{ env.DOCKERFILE }} --tag ${{ env.CONTAINER_REPO }}/${{ github.repository_owner }}/${{ env.GAMEAPP_IMAGE_NAME }}:latest
+        docker tag ${{ env.GAMEAPP_IMAGE_NAME }} ${{ env.CONTAINER_REPO }}/${{ github.repository_owner }}/${{ env.GAMEAPP_IMAGE_NAME }}:latest
         docker push ${{ env.CONTAINER_REPO }}/${{ github.repository_owner }}/${{ env.GAMEAPP_IMAGE_NAME }}:latest
 
     # Deploy infra
     - name: Deploy Game Infra with Pulumi
+      id: pulumi_deploy
       working-directory: ${{ env.ARTIFACTS }}/${{ env.PULUMI_PUBLISH_DIR }}
       run: ./${{ env.INFRA_BINARY }} deploy
       env:
@@ -123,4 +134,39 @@ jobs:
     - name: Run DB migrations
       run: ${{ env.ARTIFACTS }}/${{ env.EFBUNDLE_BIN }} --verbose --connection "Server=tcp:${{ vars.DBSERVERNAME }}.database.windows.net,1433;Initial Catalog=${{ vars.DBNAME }};Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=Active Directory Default;"
    
-  # TODO deploy UI
+    - name: Replace UI placeholders
+      run: |
+        echo "Starting token replacement in UI artifacts..."
+
+        # Define a mapping of tokens to the desired environment variable values.
+        declare -A tokenMap
+        # Update the keys (tokens) and values (env var names) as needed.
+        tokenMap["__VITE_GOOGLE_CLIENT_ID__"]="${{ vars.GOOGLECLIENTID }}"
+        tokenMap["__VITE_API_URL__"]="${{ steps.pulumi_deploy.outputs.game_api_url }}"
+
+        echo "Token Replacement Map:"
+        for token in "${!tokenMap[@]}"; do
+          echo "$token -> ${tokenMap[$token]}"
+        done
+
+        # Recursively process all files in the UI artifacts folder
+        find "${{ env.ARTIFACTS }}/${{ env.UI_PUBLISH_DIR }}" -type f | while read -r file; do
+          echo "Processing $file..."
+          for token in "${!tokenMap[@]}"; do
+            replacement="${tokenMap[$token]}"
+            # Use sed in-place to replace token values in each file
+            sed -i "s|$token|$replacement|g" "$file"
+          done
+        done
+
+        echo "Token replacement completed."
+
+    - name: 'Deploy UI to Azure Static Web App'
+      run: |
+        swa deploy "${{ env.ARTIFACTS }}/${{ env.UI_PUBLISH_DIR }}" \
+        --tenant-id ${{ secrets.AZURE_TENANT_ID }} \
+        --subscription-id ${{ secrets.AZURE_SUBSCRIPTION_ID }} \
+        --resource-group ${{ vars.RESOURCEGROUPNAME }} \
+        --app-name ${{ vars.SWAAPPNAME }} \
+        --env Production \
+        --verbose=silly

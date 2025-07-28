@@ -19,8 +19,10 @@ env:
   ARTIFACTS_DIR: to_deploy
   # API Settings
   BACKEND_ROOT: backend
+  API_PROJECT_DIR: TheGame.Api
   API_PROJECT_TO_PUBLISH: TheGame.Api/TheGame.Api.csproj
   API_PUBLISH_DIR: api
+  GAMEAPP_IMAGE_NAME: thegame-api
   # Infra
   PULUMI_PROJECT_TO_PUBLISH: TheGame.Infra/TheGame.Infra.csproj
   API_TEST_SETTINGS_PLACEHOLDER_PATH: backend/TheGame.Tests/testsettings.json
@@ -97,9 +99,20 @@ jobs:
           --nologo \
           --verbosity normal \
           /p:UseAppHost=false \
-          --output ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/${{ env.API_PUBLISH_DIR }}
+          --output ${{ github.workspace }}/_temp/${{ env.API_PUBLISH_DIR }}
 
-      # TODO build docker image without pushing
+      - name: Build Docker image
+        working-directory: ${{ env.BACKEND_ROOT }}
+        run: |
+          docker build \
+          --file ${{ env.API_PROJECT_DIR }}/Dockerfile-pipelines \
+          --tag ${{ env.GAMEAPP_IMAGE_NAME }} \
+          ${{ github.workspace }}/_temp/${{ env.API_PUBLISH_DIR }}
+
+      - name: Save and compress Docker image
+        run: |
+          mkdir -p ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/${{ env.API_PUBLISH_DIR }}
+          docker save ${{ env.GAMEAPP_IMAGE_NAME }} | gzip > ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/${{ env.API_PUBLISH_DIR }}/${{ env.GAMEAPP_IMAGE_NAME }}.tar.gz
 
       # Build UI APP
       - name: NPM install
@@ -116,8 +129,10 @@ jobs:
       - name: Build and export UI App
         working-directory: ${{ env.UI_ROOT }}
         run: npm run build
+        # placeholder values to be replated during deploy workflow
         env:
-          VITE_GOOGLE_CLIENT_ID: ${{ vars.GOOGLECLIENTID }}
+          VITE_GOOGLE_CLIENT_ID: "__VITE_GOOGLE_CLIENT_ID__"
+          VITE_API_URL: "__VITE_API_URL__"
 
       - name: Install Playwright Browsers
         working-directory: "ui"
