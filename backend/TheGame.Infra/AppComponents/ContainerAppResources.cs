@@ -126,7 +126,7 @@ public sealed record ContainerAppResources(ContainerApp ContainerApp)
               new EnvironmentVarArgs()
               {
                 Name = "Cors__uiHost",
-                Value = swa.StaticWebApp.DefaultHostname
+                Value = swa.StaticWebApp.DefaultHostname.Apply(uiHost => $"https://{uiHost}")
               },
             }
           }

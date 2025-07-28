@@ -83,7 +83,6 @@ public class Program
       .AddHealthChecks()
       .AddCheck<ApiInfraHealthCheck>(nameof(ApiInfraHealthCheck));
 
-
     // register game api services and configuration
     builder.Services
       .AddOptions<GameSettings>()
@@ -147,6 +146,8 @@ public class Program
     app.UseStatusCodePages();
 
     app.MapDefaultEndpoints();
+
+    app.MapHealthChecks("/health");
 
     // Configure the HTTP request pipeline.
     if (isDevEnvironment)
