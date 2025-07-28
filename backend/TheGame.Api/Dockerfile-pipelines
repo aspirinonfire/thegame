@@ -5,8 +5,7 @@
 # This Dockerfile definition expects dotnet restore, build, test, and publish commands to be executed and completed prior to issuing docker build.
 # This will ensure we use same artifacts during and testing and when generating a Docker image in CI/CD pipelines.
 
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
-LABEL org.opencontainers.image.source https://github.com/aspirinonfire/thegame
+FROM mcr.microsoft.com/dotnet/aspnet:9.0-azurelinux3.0-distroless AS base
 USER app
 WORKDIR /app
 EXPOSE 8080

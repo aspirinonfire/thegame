@@ -19,6 +19,7 @@ env:
   ARTIFACTS_DIR: to_deploy
   # API Settings
   BACKEND_ROOT: backend
+  API_PROJECT_DIR: TheGame.Api
   API_PROJECT_TO_PUBLISH: TheGame.Api/TheGame.Api.csproj
   API_PUBLISH_DIR: api
   GAMEAPP_IMAGE_NAME: thegame-api
@@ -101,9 +102,10 @@ jobs:
           --output ${{ github.workspace }}/_temp/${{ env.API_PUBLISH_DIR }}
 
       - name: Builder Docker image
+        working-directory: ${{ env.BACKEND_ROOT }}
         run: |
           docker build \
-          --file ${{ env.BACKEND_ROOT }}/Dockerfile-pipelines \
+          --file ${{ env.API_PROJECT_DIR }}/Dockerfile-pipelines \
           --tag ${{ env.GAMEAPP_IMAGE_NAME }} \
           ${{ github.workspace }}/_temp/${{ env.API_PUBLISH_DIR }}
 
