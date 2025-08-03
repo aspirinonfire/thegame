@@ -1,0 +1,252 @@
+[
+  {
+    "key": "us-ak",
+    "version": "default",
+    "description": "alaska ak 6 break 3 4 red black blue sky white snow bottom yellow sun glow bear middle"
+  },
+  {
+    "key": "us-al",
+    "version": "default",
+    "description": "alabama al 7 continious black dark blue yellow sky top green hills middle blue lake river bottom"
+  },
+  {
+    "key": "us-ar",
+    "version": "default",
+    "description": "arkansas ar 6 break 3 4 black red blue top fade white bottom diamond middle natural state"
+  },
+  {
+    "key": "us-az",
+    "version": "default",
+    "description": "arizona az 7 continious green purple mountains bottom blue sky top cactus saguaro white middle left grand canyon state"
+  },
+  {
+    "key": "us-ca",
+    "version": "default",
+    "description": "california ca 7 continuous blue red solid white dmv gov"
+  },
+  {
+    "key": "us-co",
+    "version": "default",
+    "description": "colorado co 6 break 3 4 green red top mountain jagged mostly white middle"
+  },
+  {
+    "key": "us-ct",
+    "version": "default",
+    "description": "connecticut ct 7 break 2 3 blue top white bottom fade left constitution state"
+  },
+  {
+    "key": "us-de",
+    "version": "default",
+    "description": "delaware de 6 continuous solid dark blue yellow first state"
+  },
+  {
+    "key": "us-fl",
+    "version": "default",
+    "description": "florida fl 6 break 3 4 white solid green orange middle sunshine state"
+  },
+  {
+    "key": "us-ga",
+    "version": "default",
+    "description": "georgia ga 7 continuous solid white orange middle peach black"
+  },
+  {
+    "key": "us-hi",
+    "version": "default",
+    "description": "hawaii hi 6 break 3 4 black solid white rainbow middle aloha state"
+  },
+  {
+    "key": "us-id",
+    "version": "default",
+    "description": "idaho id 7 break 3 4 red top sky blue mountains forest bottom white middle left famous potatoes"
+  },
+  {
+    "key": "us-il",
+    "version": "default",
+    "description": "illinois il 7 break 2 3 red top blue sky bottom white silhouette city downtown skyscrapper left land lincoln"
+  },
+  {
+    "key": "us-in",
+    "version": "default",
+    "description": "indiana in 6 continuous blue top white middle bottom green park forest bridge red river"
+  },
+  {
+    "key": "us-ia",
+    "version": "default",
+    "description": "iowa ia 6 break 3 4 black top blue sky white city downtown skyscrapper middle bottom"
+  },
+  {
+    "key": "us-ks",
+    "version": "default",
+    "description": "kansas ka 6 break 3 4 blue middle right white bottom mountains seal middle"
+  },
+  {
+    "key": "us-ky",
+    "version": "default",
+    "description": "kentucky ky 6 break 3 4 blue white top bottom fade middle"
+  },
+  {
+    "key": "us-la",
+    "version": "default",
+    "description": "louisiana la 6 continuous solid white blue red left horse prancing cowboy rider top"
+  },
+  {
+    "key": "us-me",
+    "version": "default",
+    "description": "maine me 6 break 4 5 white bottom green left pine cone bird branch vacation land vacationland line"
+  },
+  {
+    "key": "us-md",
+    "version": "default",
+    "description": "maryland md 7 continuous black yellow red square checkers flag"
+  },
+  {
+    "key": "us-ma",
+    "version": "default",
+    "description": "massachusetts ma 6 break 3 4 middle red blue solid white spirit america"
+  },
+  {
+    "key": "us-mi",
+    "version": "default",
+    "description": "michigan mi 7 break 3 4 white blue bottom pure line"
+  },
+  {
+    "key": "us-mn",
+    "version": "default",
+    "description": "minnesota mn 6 break 3 4 middle top bottom blue white 10000 lakes line"
+  },
+  {
+    "key": "us-ms",
+    "version": "default",
+    "description": "mississippi ms 7 break 3 4 continuous middle seal blue gold pale yellow circle"
+  },
+  {
+    "key": "us-mt",
+    "version": "default",
+    "description": "montana mt 7 break 2 3 left white blue solid state border jagged nose face line treasure state"
+  },
+  {
+    "key": "us-mo",
+    "version": "default",
+    "description": "missouri mo 6 break 3 4 middle top red middle white bottom blue wave line"
+  },
+  {
+    "key": "us-ne",
+    "version": "default",
+    "description": "nebraska ne 6 break 3 4 middle white yellow top blue black line"
+  },
+  {
+    "key": "us-nv",
+    "version": "default",
+    "description": "nevada nv 6 break 3 4 middle blue bottom mountains yellow green red orange black top"
+  },
+  {
+    "key": "us-nh",
+    "version": "default",
+    "description": "new hampshire nh 7 break 3 4 green blue left right live free or die"
+  },
+  {
+    "key": "us-nj",
+    "version": "default",
+    "description": "new jersey nj 6 break 3 4 middle red fade white black garden state"
+  },
+  {
+    "key": "us-nm",
+    "version": "default",
+    "description": "new mexico 6 break 3 4 sun star circle red yellow green solid wavy wave zigzag pattern land enchantment line"
+  },
+  {
+    "key": "us-ny",
+    "version": "default",
+    "description": "new york ny 7 break 3 4 blue top yellow empire state line"
+  },
+  {
+    "key": "us-nc",
+    "version": "default",
+    "description": "north carolina nc 7 break 3 4 middle dash blue white red bottom top plane first flight"
+  },
+  {
+    "key": "us-nd",
+    "version": "default",
+    "description": "north dakote 6 break 3 4 middle blue black orange red buffalo animal sky"
+  },
+  {
+    "key": "us-oh",
+    "version": "default",
+    "description": "ohio oh 7 break 3 4 middle blue white top red solid line"
+  },
+  {
+    "key": "us-ok",
+    "version": "default",
+    "description": "oklahoma ok 6 break 3 4 blue white bird dove black"
+  },
+  {
+    "key": "us-or",
+    "version": "default",
+    "description": "oregon or 6 break 3 4 middle blue mountains green tree pine tree"
+  },
+  {
+    "key": "us-pa",
+    "version": "default",
+    "description": "pennsylvania pa 7 break 3 4 middle blue top middle white bottom yellow line"
+  },
+  {
+    "key": "us-ri",
+    "version": "default",
+    "description": "rhode island 6 break 3 4 middle dash white wave blue ocean state anchor"
+  },
+  {
+    "key": "us-sc",
+    "version": "default",
+    "description": "south carolina sc 6 break 3 4 middle palm tree blue black bottom top while breathe hope line"
+  },
+  {
+    "key": "us-sd",
+    "version": "default",
+    "description": "south dakota sd 6 break 3 4 middle blue top brown mount rushmore face president"
+  },
+  {
+    "key": "us-tn",
+    "version": "default",
+    "description": "tennesse tn 6 break 3 4 middle dash black green top white bottom"
+  },
+  {
+    "key": "us-tx",
+    "version": "default",
+    "description": "texas tx 7 break 3 4 middle solid white black star lone star state"
+  },
+  {
+    "key": "us-ut",
+    "version": "default",
+    "description": "utah ut 6 break 3 4 middle orange blue white arch life elevated"
+  },
+  {
+    "key": "us-vt",
+    "version": "default",
+    "description": "vermon vt 6 break 3 4 middle solid rectangle white green middle line"
+  },
+  {
+    "key": "us-va",
+    "version": "default",
+    "description": "virginia va 7 break middle 3 4 dash blue solid white"
+  },
+  {
+    "key": "us-wa",
+    "version": "default",
+    "description": "washington wa 7 continuous blue top white bottom mountain pyramid red top"
+  },
+  {
+    "key": "us-wv",
+    "version": "default",
+    "description": "west virginia wv 6 break middle 3 4 blue top yellow white solid line"
+  },
+  {
+    "key": "us-wi",
+    "version": "default",
+    "description": "wisconsin wi 7 break middle 3 4 dash solid white red top line"
+  },
+  {
+    "key": "us-wy",
+    "version": "default",
+    "description": "wyoming wy 7 break 5 horse rider cowboy blue yellow black"
+  }
+]
