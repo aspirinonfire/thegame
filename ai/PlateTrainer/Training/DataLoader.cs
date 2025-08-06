@@ -1,4 +1,5 @@
 ﻿using Microsoft.ML;
+using PlateTrainer.Training.Models;
 
 namespace PlateTrainer.Training;
 

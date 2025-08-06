@@ -3,6 +3,7 @@ using Microsoft.ML.Transforms.Text;
 using Microsoft.ML.Data;
 using Microsoft.ML.Transforms;
 using PlateTrainer.Prediction;
+using PlateTrainer.Training.Models;
 
 namespace PlateTrainer.Training;
 
@@ -20,11 +21,12 @@ public sealed class PlateModelTrainerPipelineFactory
           WordFeatureExtractor = new()
           {
             NgramLength = 2,
-            UseAllLengths = true
+            UseAllLengths = true,
+            Weighting = NgramExtractingEstimator.WeightingCriteria.Tf
           },
           CharFeatureExtractor = null,  // we care about words only for now
           KeepPunctuations = false,
-          KeepNumbers = true,
+          KeepNumbers = true
         },
         inputColumnNames: nameof(PlateTrainingRow.Text))
       .Append(ml.Transforms.Conversion.MapValueToKey(nameof(PlateTrainingRow.Label), nameof(PlateTrainingRow.Label))
@@ -32,7 +34,8 @@ public sealed class PlateModelTrainerPipelineFactory
           labelColumnName: nameof(PlateTrainingRow.Label),
           featureColumnName: "Features",
           exampleWeightColumnName: nameof(PlateTrainingRow.Weight),
-          maximumNumberOfIterations: 100
+          maximumNumberOfIterations: 100,
+          l2Regularization: 0.01f
         ))
         .Append(ml.Transforms.Conversion.MapKeyToValue(nameof(PlatePrediction.PredictedLabel), nameof(PlatePrediction.PredictedLabel))));
 

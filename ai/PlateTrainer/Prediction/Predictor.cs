@@ -1,5 +1,5 @@
 ﻿using Microsoft.ML;
-using PlateTrainer.Training;
+using PlateTrainer.Training.Models;
 using System.Collections.Immutable;
 
 namespace PlateTrainer.Prediction;
@@ -23,8 +23,7 @@ public sealed class Predictor(MLContext ml, TrainedModel trainedModel) : IDispos
       .ToImmutableArray();
 
     Console.WriteLine($"Query: \"{query}\"");
-    Console.WriteLine($"Top match: {prediction.PredictedLabel}.");
-    Console.WriteLine("Probability distribution:");
+    //Console.WriteLine($"Top match: {prediction.PredictedLabel}.");
     foreach (var (label, score) in top5Matches)
     {
       Console.WriteLine($"{label}: {score:P2}");

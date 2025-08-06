@@ -3,6 +3,7 @@ using Microsoft.ML.Data;
 using Microsoft.ML.Trainers;
 using Microsoft.ML.Transforms;
 using Newtonsoft.Json.Linq;
+using PlateTrainer.Training.Models;
 using System.Data;
 
 namespace PlateTrainer.Training;
@@ -27,18 +28,34 @@ public sealed class Trainer
       .Select(x => x.ToString())
       .ToArray();
 
-    var rowCount = data.GetRowCount().GetValueOrDefault(10);
+    var sanityRows = new[]
+    {
+      new PlateTrainingRow("us-ak", "bear center", 1),
+      new PlateTrainingRow("us-ar", "center diamond", 1),
+      new PlateTrainingRow("us-az", "grand canyon", 1),
+      new PlateTrainingRow("us-ca", "all white solid white", 1),
+      new PlateTrainingRow("us-id", "famous potatoes", 1),
+      new PlateTrainingRow("us-nc", "first flight center", 1),
+      new PlateTrainingRow("us-oh", "birthplace aviation", 1),
+      new PlateTrainingRow("us-ok", "white dove", 1),
+      new PlateTrainingRow("us-or", "green tree", 1),
+      new PlateTrainingRow("us-pa", "top blue yellow bottom", 1),
+      new PlateTrainingRow("us-ut", "delicate arch", 1),
+      new PlateTrainingRow("us-vt", "white box", 1),
+      new PlateTrainingRow("us-wa", "blue mountain", 1)
+    };
 
-    var crossValidation = ml.MulticlassClassification.CrossValidate(
-      data: data,
-      estimator: pipeline,
-      numberOfFolds: rowCount > int.MaxValue ? int.MaxValue : (int)rowCount,
-      labelColumnName: nameof(PlateTrainingRow.Label));
+    var sanityData = ml.Data.LoadFromEnumerable(sanityRows);
 
-    var avgAccuracy = crossValidation.Average(f => f.Metrics.MicroAccuracy);
-    var avgLogLoss = crossValidation.Average(f => f.Metrics.LogLoss);
+    var predictions = trainedModel.Transform(sanityData);
 
-    Console.WriteLine($"{rowCount}-fold CrossValidation (CV) accuracy: {avgAccuracy:P2}, log-loss: {avgLogLoss:P2}");
+    var sanityMetrics = ml.MulticlassClassification.Evaluate(
+    predictions,
+    labelColumnName: nameof(PlateTrainingRow.Label));
+
+    Console.WriteLine($"Top-1 accuracy on cues: {sanityMetrics.MicroAccuracy:P2}");
+    Console.WriteLine($"LogLossReduction:       {sanityMetrics.LogLossReduction:F4}");
+    //Console.WriteLine($"{sanityMetrics.ConfusionMatrix.GetFormattedConfusionTable()}");
 
     return new TrainedModel(trainedModel, labels);
   }

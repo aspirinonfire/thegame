@@ -4,8 +4,12 @@
     "version": "default",
     "phrases": [
       {
-        "text": "alaska ak grizzly bear black bear brown bear center bear middle bear large bear",
+        "text": "alaska ak",
         "weight": 100.0
+      },
+      {
+        "text": "grizzly bear black bear brown bear center bear middle bear large bear",
+        "weight": 100
       },
       {
         "text": "mostly blue blue fade blue sky yellow center yellow middle yellow sun middle sun yellow sphere yellow circle white bottom snow white",
@@ -26,7 +30,11 @@
     "version": "default",
     "phrases": [
       {
-        "text": "arkansas ar natural state shiny diamond clear gem center diamond",
+        "text": "arkansas ar natural state",
+        "weight": 100.0
+      },
+      {
+        "text": "shiny diamond clear gem center diamond middle diamond",
         "weight": 100.0
       },
       {
@@ -93,15 +101,15 @@
       },
       {
         "text": "vivid red dark red strong red top red red banner red stripe red strip red line top banner top strip",
-        "weight": 80.0
+        "weight": 100.0
       },
       {
         "text": "vivid blue dark blue strong blue bottom blue blue banner blue stripe blue strip blue line bottom banner bottom strip",
-        "weight": 80.0
+        "weight": 100.0
       },
       {
         "text": "white middle white center white fade plain white",
-        "weight": 80.0
+        "weight": 100.0
       },
       {
         "text": "blue forest blue mountain white sky red sky",
@@ -212,7 +220,7 @@
         "weight": 100.0
       },
       {
-        "text": "blue top white middle orange bottom orange arch white clouds blue sky orange ground",
+        "text": "blue top white middle orange bottom orange arch white clouds blue sky orange ground delicate arch",
         "weight": 80.0
       },
       {
