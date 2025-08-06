@@ -22,7 +22,7 @@ public sealed class PlateModelTrainerPipelineFactory
           {
             NgramLength = 2,
             UseAllLengths = true,
-            Weighting = NgramExtractingEstimator.WeightingCriteria.Tf
+            Weighting = NgramExtractingEstimator.WeightingCriteria.TfIdf
           },
           CharFeatureExtractor = null,  // we care about words only for now
           KeepPunctuations = false,
@@ -34,8 +34,8 @@ public sealed class PlateModelTrainerPipelineFactory
           labelColumnName: nameof(PlateTrainingRow.Label),
           featureColumnName: "Features",
           exampleWeightColumnName: nameof(PlateTrainingRow.Weight),
-          maximumNumberOfIterations: 100,
-          l2Regularization: 0.01f
+          maximumNumberOfIterations: 200,
+          l2Regularization: 0.005f
         ))
         .Append(ml.Transforms.Conversion.MapKeyToValue(nameof(PlatePrediction.PredictedLabel), nameof(PlatePrediction.PredictedLabel))));
 
