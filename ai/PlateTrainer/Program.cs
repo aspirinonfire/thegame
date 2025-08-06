@@ -1,27 +1,36 @@
 ﻿using Microsoft.ML;
-using Microsoft.ML.Data;
-using Microsoft.ML.Transforms.Text;
 using PlateTrainer.Prediction;
 using PlateTrainer.Training;
-using System.Collections.Immutable;
 
 Console.WriteLine("Initializing training data...");
+
+const int mlSeed = 123;
 
 // Load training data into memory
 var jsonDataPath = @"c:\src\thegame\ai\training_data\plate_descriptions.sm.json";
 
-var ml = new MLContext(seed: 1);  // TODO use random seed?
+var ml = new MLContext(seed: mlSeed);
 
 var mlDataLoader = new DataLoader();
 var pipelineFactory = new PlateModelTrainerPipelineFactory();
 var trainer = new Trainer();
 
-var (dataSplit, dataSchema) = mlDataLoader.LoadTrainingData(ml, jsonDataPath);
+var (dataView, dataSchema) = mlDataLoader.LoadTrainingData(ml, jsonDataPath, mlSeed);
 var pipeline = pipelineFactory.GetMlPipeline(ml);
-var trainedModel = trainer.Train(pipeline, dataSplit, dataSchema);
 
-var predictor = new Predictor(ml, trainedModel);
+var trainedModel = trainer.Train(ml, pipeline, dataView, dataSchema);
 
-var query = "top red white middle blue bottom";
-predictor.Predict(query);
+using var predictor = new Predictor(ml, trainedModel);
 
+predictor.Predict("top red white middle blue bottom");
+predictor.Predict("middle diamond");
+predictor.Predict("purple");
+predictor.Predict("center bear");
+predictor.Predict("mostly white");
+
+//trainer.CalculateFeatureContribution(ml,
+//  trainedModel.Model,
+//  dataView,
+//  "center bear");
+
+//trainer.CalculatePfi(ml, trainedModel.Model, dataView);

@@ -11,7 +11,7 @@ public sealed class Predictor(MLContext ml, TrainedModel trainedModel) : IDispos
 
   public void Predict(string query)
   {
-    Console.WriteLine("Predicting...");
+    Console.WriteLine("----- Predicting...");
 
     var prediction = _predictionEngine.Predict(new PlateQuery(query));
 

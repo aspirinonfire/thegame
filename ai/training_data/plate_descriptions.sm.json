@@ -4,7 +4,7 @@
     "version": "default",
     "phrases": [
       {
-        "text": "alaska ak grizzly bear black bear brown bear center bear middle bear",
+        "text": "alaska ak grizzly bear black bear brown bear center bear middle bear large bear",
         "weight": 100.0
       },
       {
@@ -74,7 +74,7 @@
         "weight": 100.0
       },
       {
-        "text": "all white solid white entire white no artwork no graphics",
+        "text": "all white solid white entire white no artwork no graphics mostly white",
         "weight": 80.0
       },
       {

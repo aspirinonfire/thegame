@@ -4,9 +4,9 @@ namespace PlateTrainer.Training;
 
 public sealed class DataLoader
 {
-  public (DataOperationsCatalog.TrainTestData dataSplit, DataViewSchema schema) LoadTrainingData(MLContext ml, string jsonDataPath)
+  public (IDataView dataView, DataViewSchema schema) LoadTrainingData(MLContext ml, string jsonDataPath, int seed)
   {
-    Console.WriteLine("Loading data...");
+    Console.WriteLine("----- Loading data...");
 
     var plates = Array.Empty<PlateTrainingData>();
     using (var dataStream = File.OpenRead(jsonDataPath))
@@ -23,8 +23,8 @@ public sealed class DataLoader
 
     // convert training data json into ml.net consumable data view
     var dataView = ml.Data.LoadFromEnumerable(trainingRows);
-    var split = ml.Data.TrainTestSplit(dataView, testFraction: 0.2);
+    var split = ml.Data.TrainTestSplit(dataView, testFraction: 0.0000000001, seed: seed);
 
-    return (split, dataView.Schema);
+    return (dataView, dataView.Schema);
   }
 }

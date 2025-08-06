@@ -10,7 +10,7 @@ public sealed class PlateModelTrainerPipelineFactory
 {
   public EstimatorChain<TransformerChain<KeyToValueMappingTransformer>> GetMlPipeline(MLContext ml)
   {
-    Console.WriteLine("Creating training pipeline...");
+    Console.WriteLine("----- Creating training pipeline...");
 
     var trainingPipeline = ml.Transforms.Text
       .FeaturizeText(
@@ -22,8 +22,9 @@ public sealed class PlateModelTrainerPipelineFactory
             NgramLength = 2,
             UseAllLengths = true
           },
+          CharFeatureExtractor = null,  // we care about words only for now
           KeepPunctuations = false,
-          KeepNumbers = true
+          KeepNumbers = true,
         },
         inputColumnNames: nameof(PlateTrainingRow.Text))
       .Append(ml.Transforms.Conversion.MapValueToKey(nameof(PlateTrainingRow.Label), nameof(PlateTrainingRow.Label))
@@ -31,7 +32,8 @@ public sealed class PlateModelTrainerPipelineFactory
           labelColumnName: nameof(PlateTrainingRow.Label),
           featureColumnName: "Features",
           exampleWeightColumnName: nameof(PlateTrainingRow.Weight),
-          maximumNumberOfIterations: 100))
+          maximumNumberOfIterations: 100
+        ))
         .Append(ml.Transforms.Conversion.MapKeyToValue(nameof(PlatePrediction.PredictedLabel), nameof(PlatePrediction.PredictedLabel))));
 
     return trainingPipeline;
