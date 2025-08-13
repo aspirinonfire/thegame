@@ -5,7 +5,7 @@ namespace PlateTrainer.Training;
 
 public sealed class DataLoader
 {
-  public (IDataView dataView, DataViewSchema schema) LoadTrainingData(MLContext ml, string jsonDataPath, int seed)
+  public IDataView LoadTrainingData(MLContext ml, string jsonDataPath, int seed)
   {
     Console.WriteLine("----- Loading data...");
 
@@ -36,6 +36,6 @@ public sealed class DataLoader
     // convert training data json into ml.net consumable data view
     var dataView = ml.Data.LoadFromEnumerable(trainingRows);
 
-    return (dataView, dataView.Schema);
+    return dataView;
   }
 }

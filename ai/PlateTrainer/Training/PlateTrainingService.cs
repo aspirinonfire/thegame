@@ -1,24 +1,66 @@
 ﻿using Microsoft.ML;
 using Microsoft.ML.Data;
 using Microsoft.ML.Trainers;
-using Microsoft.ML.Transforms;
+using Microsoft.ML.Transforms.Text;
+using PlateTrainer.Prediction;
 using PlateTrainer.Training.Models;
-using System.Data;
-using System.Text.Json;
 
 namespace PlateTrainer.Training;
 
-public sealed class Trainer
+public sealed class PlateTrainingService(int seed, int numOfIterations = 200, float l2Reg = 0.001f)
 {
-  public TrainedModel Train(Pipelines pipelines,
-    IDataView data,
-    DataViewSchema dataSchema)
+  public MLContext MlCtx { get; } = new MLContext(seed);
+
+  public IEstimator<ITransformer> CreateEstimatorPipeline()
   {
-    Console.WriteLine("----- Training...");
-    var trainedModel = pipelines.FullPipeline.Fit(data);
+    var (n1gram, n1col) = CreateNgramTransformer(MlCtx, "TokenKeys", 1);
+    var (n2gram, n2col) = CreateNgramTransformer(MlCtx, "TokenKeys", 2);
+    var (n3gram, n3col) = CreateNgramTransformer(MlCtx, "TokenKeys", 3);
+    var (n4gram, n4col) = CreateNgramTransformer(MlCtx, "TokenKeys", 4);
+
+    var featurizer = MlCtx.Transforms.Text
+      .NormalizeText(
+        inputColumnName: nameof(PlateTrainingRow.Text),
+        outputColumnName: "TextNorm",
+        caseMode: TextNormalizingEstimator.CaseMode.Lower,
+        keepDiacritics: false,
+        keepPunctuations: false,
+        keepNumbers: false)
+      .Append(MlCtx.Transforms.Text.TokenizeIntoWords("RawTokens", "TextNorm"))
+      .Append(MlCtx.Transforms.Text.RemoveDefaultStopWords(
+        inputColumnName: "RawTokens",
+        outputColumnName: "CleanTokens",
+        language: StopWordsRemovingEstimator.Language.English))
+      .Append(MlCtx.Transforms.Conversion.MapValueToKey(
+        inputColumnName: "CleanTokens",
+        outputColumnName: "TokenKeys"))
+      .Append(n1gram)
+      .Append(n2gram)
+      .Append(n3gram)
+      .Append(n4gram)
+      .Append(MlCtx.Transforms.Concatenate("Features", n1col, n2col, n3col, n4col))
+      .Append(MlCtx.Transforms.Conversion.MapValueToKey(nameof(PlateTrainingRow.Label), nameof(PlateTrainingRow.Label)));
+
+    var sdcaMaxEntTrainer = MlCtx.MulticlassClassification.Trainers.SdcaMaximumEntropy(
+      labelColumnName: nameof(PlateTrainingRow.Label),
+      featureColumnName: "Features",
+      exampleWeightColumnName: nameof(PlateTrainingRow.Weight),
+      maximumNumberOfIterations: numOfIterations,
+      l2Regularization: l2Reg);
+
+    return featurizer
+      .Append(MlCtx.Transforms.Conversion.MapValueToKey(nameof(PlateTrainingRow.Label), nameof(PlateTrainingRow.Label))
+        .Append(sdcaMaxEntTrainer)
+        .Append(MlCtx.Transforms.Conversion.MapKeyToValue(nameof(PlatePrediction.PredictedLabel), nameof(PlatePrediction.PredictedLabel)))
+      );
+  }
+
+  public TrainedModel Train(IDataView dataView)
+  {
+    var model = CreateEstimatorPipeline().Fit(dataView);
 
     // map key indices -> label strings taken from the *Label* column
-    var outputSchema = trainedModel.GetOutputSchema(dataSchema);
+    var outputSchema = model.GetOutputSchema(dataView.Schema);
     var labelCol = outputSchema[nameof(PlateTrainingRow.Label)];
     var keyBuffer = default(VBuffer<ReadOnlyMemory<char>>);
     labelCol.GetKeyValues(ref keyBuffer);
@@ -27,11 +69,11 @@ public sealed class Trainer
       .Select(x => x.ToString())
       .ToArray();
 
-    return new TrainedModel(trainedModel, labels);
+    return new(model, labels);
   }
 
-  public void EvaluateModel(MLContext ml, TrainedModel trainedModel)
-  { 
+  public void EvaluateModel(TrainedModel trainedModel)
+  {
     var sanityCheck = new[]
     {
       new PlateTrainingRow("us-id", "top red white middle blue bottom", 1),
@@ -39,10 +81,10 @@ public sealed class Trainer
       new PlateTrainingRow("us-az", "purple bottom", 1),
     };
 
-    var testDataView = ml.Data.LoadFromEnumerable(sanityCheck);
+    var testDataView = MlCtx.Data.LoadFromEnumerable(sanityCheck);
     var testerModel = trainedModel.Model.Transform(testDataView);
 
-    var metrics = ml.MulticlassClassification.Evaluate(testerModel, labelColumnName: "Label");
+    var metrics = MlCtx.MulticlassClassification.Evaluate(testerModel, labelColumnName: "Label");
 
     Console.WriteLine($"LogLoss {metrics.LogLoss}");
     Console.WriteLine($"LogLossReduction {metrics.LogLossReduction}");
@@ -62,14 +104,13 @@ public sealed class Trainer
     }
   }
 
-  public void CalculateFeatureContribution(MLContext ml,
-    TransformerChain<TransformerChain<KeyToValueMappingTransformer>> trainedModel,
+  public void CalculateFeatureContribution(TrainedModel trainedModel,
     IDataView data,
     string queryText)
   {
     Console.WriteLine("----- Calculating feature contributions...");
 
-    var flattenedChains = Flatten(trainedModel);
+    var flattenedChains = Flatten(trainedModel.Model);
 
     var predictor = flattenedChains
       .OfType<MulticlassPredictionTransformer<MaximumEntropyModelParameters>>()
@@ -77,7 +118,7 @@ public sealed class Trainer
 
     var maxEntModel = predictor.Model; // weight matrix
 
-    var transformSchema = trainedModel.Transform(data).Schema;
+    var transformSchema = trainedModel.Model.Transform(data).Schema;
 
     var tokenBuffer = default(VBuffer<ReadOnlyMemory<char>>);
     transformSchema["Features"].GetSlotNames(ref tokenBuffer);
@@ -86,18 +127,11 @@ public sealed class Trainer
       .Select(s => s.ToString())
       .ToArray();
 
-    var labelBuffer = default(VBuffer<ReadOnlyMemory<char>>);
-    transformSchema["Label"].GetKeyValues(ref labelBuffer);
-    var labels = labelBuffer
-      .DenseValues()
-      .Select(s => s.ToString())
-      .ToArray();
-
-    var queryView = ml.Data
+    var queryView = MlCtx.Data
       .LoadFromEnumerable<PlateTrainingRow>(
-        [new ("?", queryText, 1)]);
+        [new("?", queryText, 1)]);
 
-    var featureVector = trainedModel
+    var featureVector = trainedModel.Model
       .Transform(queryView)
       .GetColumn<VBuffer<float>>("Features")
       .First();
@@ -114,7 +148,7 @@ public sealed class Trainer
 
     var biasVal = maxEntModel.GetBiases().ToArray();
 
-    var scores = labels
+    var scores = trainedModel.Labels
       .Select((className, classIndex) =>
       {
         var flatWeights = weights[classIndex];
@@ -156,9 +190,7 @@ public sealed class Trainer
     }
   }
 
-  private sealed record TokenPfiStat(string Token, double Delta);
-
-  static IEnumerable<ITransformer> Flatten(ITransformer root)
+  private static IEnumerable<ITransformer> Flatten(ITransformer root)
   {
     // yield the root itself
     yield return root;
@@ -174,7 +206,24 @@ public sealed class Trainer
         {
           yield return grand;
         }
-      } 
+      }
     }
   }
+
+  private static (NgramExtractingEstimator, string) CreateNgramTransformer(MLContext ml, string inputTokenColumnName, int ngramLength)
+  {
+    var colName = $"W{ngramLength}";
+
+    var ngram = ml.Transforms.Text.ProduceNgrams(
+      inputColumnName: inputTokenColumnName,
+      outputColumnName: colName,
+      ngramLength: ngramLength,
+      useAllLengths: false,
+      weighting: NgramExtractingEstimator.WeightingCriteria.TfIdf
+    );
+
+    return (ngram, colName);
+  }
 }
+
+public sealed record TrainedModel(ITransformer Model, string[] Labels);

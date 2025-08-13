@@ -1,5 +1,5 @@
 ﻿using Microsoft.ML;
-using PlateTrainer.Training.Models;
+using PlateTrainer.Training;
 using System.Collections.Immutable;
 
 namespace PlateTrainer.Prediction;

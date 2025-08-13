@@ -12,15 +12,13 @@ var jsonDataPath = @"c:\src\thegame\ai\training_data\plate_descriptions.sm.json"
 var ml = new MLContext(seed: mlSeed);
 
 var mlDataLoader = new DataLoader();
-var pipelineFactory = new PlateModelTrainerPipelineFactory();
-var trainer = new Trainer();
+var trainerSvc = new PlateTrainingService(seed: mlSeed);
 
-var (dataView, dataSchema) = mlDataLoader.LoadTrainingData(ml, jsonDataPath, mlSeed);
-var pipeline = pipelineFactory.GetMlPipeline(ml);
+var dataView = mlDataLoader.LoadTrainingData(ml, jsonDataPath, mlSeed);
 
-var trainedModel = trainer.Train(pipeline, dataView, dataSchema);
+var trainedModel = trainerSvc.Train(dataView);
 
-trainer.EvaluateModel(ml, trainedModel);
+trainerSvc.EvaluateModel(trainedModel);
 
 using var predictor = new Predictor(ml, trainedModel);
 
