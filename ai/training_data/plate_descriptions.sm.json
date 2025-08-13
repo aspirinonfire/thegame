@@ -2,275 +2,151 @@
   {
     "key": "us-ak",
     "version": "default",
-    "phrases": [
-      {
-        "text": "alaska ak",
-        "weight": 100.0
-      },
-      {
-        "text": "grizzly bear black bear brown bear center bear middle bear large bear",
-        "weight": 100
-      },
-      {
-        "text": "mostly blue blue fade blue sky yellow center yellow middle yellow sun middle sun yellow sphere yellow circle white bottom snow white",
-        "weight": 80.0
-      },
-      {
-        "text": "red text red letters red characters",
-        "weight": 60.0
-      },
-      {
-        "text": "black text black top",
-        "weight": 20.0
-      }
-    ]
+    "weight": 1.0,
+    "description": {
+      "plate": "picture",
+      "top": "light blue, mostly blue, fade blue",
+      "middle": "fade yellow, yellow glow, blueish, light blue, yellow circle, yellow sun, yellowish fade, yellow fade, bear",
+      "bottom": "white strip, white line",
+      "artwork": "grizzly bear, bear, black bear, standing bear"
+    }
   },
   {
     "key": "us-ar",
     "version": "default",
-    "phrases": [
-      {
-        "text": "arkansas ar natural state",
-        "weight": 100.0
-      },
-      {
-        "text": "shiny diamond clear gem center diamond middle diamond",
-        "weight": 100.0
-      },
-      {
-        "text": "blue top white bottom faded blue faded white gradient blue gradient white",
-        "weight": 80.0
-      },
-      {
-        "text": "black text black letters black characters",
-        "weight": 60.0
-      },
-      {
-        "text": "red text red top",
-        "weight": 40.0
-      }
-    ]
+    "weight": 1.0,
+    "description": {
+      "plate": "picture",
+      "top": "light blue, fade blue, red text",
+      "middle": "light, whitish, diamond",
+      "bottom": "white strip, white line, white fade",
+      "artwork": "diamond"
+    }
   },
   {
     "key": "us-az",
     "version": "default",
-    "phrases": [
-      {
-        "text": "arizona az grand canyon cactus",
-        "weight": 100.0
-      },
-      {
-        "text": "blue top blue strip blue line white middle white center purple bottom purple line purple strip",
-        "weight": 80.0
-      },
-      {
-        "text": "green text green letters green characters",
-        "weight": 60.0
-      },
-      {
-        "text": "yellow line",
-        "weight": 20.0
-      }
-    ]
+    "weight": 1.0,
+    "description": {
+      "plate": "picture",
+      "top": "light blue, fade blue, green blue, teal",
+      "middle": "soft white, white",
+      "bottom": "purple line, purple mountains, purple cactus, yellow fade, yellow glow",
+      "artwork": "diamond"
+    }
   },
   {
     "key": "us-ca",
     "version": "default",
-    "phrases": [
-      {
-        "text": "california ca",
-        "weight": 100.0
-      },
-      {
-        "text": "all white solid white entire white no artwork no graphics mostly white",
-        "weight": 80.0
-      },
-      {
-        "text": "blue text blue letters blue characters red cursive",
-        "weight": 60.0
-      }
-    ]
+    "weight": 1.0,
+    "description": {
+      "plate": "solid white, all white",
+      "top": "red cursive"
+    }
+  },
+  {
+    "key": "us-ga",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "solid white, mostly white",
+      "top": "black text",
+      "middle": "peach, orange fruit, fruit",
+      "artwork": "peach, orange fruit, fruit"
+    }
   },
   {
     "key": "us-id",
     "version": "default",
-    "phrases": [
-      {
-        "text": "idaho id famous potatoes",
-        "weight": 100.0
-      },
-      {
-        "text": "vivid red dark red strong red top red red banner red stripe red strip red line top banner top strip",
-        "weight": 100.0
-      },
-      {
-        "text": "vivid blue dark blue strong blue bottom blue blue banner blue stripe blue strip blue line bottom banner bottom strip",
-        "weight": 100.0
-      },
-      {
-        "text": "white middle white center white fade plain white",
-        "weight": 100.0
-      },
-      {
-        "text": "blue forest blue mountain white sky red sky",
-        "weight": 40.0
-      }
-    ]
+    "weight": 1.0,
+    "description": {
+      "plate": "picture",
+      "top": "red, red strip, red fade, solid red, deep red",
+      "middle": "white, light",
+      "bottom": "blue, blue line, blue strip, deep blue, dark blue"
+    }
   },
   {
     "key": "us-nc",
     "version": "default",
-    "phrases": [
-      {
-        "text": "north carolina nc first flight airplane plane",
-        "weight": 100.0
-      },
-      {
-        "text": "mostly white touch blue little blue",
-        "weight": 80.0
-      },
-      {
-        "text": "blue text blue letters blue characters center dash middle dash",
-        "weight": 60.0
-      },
-      {
-        "text": "red text red top red bottom",
-        "weight": 10.0
-      }
-    ]
+    "weight": 1.0,
+    "description": {
+      "plate": "white, light",
+      "top": "red text, touch light blue, little light blue",
+      "bottom": "red text"
+    }
   },
   {
     "key": "us-oh",
     "version": "default",
-    "phrases": [
-      {
-        "text": "ohio oh birthplace aviation",
-        "weight": 100.0
-      },
-      {
-        "text": "mostly white white middle white center red top red banner red strip red line",
-        "weight": 80.0
-      },
-      {
-        "text": "blue text blue letters blue characters",
-        "weight": 60.0
-      }
-    ]
+    "weight": 1.0,
+    "description": {
+      "plate": "mostly white, white",
+      "top": "red line, red triangle, red banner, red strip"
+    }
   },
   {
     "key": "us-ok",
     "version": "default",
-    "phrases": [
-      {
-        "text": "oklahoma ok explore oklahoma",
-        "weight": 100.0
-      },
-      {
-        "text": "mostly blue white center white middle white dove white bird",
-        "weight": 80.0
-      },
-      {
-        "text": "black text black letters black characters",
-        "weight": 60.0
-      }
-    ]
+    "weight": 1.0,
+    "description": {
+      "plate": "blue white, picture",
+      "artwork": "dove, white dove, white bird",
+      "top": "red line, red triangle, red banner, red strip"
+    }
   },
   {
     "key": "us-or",
     "version": "default",
-    "phrases": [
-      {
-        "text": "oregon or",
-        "weight": 100.0
-      },
-      {
-        "text": "mostly blue blue mountains green tree green fur green pine green sequoia green center middle tree",
-        "weight": 80.0
-      },
-      {
-        "text": "blue text blue letters blue characters",
-        "weight": 60.0
-      }
-    ]
+    "weight": 1.0,
+    "description": {
+      "plate": "light gray, light grey, whitish, light blue",
+      "middle": "green artwork, green tree, green pine, tree, pine",
+      "artwork": "green tree, green pine, tree, pine, green"
+    }
   },
   {
     "key": "us-pa",
     "version": "default",
-    "phrases": [
-      {
-        "text": "pennsylvania pa visitpa",
-        "weight": 100.0
-      },
-      {
-        "text": "blue line blue top yellow line yellow bottom white middle white center",
-        "weight": 80.0
-      },
-      {
-        "text": "blue text blue letters blue characters",
-        "weight": 60.0
-      }
-    ]
+    "weight": 1.0,
+    "description": {
+      "plate": "3 lines, blue white yellow",
+      "top": "solid blue line, blue line, deep blue line, blue strip, deep blue strip",
+      "middle": "white, white line, solid white",
+      "bottom": "solid yellow line, yellow line, yellow strip"
+    }
   },
   {
     "key": "us-ut",
     "version": "default",
-    "phrases": [
-      {
-        "text": "utah ut life elevated arch",
-        "weight": 100.0
-      },
-      {
-        "text": "blue top white middle orange bottom orange arch white clouds blue sky orange ground delicate arch",
-        "weight": 80.0
-      },
-      {
-        "text": "blue text blue letters blue characters",
-        "weight": 60.0
-      },
-      {
-        "text": "black text black top",
-        "weight": 15.0
-      }
-    ]
+    "weight": 1.0,
+    "description": {
+      "plate": "picture",
+      "top": "light blue, blue sky",
+      "middle": "orange picture, orange arch, orange with white",
+      "bottom": "solid orange",
+      "artwork": "arch, orange arch"
+    }
   },
   {
     "key": "us-vt",
     "version": "default",
-    "phrases": [
-      {
-        "text": "vermont vt green mountain",
-        "weight": 100.0
-      },
-      {
-        "text": "solid green all green white box white frame white rectangle white square",
-        "weight": 80.0
-      },
-      {
-        "text": "white text white letters white characters",
-        "weight": 60.0
-      }
-    ]
+    "weight": 1.0,
+    "description": {
+      "plate": "solid green, green, white frame, white box, white square",
+      "artwork": "frame, white frame, white box, white square",
+      "top": "white text"
+    }
   },
     {
     "key": "us-wa",
     "version": "default",
-    "phrases": [
-      {
-        "text": "washington wa evergreen rainier",
-        "weight": 100.0
-      },
-      {
-        "text": "white top blue bottom blue mountain blue peak blue summit white sky light blue",
-        "weight": 80.0
-      },
-      {
-        "text": "blue text blue letters blue characters",
-        "weight": 60.0
-      },
-      {
-        "text": "red text red top",
-        "weight": 15.0
-      }
-    ]
+    "weight": 1.0,
+    "description": {
+      "plate": "mostly white",
+      "artwork": "light blue mountain, mountain, peak, rainier",
+      "buttom": "light blue, bluish",
+      "top": "red text"
+    }
   }
 ]

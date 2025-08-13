@@ -18,13 +18,23 @@ public sealed class DataLoader
       })!;
     }
 
-    var trainingRows = plates.SelectMany(plate => plate.Phrases,
-      (plate, desc) => new PlateTrainingRow(plate.Key, desc.Text, desc.Weight))
+    var trainingRows = plates
+      .Select(plate => new
+      {
+        plate.Key,
+        plate.Weight,
+        Descriptions = plate.Description
+          .SelectMany(
+            kvp => kvp.Value.Split(","),
+            (kvp, featureDescription) => $"{featureDescription} {kvp.Key}")
+      })
+      .SelectMany(
+        plate => plate.Descriptions,
+        (plate, description) => new PlateTrainingRow(plate.Key, description.Trim(), plate.Weight))
       .ToArray();
 
     // convert training data json into ml.net consumable data view
     var dataView = ml.Data.LoadFromEnumerable(trainingRows);
-    var split = ml.Data.TrainTestSplit(dataView, testFraction: 0.0000000001, seed: seed);
 
     return (dataView, dataView.Schema);
   }

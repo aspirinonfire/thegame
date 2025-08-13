@@ -2,21 +2,20 @@
 using Microsoft.ML.Data;
 using Microsoft.ML.Trainers;
 using Microsoft.ML.Transforms;
-using Newtonsoft.Json.Linq;
 using PlateTrainer.Training.Models;
 using System.Data;
+using System.Text.Json;
 
 namespace PlateTrainer.Training;
 
 public sealed class Trainer
 {
-  public TrainedModel Train(MLContext ml,
-    EstimatorChain<TransformerChain<KeyToValueMappingTransformer>> pipeline,
+  public TrainedModel Train(Pipelines pipelines,
     IDataView data,
     DataViewSchema dataSchema)
   {
     Console.WriteLine("----- Training...");
-    var trainedModel = pipeline.Fit(data);
+    var trainedModel = pipelines.FullPipeline.Fit(data);
 
     // map key indices -> label strings taken from the *Label* column
     var outputSchema = trainedModel.GetOutputSchema(dataSchema);
@@ -28,70 +27,38 @@ public sealed class Trainer
       .Select(x => x.ToString())
       .ToArray();
 
-    var sanityRows = new[]
-    {
-      new PlateTrainingRow("us-ak", "bear center", 1),
-      new PlateTrainingRow("us-ar", "center diamond", 1),
-      new PlateTrainingRow("us-az", "grand canyon", 1),
-      new PlateTrainingRow("us-ca", "all white solid white", 1),
-      new PlateTrainingRow("us-id", "famous potatoes", 1),
-      new PlateTrainingRow("us-nc", "first flight center", 1),
-      new PlateTrainingRow("us-oh", "birthplace aviation", 1),
-      new PlateTrainingRow("us-ok", "white dove", 1),
-      new PlateTrainingRow("us-or", "green tree", 1),
-      new PlateTrainingRow("us-pa", "top blue yellow bottom", 1),
-      new PlateTrainingRow("us-ut", "delicate arch", 1),
-      new PlateTrainingRow("us-vt", "white box", 1),
-      new PlateTrainingRow("us-wa", "blue mountain", 1)
-    };
-
-    var sanityData = ml.Data.LoadFromEnumerable(sanityRows);
-
-    var predictions = trainedModel.Transform(sanityData);
-
-    var sanityMetrics = ml.MulticlassClassification.Evaluate(
-    predictions,
-    labelColumnName: nameof(PlateTrainingRow.Label));
-
-    Console.WriteLine($"Top-1 accuracy on cues: {sanityMetrics.MicroAccuracy:P2}");
-    Console.WriteLine($"LogLossReduction:       {sanityMetrics.LogLossReduction:F4}");
-    //Console.WriteLine($"{sanityMetrics.ConfusionMatrix.GetFormattedConfusionTable()}");
-
     return new TrainedModel(trainedModel, labels);
   }
 
-  public void CalculatePfi(MLContext ml,
-    TransformerChain<TransformerChain<KeyToValueMappingTransformer>> trainedModel,
-    IDataView dataSplit)
-  {
-    Console.WriteLine("----- Calculating PFI...");
-
-    var transformedData = trainedModel.Transform(dataSplit);
-
-    var pfi = ml.MulticlassClassification.PermutationFeatureImportance(
-      trainedModel.LastTransformer,
-      transformedData,
-      permutationCount: 50);
-
-    // helpful tokens by Log-Loss *reduction*
-    var tokenStats = pfi
-      //.OrderByDescending(x => x.Value.LogLoss.Mean)
-      .Select((feat, i) => new TokenPfiStat
-      (
-        Token: pfi.Keys.ElementAt(i),
-        // positive -> token helps
-        // negative -> token hurts
-        // near zero -> most likely irrelevant
-        Delta: feat.Value.LogLoss.Mean
-      ))
-      .OrderBy(x => x.Token)
-      .ToArray();
-
-    Console.WriteLine("Token stats. Higher (+) more helpful, Higher (-) more hurtful, near 0 - most likely irrelevant.");
-    for (int idx = 0; idx < tokenStats.Length; idx++)
+  public void EvaluateModel(MLContext ml, TrainedModel trainedModel)
+  { 
+    var sanityCheck = new[]
     {
-      var (Token, Delta) = tokenStats[idx];
-      Console.WriteLine($"{idx + 1}. {Token,-25}\t{Delta:P5}");
+      new PlateTrainingRow("us-id", "top red white middle blue bottom", 1),
+      new PlateTrainingRow("us-ar", "middle diamond", 1),
+      new PlateTrainingRow("us-az", "purple bottom", 1),
+    };
+
+    var testDataView = ml.Data.LoadFromEnumerable(sanityCheck);
+    var testerModel = trainedModel.Model.Transform(testDataView);
+
+    var metrics = ml.MulticlassClassification.Evaluate(testerModel, labelColumnName: "Label");
+
+    Console.WriteLine($"LogLoss {metrics.LogLoss}");
+    Console.WriteLine($"LogLossReduction {metrics.LogLossReduction}");
+    Console.WriteLine($"MacroAccuracy {metrics.MacroAccuracy}");
+    Console.WriteLine($"MicroAccuracy {metrics.MicroAccuracy}");
+
+    var perClassLogLoss = metrics.PerClassLogLoss.Select((loss, idx) => new
+    {
+      loss,
+      label = trainedModel.Labels[idx]
+    });
+
+    Console.WriteLine("Per Class Log Loss:");
+    foreach (var classLogLoss in perClassLogLoss)
+    {
+      Console.WriteLine($"{classLogLoss.label}: {classLogLoss.loss}");
     }
   }
 
@@ -147,28 +114,45 @@ public sealed class Trainer
 
     var biasVal = maxEntModel.GetBiases().ToArray();
 
-    for (int classIndex = 0; classIndex < labels.Length; classIndex++)
-    {
-      var flatWeights = weights[classIndex];
-
-      var contrib = Enumerable.Range(0, featureSlotIndices.Length)
-          .Select(pos =>
-          {
-            var slot = featureSlotIndices[pos];
-            var val = featureSlotValues[pos];
-            var w = flatWeights.GetItemOrDefault(slot);   // exact weight for this slot
-            var bias = biasVal[classIndex];
-            
-            return new { token = tokens[slot], rawValue = val * w, bias, biasedValue = val * w + bias };
-          })
-          .OrderByDescending(t => t.biasedValue)
-          .ToArray();
-
-      Console.WriteLine($"=== {labels[classIndex]} ===");
-      foreach (var t in contrib)
+    var scores = labels
+      .Select((className, classIndex) =>
       {
-        Console.WriteLine($"{t.token,-18} biased: {t.biasedValue}");
+        var flatWeights = weights[classIndex];
+
+        var tokenContributions = Enumerable.Range(0, featureSlotIndices.Length)
+            .Select(pos =>
+            {
+              var slot = featureSlotIndices[pos];
+              var val = featureSlotValues[pos];
+              var w = flatWeights.GetItemOrDefault(slot);   // exact weight for this slot
+
+              return new { token = tokens[slot], rawValue = val * w };
+            })
+            .OrderByDescending(t => t.rawValue)
+            .ToArray();
+
+        var classBias = biasVal[classIndex];
+        var classScore = tokenContributions.Sum(c => c.rawValue) + classBias;
+
+        return new
+        {
+          className,
+          classScore,
+          classBias,
+          tokenContributions
+        };
+      })
+      .OrderByDescending(x => x.classScore)
+      .ToArray();
+
+    foreach (var classContribs in scores)
+    {
+      Console.WriteLine($"=== {classContribs.className}: (Token sum: {classContribs.classScore}, bias: {classContribs.classBias}) ===");
+      foreach (var token in classContribs.tokenContributions)
+      {
+        Console.WriteLine($"{token.token,-18} token Value: {token.rawValue}");
       }
+
     }
   }
 

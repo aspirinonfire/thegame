@@ -18,19 +18,15 @@ var trainer = new Trainer();
 var (dataView, dataSchema) = mlDataLoader.LoadTrainingData(ml, jsonDataPath, mlSeed);
 var pipeline = pipelineFactory.GetMlPipeline(ml);
 
-var trainedModel = trainer.Train(ml, pipeline, dataView, dataSchema);
+var trainedModel = trainer.Train(pipeline, dataView, dataSchema);
+
+trainer.EvaluateModel(ml, trainedModel);
 
 using var predictor = new Predictor(ml, trainedModel);
 
 predictor.Predict("top red white middle blue bottom");
 predictor.Predict("middle diamond");
-predictor.Predict("purple");
+predictor.Predict("purple bottom");
 predictor.Predict("center bear");
-predictor.Predict("mostly white");
+predictor.Predict("solid white plate");
 
-//trainer.CalculateFeatureContribution(ml,
-//  trainedModel.Model,
-//  dataView,
-//  "center bear");
-
-//trainer.CalculatePfi(ml, trainedModel.Model, dataView);
