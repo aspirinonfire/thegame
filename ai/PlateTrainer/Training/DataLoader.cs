@@ -11,13 +11,42 @@ public sealed class DataLoader(MLContext mlContext)
     PropertyNameCaseInsensitive = true
   };
 
-  public IDataView ReadTrainingData(string trainingDataPath)
+  /// <summary>
+  /// Read source json, denormalize rows, then save as temp bin file so trainer doesn't need to invoke de-normalization multiple times.
+  /// </summary>
+  /// <param name="trainingDataPath"></param>
+  /// <param name="seed"></param>
+  /// <returns></returns>
+  public IDataView ReadTrainingData(string trainingDataPath, int seed)
   {
+    Console.WriteLine("----- Preparing training data for training...");
+
     var trainingRows = ReadTrainingDataAsJsonStream(trainingDataPath);
 
-    return mlContext.Data.LoadFromEnumerable(trainingRows);
+    var normalizedDataView = mlContext.Data.LoadFromEnumerable(trainingRows);
+
+    var normalizedBinDataFile = Path.Combine(Path.GetDirectoryName(trainingDataPath)!,
+      $"{Path.GetFileNameWithoutExtension(trainingDataPath)}.bin");
+
+    using (var writer = new StreamWriter(normalizedBinDataFile, append: false))
+    {
+      mlContext.Data.SaveAsBinary(normalizedDataView, writer.BaseStream);
+    }
+
+    var preparsedTrainingDataView = mlContext.Data.LoadFromBinary(normalizedBinDataFile);
+
+    // Bounded-memory shuffle to break label blocks
+    return mlContext.Data.ShuffleRows(input: preparsedTrainingDataView,
+      seed: seed,
+      shufflePoolSize: 1_000,
+      shuffleSource: true);
   }
 
+  /// <summary>
+  /// Read source json into async enumerable stream to prevent training data consuming too much memory
+  /// </summary>
+  /// <param name="trainingDataPath"></param>
+  /// <returns></returns>
   private static IEnumerable<PlateTrainingRow> ReadTrainingDataAsJsonStream(string trainingDataPath)
   {
     FileStream? rawTrainingDataStream = null;

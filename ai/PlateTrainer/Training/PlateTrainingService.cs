@@ -31,33 +31,44 @@ public sealed class PlateTrainingService(int seed, int numOfIterations = 200, fl
         inputColumnName: "RawTokens",
         outputColumnName: "CleanTokens",
         language: StopWordsRemovingEstimator.Language.English))
+      // text transforms (producengram) works with numeric Id not strings, so we need to convert clean tokens to Ids.
       .Append(MlContext.Transforms.Conversion.MapValueToKey(
         inputColumnName: "CleanTokens",
         outputColumnName: "TokenKeys"))
       .Append(n1gram)
       .Append(n2gram)
       .Append(n3gram)
-      .Append(n4gram)
-      .Append(MlContext.Transforms.Concatenate("Features", n1col, n2col, n3col, n4col))
-      .Append(MlContext.Transforms.Conversion.MapValueToKey(nameof(PlateTrainingRow.Label), nameof(PlateTrainingRow.Label)));
+      .Append(n4gram);
 
-    var sdcaMaxEntTrainer = MlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy(
-      labelColumnName: nameof(PlateTrainingRow.Label),
-      featureColumnName: "Features",
-      exampleWeightColumnName: nameof(PlateTrainingRow.Weight),
-      maximumNumberOfIterations: numOfIterations,
-      l2Regularization: l2Reg);
+    var trainerOpts = new SdcaMaximumEntropyMulticlassTrainer.Options()
+    {
+      LabelColumnName = nameof(PlateTrainingRow.Label),
+      FeatureColumnName = "Features",
+      ExampleWeightColumnName = nameof(PlateTrainingRow.Weight),
+      MaximumNumberOfIterations = numOfIterations,
+      L2Regularization = l2Reg,
+      Shuffle = true,
+      NumberOfThreads = Environment.ProcessorCount
+    };
 
     return featurizer
-      .Append(MlContext.Transforms.Conversion.MapValueToKey(nameof(PlateTrainingRow.Label), nameof(PlateTrainingRow.Label))
-        .Append(sdcaMaxEntTrainer)
-        .Append(MlContext.Transforms.Conversion.MapKeyToValue(nameof(PlatePrediction.PredictedLabel), nameof(PlatePrediction.PredictedLabel)))
-      );
+      // SDCA trainer expects a single Features column to be trained on.
+      // We must concat all ngrams into it so they can be used during training
+      .Append(MlContext.Transforms.Concatenate("Features", n1col, n2col, n3col, n4col))
+      // trainers work with numeric label Ids not strings.
+      .Append(MlContext.Transforms.Conversion.MapValueToKey(nameof(PlateTrainingRow.Label), nameof(PlateTrainingRow.Label)))
+      .Append(MlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy(trainerOpts))
+      // trainers produce predicted label as Id not string, convert it to human readable.
+      .Append(MlContext.Transforms.Conversion.MapKeyToValue(nameof(PlatePrediction.PredictedLabel), nameof(PlatePrediction.PredictedLabel)));
   }
 
   public TrainedModel Train(IDataView dataView)
   {
+    Console.WriteLine("----- Training...");
+
     var model = CreateEstimatorPipeline().Fit(dataView);
+
+    Console.WriteLine("----- Training completed successfully.");
 
     // map key indices -> label strings taken from the *Label* column
     var outputSchema = model.GetOutputSchema(dataView.Schema);
@@ -74,6 +85,8 @@ public sealed class PlateTrainingService(int seed, int numOfIterations = 200, fl
 
   public void EvaluateModel(TrainedModel trainedModel, IEnumerable<PlateTrainingRow> sanityCheck)
   {
+    Console.WriteLine("----- Evaluating the trained model...");
+
     var testDataView = MlContext.Data.LoadFromEnumerable(sanityCheck);
     var testerModel = trainedModel.Model.Transform(testDataView);
 
@@ -137,7 +150,7 @@ public sealed class PlateTrainingService(int seed, int numOfIterations = 200, fl
 
     var activatedTokens = featureSlotIndices
       .Select(featureIndex => tokens[featureIndex]);
-    Console.WriteLine($"Activated tokens for query:\n{string.Join(", ", activatedTokens)}");
+    Console.WriteLine($"Activated tokens for query \"{queryText}\":\n{string.Join(", ", activatedTokens)}");
 
     var biasVal = maxEntModel.GetBiases().ToArray();
 

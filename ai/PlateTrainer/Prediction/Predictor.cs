@@ -8,7 +8,7 @@ public sealed class Predictor(MLContext ml, TrainedModel trainedModel)
 {
   public void Predict(string query)
   {
-    Console.WriteLine("----- Predicting...");
+    Console.WriteLine($"----- Predictions for \"{query}\":");
 
     var queryDataView = ml.Data.LoadFromEnumerable([new PlateQuery(query)]);
     var scoredPredictions = trainedModel.Model.Transform(queryDataView);
@@ -23,7 +23,6 @@ public sealed class Predictor(MLContext ml, TrainedModel trainedModel)
       .Take(5)
       .ToImmutableArray();
 
-    Console.WriteLine($"Query: \"{query}\"");
     //Console.WriteLine($"Top match: {prediction.PredictedLabel}.");
     foreach (var (label, score) in top5Matches)
     {
