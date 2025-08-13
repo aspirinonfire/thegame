@@ -11,6 +11,10 @@ public sealed class PlateTrainingService(int seed, int numOfIterations = 200, fl
 {
   public MLContext MlContext { get; } = new MLContext(seed);
 
+  /// <summary>
+  /// See <see href="https://learn.microsoft.com/en-us/azure/machine-learning/algorithm-cheat-sheet?view=azureml-api-1"/>
+  /// </summary>
+  /// <returns></returns>
   public IEstimator<ITransformer> CreateEstimatorPipeline()
   {
     var (n1gram, n1col) = CreateNgramTransformer(MlContext, "TokenKeys", 1);
