@@ -9,16 +9,16 @@ namespace PlateTrainer.Training;
 
 public sealed class PlateTrainingService(int seed, int numOfIterations = 200, float l2Reg = 0.001f)
 {
-  public MLContext MlCtx { get; } = new MLContext(seed);
+  public MLContext MlContext { get; } = new MLContext(seed);
 
   public IEstimator<ITransformer> CreateEstimatorPipeline()
   {
-    var (n1gram, n1col) = CreateNgramTransformer(MlCtx, "TokenKeys", 1);
-    var (n2gram, n2col) = CreateNgramTransformer(MlCtx, "TokenKeys", 2);
-    var (n3gram, n3col) = CreateNgramTransformer(MlCtx, "TokenKeys", 3);
-    var (n4gram, n4col) = CreateNgramTransformer(MlCtx, "TokenKeys", 4);
+    var (n1gram, n1col) = CreateNgramTransformer(MlContext, "TokenKeys", 1);
+    var (n2gram, n2col) = CreateNgramTransformer(MlContext, "TokenKeys", 2);
+    var (n3gram, n3col) = CreateNgramTransformer(MlContext, "TokenKeys", 3);
+    var (n4gram, n4col) = CreateNgramTransformer(MlContext, "TokenKeys", 4);
 
-    var featurizer = MlCtx.Transforms.Text
+    var featurizer = MlContext.Transforms.Text
       .NormalizeText(
         inputColumnName: nameof(PlateTrainingRow.Text),
         outputColumnName: "TextNorm",
@@ -26,22 +26,22 @@ public sealed class PlateTrainingService(int seed, int numOfIterations = 200, fl
         keepDiacritics: false,
         keepPunctuations: false,
         keepNumbers: false)
-      .Append(MlCtx.Transforms.Text.TokenizeIntoWords("RawTokens", "TextNorm"))
-      .Append(MlCtx.Transforms.Text.RemoveDefaultStopWords(
+      .Append(MlContext.Transforms.Text.TokenizeIntoWords("RawTokens", "TextNorm"))
+      .Append(MlContext.Transforms.Text.RemoveDefaultStopWords(
         inputColumnName: "RawTokens",
         outputColumnName: "CleanTokens",
         language: StopWordsRemovingEstimator.Language.English))
-      .Append(MlCtx.Transforms.Conversion.MapValueToKey(
+      .Append(MlContext.Transforms.Conversion.MapValueToKey(
         inputColumnName: "CleanTokens",
         outputColumnName: "TokenKeys"))
       .Append(n1gram)
       .Append(n2gram)
       .Append(n3gram)
       .Append(n4gram)
-      .Append(MlCtx.Transforms.Concatenate("Features", n1col, n2col, n3col, n4col))
-      .Append(MlCtx.Transforms.Conversion.MapValueToKey(nameof(PlateTrainingRow.Label), nameof(PlateTrainingRow.Label)));
+      .Append(MlContext.Transforms.Concatenate("Features", n1col, n2col, n3col, n4col))
+      .Append(MlContext.Transforms.Conversion.MapValueToKey(nameof(PlateTrainingRow.Label), nameof(PlateTrainingRow.Label)));
 
-    var sdcaMaxEntTrainer = MlCtx.MulticlassClassification.Trainers.SdcaMaximumEntropy(
+    var sdcaMaxEntTrainer = MlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy(
       labelColumnName: nameof(PlateTrainingRow.Label),
       featureColumnName: "Features",
       exampleWeightColumnName: nameof(PlateTrainingRow.Weight),
@@ -49,9 +49,9 @@ public sealed class PlateTrainingService(int seed, int numOfIterations = 200, fl
       l2Regularization: l2Reg);
 
     return featurizer
-      .Append(MlCtx.Transforms.Conversion.MapValueToKey(nameof(PlateTrainingRow.Label), nameof(PlateTrainingRow.Label))
+      .Append(MlContext.Transforms.Conversion.MapValueToKey(nameof(PlateTrainingRow.Label), nameof(PlateTrainingRow.Label))
         .Append(sdcaMaxEntTrainer)
-        .Append(MlCtx.Transforms.Conversion.MapKeyToValue(nameof(PlatePrediction.PredictedLabel), nameof(PlatePrediction.PredictedLabel)))
+        .Append(MlContext.Transforms.Conversion.MapKeyToValue(nameof(PlatePrediction.PredictedLabel), nameof(PlatePrediction.PredictedLabel)))
       );
   }
 
@@ -72,19 +72,12 @@ public sealed class PlateTrainingService(int seed, int numOfIterations = 200, fl
     return new(model, labels);
   }
 
-  public void EvaluateModel(TrainedModel trainedModel)
+  public void EvaluateModel(TrainedModel trainedModel, IEnumerable<PlateTrainingRow> sanityCheck)
   {
-    var sanityCheck = new[]
-    {
-      new PlateTrainingRow("us-id", "top red white middle blue bottom", 1),
-      new PlateTrainingRow("us-ar", "middle diamond", 1),
-      new PlateTrainingRow("us-az", "purple bottom", 1),
-    };
-
-    var testDataView = MlCtx.Data.LoadFromEnumerable(sanityCheck);
+    var testDataView = MlContext.Data.LoadFromEnumerable(sanityCheck);
     var testerModel = trainedModel.Model.Transform(testDataView);
 
-    var metrics = MlCtx.MulticlassClassification.Evaluate(testerModel, labelColumnName: "Label");
+    var metrics = MlContext.MulticlassClassification.Evaluate(testerModel, labelColumnName: "Label");
 
     Console.WriteLine($"LogLoss {metrics.LogLoss}");
     Console.WriteLine($"LogLossReduction {metrics.LogLossReduction}");
@@ -127,7 +120,7 @@ public sealed class PlateTrainingService(int seed, int numOfIterations = 200, fl
       .Select(s => s.ToString())
       .ToArray();
 
-    var queryView = MlCtx.Data
+    var queryView = MlContext.Data
       .LoadFromEnumerable<PlateTrainingRow>(
         [new("?", queryText, 1)]);
 

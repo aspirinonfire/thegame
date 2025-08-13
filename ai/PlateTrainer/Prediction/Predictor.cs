@@ -4,16 +4,17 @@ using System.Collections.Immutable;
 
 namespace PlateTrainer.Prediction;
 
-public sealed class Predictor(MLContext ml, TrainedModel trainedModel) : IDisposable
+public sealed class Predictor(MLContext ml, TrainedModel trainedModel)
 {
-  private readonly PredictionEngine<PlateQuery, PlatePrediction> _predictionEngine =
-    ml.Model.CreatePredictionEngine<PlateQuery, PlatePrediction>(trainedModel.Model);
-
   public void Predict(string query)
   {
     Console.WriteLine("----- Predicting...");
 
-    var prediction = _predictionEngine.Predict(new PlateQuery(query));
+    var queryDataView = ml.Data.LoadFromEnumerable([new PlateQuery(query)]);
+    var scoredPredictions = trainedModel.Model.Transform(queryDataView);
+
+    var prediction = ml.Data.CreateEnumerable<PlatePrediction>(scoredPredictions, reuseRowObject: false)
+      .First();
 
     var predictionPairs = trainedModel.Labels.Zip(prediction.Scores, (label, score) => (label, score));
 
@@ -28,10 +29,5 @@ public sealed class Predictor(MLContext ml, TrainedModel trainedModel) : IDispos
     {
       Console.WriteLine($"{label}: {score:P2}");
     }
-  }
-
-  public void Dispose()
-  {
-    _predictionEngine.Dispose();
   }
 }
