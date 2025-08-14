@@ -72,8 +72,9 @@ public sealed class DataLoader(MLContext mlContext)
         }
 
         var descriptions = currentPlateData.Description
+          .Where(kvp => !string.IsNullOrEmpty(kvp.Value))
           .SelectMany(
-            kvp => kvp.Value.Split(","),
+            kvp => kvp.Value!.Split(","),
             (kvp, featureDescription) => $"{featureDescription.Trim()} {kvp.Key}");
 
         foreach (var platePhrase in descriptions)
