@@ -1,4 +1,4 @@
-﻿namespace PlateTrainer.Training.Models;
+﻿namespace PlateTrainer.Training;
 
 public sealed record PlateTrainingData
 {

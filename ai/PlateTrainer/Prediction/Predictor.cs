@@ -6,7 +6,7 @@ namespace PlateTrainer.Prediction;
 
 public sealed class Predictor(MLContext ml, TrainedModel trainedModel)
 {
-  public void Predict(string query)
+  public void Predict(string query, int topK = 5)
   {
     Console.WriteLine($"----- Predictions for \"{query}\":");
 
@@ -20,7 +20,7 @@ public sealed class Predictor(MLContext ml, TrainedModel trainedModel)
 
     var top5Matches = predictionPairs
       .OrderByDescending(p => p.score)
-      .Take(5)
+      .Take(topK)
       .ToImmutableArray();
 
     //Console.WriteLine($"Top match: {prediction.PredictedLabel}.");

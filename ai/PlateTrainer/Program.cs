@@ -1,20 +1,31 @@
-﻿using PlateTrainer.Prediction;
+﻿using Microsoft.ML;
+using PlateTrainer.Prediction;
 using PlateTrainer.Training;
-using PlateTrainer.Training.Models;
+using PlateTrainer.Validation;
 
 const int mlSeed = 123;
 
 // Load training data into memory
 var jsonDataPath = @"c:\src\thegame\ai\training_data\plate_descriptions.json";
 
-var trainerSvc = new PlateTrainingService(seed: mlSeed);
-var mlDataLoader = new DataLoader(trainerSvc.MlContext);
+var ml = new MLContext(mlSeed);
 
-var dataView = mlDataLoader.ReadTrainingData(jsonDataPath, mlSeed);
+var mlDataLoader = new DataLoader(ml);
+var trainerSvc = new PlateTrainingService(ml);
 
-var trainedModel = trainerSvc.Train(dataView);
+TrainedModel trainedModel = null!;
+DataViewSchema dataViewSchema = null!;
 
-var predictor = new Predictor(trainerSvc.MlContext, trainedModel);
+using (var trainingData = mlDataLoader.ReadTrainingData(jsonDataPath, mlSeed))
+{
+  trainedModel = trainerSvc.Train(trainingData.DataView);
+  dataViewSchema = trainingData.DataView.Schema;
+}
+
+var predictor = new Predictor(ml, trainedModel);
+
+predictor.Predict("solid white plate");
+
 
 predictor.Predict("top red white middle blue bottom");
 predictor.Predict("middle diamond");
@@ -22,7 +33,10 @@ predictor.Predict("purple bottom");
 predictor.Predict("solid white plate red cursive");
 predictor.Predict("yellow plate top dark blue banner");
 
-trainerSvc.EvaluateModel(
+var modelValidator = new TrainedModelValidationService(ml);
+modelValidator.CalculateFeatureContribution(trainedModel, dataViewSchema, "solid white plate");
+
+modelValidator.EvaluateModel(
   trainedModel,
   [
     new PlateTrainingRow("us-id", "top red white middle blue bottom", 1),
@@ -32,4 +46,3 @@ trainerSvc.EvaluateModel(
     new PlateTrainingRow("us-ny", "yellow plate top dark blue banner", 1),
   ]);
 
-trainerSvc.CalculateFeatureContribution(trainedModel, dataView, "solid white plate");

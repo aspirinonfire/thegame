@@ -1,10 +1,35 @@
 ﻿using Microsoft.ML;
-using PlateTrainer.Training.Models;
+using Microsoft.ML.Data;
 using System.Text.Json;
 
 namespace PlateTrainer.Training;
 
-public sealed class DataLoader(MLContext mlContext)
+/// <summary>
+/// An intermediate object to control the lifecycle of BinaryReader
+/// </summary>
+/// <remarks>
+/// ML.NET bug:
+/// Both <c>LoadFromBinary</c> and <c>ShuffleRows</c> both return <c>IDataView</c>,
+/// With <c>LoadFromBinary</c> returning a <c>BinaryReader</c> and <c>ShuffleRows</c> returning a <c>Transformer</c>.
+/// <c>BinaryReader</c> needs to be disposed so it closes a file handle correctly, otherwise the file will remain open.
+/// </remarks>
+/// <param name="dataView"></param>
+/// <param name="fileHandle"></param>
+/// <param name="disposableDataView"></param>
+public sealed class TrainingData(IDataView dataView, IFileHandle fileHandle, IDisposable? disposableDataView) : IDisposable
+{
+  public IDataView DataView { get; } = dataView;
+  private readonly IFileHandle _fileHandle = fileHandle;
+  private readonly IDisposable? _disposableDataView = disposableDataView;
+
+  public void Dispose()
+  {
+    _disposableDataView?.Dispose();
+    _fileHandle.Dispose();
+  }
+}
+
+public sealed class DataLoader(MLContext ml)
 {
   private readonly static JsonSerializerOptions _jsonSerializerOpts = new()
   {
@@ -17,29 +42,36 @@ public sealed class DataLoader(MLContext mlContext)
   /// <param name="trainingDataPath"></param>
   /// <param name="seed"></param>
   /// <returns></returns>
-  public IDataView ReadTrainingData(string trainingDataPath, int seed)
+  public TrainingData ReadTrainingData(string trainingDataPath, int seed)
   {
     Console.WriteLine("----- Preparing training data for training...");
 
     var trainingRows = ReadTrainingDataAsJsonStream(trainingDataPath);
 
-    var normalizedDataView = mlContext.Data.LoadFromEnumerable(trainingRows);
+    var normalizedDataView = ml.Data.LoadFromEnumerable(trainingRows);
 
     var normalizedBinDataFile = Path.Combine(Path.GetDirectoryName(trainingDataPath)!,
       $"{Path.GetFileNameWithoutExtension(trainingDataPath)}.bin");
 
     using (var writer = new StreamWriter(normalizedBinDataFile, append: false))
     {
-      mlContext.Data.SaveAsBinary(normalizedDataView, writer.BaseStream);
+      ml.Data.SaveAsBinary(normalizedDataView, writer.BaseStream);
     }
 
-    var preparsedTrainingDataView = mlContext.Data.LoadFromBinary(normalizedBinDataFile);
+    var binDataFileHandle = new SimpleFileHandle(ml,
+      normalizedBinDataFile,
+      false,
+      true);
+
+    var preparsedTrainingDataView = ml.Data.LoadFromBinary(new FileHandleSource(binDataFileHandle));
 
     // Bounded-memory shuffle to break label blocks
-    return mlContext.Data.ShuffleRows(input: preparsedTrainingDataView,
-      seed: seed,
-      shufflePoolSize: 1_000,
-      shuffleSource: true);
+    var shuffledDataView = ml.Data.ShuffleRows(input: preparsedTrainingDataView,
+     seed: seed,
+     shufflePoolSize: 1_000,
+     shuffleSource: true);
+
+    return new TrainingData(shuffledDataView, binDataFileHandle, preparsedTrainingDataView as IDisposable);
   }
 
   /// <summary>
@@ -72,9 +104,8 @@ public sealed class DataLoader(MLContext mlContext)
         }
 
         var descriptions = currentPlateData.Description
-          .Where(kvp => !string.IsNullOrEmpty(kvp.Value))
           .SelectMany(
-            kvp => kvp.Value!.Split(","),
+            kvp => (kvp.Value ?? "n/a").Split(","),
             (kvp, featureDescription) => $"{featureDescription.Trim()} {kvp.Key}");
 
         foreach (var platePhrase in descriptions)
