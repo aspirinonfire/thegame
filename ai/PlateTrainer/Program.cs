@@ -26,23 +26,22 @@ var predictor = new Predictor(ml, trainedModel);
 
 predictor.Predict("solid white plate");
 
-
-predictor.Predict("top red white middle blue bottom");
-predictor.Predict("middle diamond");
-predictor.Predict("purple bottom");
-predictor.Predict("solid white plate red cursive");
-predictor.Predict("yellow plate top dark blue banner");
+//predictor.Predict("top red white middle blue bottom");
+//predictor.Predict("middle diamond");
+//predictor.Predict("purple bottom");
+//predictor.Predict("solid white plate red cursive");
+//predictor.Predict("yellow plate top dark blue banner");
 
 var modelValidator = new TrainedModelValidationService(ml);
 modelValidator.CalculateFeatureContribution(trainedModel, dataViewSchema, "solid white plate");
 
-modelValidator.EvaluateModel(
-  trainedModel,
-  [
-    new PlateTrainingRow("us-id", "top red white middle blue bottom", 1),
-    new PlateTrainingRow("us-ar", "middle diamond", 1),
-    new PlateTrainingRow("us-az", "purple bottom", 1),
-    new PlateTrainingRow("us-ca", "solid white plate red cursive", 1),
-    new PlateTrainingRow("us-ny", "yellow plate top dark blue banner", 1),
-  ]);
+//modelValidator.EvaluateModel(
+//  trainedModel,
+//  [
+//    new PlateTrainingRow("us-id", "top red white middle blue bottom", 1),
+//    new PlateTrainingRow("us-ar", "middle diamond", 1),
+//    new PlateTrainingRow("us-az", "purple bottom", 1),
+//    new PlateTrainingRow("us-ca", "solid white plate red cursive", 1),
+//    new PlateTrainingRow("us-ny", "yellow plate top dark blue banner", 1),
+//  ]);
 

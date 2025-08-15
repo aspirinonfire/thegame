@@ -11,7 +11,7 @@ public sealed class PlateTrainingService(MLContext mlContext, int numOfIteration
   /// See <see href="https://learn.microsoft.com/en-us/azure/machine-learning/algorithm-cheat-sheet?view=azureml-api-1"/>
   /// </summary>
   /// <returns></returns>
-  public IEstimator<ITransformer> CreateEstimatorPipeline()
+  public EstimatorPipelineParts CreateEstimatorPipeline()
   {
     var (n1gram, n1col) = CreateNgramTransformer(mlContext, "TokenKeys", 1);
     var (n2gram, n2col) = CreateNgramTransformer(mlContext, "TokenKeys", 2);
@@ -38,7 +38,18 @@ public sealed class PlateTrainingService(MLContext mlContext, int numOfIteration
       .Append(n1gram)
       .Append(n2gram)
       .Append(n3gram)
-      .Append(n4gram);
+      .Append(n4gram)
+      // SDCA trainer expects a single Features column to be trained on.
+      // We must concat all ngrams into it so they can be used during training
+      .Append(mlContext.Transforms.Concatenate("Features", n1col, n2col, n3col, n4col))
+    // trainers work with numeric label Ids not strings.
+      .Append(mlContext.Transforms.Conversion.MapValueToKey(nameof(PlateTrainingRow.Label),
+      nameof(PlateTrainingRow.Label)));
+
+
+    // trainers produce predicted label as Id not string, convert it to human readable.
+    var predictedLabelKey = mlContext.Transforms.Conversion.MapKeyToValue(nameof(PlatePrediction.PredictedLabel),
+      nameof(PlatePrediction.PredictedLabel));
 
     var trainerOpts = new SdcaMaximumEntropyMulticlassTrainer.Options()
     {
@@ -51,36 +62,53 @@ public sealed class PlateTrainingService(MLContext mlContext, int numOfIteration
       NumberOfThreads = Environment.ProcessorCount
     };
 
-    return featurizer
-      // SDCA trainer expects a single Features column to be trained on.
-      // We must concat all ngrams into it so they can be used during training
-      .Append(mlContext.Transforms.Concatenate("Features", n1col, n2col, n3col, n4col))
-      // trainers work with numeric label Ids not strings.
-      .Append(mlContext.Transforms.Conversion.MapValueToKey(nameof(PlateTrainingRow.Label), nameof(PlateTrainingRow.Label)))
-      .Append(mlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy(trainerOpts))
-      // trainers produce predicted label as Id not string, convert it to human readable.
-      .Append(mlContext.Transforms.Conversion.MapKeyToValue(nameof(PlatePrediction.PredictedLabel), nameof(PlatePrediction.PredictedLabel)));
+    var trainer = mlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy(trainerOpts);
+
+    return new EstimatorPipelineParts(featurizer, trainer, trainer, predictedLabelKey);
   }
 
   public TrainedModel Train(IDataView dataView)
   {
     Console.WriteLine("----- Training...");
 
-    var model = CreateEstimatorPipeline().Fit(dataView);
+    var parts = CreateEstimatorPipeline();
+
+    // Fit featurizer + labelKey
+    var featurizerModel = parts.Featurizer.Fit(dataView);
+    var featurizedDataView = featurizerModel.Transform(dataView);
+
+    var labelKeyModel = parts.LabelKey.Fit(featurizedDataView);
+    var preppedDataView = labelKeyModel.Transform(featurizedDataView);
+
+    // Train the head (this is the only real "training")
+    var head = parts.Trainer.Fit(preppedDataView);
+
+    // IMPORTANT: Fit MapKeyToValue on the *scored* view so PredictedLabel (key) exists
+    var scored = head.Transform(preppedDataView);
+    var predictedLabelMapModel = parts.PredictedLabelMap.Fit(scored);
+
+    // Compose final transformer chain
+    var trainedModel = featurizerModel
+      .Append(labelKeyModel)
+      .Append(head)
+      .Append(predictedLabelMapModel);
 
     Console.WriteLine("----- Training completed successfully.");
 
     // map key indices -> label strings taken from the *Label* column
-    var outputSchema = model.GetOutputSchema(dataView.Schema);
+    var outputSchema = trainedModel.GetOutputSchema(dataView.Schema);
     var labelCol = outputSchema[nameof(PlateTrainingRow.Label)];
     var keyBuffer = default(VBuffer<ReadOnlyMemory<char>>);
     labelCol.GetKeyValues(ref keyBuffer);
-
     var labels = keyBuffer.DenseValues()
       .Select(x => x.ToString())
       .ToArray();
 
-    return new(model, labels);
+    return new(trainedModel,
+      labels,
+      featurizerModel,
+      head.Model,
+      "Features");
   }
 
   private static (NgramExtractingEstimator, string) CreateNgramTransformer(MLContext ml, string inputTokenColumnName, int ngramLength)
@@ -97,6 +125,16 @@ public sealed class PlateTrainingService(MLContext mlContext, int numOfIteration
 
     return (ngram, colName);
   }
+
+  public sealed record EstimatorPipelineParts(
+    IEstimator<ITransformer> Featurizer,
+    IEstimator<ITransformer> LabelKey,
+    IEstimator<MulticlassPredictionTransformer<MaximumEntropyModelParameters>> Trainer,
+    IEstimator<ITransformer> PredictedLabelMap);
 }
 
-public sealed record TrainedModel(ITransformer Model, string[] Labels);
+public sealed record TrainedModel(ITransformer FullTrainedModel,
+  string[] Labels,
+  ITransformer Featurizer,
+  MaximumEntropyModelParameters HeadModel,
+  string FeatureColumnName);

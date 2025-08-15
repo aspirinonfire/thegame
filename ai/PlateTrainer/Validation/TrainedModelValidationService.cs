@@ -11,7 +11,7 @@ public sealed class TrainedModelValidationService(MLContext ml)
     Console.WriteLine("----- Evaluating the trained model...");
 
     var testDataView = ml.Data.LoadFromEnumerable(evalRows);
-    var testerModel = trainedModel.Model.Transform(testDataView);
+    var testerModel = trainedModel.FullTrainedModel.Transform(testDataView);
 
     var metrics = ml.MulticlassClassification.Evaluate(testerModel, labelColumnName: "Label");
 
@@ -39,62 +39,57 @@ public sealed class TrainedModelValidationService(MLContext ml)
   {
     Console.WriteLine("----- Calculating feature contributions...");
 
-    var flattenedChains = Flatten(trainedModel.Model);
+    var queryDataView = ml.Data.LoadFromEnumerable(
+      [
+        new PlateTrainingRow(string.Empty, queryText, 0)
+      ]);
 
-    var predictor = flattenedChains
-      .OfType<MulticlassPredictionTransformer<MaximumEntropyModelParameters>>()
-      .Last();
+    var queryTokensView = trainedModel.Featurizer.Transform(queryDataView);
 
-    var maxEntModel = predictor.Model; // weight matrix
-
-    var transformSchema = trainedModel.Model.GetOutputSchema(dataViewSchema);
+    var queryTokensBuffer = queryTokensView.GetColumn<VBuffer<float>>(trainedModel.FeatureColumnName).First();
+    // indicies of tokens as matched to trainedModel.Tokens
+    var queryTokenIndices = queryTokensBuffer.GetIndices().ToArray();
+    // specific token values (based on ngram weighting criteria eg Tf-Idf)
+    var featurizedTokenValues = queryTokensBuffer.GetValues().ToArray();
 
     var tokenBuffer = default(VBuffer<ReadOnlyMemory<char>>);
-    transformSchema["Features"].GetSlotNames(ref tokenBuffer);
-    var tokens = tokenBuffer
-      .DenseValues()
-      .Select(s => s.ToString())
+    trainedModel.FullTrainedModel
+      .GetOutputSchema(dataViewSchema)["Features"]
+      .GetSlotNames(ref tokenBuffer);
+    
+    var allModelTokens = tokenBuffer.DenseValues()
+      .Select(x => x.ToString())
       .ToArray();
 
-    var queryView = ml.Data
-      .LoadFromEnumerable<PlateTrainingRow>(
-        [new("?", queryText, 1)]);
+    var classBiases = trainedModel.HeadModel
+      .GetBiases()
+      .ToArray();
 
-    var featureVector = trainedModel.Model
-      .Transform(queryView)
-      .GetColumn<VBuffer<float>>("Features")
-      .First();
+    var tokenWeightsByClassIndex = default(VBuffer<float>[]);
+    trainedModel.HeadModel.GetWeights(ref tokenWeightsByClassIndex, out var _);
 
-    var featureSlotIndices = featureVector.GetIndices().ToArray();
-    var featureSlotValues = featureVector.GetValues().ToArray();
-
-    var weights = default(VBuffer<float>[]);
-    maxEntModel.GetWeights(ref weights, out var classes);
-
-    var activatedTokens = featureSlotIndices
-      .Select(featureIndex => tokens[featureIndex]);
+    var activatedTokens = queryTokenIndices
+      .Select(tokenIndex => allModelTokens[tokenIndex]);
     Console.WriteLine($"Activated tokens for query \"{queryText}\":\n{string.Join(", ", activatedTokens)}");
-
-    var biasVal = maxEntModel.GetBiases().ToArray();
 
     var scores = trainedModel.Labels
       .Select((className, classIndex) =>
       {
-        var flatWeights = weights[classIndex];
+        var classTokenWeights = tokenWeightsByClassIndex[classIndex];
+        var classBias = classBiases[classIndex];
 
-        var tokenContributions = Enumerable.Range(0, featureSlotIndices.Length)
-            .Select(pos =>
+        var tokenContributions = Enumerable.Range(0, queryTokenIndices.Length)
+            .Select(tokenPosition =>
             {
-              var slot = featureSlotIndices[pos];
-              var val = featureSlotValues[pos];
-              var w = flatWeights.GetItemOrDefault(slot);   // exact weight for this slot
+              var tokenIndex = queryTokenIndices[tokenPosition];
+              var tokenValue = featurizedTokenValues[tokenPosition];
+              var tokenWeight = classTokenWeights.GetItemOrDefault(tokenIndex);
 
-              return new { token = tokens[slot], rawValue = val * w };
+              return new { token = allModelTokens[tokenIndex], rawValue = tokenValue * tokenWeight };
             })
             .OrderByDescending(t => t.rawValue)
             .ToArray();
 
-        var classBias = biasVal[classIndex];
         var classScore = tokenContributions.Sum(c => c.rawValue) + classBias;
 
         return new
@@ -114,27 +109,6 @@ public sealed class TrainedModelValidationService(MLContext ml)
       foreach (var token in classContribs.tokenContributions)
       {
         Console.WriteLine($"{token.token,-18} token Value: {token.rawValue}");
-      }
-
-    }
-  }
-
-  private static IEnumerable<ITransformer> Flatten(ITransformer root)
-  {
-    // yield the root itself
-    yield return root;
-
-    // does the object’s raw type start with "TransformerChain`1" ?
-    var t = root.GetType();
-    if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(TransformerChain<>))
-    {
-      // cast via non-generic IEnumerable to avoid type-mismatch
-      foreach (var child in (System.Collections.IEnumerable)root)
-      {
-        foreach (var grand in Flatten((ITransformer)child))
-        {
-          yield return grand;
-        }
       }
     }
   }
