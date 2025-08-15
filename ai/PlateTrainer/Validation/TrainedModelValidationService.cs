@@ -13,7 +13,7 @@ public sealed class TrainedModelValidationService(MLContext ml)
     var testDataView = ml.Data.LoadFromEnumerable(evalRows);
     var testerModel = trainedModel.FullTrainedModel.Transform(testDataView);
 
-    var metrics = ml.MulticlassClassification.Evaluate(testerModel, labelColumnName: "Label");
+    var metrics = ml.MulticlassClassification.Evaluate(testerModel, labelColumnName: "LabelKey");
 
     Console.WriteLine($"LogLoss {metrics.LogLoss}");
     Console.WriteLine($"LogLossReduction {metrics.LogLossReduction}");

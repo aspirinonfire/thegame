@@ -82,5 +82,8 @@ export default defineConfig({
   build: {
     minify: 'esbuild',
     sourcemap: false
-  }
+  },
+  optimizeDeps: {
+    exclude: ["onnxruntime-web"],
+  },
 });

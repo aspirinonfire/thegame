@@ -7,6 +7,7 @@ import type { LicensePlateSpot } from "./game-core/models/LicensePlateSpot";
 import CalculateScore from "./game-core/gameScoreCalculator";
 import { deleteNextJsGameData, retrieveNextJsData } from "./game-core/migrations/nextjs-game-repository";
 import type { NextJsGame } from "./game-core/migrations/nextjs-models";
+import { OnnxPlateDescriptionClassifier } from "./common-components/plateDescriptionClassifier";
 
 interface AppState {
   _hasStorageHydrated: boolean,
@@ -16,9 +17,11 @@ interface AppState {
 
   activeUser: UserAccount | null,
 
-  activeGame: Game | null
+  activeGame: Game | null,
 
-  pastGames: Game[]
+  pastGames: Game[],
+
+  plateClassifier: OnnxPlateDescriptionClassifier | null,
 }
 
 interface AppActions {
@@ -88,6 +91,7 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
   activeGame: null,
   pastGames: [],
   isMigratedFromNextJs: false,
+  plateClassifier: null,
 
   // app actions
   _setStorageHydrated: (state: boolean) => {
@@ -120,6 +124,14 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
       deleteNextJsGameData();
     }
 
+    const plateClassifier = new OnnxPlateDescriptionClassifier();
+    await plateClassifier.init("sdca_plates_model.onnx", "sdca_plates_labels.json");
+
+    (window as any).predictPlates = (query: string) =>
+      plateClassifier.predictAll(query)
+      .then(scoredLabels => console.log(JSON.stringify(scoredLabels, null, 2)))
+      .catch(err => console.error("Error during plate classification:", err));
+    
     set({
       activeUser: {
         name: "Guest User"
