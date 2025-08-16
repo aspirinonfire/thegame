@@ -7,10 +7,11 @@ const sess = await ort.InferenceSession.create(`public/${model_file}`);
 
 console.log('inputs', sess.inputNames);
 console.log('outputs', sess.outputNames);
+console.log('meta', sess.inputMetadata);
 
 const feeds = {
-  Text: new ort.Tensor('string', [ 'top red white middle blue bottom' ], [1, 1]),
   Label: new ort.Tensor('string', [''], [1,1]),
+  Text: new ort.Tensor('string', [ 'top red white middle blue bottom' ], [1, 1]),
   Weight: new ort.Tensor('float32', new Float32Array([1]), [1,1]),
 };
 

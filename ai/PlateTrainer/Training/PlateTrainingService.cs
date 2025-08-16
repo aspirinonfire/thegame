@@ -12,7 +12,6 @@ public sealed class PlateTrainingService(MLContext mlContext, int numOfIteration
   private const string _cleanTokenColumn = "CleanTokens";
   private const string _cleanTokenKeyColumn = "TokenKeys";
   private const string _featuresColumn = "Features";
-  private const string _labelKeyColumn = "LabelKey";
 
   /// <summary>
   /// See <see href="https://learn.microsoft.com/en-us/azure/machine-learning/algorithm-cheat-sheet?view=azureml-api-1"/>
@@ -42,27 +41,23 @@ public sealed class PlateTrainingService(MLContext mlContext, int numOfIteration
       // To avoid potential ONNX column name collisions - map to a new column
       .Append(mlContext.Transforms.Conversion.MapValueToKey(
         inputColumnName: nameof(PlateTrainingRow.Label),
-        outputColumnName: _labelKeyColumn));
+        outputColumnName: nameof(PlateTrainingRow.Label)));
 
     // trainers produce predicted label as Id not string, convert it to human readable.
-    var predictedLabelKey = mlContext.Transforms.Conversion.MapKeyToValue(
-      inputColumnName: nameof(PlatePrediction.PredictedLabel),
-      outputColumnName: nameof(PlatePrediction.PredictedLabel));
 
-    var trainerOpts = new SdcaMaximumEntropyMulticlassTrainer.Options()
+
+    var trainer = mlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy(new SdcaMaximumEntropyMulticlassTrainer.Options()
     {
-      LabelColumnName = _labelKeyColumn,
+      LabelColumnName = nameof(PlateTrainingRow.Label),
       FeatureColumnName = _featuresColumn,
       ExampleWeightColumnName = nameof(PlateTrainingRow.Weight),
       MaximumNumberOfIterations = numOfIterations,
       L2Regularization = l2Reg,
       Shuffle = true,
       NumberOfThreads = Environment.ProcessorCount
-    };
+    });
 
-    var trainer = mlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy(trainerOpts);
-
-    return new EstimatorPipelineParts(featurizer, trainer, trainer, predictedLabelKey);
+    return new EstimatorPipelineParts(featurizer, trainer);
   }
 
   public TrainedModel Train(IDataView dataView)
@@ -71,43 +66,30 @@ public sealed class PlateTrainingService(MLContext mlContext, int numOfIteration
 
     var parts = CreateEstimatorPipeline();
 
-    // Fit featurizer + labelKey
-    var featurizerModel = parts.Featurizer.Fit(dataView);
-    var featurizedDataView = featurizerModel.Transform(dataView);
+    var predictedLabelKey = mlContext.Transforms.Conversion.MapKeyToValue(
+      inputColumnName: nameof(PlatePrediction.PredictedLabel),
+      outputColumnName: nameof(PlatePrediction.PredictedLabel));
 
-    var labelKeyModel = parts.LabelKey.Fit(featurizedDataView);
-    var preppedDataView = labelKeyModel.Transform(featurizedDataView);
-
-    // Train the head (this is the only real "training")
-    var head = parts.Trainer.Fit(preppedDataView);
-
-    // IMPORTANT: Fit MapKeyToValue on the *scored* view so PredictedLabel (key) exists
-    var scored = head.Transform(preppedDataView);
-    var predictedLabelMapModel = parts.PredictedLabelMap.Fit(scored);
-
-    // Compose final transformer chain
-    var trainedModel = featurizerModel
-      .Append(labelKeyModel)
-      .Append(head)
-      .Append(predictedLabelMapModel);
+    var trainedModel = parts.Featurizer
+      //.Append(parts.LabelKey)
+      .Append(parts.Trainer)
+      .Append(predictedLabelKey)
+      .Fit(dataView);
 
     Console.WriteLine("----- Training completed successfully.");
 
     // map key indices -> label strings taken from the *Label* column
     var outputSchema = trainedModel.GetOutputSchema(dataView.Schema);
-    var labelCol = outputSchema[_labelKeyColumn];
+    var labelCol = outputSchema[nameof(PlateTrainingRow.Label)];
     var keyBuffer = default(VBuffer<ReadOnlyMemory<char>>);
     labelCol.GetKeyValues(ref keyBuffer);
     var labels = keyBuffer.DenseValues()
       .Select(x => x.ToString())
       .ToArray();
 
-
     return new(trainedModel,
       labels,
-      featurizerModel,
-      head.Model,
-      _featuresColumn);
+      parts.Featurizer);
   }
 
   public void ExportToOnnx(TrainedModel trainedModel,
@@ -116,28 +98,20 @@ public sealed class PlateTrainingService(MLContext mlContext, int numOfIteration
   {
     // Export ONNX with only the "Score" output to simplify client post-processing.
 
-    var schemaView = mlContext.Data.LoadFromEnumerable(
-      [
-        new PlateTrainingRow("onnx", "export", 0)
-      ]);
+    var schemaView = mlContext.Data.LoadFromEnumerable([new PlateTrainingRow()]);
 
     using (var stream = File.Create(onnxPath))
     {
-      mlContext.Model.ConvertToOnnx(trainedModel.FullTrainedModel, schemaView, stream, "Score");
+      mlContext.Model.ConvertToOnnx(trainedModel.Model, schemaView, stream, ["PredictedLabel", "Score"]);
     }
 
     File.WriteAllText(labelsJsonPath, JsonSerializer.Serialize(trainedModel.Labels));
   }
 
-  public sealed record EstimatorPipelineParts(
-    IEstimator<ITransformer> Featurizer,
-    IEstimator<ITransformer> LabelKey,
-    IEstimator<MulticlassPredictionTransformer<MaximumEntropyModelParameters>> Trainer,
-    IEstimator<ITransformer> PredictedLabelMap);
+  public sealed record EstimatorPipelineParts(IEstimator<ITransformer> Featurizer,
+    IEstimator<MulticlassPredictionTransformer<MaximumEntropyModelParameters>> Trainer);
 }
 
-public sealed record TrainedModel(ITransformer FullTrainedModel,
+public sealed record TrainedModel(ITransformer Model,
   string[] Labels,
-  ITransformer Featurizer,
-  MaximumEntropyModelParameters HeadModel,
-  string FeatureColumnName);
+  IEstimator<ITransformer> Featurizer);

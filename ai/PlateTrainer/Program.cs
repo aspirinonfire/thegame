@@ -3,12 +3,11 @@ using PlateTrainer.Prediction;
 using PlateTrainer.Training;
 using PlateTrainer.Validation;
 
-const int mlSeed = 123;
-
 // TODO process args or env
-var jsonDataPath = @"c:\src\thegame\ai\training_data\plate_descriptions.json";
-var trainedModelOnnxPath = @"c:\src\thegame\ui\public\sdca_plates_model.onnx";
-var trainedModelOnnxLabelPath = @"c:\src\thegame\ui\public\sdca_plates_labels.json";
+const int mlSeed = 123;
+const string jsonDataPath = @"c:\src\thegame\ai\training_data\plate_descriptions.json";
+const string trainedModelOnnxPath = @"c:\src\thegame\ui\public\sdca_plates_model.onnx";
+const string trainedModelOnnxLabelPath = @"c:\src\thegame\ui\public\sdca_plates_labels.json";
 
 var ml = new MLContext(mlSeed);
 
@@ -24,9 +23,9 @@ using (var trainingData = mlDataLoader.ReadTrainingData(jsonDataPath, mlSeed))
   dataViewSchema = trainingData.DataView.Schema;
 }
 
-//trainerSvc.ExportToOnnx(trainedModel,
-//  trainedModelOnnxPath,
-//  trainedModelOnnxLabelPath);
+trainerSvc.ExportToOnnx(trainedModel,
+  trainedModelOnnxPath,
+  trainedModelOnnxLabelPath);
 
 var predictor = new Predictor(ml, trainedModel);
 
@@ -39,7 +38,7 @@ predictor.Predict("top red white middle blue bottom");
 //predictor.Predict("yellow plate top dark blue banner");
 
 var modelValidator = new TrainedModelValidationService(ml);
-modelValidator.CalculateFeatureContribution(trainedModel, dataViewSchema, "solid white plate");
+//modelValidator.CalculateFeatureContribution(trainedModel, dataViewSchema, "solid white plate");
 
 modelValidator.EvaluateModel(
   trainedModel,
