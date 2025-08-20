@@ -125,7 +125,7 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
     }
 
     const plateClassifier = new OnnxPlateDescriptionClassifier();
-    await plateClassifier.init("sdca_plates_model.onnx", "sdca_plates_labels.json");
+    await plateClassifier.init("skl_plates_model.onnx");
 
     (window as any).predictPlates = (query: string) =>
       plateClassifier.predictAll(query)
