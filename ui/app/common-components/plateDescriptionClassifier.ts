@@ -1,6 +1,12 @@
-import * as ort from "onnxruntime-web";
-ort.env.debug = true;
-ort.env.logLevel = 'verbose';
+import * as ort from "onnxruntime-web/wasm";
+
+// ort.env.debug = true;
+// ort.env.logLevel = 'verbose';
+// ort.env.wasm.wasmPaths = {
+//   wasm: "ort-wasm-simd-threaded.wasm",
+//   mjs: "ort-wasm-simd-threaded.mjs",
+// }
+
 
 export type ScoredLabel = { label: string; probability: number };
 

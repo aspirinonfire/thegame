@@ -4,9 +4,16 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import flowbiteReact from "flowbite-react/plugin/vite";
 import { VitePWA } from 'vite-plugin-pwa'
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 export default defineConfig({
   plugins: [tailwindcss(), reactRouter(), tsconfigPaths(), flowbiteReact(),
+    viteStaticCopy({
+      targets: [
+        { src: 'node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm', dest: 'assets' },
+        { src: 'node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs',  dest: 'assets' }
+      ]
+    }),
     VitePWA({
       base: '/',
       registerType: 'autoUpdate',
@@ -19,7 +26,7 @@ export default defineConfig({
         clientsClaim: true,
         skipWaiting: true,
         globPatterns: [
-          '**\/*.{js,json,css,html,woff2,ico,png,jpg,jpeg,svg,avif,webp,gif}'
+          '**\/*.{js,json,css,html,woff2,ico,png,jpg,jpeg,svg,avif,webp,gif,mjs,onnx,wasm}'
         ],
         navigationPreload: false,
         navigateFallback: '/index.html',
@@ -29,9 +36,7 @@ export default defineConfig({
           // we must cache react-router manifest manually due to an unresolved bug
           // see https://github.com/remix-run/react-router/issues/12659
           {
-            urlPattern: ({ url }) =>
-              url.pathname.startsWith('/assets/manifest-') &&
-              url.pathname.endsWith('.js'),
+            urlPattern: ({ url }) => url.pathname.startsWith('/assets/manifest-') && url.pathname.endsWith('.js'),
             handler: 'CacheFirst',
             options: {
               cacheName: 'rr-manifest',
@@ -42,7 +47,8 @@ export default defineConfig({
               }
             }
           }
-        ]
+        ],
+        maximumFileSizeToCacheInBytes: 1024 * 1024 * 30
       },
       manifest: {
         name: "The License Plate Game",
@@ -85,5 +91,5 @@ export default defineConfig({
   },
   optimizeDeps: {
     exclude: ["onnxruntime-web"],
-  },
+  }
 });
