@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Button, Modal, ModalBody, ModalFooter, ModalHeader } from "flowbite-react";
+import { Button, Modal, ModalBody, ModalFooter, ModalHeader, Spinner, ToggleSwitch } from "flowbite-react";
 import type { LicensePlateSpot } from '~/game-core/models/LicensePlateSpot';
 import type { Territory } from '~/game-core/models/Territory';
 import { useAppStore } from '~/useAppStore';
 import { territories } from '~/game-core/gameConfiguration';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { useShallow } from 'zustand/shallow';
 
 interface PickerControls {
   isShowPicker: boolean;
@@ -12,58 +14,120 @@ interface PickerControls {
   plateData: LicensePlateSpot[];
 }
 
+const territoriesByLowercaseKeyLkp = territories.reduce((map, ter) => {
+  map.set(ter.key.toLowerCase(), ter);
+  return map;
+}, new Map<string, Territory>());
+
 export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, plateData }: PickerControls) => {
-  const user = useAppStore(state => state.activeUser);
-
-  const [formChangePreview, setFormChangePreview] = useState<Map<string, boolean>>(new Map<string, boolean>());
-
-  useEffect(() => {
-    setFormChangePreview(new Map<string, boolean>());
-  }, [isShowPicker]);
+  const [user, getMatchingPlates] = useAppStore(useShallow(state =>
+    [state.activeUser, state.getMatchingPlates]));
 
   const plateByKeyLkp = plateData.reduce((lkp, plate) => {
     lkp[plate.key] = plate;
     return lkp;
   }, {} as {[key: string]: LicensePlateSpot});
+  
   const [formData, setFormData] = useState(plateByKeyLkp);
   const [searchTerm, setSearchTerm] = useState<string | null>();
-
+  const [useAiSearch, setUseAiSearch] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout>(null);
+  const prevUseAiSearch = useRef(false);
 
-  const territoriesToRender = territories
-    .filter(plate => {
+  const [territoriesToRender, setTerritoriesToRender] = useState(territories);
+  useEffect(() => {
+    if (!useAiSearch && prevUseAiSearch.current) {
+      setSearchTerm(null);
+    }
+    prevUseAiSearch.current = useAiSearch;
+
+    if (useAiSearch) {
       if (!searchTerm) {
-        return true;
+        if (!!debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+        }
+        setIsSearching(false);
+        setTerritoriesToRender(territories);
+        return;
       }
 
-      const searchValue = searchTerm.toLowerCase();
+      setIsSearching(true);
+      
+      const debounceTimeout = setTimeout(() => {
+        getPlatesMatchingAiSearch(searchTerm)
+          .then(setTerritoriesToRender)
+          .finally(() => {
+            setIsSearching(false);
+          })
+      }, 1000);
 
-      const plateName = plate.longName.toLowerCase()
-
-      // full name starts with
-      if (plateName.startsWith(searchValue)) {
-        return true;
+      if (!!debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
-
-      // contained in the second word
-      if (plateName.includes(` ${searchValue}`)) {
-        return true;
+      debounceTimerRef.current = debounceTimeout;
+    } else {
+      if (!!debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
+      setIsSearching(false);
 
-      // short name matches
-      if (plate.shortName.toLowerCase() == searchValue) {
-        return true;
-      }
+      const toRender = getPlatesMatchingSimpleSearch(searchTerm);
+      setTerritoriesToRender(toRender);
+    }
+  }, [searchTerm, useAiSearch]);
 
-      return false;
-    });
+  const [formChangePreview, setFormChangePreview] = useState<Map<string, boolean>>(new Map<string, boolean>());
+
+  useEffect(() => {
+    setFormChangePreview(new Map<string, boolean>());
+    setUseAiSearch(false);
+  }, [isShowPicker]);
+
+  async function getPlatesMatchingAiSearch(query: string) {
+    const scoredMatches = await getMatchingPlates(query);
+
+    return scoredMatches
+      .map(scoredLbl => territoriesByLowercaseKeyLkp.get(scoredLbl.label.toLowerCase()))
+      .filter(ter => !!ter)
+      .slice(0, 5)
+  }
+
+  function getPlatesMatchingSimpleSearch(query: string | null | undefined) {
+    if (!query) {
+      return territories;
+    }
+
+    const searchValue = query.toLowerCase();
+
+    return territories
+      .filter(plate => {
+        const plateName = plate.longName.toLowerCase()
+
+        // full name starts with
+        if (plateName.startsWith(searchValue)) {
+          return true;
+        }
+
+        // contained in the second word
+        if (plateName.includes(` ${searchValue}`)) {
+          return true;
+        }
+
+        // short name matches
+        if (plate.shortName.toLowerCase() == searchValue) {
+          return true;
+        }
+
+        return false;
+      });
+  }
 
   function handleCheckboxChange(territory: Territory, clickEvent: React.MouseEvent) {
     clickEvent.stopPropagation();
 
-    const updatedForm = {
-      ...formData
-    };
+    const updatedForm = { ...formData };
 
     const currentFormChanges = formChangePreview;
 
@@ -123,10 +187,10 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
       .map((territory) => (
         <div key={territory.key}
           data-testid={`select-plate-${territory.key}`}
-          onClick={e => handleCheckboxChange(territory, e)}
+          onClick={e => !isSearching && handleCheckboxChange(territory, e)}
           className="flex flex-row grow gap-3 text-black justify-start items-center">
-          <div className="flex w-1/5 md:w-1/4 justify-end">
-            { !!formData[territory.key] ? renderCheckedBox() : renderUncheckedBox()}
+          <div className={`flex w-1/5 md:w-1/4 justify-end ${isSearching ? "blur-[2px]" : null}`}>
+            { !!formData[territory.key] ? renderCheckedBox() : renderUncheckedBox() }
           </div>
           <div className="flex flex-col flex-grow justify-start">
             {territory.country == "US" ?
@@ -135,7 +199,7 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
                 alt={territory.shortName}
                 width="300"
                 height="500"
-                className="w-300 h-auto" />) :
+                className={`w-300 h-auto ${ isSearching ? "blur-[3px] grayscale-90" : null }`} />) :
               (<h1 className="text-2xl">{territory.longName} ({territory.country})</h1>)}
           </div>
         </div>
@@ -145,11 +209,7 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
   function renderSearch() {
     return (
       <div className="relative">
-        <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-          <svg className="w-4 h-4 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z" />
-          </svg>
-        </div>
+        <MagnifyingGlassIcon className="h-6 absolute m-2 text-gray-400" />
         <input type="search"
           name="search"
           key="search-input"
@@ -157,12 +217,12 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
           ref={searchInputRef}
           id="default-search"
           className="block w-full p-2 ps-10 placeholder:text-base text-gray-900 border border-gray-300 rounded-lg bg-gray-200 focus:ring-blue-500 focus:border-blue-500"
-          placeholder="Name or abbreviation"
+          placeholder={useAiSearch ? "Visual description" : "Name or abbreviation"}
           onChange={event => setSearchTerm(event.target.value)}
           value={searchTerm || ""} />
         <button type="button"
           className="text-white absolute end-2 bottom-1.25 bg-gray-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg text-sm px-3 py-1.5"
-          onClick={event => setSearchTerm(null)}>
+          onClick={_ => setSearchTerm(null)}>
           Clear
         </button>
       </div>
@@ -181,10 +241,20 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
     </>
   }
 
+  function renderSearchMode() {
+    return <>
+      <ToggleSwitch className="pb-2" color="gray"
+        checked={useAiSearch}
+        onChange={setUseAiSearch}
+        label="Search by plate description"/>
+    </>
+  }
+
   return (
     <>
       <Modal dismissible show={isShowPicker} onClose={handleClose} initialFocus={searchInputRef} size="xl">
         <ModalHeader className="[&>button]:hidden [&>h3]:grow">
+          {renderSearchMode()}
           {renderSearch()}
           {renderFormChangePreview()}
         </ModalHeader>

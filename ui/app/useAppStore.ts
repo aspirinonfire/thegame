@@ -7,7 +7,7 @@ import type { LicensePlateSpot } from "./game-core/models/LicensePlateSpot";
 import CalculateScore from "./game-core/gameScoreCalculator";
 import { deleteNextJsGameData, retrieveNextJsData } from "./game-core/migrations/nextjs-game-repository";
 import type { NextJsGame } from "./game-core/migrations/nextjs-models";
-import { OnnxPlateDescriptionClassifier } from "./common-components/plateDescriptionClassifier";
+import { OnnxPlateDescriptionClassifier, type ScoredLabel } from "./common-components/plateDescriptionClassifier";
 
 interface AppState {
   _hasStorageHydrated: boolean,
@@ -35,6 +35,8 @@ interface AppActions {
   spotNewPlates: (spottedPlates: LicensePlateSpot[]) => Promise<Game | string>,
 
   finishCurrentGame: () => Promise<string | void>,
+
+  getMatchingPlates: (searchQuery: string) => Promise<ScoredLabel[]>
 };
 
 const mockDataAccessDelay = async () => {
@@ -46,6 +48,9 @@ let rehydrationPromiseResolve: (() => void) | null = null;
 const rehydrationPromise = new Promise<void>(resolve => {
   rehydrationPromiseResolve = resolve;
 });
+
+const onnxModel = "skl_plates_model.onnx";
+const plateClassifier = new OnnxPlateDescriptionClassifier();
 
 const getNewGameFromNextJsGame = (oldGame: NextJsGame, activeUser: UserAccount | null) : Game => ({
   id: oldGame.id,
@@ -124,13 +129,7 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
       deleteNextJsGameData();
     }
 
-    const plateClassifier = new OnnxPlateDescriptionClassifier();
-    await plateClassifier.init("skl_plates_model.onnx");
-
-    (window as any).predictPlates = (query: string) =>
-      plateClassifier.predictAll(query)
-      .then(scoredLabels => console.log(JSON.stringify(scoredLabels, null, 2)))
-      .catch(err => console.error("Error during plate classification:", err));
+    await plateClassifier.init(onnxModel);    
     
     set({
       activeUser: {
@@ -212,6 +211,20 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
     set({
       activeGame: null
     });
+  },
+
+  getMatchingPlates: async (searchQuery: string) => {
+    if (!searchQuery) {
+      return [];
+    }
+
+    try {
+      return await plateClassifier.predictAll(searchQuery);
+    }
+    catch (err) {
+      console.error("Error during plate classification:", err)
+    }
+    return [];
   }
 });
 
