@@ -48,7 +48,7 @@ def transform_to_training_rows(training_data: list[RawTrainingDataRow]) -> panda
       .explode("text", ignore_index=True)[["label", "text"]]
   )
 
-# Train data set using logistic regression (MaxEnt) with tfidf tokenization and SGD optimizer
+# Train data set using logistic regression (MaxEnt) with tfidf tokenization and saga optimizer
 def train_maxent(training_rows: pandas.DataFrame,
                  random_state: int = 42,
                  l2_strength: int = 10,
@@ -77,9 +77,6 @@ def train_maxent(training_rows: pandas.DataFrame,
     },
   )
 
-  X_text = training_rows["text"].astype(str)
-  y_label = training_rows["label"].astype(str)
-
   pipeline = Pipeline(steps=[
     ("tfidf", TraceableTfidfVectorizer(
       ngram_range=(1, 4),          # 1–4 n-grams
@@ -98,7 +95,8 @@ def train_maxent(training_rows: pandas.DataFrame,
     ))
   ])
 
-  trained_model = pipeline.fit(X_text, y_label)
+  trained_model = pipeline.fit(X=training_rows["text"].astype(str),
+                               y=training_rows["label"].astype(str))
   print("Model trained.")
   return trained_model
 

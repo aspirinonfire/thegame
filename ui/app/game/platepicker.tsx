@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Button, Modal, ModalBody, ModalFooter, ModalHeader, Spinner, ToggleSwitch } from "flowbite-react";
+import { Button, Modal, ModalBody, ModalFooter, ModalHeader, ToggleSwitch } from "flowbite-react";
 import type { LicensePlateSpot } from '~/game-core/models/LicensePlateSpot';
 import type { Territory } from '~/game-core/models/Territory';
 import { useAppStore } from '~/useAppStore';
@@ -38,11 +38,6 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
 
   const [territoriesToRender, setTerritoriesToRender] = useState(territories);
   useEffect(() => {
-    if (!useAiSearch && prevUseAiSearch.current) {
-      setSearchTerm(null);
-    }
-    prevUseAiSearch.current = useAiSearch;
-
     if (useAiSearch) {
       if (!searchTerm) {
         if (!!debounceTimerRef.current) {
@@ -73,9 +68,15 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
       }
       setIsSearching(false);
 
+      if (prevUseAiSearch.current) {
+        setSearchTerm(null);
+      }
+
       const toRender = getPlatesMatchingSimpleSearch(searchTerm);
       setTerritoriesToRender(toRender);
     }
+
+    prevUseAiSearch.current = useAiSearch;
   }, [searchTerm, useAiSearch]);
 
   const [formChangePreview, setFormChangePreview] = useState<Map<string, boolean>>(new Map<string, boolean>());
@@ -199,7 +200,7 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
                 alt={territory.shortName}
                 width="300"
                 height="500"
-                className={`w-300 h-auto ${ isSearching ? "blur-[3px] grayscale-90" : null }`} />) :
+                className={`w-300 h-auto ${ isSearching ? "blur-[3px] grayscale-90 opacity-50" : null }`} />) :
               (<h1 className="text-2xl">{territory.longName} ({territory.country})</h1>)}
           </div>
         </div>

@@ -20,8 +20,6 @@ interface AppState {
   activeGame: Game | null,
 
   pastGames: Game[],
-
-  plateClassifier: OnnxPlateDescriptionClassifier | null,
 }
 
 interface AppActions {
@@ -74,7 +72,6 @@ const getNewGameFromNextJsGame = (oldGame: NextJsGame, activeUser: UserAccount |
 const getNextJsDataAsNew = (activeUser: UserAccount | null) => {
   const oldData = retrieveNextJsData();
 
-
   const currentGame: Game | null = !!oldData.currentGame ?
     getNewGameFromNextJsGame(oldData.currentGame, activeUser):
     null;
@@ -96,7 +93,6 @@ const createStore: StateCreator<AppState & AppActions> = (set, get) => ({
   activeGame: null,
   pastGames: [],
   isMigratedFromNextJs: false,
-  plateClassifier: null,
 
   // app actions
   _setStorageHydrated: (state: boolean) => {
