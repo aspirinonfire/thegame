@@ -21,6 +21,8 @@
     "flowbite": "^3.1.2",
     "flowbite-react": "^0.11.8",
     "isbot": "^5.1.27",
+    "onnxruntime-node": "^1.22.0-rev",
+    "onnxruntime-web": "^1.22.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router": "^7.6.2",
@@ -38,6 +40,7 @@
     "typescript": "^5.8.3",
     "vite": "^6.3.3",
     "vite-plugin-pwa": "^1.0.0",
+    "vite-plugin-static-copy": "^3.1.2",
     "vite-tsconfig-paths": "^5.1.4",
     "workbox-window": "^7.3.0"
   },

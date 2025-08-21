@@ -1,0 +1,604 @@
+[
+  {
+    "key": "us-ak",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture, light blue",
+      "top": "light blue, mostly blue, fade blue",
+      "middle": "fade yellow, yellow glow, blueish, light blue, yellow circle, yellow sun, yellowish fade, yellow fade, bear",
+      "bottom": "white strip, white line",
+      "artwork": "grizzly bear, bear, black bear, standing bear, animal"
+    }
+  },
+  {
+    "key": "us-al",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture, light blue",
+      "top": "yellow fade, yellow",
+      "middle": "green fade, light green, green hills",
+      "bottom": "blue line, blue strip, blue lake",
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-ar",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture",
+      "top": "light blue, fade blue, red text",
+      "middle": "light, whitish, diamond",
+      "bottom": "white strip, white line, white fade",
+      "artwork": "diamond"
+    }
+  },
+  {
+    "key": "us-az",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture",
+      "top": "light blue, fade blue, green blue, teal",
+      "middle": "soft white, white",
+      "bottom": "purple line, purple mountains, purple cactus, yellow fade, yellow glow",
+      "artwork": "cactus, purple cactus, purple mountains"
+    }
+  },
+  {
+    "key": "us-ca",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "solid white",
+      "top": "red cursive, cursive red text, red script",
+      "middle": null,
+      "bottom": null,
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-co",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture, mountains, mountain range, snowy peaks, snowy ridge",
+      "top": "green jagged line, red jagged line, green line, red line",
+      "middle": "white",
+      "bottom": "white"
+    }
+  },
+  {
+    "key": "us-ct",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "blue white fade, white blue fade, blue white gradient, white blue gradient",
+      "top": "light blue",
+      "middle": null,
+      "bottom": "white",
+      "artwork": ""
+    }
+  },
+  {
+    "key": "us-dc",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "solid white",
+      "top": "red line, thin red line",
+      "middle": "small graphic, small square graphic, red graphic",
+      "bottom": "red line, thin red line",
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-de",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "solid dark blue, solid deep blue, deep blue, yellow border, yellow frame",
+      "top": null,
+      "middle": "yellow text, yellow numbers",
+      "bottom": null,
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-fl",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "white, picture",
+      "top": null,
+      "middle": "oranges, fruit, fruits",
+      "bottom": null,
+      "artwork": "oranges, fruit, fruits"
+    }
+  },
+  {
+    "key": "us-ga",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "solid white, mostly white",
+      "top": "black text",
+      "middle": null,
+      "bottom": null,
+      "artwork": "peach, fruits, fruit"
+    }
+  },
+  {
+    "key": "us-hi",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "solid white",
+      "top": null,
+      "middle": null,
+      "bottom": null,
+      "artwork": "rainbow, half-circle, half circle"
+    }
+  },
+  {
+    "key": "us-ia",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture, white, city, cityscape, downtown, buildings",
+      "top": "light blue, light blue jagged line, blue sky",
+      "middle": null,
+      "bottom": null,
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-id",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture",
+      "top": "red, red strip, red fade, solid red, deep red",
+      "middle": "white, light",
+      "bottom": "blue, blue line, blue strip, deep blue, dark blue"
+    }
+  },
+  {
+    "key": "us-il",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture, white, city, cityscape, downtown, buildings",
+      "top": "light blue, light blue jagged line, blue sky",
+      "middle": "red text, red numbers",
+      "bottom": null,
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-in",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture",
+      "top": "light blue, blue sky",
+      "middle": "white, white fade, white gradient",
+      "bottom": "green line, green strip, green jagged line, brown line",
+      "artwork": "wooden bridge, brown bridge, bridge"
+    }
+  },
+  {
+    "key": "us-ks",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture, light blue",
+      "top": "light blue, fade blue, red text",
+      "middle": "light, whitish, seal, circle",
+      "bottom": null,
+      "artwork": "seal, circle"
+    }
+  },
+  {
+    "key": "us-ky",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "white blue fade",
+      "top": "white, white fade",
+      "middle": null,
+      "bottom": "light blue, light blue fade, blue fade",
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-la",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "solid white",
+      "top": "red text",
+      "middle": "left picture, left horse",
+      "bottom": null,
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-ma",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "solid white",
+      "top": "light blue text, blue text",
+      "middle": "red text, red numbers",
+      "bottom": null,
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-md",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture, white, mostly white",
+      "top": "solid white, white",
+      "middle": null,
+      "bottom": "black red yellow, flag, squares",
+      "artwork": "flag, black red yellow"
+    }
+  },
+  {
+    "key": "us-me",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture, mostly white, white",
+      "top": "white, solid white",
+      "middle": "white, solid white",
+      "bottom": "green line, green strip",
+      "artwork": "branch, pinecone, pine cone, small bird, bird"
+    }
+  },
+  {
+    "key": "us-mi",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "white blue",
+      "top": "solid white",
+      "middle": "solid white",
+      "bottom": "blue line, blue wave",
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-mn",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "white light blue",
+      "top": "light blue line, light blue banner, light blue strip",
+      "middle": "white, solid white, center picture",
+      "bottom": "light blue fade, light blue",
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-mo",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "whitish, mostly white",
+      "top": "curvy red line, thin red line",
+      "middle": "solid white, white",
+      "bottom": "curvy blue line, thin blue line",
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-ms",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "solid gold, golden, solid golden, beige, light brown",
+      "top": null,
+      "middle": "circle, seal",
+      "bottom": null,
+      "artwork": "circle, seal"
+    }
+  },
+  {
+    "key": "us-mt",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "solid blue, white frame, nose, left diagonal line, diagonal line, diagonal white, jagged white line",
+      "top": null,
+      "middle": null,
+      "bottom": null,
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-nc",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "white, light",
+      "top": "red text, touch light blue, little light blue",
+      "bottom": "red text"
+    }
+  },
+  {
+    "key": "us-nd",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture",
+      "top": "light blue, blue sky",
+      "middle": null,
+      "bottom": "orange line, yellow line, brown line, yellow glow, orange glow, sunset",
+      "artwork": "animal, cow, buffalo"
+    }
+  },
+  {
+    "key": "us-ne",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "solid white, whitish",
+      "top": "blue line, blue banner, dark blue line, dark blue banner, yellow text, dark banner",
+      "middle": null,
+      "bottom": null,
+      "artwork": "farmer, person, sowing"
+    }
+  },
+  {
+    "key": "us-nh",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture, left blue right green, blue green fade, light blue green",
+      "top": null,
+      "middle": null,
+      "bottom": "green",
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-nj",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "yellow, yellow white fade",
+      "top": "yellow",
+      "middle": null,
+      "bottom": "white",
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-nm",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "solid yellow",
+      "top": "green corners, green corner",
+      "middle": "red text, red numbers, red circle, red star",
+      "bottom": null,
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-nv",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture, light blue",
+      "top": null,
+      "middle": null,
+      "bottom": "green yellow, green yellow red, jagged line",
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-ny",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "solid yellow, yellow",
+      "top": "blue line, blue banner, dark blue line, dark blue banner",
+      "middle": "solid yellow",
+      "bottom": "solid yellow",
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-oh",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "mostly white, white",
+      "top": "red line, red triangle, red banner, red strip",
+      "middle": null,
+      "bottom": null,
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-ok",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "blue white, light blue, picture",
+      "top": null,
+      "middle": "white, white dove, white bird, dove, bird",
+      "bottom": null,
+      "artwork": "dove, white dove, white bird"
+    }
+  },
+  {
+    "key": "us-or",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "light gray, light grey, whitish, light blue",
+      "middle": "green artwork, green tree, green pine, tree, pine",
+      "artwork": "green tree, green pine, tree, pine, green"
+    }
+  },
+  {
+    "key": "us-pa",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "3 lines, blue white yellow",
+      "top": "solid blue line, blue line, deep blue line, blue strip, deep blue strip",
+      "middle": "white, white line, solid white",
+      "bottom": "solid yellow line, yellow line, yellow strip"
+    }
+  },
+  {
+    "key": "us-ri",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture, white, light gray, light grey, wave, gray wave, grey wave",
+      "top": null,
+      "middle": null,
+      "bottom": null,
+      "artwork": "anchor"
+    }
+  },
+  {
+    "key": "us-sc",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture, white, blue",
+      "top": "blue line, blue banner, dark blue line, dark blue banner",
+      "middle": "white, solid white, blue tree, blue palm, palm tree, vertical line",
+      "bottom": "blue line, blue banner, dark blue line, dark blue banner",
+      "artwork": "tree, palm tree, blue tree, blue palm"
+    }
+  },
+  {
+    "key": "us-sd",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture, light gray, light blue",
+      "top": "blue sky, light blue",
+      "middle": "gray mountains, mountains, mountain, mount, light brown, golden, faces, face, head, heads",
+      "bottom": null,
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-tn",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture, white green,",
+      "top": "white",
+      "middle": "dash, minus",
+      "bottom": "green, light green, green hills, hills",
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-tx",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "solid white, all white",
+      "top": "black text",
+      "middle": null,
+      "bottom": null,
+      "artwork": "star"
+    }
+  },
+  {
+    "key": "us-ut",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture",
+      "top": "light blue, blue sky",
+      "middle": "orange picture, orange arch, orange with white",
+      "bottom": "solid orange",
+      "artwork": "arch, orange arch"
+    }
+  },
+  {
+    "key": "us-va",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "solid white, all white",
+      "top": "blue text",
+      "middle": null,
+      "bottom": null,
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-vt",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "solid green, green, white frame, white box, white square",
+      "artwork": "frame, white frame, white box, white square",
+      "top": "white text"
+    }
+  },
+  {
+    "key": "us-wa",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "mostly white",
+      "artwork": "light blue mountain, mountain, peak, rainier",
+      "bottom": "light blue, bluish",
+      "top": "red text"
+    }
+  },
+  {
+    "key": "us-wi",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "solid white",
+      "top": "red text, left corner text, corner text, corner red, left red, thin line",
+      "middle": null,
+      "bottom": null,
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-wv",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "solid white, whitish",
+      "top": "blue line, blue banner, dark blue line, dark blue banner, yellow text, dark line",
+      "middle": null,
+      "bottom": "line, yellow line, blue line",
+      "artwork": null
+    }
+  },
+  {
+    "key": "us-wy",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "picture, blue, gray, grey",
+      "top": "blue, light blue, blue sky",
+      "middle": null,
+      "bottom": "gray, grey, mountain",
+      "artwork": "black horse, horse, cowboy, rider, rodeo"
+    }
+  }
+]

@@ -1,6 +1,6 @@
 import { MapIcon, ClockIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 import { Navbar, NavbarBrand, NavbarCollapse, NavbarLink, NavbarToggle } from "flowbite-react";
-import type { ElementType, ReactNode, SVGAttributes } from "react";
+import type { ElementType } from "react";
 import { Link, useLocation } from "react-router";
 
 const AppNavbar = () => {
