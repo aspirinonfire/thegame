@@ -27,7 +27,7 @@ export interface AppApiSlice {
   apiPost: <TResponse>(endpoint: string, body?: any) => Promise<TResponse | ApiError>;
 }
 
-export const createApiSlice: StateCreator<AppStore, [], [], AppApiSlice> = (set, get) => ({
+export const createAppApiSlice: StateCreator<AppStore, [], [], AppApiSlice> = (set, get) => ({
   apiErrors: [],
   enqueueError: (apiError: ApiError) => {
     set((s) => ({ apiErrors: [...s.apiErrors, apiError] }));

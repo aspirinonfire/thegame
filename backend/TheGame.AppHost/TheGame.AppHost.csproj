@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <Sdk Name="Aspire.AppHost.Sdk" Version="9.0.0" />
 
@@ -19,6 +19,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TheGame.Api\TheGame.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="mssql_volume\" />
   </ItemGroup>
 
 </Project>

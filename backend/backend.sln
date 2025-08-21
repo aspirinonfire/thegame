@@ -30,6 +30,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TheGame.AppHost", "TheGame.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TheGame.ServiceDefaults", "TheGame.ServiceDefaults\TheGame.ServiceDefaults.csproj", "{E6B34D71-58F4-5710-4CFB-42521EFC973F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TheGame.PlateTrainer", "TheGame.PlateTrainer\TheGame.PlateTrainer.csproj", "{F7681F13-B646-F389-748D-67F0408C05F2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ai", "ai", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		..\ai\training_data\plate_descriptions.json = ..\ai\training_data\plate_descriptions.json
+		..\ai\trainer.py = ..\ai\trainer.py
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -124,12 +132,25 @@ Global
 		{E6B34D71-58F4-5710-4CFB-42521EFC973F}.Release|x64.Build.0 = Release|Any CPU
 		{E6B34D71-58F4-5710-4CFB-42521EFC973F}.Release|x86.ActiveCfg = Release|Any CPU
 		{E6B34D71-58F4-5710-4CFB-42521EFC973F}.Release|x86.Build.0 = Release|Any CPU
+		{F7681F13-B646-F389-748D-67F0408C05F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7681F13-B646-F389-748D-67F0408C05F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F7681F13-B646-F389-748D-67F0408C05F2}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F7681F13-B646-F389-748D-67F0408C05F2}.Debug|x64.Build.0 = Debug|Any CPU
+		{F7681F13-B646-F389-748D-67F0408C05F2}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F7681F13-B646-F389-748D-67F0408C05F2}.Debug|x86.Build.0 = Debug|Any CPU
+		{F7681F13-B646-F389-748D-67F0408C05F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7681F13-B646-F389-748D-67F0408C05F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F7681F13-B646-F389-748D-67F0408C05F2}.Release|x64.ActiveCfg = Release|Any CPU
+		{F7681F13-B646-F389-748D-67F0408C05F2}.Release|x64.Build.0 = Release|Any CPU
+		{F7681F13-B646-F389-748D-67F0408C05F2}.Release|x86.ActiveCfg = Release|Any CPU
+		{F7681F13-B646-F389-748D-67F0408C05F2}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{9ABB7122-D9AE-4CEF-B622-8ECC7FFB05FF} = {DAA97881-905A-4002-AF6C-A6B9B4C6E5F5}
+		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {DAA97881-905A-4002-AF6C-A6B9B4C6E5F5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9F5897A5-3048-441E-8EA1-32BCBD2C55EB}
