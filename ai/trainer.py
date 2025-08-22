@@ -136,7 +136,7 @@ def export_to_onnx(trained_model: Pipeline, export_path: str):
 
 # main script
 base_dir = Path(__file__).parent
-training_data_path = os.path.join(base_dir, "..", "training_data", "plate_descriptions.json")
+training_data_path = os.path.join(base_dir, "training_data", "plate_descriptions.json")
 
 json_data = read_raw_data(training_data_path)
 training_rows = transform_to_training_rows(json_data)
@@ -146,7 +146,8 @@ trained_model = train_maxent(training_rows)
 
 print_top_k("red top white middle blue bottom", trained_model, 5)
 print_top_k("solid white plate", trained_model, 5)
+print_top_k("green top", trained_model, 5)
 
 # save to onnx
-onnx_export_path = os.path.join(base_dir, "..", "..", "ui", "public", "skl_plates_model.onnx")
+onnx_export_path = os.path.join(base_dir, "..", "ui", "public", "skl_plates_model.onnx")
 export_to_onnx(trained_model, onnx_export_path)
