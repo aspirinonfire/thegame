@@ -19,7 +19,7 @@ export interface AppGameSlice {
   retrieveGameHistory: () => Promise<GameHistory | null>;
 }
 
-export const createGameSlice: StateCreator<AppStore, [], [], AppGameSlice> = (set, get) => ({
+export const createAppGameSlice: StateCreator<AppStore, [], [], AppGameSlice> = (set, get) => ({
   activeGame: null,
   gameHistory: {
     numberOfGames: 0,

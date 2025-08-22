@@ -49,6 +49,11 @@ deactivate UI
 ```
 
 ### Dev Notes
-EF Migrations
+#### EF Migrations
 `dotnet ef migrations add <Migration-Name> --project .\TheGame.Domain --startup-project .\TheGame.Api`
 Migrations will be applied automatically in dev. See `TheGame.Api.Program`.
+#### Plate Search Model training
+```
+pip install scikit-learn, pandas, skl2onnx
+python ai/trainer.py
+```
