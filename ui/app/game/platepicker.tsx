@@ -14,10 +14,23 @@ interface PickerControls {
   plateData: LicensePlateSpot[];
 }
 
-const territoriesByLowercaseKeyLkp = territories.reduce((map, ter) => {
+interface TerritoryToRender extends Territory {
+  searchProbability: number | undefined 
+}
+
+const allTerritoriesToRender = territories
+  .map(ter => {
+    const toRender: TerritoryToRender = {
+      ...ter,
+      searchProbability: undefined
+    }
+    return toRender;
+  });
+
+const territoriesByLowercaseKeyLkp = allTerritoriesToRender.reduce((map, ter) => {
   map.set(ter.key.toLowerCase(), ter);
   return map;
-}, new Map<string, Territory>());
+}, new Map<string, TerritoryToRender>());
 
 export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, plateData }: PickerControls) => {
   const [user, getMatchingPlates] = useAppState(useShallow(state =>
@@ -30,24 +43,27 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
   
   const [formData, setFormData] = useState(plateByKeyLkp);
   const [searchTerm, setSearchTerm] = useState<string | null>();
-  const [useAiSearch, setUseAiSearch] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout>(null);
-  const prevUseAiSearch = useRef(false);
 
-  const [territoriesToRender, setTerritoriesToRender] = useState(territories);
+  const [territoriesToRender, setTerritoriesToRender] = useState(allTerritoriesToRender);
   useEffect(() => {
-    if (useAiSearch) {
-      if (!searchTerm) {
-        if (!!debounceTimerRef.current) {
-          clearTimeout(debounceTimerRef.current);
-        }
-        setIsSearching(false);
-        setTerritoriesToRender(territories);
-        return;
-      }
+    if (!!debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    setIsSearching(false);
 
+    if (!searchTerm) {
+      setTerritoriesToRender(allTerritoriesToRender);
+      return;
+    }
+
+    // do a quick search, and fallback to ai search on no quick match
+    const quickSearchResults = getQuickSearchResults(searchTerm);
+    if (quickSearchResults.length > 0) {
+      setTerritoriesToRender(quickSearchResults);
+    } else {
       setIsSearching(true);
       
       const debounceTimeout = setTimeout(() => {
@@ -62,47 +78,40 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
         clearTimeout(debounceTimerRef.current);
       }
       debounceTimerRef.current = debounceTimeout;
-    } else {
-      if (!!debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-      setIsSearching(false);
-
-      if (prevUseAiSearch.current) {
-        setSearchTerm(null);
-      }
-
-      const toRender = getPlatesMatchingSimpleSearch(searchTerm);
-      setTerritoriesToRender(toRender);
     }
+  }, [searchTerm]);
 
-    prevUseAiSearch.current = useAiSearch;
-  }, [searchTerm, useAiSearch]);
 
   const [formChangePreview, setFormChangePreview] = useState<Map<string, boolean>>(new Map<string, boolean>());
 
   useEffect(() => {
     setFormChangePreview(new Map<string, boolean>());
-    setUseAiSearch(false);
   }, [isShowPicker]);
 
   async function getPlatesMatchingAiSearch(query: string) {
     const scoredMatches = await getMatchingPlates(query);
 
     return scoredMatches
-      .map(scoredLbl => territoriesByLowercaseKeyLkp.get(scoredLbl.label.toLowerCase()))
-      .filter(ter => !!ter)
-      .slice(0, 5)
+      .map(scoredLbl =>({
+        toRender: territoriesByLowercaseKeyLkp.get(scoredLbl.label.toLowerCase()),
+        prob: scoredLbl.probability
+      }))
+      .filter(ter => !!ter.toRender && ter.prob > 0.05)
+      .slice(0, 10)
+      .map(ter => ({
+        ...ter.toRender!,
+        searchProbability: ter.prob
+      }));
   }
 
-  function getPlatesMatchingSimpleSearch(query: string | null | undefined) {
+  function getQuickSearchResults(query: string | null | undefined) {
     if (!query) {
-      return territories;
+      return allTerritoriesToRender;
     }
 
     const searchValue = query.toLowerCase();
 
-    return territories
+    return allTerritoriesToRender
       .filter(plate => {
         const plateName = plate.longName.toLowerCase()
 
@@ -205,6 +214,11 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
                 height="500"
                 className={`w-300 h-auto ${ isSearching ? "blur-[3px] grayscale-90 opacity-50" : null }`} />) :
               (<h1 className="text-2xl">{territory.longName} ({territory.country})</h1>)}
+            { !!territory.searchProbability && !isSearching &&
+              <span className="text-xs text-gray-500">
+                Probability:&nbsp;{(territory.searchProbability! * 100.0).toFixed(2)}%
+              </span>
+            }
           </div>
         </div>
       ));
@@ -221,7 +235,7 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
           ref={searchInputRef}
           id="default-search"
           className="block w-full p-2 ps-10 placeholder:text-base text-gray-900 border border-gray-300 rounded-lg bg-gray-200 focus:ring-blue-500 focus:border-blue-500"
-          placeholder={useAiSearch ? "Visual description" : "Name or abbreviation"}
+          placeholder="Name, abbreviation, or visual description"
           onChange={event => setSearchTerm(event.target.value)}
           value={searchTerm || ""} />
         <button type="button"
@@ -245,20 +259,10 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
     </>
   }
 
-  function renderSearchMode() {
-    return <>
-      <ToggleSwitch className="pb-2" color="gray"
-        checked={useAiSearch}
-        onChange={setUseAiSearch}
-        label="Search by plate description"/>
-    </>
-  }
-
   return (
     <>
       <Modal dismissible show={isShowPicker} onClose={handleClose} initialFocus={searchInputRef} size="xl">
         <ModalHeader className="[&>button]:hidden [&>h3]:grow">
-          {renderSearchMode()}
           {renderSearch()}
           {renderFormChangePreview()}
         </ModalHeader>
