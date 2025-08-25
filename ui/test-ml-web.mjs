@@ -1,6 +1,6 @@
 import * as ort from 'onnxruntime-node';
 
-const model_file = "skl_plates_model.onnx";
+const model_file = 'skl_plates_model.onnx';
 
 const sess = await ort.InferenceSession.create(`public/${model_file}`);
 
@@ -8,8 +8,10 @@ console.log('inputs', sess.inputNames);
 console.log('outputs', sess.outputNames);
 console.log('meta', sess.inputMetadata);
 
+const query = 'red top white middle blue bottom';
+
 const feeds = {
-  text: new ort.Tensor('string', [ 'top red white middle blue bottom' ], [1, 1]),
+  text: new ort.Tensor('string', [ query ], [1, 1]),
 };
 
 const results = await sess.run(feeds);
@@ -33,8 +35,8 @@ for (let batchIndex = 0; batchIndex < batchSize; batchIndex += 1) {
 
   const topK = pairs.slice(0, k);
 
-  console.log(`\nTop ${k} for batch ${batchIndex}:`);
+  console.log(`\nTop ${k} for \"${query}\":`);
   for (const item of topK) {
-    console.log(`${item.label.padEnd(4)}  ${item.probability}`);
+    console.log(`${item.label}   ${item.probability.toString().substring(0, 5)}`);
   }
 }
