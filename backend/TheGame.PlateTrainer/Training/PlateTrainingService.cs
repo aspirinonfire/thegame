@@ -92,22 +92,6 @@ public sealed class PlateTrainingService(MLContext mlContext, int numOfIteration
       parts.Featurizer);
   }
 
-  public void ExportToOnnx(TrainedModel trainedModel,
-    string onnxPath,
-    string labelsJsonPath)
-  {
-    // Export ONNX with only the "Score" output to simplify client post-processing.
-
-    var schemaView = mlContext.Data.LoadFromEnumerable([new PlateTrainingRow()]);
-
-    using (var stream = File.Create(onnxPath))
-    {
-      mlContext.Model.ConvertToOnnx(trainedModel.Model, schemaView, stream, ["PredictedLabel", "Score"]);
-    }
-
-    File.WriteAllText(labelsJsonPath, JsonSerializer.Serialize(trainedModel.Labels));
-  }
-
   public sealed record EstimatorPipelineParts(IEstimator<ITransformer> Featurizer,
     IEstimator<MulticlassPredictionTransformer<MaximumEntropyModelParameters>> Trainer);
 }
