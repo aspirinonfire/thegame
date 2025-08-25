@@ -18,7 +18,8 @@ synonyms_lkp = {
   "middle": ["center"],
   "bottom": ["lower"],
   "line": ["strip", "banner"],
-  "lines": ["strips", "banners"]
+  "lines": ["strips", "banners"],
+  "solid": ["all"]
 }
 
 # Read training data json and transform it into de-normalized training rows.

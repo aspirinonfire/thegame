@@ -59,7 +59,7 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "solid white, white, all white",
+      "plate": "solid white, white",
       "top": "red cursive, cursive red text, red script"
     }
   },
@@ -79,7 +79,7 @@
     "weight": 1.0,
     "description": {
       "plate": "blue white, blue white fade, light blue white",
-      "top": "light blue",
+      "top": "light blue, blue",
       "bottom": "white"
     }
   },
@@ -444,7 +444,7 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "solid white, all white, white",
+      "plate": "solid white, white",
       "top": "black text, star, black star, left star, left black star, black symbol, left black symbol"
     }
   },
@@ -464,7 +464,7 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "solid white, all white, white",
+      "plate": "solid white, white",
       "top": "blue text"
     }
   },
