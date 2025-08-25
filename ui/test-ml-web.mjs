@@ -4,9 +4,9 @@ const model_file = "skl_plates_model.onnx";
 
 const sess = await ort.InferenceSession.create(`public/${model_file}`);
 
-// console.log('inputs', sess.inputNames);
-// console.log('outputs', sess.outputNames);
-// console.log('meta', sess.inputMetadata);
+console.log('inputs', sess.inputNames);
+console.log('outputs', sess.outputNames);
+console.log('meta', sess.inputMetadata);
 
 const feeds = {
   text: new ort.Tensor('string', [ 'top red white middle blue bottom' ], [1, 1]),

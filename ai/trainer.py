@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-import pandas
+import pandas as pd
+from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
 import os;
 from pathlib import Path
@@ -11,9 +12,9 @@ class RawTrainingDataRow:
   weight: float
   description: dict[str, str]
 
-# Read training data json and transform it into de-normalized training rows
-# Note: we are loading entire data set into memory because it is small enough and makes rest of the code simpler
-# For larger data sets, we'll need to refactor solution to work with streams, and de-normalize once
+# Read training data json and transform it into de-normalized training rows.
+# Note: we are loading entire data set into memory because it is small enough and makes rest of the code simpler.
+# For larger data sets, we'll need to refactor solution to work with streams, and de-normalize once into a temp file.
 def read_raw_data(training_data_path: str) -> list[RawTrainingDataRow]:
   import json;
   print("Reading raw json data...")
@@ -29,9 +30,10 @@ def read_raw_data(training_data_path: str) -> list[RawTrainingDataRow]:
 # { "key": "us-ca", "description": { "plate" : "white, solid white" }} =>
 # { "label": "us-ca", "text": "white plate" }
 # { "label": "us-ca", "text": "solid white plate" }
-def transform_to_training_rows(training_data: list[RawTrainingDataRow]) -> pandas.DataFrame:
+def transform_to_training_rows(training_data: list[RawTrainingDataRow]) -> pd.DataFrame:
   print("Transforming to training rows...")
-  training_row_df = pandas.DataFrame(training_data)
+  training_row_df = pd.DataFrame(training_data)
+  training_row_df = training_row_df[training_row_df["key"] != "sample"]
   return (
     training_row_df
       .rename(columns={"key": "label"})
@@ -49,7 +51,7 @@ def transform_to_training_rows(training_data: list[RawTrainingDataRow]) -> panda
   )
 
 # Train data set using logistic regression (MaxEnt) with tfidf tokenization and saga optimizer
-def train_maxent(training_rows: pandas.DataFrame,
+def train_maxent(training_rows: pd.DataFrame,
                  random_state: int = 42,
                  l2_strength: int = 10,
                  max_iter: int = 50) -> Pipeline:
@@ -69,11 +71,11 @@ def train_maxent(training_rows: pandas.DataFrame,
     calculate_sklearn_text_vectorizer_output_shapes,
     convert_sklearn_tfidf_vectoriser,
     options={
-        "tokenexp": None,
-        "separators": None,
-        "nan": [True, False],
-        "keep_empty_string": [True, False],
-        "locale": None,
+      "tokenexp": None,
+      "separators": None,
+      "nan": [True, False],
+      "keep_empty_string": [True, False],
+      "locale": None,
     },
   )
 
@@ -83,31 +85,34 @@ def train_maxent(training_rows: pandas.DataFrame,
       lowercase=True,
       token_pattern=r"[a-z0-9-]+", # word tokenization (words only no spaces)
       min_df=1,
-      stop_words=None
-  )),
-    ("clf", LogisticRegression(
+      # TODO remove stop words
+      stop_words=None)
+    ),
+    ("maxent", LogisticRegression(
       penalty="l2",
       C=l2_strength,
       solver="saga",
       max_iter=max_iter,
       random_state=random_state,
-      n_jobs=-1
-    ))
+      n_jobs=-1)
+    )
   ])
 
-  trained_model = pipeline.fit(X=training_rows["text"].astype(str),
-                               y=training_rows["label"].astype(str))
+  estimator = pipeline.fit(
+    X=training_rows["text"].astype(str),
+    y=training_rows["label"].astype(str))
+  
   print("Model trained.")
-  return trained_model
+  return estimator
 
 # Print query predictions against trained model
-def print_top_k(query_text: str, trained_model: Pipeline, top_k: int = 5):
-  labels = trained_model.named_steps["clf"].classes_
+def print_top_k(query_text: str, estimator: Pipeline, top_k: int = 5):
+  labels = estimator.named_steps["maxent"].classes_
 
-  raw_probs = trained_model.predict_proba([query_text])[0]
+  raw_probs = estimator.predict_proba([query_text])[0]
   
   probabilities = (
-    pandas.DataFrame({"label": labels, "probability": raw_probs})
+    pd.DataFrame({"label": labels, "probability": raw_probs})
       .sort_values("probability", ascending=False)
       .reset_index(drop=True)
   )
@@ -115,17 +120,19 @@ def print_top_k(query_text: str, trained_model: Pipeline, top_k: int = 5):
   print(f"== \"{query_text}\" ==")
   print(probabilities.head(top_k))
 
-def export_to_onnx(trained_model: Pipeline, export_path: str):
+def export_to_onnx(estimator: Pipeline, export_path: str):
   from skl2onnx import to_onnx
   from skl2onnx.common.data_types import StringTensorType
 
-  print("Exporting to ONNX...")
+  print(f"Exporting estimator to {export_path}...")
 
   onnx = to_onnx(
-    trained_model,
-    initial_types=[("text", StringTensorType([None, 1]))],  # batch of strings [N,1]
+    estimator,
+    # define inference input for onnxruntime
+    initial_types=[("text", StringTensorType([None, 1]))],
     options={
-      id(trained_model.named_steps["clf"]): {"zipmap": False, "output_class_labels": True}
+      # zipmap is not well supported in onnxruntime-web
+      id(estimator.named_steps["maxent"]): {"zipmap": False, "output_class_labels": True}
     }
   )
 
@@ -140,14 +147,16 @@ training_data_path = os.path.join(base_dir, "training_data", "plate_descriptions
 
 json_data = read_raw_data(training_data_path)
 training_rows = transform_to_training_rows(json_data)
-trained_model = train_maxent(training_rows)
+estimator = train_maxent(training_rows)
 
 # TODO evaluate accuracy, log-loss, cv k-fold, etc
 
-print_top_k("red top white middle blue bottom", trained_model, 5)
-print_top_k("solid white plate", trained_model, 5)
-print_top_k("green top", trained_model, 5)
+print_top_k("red top white middle blue bottom", estimator, 5)
+print_top_k("solid white plate", estimator, 5)
+print_top_k("green top", estimator, 5)
+print_top_k("blue white plate", estimator, 5)
+print_top_k("green plate", estimator, 5)
 
 # save to onnx
 onnx_export_path = os.path.join(base_dir, "..", "ui", "public", "skl_plates_model.onnx")
-export_to_onnx(trained_model, onnx_export_path)
+export_to_onnx(estimator, onnx_export_path)

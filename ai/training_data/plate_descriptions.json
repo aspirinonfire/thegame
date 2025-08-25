@@ -1,14 +1,24 @@
 [
   {
+    "key": "sample",
+    "version": "default",
+    "weight": 1.0,
+    "description": {
+      "plate": "<overall and most obvious description of a plate, usually colors, and any artwork>",
+      "top": "<description of the upper part of the plate - usually colors, and any shapes like lines or banners>",
+      "middle": "<description of the center part of the plate (if applicable) - usually colors, and any shapes like lines or banners>",
+      "bottom": "<description of the lower part of the plate - usually colors, and any shapes like lines or banner>."
+    }
+  },
+  {
     "key": "us-ak",
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture, light blue",
+      "plate": "light blue, light blue yellow, blue yellow, blue white, light blue white",
       "top": "light blue, mostly blue, fade blue",
-      "middle": "fade yellow, yellow glow, blueish, light blue, yellow circle, yellow sun, yellowish fade, yellow fade, bear",
-      "bottom": "white strip, white line",
-      "artwork": "grizzly bear, bear, black bear, standing bear, animal"
+      "middle": "fade yellow, yellow glow, yellow circle, yellow sun, yellowish fade, yellow fade, grizzly bear, bear, black bear, standing bear, animal",
+      "bottom": "white"
     }
   },
   {
@@ -16,11 +26,10 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture, light blue",
+      "plate": "green, light green, green yellow",
       "top": "yellow fade, yellow",
       "middle": "green fade, light green, green hills",
-      "bottom": "blue line, blue strip, blue lake",
-      "artwork": null
+      "bottom": "blue, blue line, blue lake"
     }
   },
   {
@@ -28,11 +37,10 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture",
-      "top": "light blue, fade blue, red text",
-      "middle": "light, whitish, diamond",
-      "bottom": "white strip, white line, white fade",
-      "artwork": "diamond"
+      "plate": "blue white, light blue white, light blue",
+      "top": "light blue, blue fade, red text",
+      "middle": "diamond, gem",
+      "bottom": "white fade, white"
     }
   },
   {
@@ -40,11 +48,10 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture",
-      "top": "light blue, fade blue, green blue, teal",
-      "middle": "soft white, white",
-      "bottom": "purple line, purple mountains, purple cactus, yellow fade, yellow glow",
-      "artwork": "cactus, purple cactus, purple mountains"
+      "plate": "purple cactus, purple mountains, blue yellow, blue yellow purple, blue purple, blue white yellow, blue white yellow purple",
+      "top": "light blue, light blue fade",
+      "middle": "white, yellow",
+      "bottom": "purple line, purple, purple mountains"
     }
   },
   {
@@ -52,11 +59,8 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "solid white",
-      "top": "red cursive, cursive red text, red script",
-      "middle": null,
-      "bottom": null,
-      "artwork": null
+      "plate": "solid white, white, all white",
+      "top": "red cursive, cursive red text, red script"
     }
   },
   {
@@ -64,9 +68,8 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture, mountains, mountain range, snowy peaks, snowy ridge",
-      "top": "green jagged line, red jagged line, green line, red line, green, red",
-      "middle": "white",
+      "plate": "picture, mountains, mountain range, snowy peaks, snowy ridge, green white",
+      "top": "green jagged line, green line, green",
       "bottom": "white"
     }
   },
@@ -75,11 +78,9 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "blue white fade, white blue fade, blue white gradient, white blue gradient",
+      "plate": "blue white, blue white fade, light blue white",
       "top": "light blue",
-      "middle": null,
-      "bottom": "white",
-      "artwork": ""
+      "bottom": "white"
     }
   },
   {
@@ -87,11 +88,9 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "solid white",
+      "plate": "solid white, white, red symbol",
       "top": "red line, thin red line",
-      "middle": "small graphic, small square graphic, red graphic",
-      "bottom": "red line, thin red line",
-      "artwork": null
+      "bottom": "red line, thin red line"
     }
   },
   {
@@ -99,11 +98,7 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "solid dark blue, solid deep blue, deep blue, yellow border, yellow frame",
-      "top": null,
-      "middle": "yellow text, yellow numbers",
-      "bottom": null,
-      "artwork": null
+      "plate": "solid dark blue, solid deep blue, deep blue, blue, yellow border, yellow frame, yellow text"
     }
   },
   {
@@ -111,11 +106,8 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "white, picture",
-      "top": null,
-      "middle": "oranges, fruit, fruits",
-      "bottom": null,
-      "artwork": "oranges, fruit, fruits"
+      "plate": "white, green white orange, green white",
+      "middle": "orange, oranges, orange fruit, fruit, fruits"
     }
   },
   {
@@ -123,11 +115,9 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "solid white, mostly white",
+      "plate": "solid white, white",
       "top": "black text",
-      "middle": null,
-      "bottom": null,
-      "artwork": "peach, fruits, fruit"
+      "middle": "peach, fruit"
     }
   },
   {
@@ -135,11 +125,7 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "solid white",
-      "top": null,
-      "middle": null,
-      "bottom": null,
-      "artwork": "rainbow, half-circle, half circle"
+      "plate": "solid white, white, rainbow, half circle, semicircle"
     }
   },
   {
@@ -147,11 +133,8 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture, white, city, cityscape, downtown, buildings",
-      "top": "light blue, light blue jagged line, blue sky",
-      "middle": null,
-      "bottom": null,
-      "artwork": null
+      "plate": "light blue white, light blue, blue white, white, city, cityscape, downtown, buildings",
+      "top": "light blue, light blue jagged line, blue sky"
     }
   },
   {
@@ -159,10 +142,10 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture",
-      "top": "red, red strip, red fade, solid red, deep red",
-      "middle": "white, light",
-      "bottom": "blue, blue line, blue strip, deep blue, dark blue"
+      "plate": "red white blue",
+      "top": "red, red line, dark red",
+      "middle": "white, white line",
+      "bottom": "blue, blue line, dark blue, dark blue line"
     }
   },
   {
@@ -170,11 +153,8 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture, white, city, cityscape, downtown, buildings",
-      "top": "light blue, light blue jagged line, blue sky",
-      "middle": "red text, red numbers",
-      "bottom": null,
-      "artwork": null
+      "plate": "light blue white, light blue, white, blue white, city, cityscape, downtown, buildings, red text",
+      "top": "light blue, light blue jagged line, blue sky"
     }
   },
   {
@@ -182,11 +162,10 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture",
+      "plate": "light blue, light blue white green, blue white green",
       "top": "light blue, blue sky",
-      "middle": "white, white fade, white gradient",
-      "bottom": "green line, green strip, green jagged line, brown line",
-      "artwork": "wooden bridge, brown bridge, bridge"
+      "middle": "white, white fade",
+      "bottom": "green line"
     }
   },
   {
@@ -194,11 +173,9 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture, light blue",
-      "top": "light blue, fade blue, red text",
-      "middle": "light, whitish, seal, circle",
-      "bottom": null,
-      "artwork": "seal, circle"
+      "plate": "light blue, light blue white, white seal, white circle",
+      "top": "light blue, light blue fade",
+      "middle": "white, white seal, white circle"
     }
   },
   {
@@ -206,11 +183,9 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "white blue fade",
+      "plate": "white blue fade, white light blue, white light blue fade",
       "top": "white, white fade",
-      "middle": null,
-      "bottom": "light blue, light blue fade, blue fade",
-      "artwork": null
+      "bottom": "light blue, light blue fade, blue fade"
     }
   },
   {
@@ -220,9 +195,7 @@
     "description": {
       "plate": "solid white",
       "top": "red text",
-      "middle": "left picture, left horse",
-      "bottom": null,
-      "artwork": null
+      "middle": "left picture, left horse, horse, left rider, rider"
     }
   },
   {
@@ -230,11 +203,8 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "solid white",
-      "top": "light blue text, blue text",
-      "middle": "red text, red numbers",
-      "bottom": null,
-      "artwork": null
+      "plate": "solid white, white, red text",
+      "top": "light blue text, blue text"
     }
   },
   {
@@ -242,11 +212,9 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture, white, mostly white",
+      "plate": "white, mostly white, flag, black yellow, yellow black, black yellow flag, yellow black flag",
       "top": "solid white, white",
-      "middle": null,
-      "bottom": "black red yellow, flag, squares",
-      "artwork": "flag, black red yellow"
+      "bottom": "black red yellow, flag, squares"
     }
   },
   {
@@ -254,11 +222,10 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture, mostly white, white",
+      "plate": "mostly white, white white green",
       "top": "white, solid white",
-      "middle": "white, solid white",
-      "bottom": "green line, green strip",
-      "artwork": "branch, pinecone, pine cone, small bird, bird"
+      "middle": "branch, green branch, pinecone, pine cone, small bird, bird, left bird, left branch, left pine cone",
+      "bottom": "green line"
     }
   },
   {
@@ -267,10 +234,8 @@
     "weight": 1.0,
     "description": {
       "plate": "white blue",
-      "top": "solid white",
-      "middle": "solid white",
-      "bottom": "blue line, blue wave",
-      "artwork": null
+      "top": "solid white, white",
+      "bottom": "blue, blue line, blue wave"
     }
   },
   {
@@ -278,11 +243,10 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "white light blue",
-      "top": "light blue line, light blue banner, light blue strip",
-      "middle": "white, solid white, center picture",
-      "bottom": "light blue fade, light blue",
-      "artwork": null
+      "plate": "light blue white, blue white",
+      "top": "light blue line, light blue",
+      "middle": "white, solid white, dot, symbol",
+      "bottom": "light blue fade, light blue"
     }
   },
   {
@@ -290,11 +254,10 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "whitish, mostly white",
-      "top": "curvy red line, thin red line",
+      "plate": "white",
+      "top": "curvy red line, red line, thin red line",
       "middle": "solid white, white",
-      "bottom": "curvy blue line, thin blue line",
-      "artwork": null
+      "bottom": "curvy blue line, blue line, thin blue line"
     }
   },
   {
@@ -302,11 +265,7 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "solid gold, golden, solid golden, beige, light brown",
-      "top": null,
-      "middle": "circle, seal",
-      "bottom": null,
-      "artwork": "circle, seal"
+      "plate": "solid gold, golden, solid golden, beige, light brown, circle, seal"
     }
   },
   {
@@ -314,11 +273,8 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "solid blue, white frame, nose, left diagonal line, diagonal line, diagonal white, jagged white line",
-      "top": null,
-      "middle": null,
-      "bottom": null,
-      "artwork": null
+      "plate": "solid blue, dark blue white frame",
+      "middle": "nose, left diagonal line, diagonal line, diagonal white, jagged white line"
     }
   },
   {
@@ -327,8 +283,9 @@
     "weight": 1.0,
     "description": {
       "plate": "white, light",
-      "top": "red text, touch light blue, little light blue",
-      "bottom": "red text"
+      "top": "red text",
+      "middle": "dash, line, minus",
+      "bottom": "red text, light blue"
     }
   },
   {
@@ -336,11 +293,10 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture",
+      "plate": "animal, cow, buffalo, light blue yellow, light blue orange, blue orange, blue yellow",
       "top": "light blue, blue sky",
       "middle": null,
-      "bottom": "orange line, yellow line, brown line, yellow glow, orange glow, sunset",
-      "artwork": "animal, cow, buffalo"
+      "bottom": "orange line, yellow line, brown line, yellow glow, orange glow, right animal, right buffalo"
     }
   },
   {
@@ -349,10 +305,7 @@
     "weight": 1.0,
     "description": {
       "plate": "solid white, whitish",
-      "top": "blue line, blue banner, dark blue line, dark blue banner, yellow text, dark banner",
-      "middle": null,
-      "bottom": null,
-      "artwork": "farmer, person, sowing"
+      "top": "blue line, dark blue line, dark blue yellow text, dark banner"
     }
   },
   {
@@ -360,11 +313,8 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture, left blue right green, blue green fade, light blue green",
-      "top": null,
-      "middle": null,
-      "bottom": "green",
-      "artwork": null
+      "plate": "blue green, light blue green, light blue, light green, left blue right green, blue left green right",
+      "bottom": "green"
     }
   },
   {
@@ -372,11 +322,9 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "yellow, yellow white fade",
+      "plate": "yellow, yellow white, yellow white fade",
       "top": "yellow",
-      "middle": null,
-      "bottom": "white",
-      "artwork": null
+      "bottom": "white"
     }
   },
   {
@@ -384,11 +332,9 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "solid yellow",
-      "top": "green corners, green corner",
-      "middle": "red text, red numbers, red circle, red star",
-      "bottom": null,
-      "artwork": null
+      "plate": "solid yellow, yellow, red text",
+      "top": "green corners, green corner, green lines",
+      "middle": "red star, red circle"
     }
   },
   {
@@ -396,10 +342,10 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture, light blue",
+      "plate": "blue, solid blue",
       "top": null,
       "middle": null,
-      "bottom": "green yellow, green yellow red, jagged line",
+      "bottom": "green yellow, green yellow red, jagged line, green, yellow, red corner, green corner",
       "artwork": null
     }
   },
@@ -408,11 +354,9 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "solid yellow, yellow",
-      "top": "blue line, blue banner, dark blue line, dark blue banner",
-      "middle": "solid yellow",
-      "bottom": "solid yellow",
-      "artwork": null
+      "plate": "solid yellow, yellow, blue yellow, dark blue yellow",
+      "top": "blue line, dark blue line, blue, dark blue",
+      "bottom": "solid yellow"
     }
   },
   {
@@ -420,11 +364,8 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "mostly white, white",
-      "top": "red line, red triangle, red banner, red strip",
-      "middle": null,
-      "bottom": null,
-      "artwork": null
+      "plate": "white, red white",
+      "top": "red line, red triangle"
     }
   },
   {
@@ -432,11 +373,8 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "blue white, light blue, picture",
-      "top": null,
-      "middle": "white, white dove, white bird, dove, bird",
-      "bottom": null,
-      "artwork": "dove, white dove, white bird"
+      "plate": "blue white, white blue, white light blue, light blue white, light blue",
+      "middle": "dove, white dove, white bird"
     }
   },
   {
@@ -444,9 +382,8 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "light gray, light grey, whitish, light blue",
-      "middle": "green artwork, green tree, green pine, tree, pine",
-      "artwork": "green tree, green pine, tree, pine, green"
+      "plate": "light gray, light grey, whitish, light blue, green tree, green pine, tree, pine",
+      "middle": "green artwork, green tree, green pine, tree, pine"
     }
   },
   {
@@ -454,10 +391,10 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "3 lines, blue white yellow",
-      "top": "solid blue line, blue line, deep blue line, blue strip, deep blue strip",
-      "middle": "white, white line, solid white",
-      "bottom": "solid yellow line, yellow line, yellow strip"
+      "plate": "blue white yellow, dark blue white, dark blue white yellow",
+      "top": "blue line, dark blue line, dark blue",
+      "middle": "white, solid white",
+      "bottom": "solid yellow line, yellow line, yellow"
     }
   },
   {
@@ -465,11 +402,8 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture, white, light gray, light grey, wave, gray wave, grey wave",
-      "top": null,
-      "middle": null,
-      "bottom": null,
-      "artwork": "anchor"
+      "plate": "white, light gray, light grey, white gray, white grey, wave, gray wave, grey wave",
+      "top": "right anchro, anchor"
     }
   },
   {
@@ -477,9 +411,9 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture, white, blue",
-      "top": "blue line, blue banner, dark blue line, dark blue banner",
-      "middle": "white, solid white, blue tree, blue palm, palm tree, vertical line",
+      "plate": "blue white, dark blue white",
+      "top": "blue line, dark blue line",
+      "middle": "white, solid white, blue tree, blue palm, palm tree, dark blue tree, dark blue palm",
       "bottom": "blue line, blue banner, dark blue line, dark blue banner",
       "artwork": "tree, palm tree, blue tree, blue palm"
     }
@@ -489,11 +423,9 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture, light gray, light blue",
+      "plate": "light blue brown, light blue gray, light blue grey, light brown, light blue light brown",
       "top": "blue sky, light blue",
-      "middle": "gray mountains, mountains, mountain, mount, light brown, golden, faces, face, head, heads",
-      "bottom": null,
-      "artwork": null
+      "middle": "gray mountains, mountains, mountain, mount, light brown, golden, gray, grey, faces, face, head, heads"
     }
   },
   {
@@ -501,11 +433,10 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture, white green,",
+      "plate": "white green, white light green",
       "top": "white",
-      "middle": "dash, minus",
-      "bottom": "green, light green, green hills, hills",
-      "artwork": null
+      "middle": "dash, line, minus",
+      "bottom": "green, light green, green hills, hills"
     }
   },
   {
@@ -513,11 +444,8 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "solid white, all white",
-      "top": "black text",
-      "middle": null,
-      "bottom": null,
-      "artwork": "star"
+      "plate": "solid white, all white, white",
+      "top": "black text, star, black star, left star, left black star, black symbol, left black symbol"
     }
   },
   {
@@ -525,11 +453,10 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture",
-      "top": "light blue, blue sky",
+      "plate": "blue orange, light blue orange, light blue white orange, arch, delicate arch, orange arch",
+      "top": "light blue, blue sky, blue",
       "middle": "orange picture, orange arch, orange with white",
-      "bottom": "solid orange",
-      "artwork": "arch, orange arch"
+      "bottom": "solid orange, orange"
     }
   },
   {
@@ -537,11 +464,8 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "solid white, all white",
-      "top": "blue text",
-      "middle": null,
-      "bottom": null,
-      "artwork": null
+      "plate": "solid white, all white, white",
+      "top": "blue text"
     }
   },
   {
@@ -550,7 +474,6 @@
     "weight": 1.0,
     "description": {
       "plate": "solid green, green, white frame, white box, white square",
-      "artwork": "frame, white frame, white box, white square",
       "top": "white text"
     }
   },
@@ -559,10 +482,9 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "mostly white",
-      "artwork": "light blue mountain, mountain, peak, rainier",
-      "bottom": "light blue, bluish",
-      "top": "red text"
+      "plate": "white, white blue, white light blue, mountain, peak, light blue mountain",
+      "top": "red text, white",
+      "bottom": "light blue"
     }
   },
   {
@@ -572,9 +494,7 @@
     "description": {
       "plate": "solid white",
       "top": "red text, left corner text, corner text, corner red, left red, thin line",
-      "middle": null,
-      "bottom": null,
-      "artwork": null
+      "middle": "dash, line, minus"
     }
   },
   {
@@ -582,11 +502,9 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "solid white, whitish",
-      "top": "blue line, blue banner, dark blue line, dark blue banner, yellow text, dark line",
-      "middle": null,
-      "bottom": "line, yellow line, blue line",
-      "artwork": null
+      "plate": "solid white, blue white, dark blue white",
+      "top": "blue line, dark blue line, yellow text, dark line",
+      "bottom": "line, yellow line, blue line"
     }
   },
   {
@@ -594,11 +512,9 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "picture, blue, gray, grey",
+      "plate": "blue gray, blue grey, light blue gray, black horse, horse, cowboy, black cowbowy, rider, black rider, rodeo",
       "top": "blue, light blue, blue sky",
-      "middle": null,
-      "bottom": "gray, grey, mountain",
-      "artwork": "black horse, horse, cowboy, rider, rodeo"
+      "bottom": "gray, grey, mountain"
     }
   }
 ]
