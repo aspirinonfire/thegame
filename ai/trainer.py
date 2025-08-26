@@ -94,6 +94,10 @@ def transform_to_training_rows(training_data: list[RawTrainingDataRow]) -> pd.Da
 # C=8, tol=0.01, max_iter=30
 # ll-red: 0.4421, ROC AUC: .992 train/.934 test
 #
+# Logistic Regression + newton-cg:
+# C=8, tol=0.001, max_iter=30
+# ll-red: 0.4397, ROC AUC: .992 train/.934 test
+#
 # SGDClassifier and CalibratedClassifierCV could not get ll-reduction above 0.40
 #
 # Dataset is too small to benefit from approximation/online methods and there's
@@ -107,10 +111,12 @@ def create_pipeline(random_state: int = 42,
   from skl2onnx.shape_calculators.text_vectorizer import calculate_sklearn_text_vectorizer_output_shapes
   from skl2onnx.operator_converters.tfidf_vectoriser import convert_sklearn_tfidf_vectoriser
   from sklearn.linear_model import LogisticRegression
-  
+
   print("Building training pipeline...")
   print(f"C={C}, tol={tol}, max_iter={max_iter}")
 
+  # We need to use TraceableTfidfVectorizer from skl2onnx so we can convert
+  # vectorizer to ONNX later. See https://github.com/scikit-learn/scikit-learn/issues/13733
   update_registered_converter(
     TraceableTfidfVectorizer,
     "Skl2onnxTraceableTfidfVectorizer",
@@ -136,7 +142,7 @@ def create_pipeline(random_state: int = 42,
   clf = LogisticRegression(
     solver="lbfgs",
     max_iter=max_iter,
-    # ignored for lbfgs
+    # ignored for non-stochastic
     random_state=random_state,
     penalty="l2",
     C=C,
@@ -276,7 +282,6 @@ def evaluate_model(pipeline: Pipeline,
   print(f"Holdout vs CV Log Loss Reduction delta: {(hold_out_ll_reduction - cv_ll_reduction_mean):.4f}")
 
 def main():
-  # main script
   random_state = 500
 
   base_dir = Path(__file__).parent
