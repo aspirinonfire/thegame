@@ -84,19 +84,32 @@ def transform_to_training_rows(training_data: list[RawTrainingDataRow]) -> pd.Da
 
   return training_rows
 
-# Train data set using logistic regression (MaxEnt) with tfidf tokenization and saga optimizer
+# Train data set
+# Tuned values as of 2025-08-26
+# Logistic Regression + LBFGS:
+# C=8, tol=0.004, max_iter=30
+# ll-red: 0.4559, ROC AUC: .991 train/0.935 test
+#
+# Logistic Regression + SAGA:
+# C=8, tol=0.01, max_iter=30
+# ll-red: 0.4421, ROC AUC: .992 train/.934 test
+#
+# SGDClassifier and CalibratedClassifierCV could not get ll-reduction above 0.40
+#
+# Dataset is too small to benefit from approximation/online methods and there's
+# enough class imbalance that causes probability calibration to become fragile.
 def create_pipeline(random_state: int = 42,
-    l2_strength: int = 10,
-    tol: float = 0.001,
-    max_iter: int = 50) -> Pipeline:
+    C: int = 8,
+    tol: float = 0.004,
+    max_iter: int = 30) -> Pipeline:
   from skl2onnx.sklapi import TraceableTfidfVectorizer # required for ONNX export!
   from skl2onnx import update_registered_converter
   from skl2onnx.shape_calculators.text_vectorizer import calculate_sklearn_text_vectorizer_output_shapes
   from skl2onnx.operator_converters.tfidf_vectoriser import convert_sklearn_tfidf_vectoriser
   from sklearn.linear_model import LogisticRegression
-  from sklearn.feature_extraction import text
   
   print("Building training pipeline...")
+  print(f"C={C}, tol={tol}, max_iter={max_iter}")
 
   update_registered_converter(
     TraceableTfidfVectorizer,
@@ -120,29 +133,29 @@ def create_pipeline(random_state: int = 42,
     stop_words=None)
 
   # see https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
-  maxent_lbfgs = LogisticRegression(
+  clf = LogisticRegression(
     solver="lbfgs",
     max_iter=max_iter,
     # ignored for lbfgs
     random_state=random_state,
     penalty="l2",
-    C=l2_strength,
+    C=C,
     # convergence tolerance
     tol=tol,
     verbose=0,
     # use all cores
     n_jobs=1)
-  
+
   pipeline = Pipeline(steps=[
     ("tfidf", tfidf),
-    ("maxent", maxent_lbfgs)
+    ("classifier", clf)
   ])
 
   return pipeline
 
 # Print query predictions against trained model
 def print_top_k(query_text: str, estimator: Pipeline, top_k: int = 5):
-  labels = estimator.named_steps["maxent"].classes_
+  labels = estimator.named_steps["classifier"].classes_
 
   raw_probs = estimator.predict_proba([query_text])[0]
   
@@ -167,7 +180,7 @@ def export_to_onnx(estimator: Pipeline, export_path: str):
     initial_types=[("text", StringTensorType([None, 1]))],
     options={
       # zipmap is not well supported in onnxruntime-web
-      id(estimator.named_steps["maxent"]): {"zipmap": False, "output_class_labels": True}
+      id(estimator.named_steps["classifier"]): {"zipmap": False, "output_class_labels": True}
     }
   )
 
@@ -284,15 +297,15 @@ def main():
 
   evaluate_model(pipeline, estimator, random_state, X_train, y_train, X_test, y_test)
 
-  # print_top_k("red top white middle blue bottom", estimator, 5)
-  # print_top_k("solid white plate", estimator, 5)
-  # print_top_k("green top", estimator, 5)
-  # print_top_k("blue white plate", estimator, 5)
-  # print_top_k("green plate", estimator, 5)
+  print_top_k("red top white middle blue bottom", estimator, 5)
+  print_top_k("solid white plate", estimator, 5)
+  print_top_k("green top", estimator, 5)
+  print_top_k("blue white plate", estimator, 5)
+  print_top_k("green plate", estimator, 5)
 
-  # # save to onnx
-  # onnx_export_path = os.path.join(base_dir, "..", "ui", "public", "skl_plates_model.onnx")
-  # export_to_onnx(estimator, onnx_export_path)
+  # save to onnx
+  onnx_export_path = os.path.join(base_dir, "..", "ui", "public", "skl_plates_model.onnx")
+  export_to_onnx(estimator, onnx_export_path)
 
 if __name__ == "__main__":
   main()
