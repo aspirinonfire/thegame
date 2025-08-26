@@ -13,15 +13,6 @@ class RawTrainingDataRow:
   weight: float
   description: dict[str, str]
 
-synonyms_lkp = {
-  "top": ["upper"],
-  "middle": ["center"],
-  "bottom": ["lower"],
-  "line": ["strip", "banner"],
-  "lines": ["strips", "banners"],
-  "solid": ["all"]
-}
-
 # Read training data json and transform it into de-normalized training rows.
 # Note: we are loading entire data set into memory because it is small enough and makes rest of the code simpler.
 # For larger data sets, we'll need to refactor solution to work with streams, and de-normalize once into a temp file.
@@ -43,6 +34,15 @@ def read_raw_data(training_data_path: str) -> list[RawTrainingDataRow]:
 # { "label": "us-ca", "text": "solid white plate" }
 def transform_to_training_rows(training_data: list[RawTrainingDataRow]) -> pd.DataFrame:
   from itertools import product
+
+  synonyms_lkp = {
+    "top": ["upper"],
+    "middle": ["center"],
+    "bottom": ["lower"],
+    "line": ["strip", "banner"],
+    "lines": ["strips", "banners"],
+    "solid": ["all"]
+  }
 
   print("Transforming to training rows...")
   
@@ -84,18 +84,32 @@ def transform_to_training_rows(training_data: list[RawTrainingDataRow]) -> pd.Da
 
   return training_rows
 
-# Train data set using logistic regression (MaxEnt) with tfidf tokenization and saga optimizer
+# Train data set
+# Tuned values as of 2025-08-26
+# Logistic Regression + LBFGS:
+# C=8, tol=0.004, max_iter=30
+# ll-red: 0.4559, ROC AUC: .991 train/0.935 test
+#
+# Logistic Regression + SAGA:
+# C=8, tol=0.01, max_iter=30
+# ll-red: 0.4421, ROC AUC: .992 train/.934 test
+#
+# SGDClassifier and CalibratedClassifierCV could not get ll-reduction above 0.40
+#
+# Dataset is too small to benefit from approximation/online methods and there's
+# enough class imbalance that causes probability calibration to become fragile.
 def create_pipeline(random_state: int = 42,
-    l2_strength: int = 10,
-    max_iter: int = 300) -> Pipeline:
+    C: int = 8,
+    tol: float = 0.004,
+    max_iter: int = 30) -> Pipeline:
   from skl2onnx.sklapi import TraceableTfidfVectorizer # required for ONNX export!
   from skl2onnx import update_registered_converter
   from skl2onnx.shape_calculators.text_vectorizer import calculate_sklearn_text_vectorizer_output_shapes
   from skl2onnx.operator_converters.tfidf_vectoriser import convert_sklearn_tfidf_vectoriser
   from sklearn.linear_model import LogisticRegression
-  from sklearn.feature_extraction import text
   
   print("Building training pipeline...")
+  print(f"C={C}, tol={tol}, max_iter={max_iter}")
 
   update_registered_converter(
     TraceableTfidfVectorizer,
@@ -111,34 +125,37 @@ def create_pipeline(random_state: int = 42,
     },
   )
 
+  tfidf = TraceableTfidfVectorizer(
+    ngram_range=(1, 4),          # 1–4 n-grams
+    lowercase=True,
+    token_pattern=r"[a-z0-9-]+", # word tokenization (words only no spaces)
+    min_df=1,
+    stop_words=None)
+
+  # see https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
+  clf = LogisticRegression(
+    solver="lbfgs",
+    max_iter=max_iter,
+    # ignored for lbfgs
+    random_state=random_state,
+    penalty="l2",
+    C=C,
+    # convergence tolerance
+    tol=tol,
+    verbose=0,
+    # use all cores
+    n_jobs=1)
+
   pipeline = Pipeline(steps=[
-    ("tfidf", TraceableTfidfVectorizer(
-      ngram_range=(1, 4),          # 1–4 n-grams
-      lowercase=True,
-      token_pattern=r"[a-z0-9-]+", # word tokenization (words only no spaces)
-      min_df=1,
-      stop_words=None)
-    ),
-    # see https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
-    ("maxent", LogisticRegression(
-      penalty="l2",
-      C=l2_strength,
-      solver="saga",
-      max_iter=max_iter,
-      # convergence tolerance
-      tol=0.0001,
-      verbose=1,
-      random_state=random_state,
-      # use all cores
-      n_jobs=-1)
-    )
+    ("tfidf", tfidf),
+    ("classifier", clf)
   ])
 
   return pipeline
 
 # Print query predictions against trained model
 def print_top_k(query_text: str, estimator: Pipeline, top_k: int = 5):
-  labels = estimator.named_steps["maxent"].classes_
+  labels = estimator.named_steps["classifier"].classes_
 
   raw_probs = estimator.predict_proba([query_text])[0]
   
@@ -163,7 +180,7 @@ def export_to_onnx(estimator: Pipeline, export_path: str):
     initial_types=[("text", StringTensorType([None, 1]))],
     options={
       # zipmap is not well supported in onnxruntime-web
-      id(estimator.named_steps["maxent"]): {"zipmap": False, "output_class_labels": True}
+      id(estimator.named_steps["classifier"]): {"zipmap": False, "output_class_labels": True}
     }
   )
 
@@ -186,71 +203,109 @@ def evaluate_model(pipeline: Pipeline,
 
   print("Model evaluations:")
 
-  # evaluate fitted model performance (accuracy, log-loss, cv k-fold, etc)
-  y_pred = fitted_estimator.predict(X_test)
-  accuracy = accuracy_score(y_test, y_pred)
-
-  y_proba = fitted_estimator.predict_proba(X_test)
-  ll = log_loss(y_test, y_proba, labels=fitted_estimator.classes_)
-
+  # Compute dummy log-loss baselines for log loss reduction calculations
   # probabilities for each class before seeing any data (how often each label appears in the dataset)
   priors = y_train.value_counts(normalize=True).reindex(fitted_estimator.classes_, fill_value=0).values
   # dummy estimator that uses class priors and ignores actual text
   baseline_proba = np.tile(priors, (len(y_test), 1))
   # baseline of how well dummy estimator predicted the true label
   ll_baseline = log_loss(y_test, baseline_proba, labels=fitted_estimator.classes_)
-  # compare fitted estimator to baseline. 1 - perfect fit, 0 - no better than dummy
-  ll_reduction = (ll_baseline - ll) / max(ll_baseline, 1e-12)
 
-  cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=random_state)
+  # Compute cross-validations
+  # These metrics help tune the model training params (algo, hyperparams, etc)
+  # They also help to measure how balanced the training set is (labels + their descriptions)
+  n_splits = 5
+  cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=random_state)
   cv_scores = cross_validate(
     clone(pipeline),
     X_train,
     y_train,
-    scoring={"accuracy": "accuracy", "log_loss": "neg_log_loss"},
+    scoring={"accuracy": "accuracy", "log_loss": "neg_log_loss", "roc_auc": "roc_auc_ovr"},
     cv=cv,
     n_jobs=1,
-    return_train_score=False,
-    error_score="raise"
+    return_train_score=True,
+    error_score="raise",
+    verbose=0
   )
+
   cv_acc_mean = cv_scores["test_accuracy"].mean()
   cv_acc_std  = cv_scores["test_accuracy"].std()
   cv_ll_mean  = -cv_scores["test_log_loss"].mean()
-  cv_ll_std   =  cv_scores["test_log_loss"].std()
+  cv_ll_std   = cv_scores["test_log_loss"].std()
+  cv_ll_reduction_mean = (ll_baseline - cv_ll_mean) / max(ll_baseline, 1e-12)
+  cv_roc_auc_train_mean  = cv_scores["train_roc_auc"].mean()
+  cv_roc_auc_train_std  = cv_scores["train_roc_auc"].std()
+  cv_roc_auc_test_mean  = cv_scores["test_roc_auc"].mean()
+  cv_roc_auc_test_std  = cv_scores["test_roc_auc"].std()
+  
+  # higher = better (1 - perfect)
+  print(f"CV({n_splits}) Accuracy:    {cv_acc_mean:.4f} +/- {cv_acc_std:.4f}")
+  # lower = better
+  print(f"CV({n_splits}) Log Loss:    {cv_ll_mean:.4f} +/- {cv_ll_std:.4f}")
+  # higher = better (1 - perfect)
+  print(f"CV({n_splits}) Log Loss Reduction:    {cv_ll_reduction_mean:.4f} +/- {cv_ll_std:.4f}")
+  # higher = better
+  print(f"CV({n_splits}) ROC AUC Train:   {cv_roc_auc_train_mean:.4f} +/- {cv_roc_auc_train_std:.4f}")
+  # higher = better
+  print(f"CV({n_splits}) ROC AUC Test:     {cv_roc_auc_test_mean:.4f} +/- {cv_roc_auc_test_std:.4f}")
+  # lower = better (higher difference suggests overfitting)
+  print(f"CV({n_splits}) ROC AUC Train/Test delta:    {(cv_roc_auc_train_mean-cv_roc_auc_test_mean):4f}")
 
-  print(f"Holdout accuracy:   {accuracy:.4f}")
-  print(f"Log-loss:           {ll:.4f}")
-  print(f"Log_loss_reduction: {ll_reduction:.4f}")
-  print(f"CV(5) accuracy:     {cv_acc_mean:.4f} +/- {cv_acc_std:.4f}")
-  print(f"CV(5) log_loss:     {cv_ll_mean:.4f} +/- {cv_ll_std:.4f}")
+  # Compute hold-out metrics using test set
+  # These metrics show how well this model will perform in the real world on previously unseen data
+  y_pred = fitted_estimator.predict(X_test)
+  hold_out_accuracy = accuracy_score(y_test, y_pred)
 
-# main script
-random_state = 500
+  y_proba = fitted_estimator.predict_proba(X_test)
+  hold_out_ll = log_loss(y_test, y_proba, labels=fitted_estimator.classes_)
 
-base_dir = Path(__file__).parent
-training_data_path = os.path.join(base_dir, "training_data", "plate_descriptions.json")
+  # compare fitted estimator to baseline. 1 - perfect fit, 0 - no better than dummy
+  hold_out_ll_reduction = (ll_baseline - hold_out_ll) / max(ll_baseline, 1e-12)
 
-json_data = read_raw_data(training_data_path)
-training_rows = transform_to_training_rows(json_data)
-X = training_rows["text"]
-y = training_rows["label"]
-X_train, X_test, y_train, y_test = train_test_split(
-  X, y, test_size=0.1, stratify=y, random_state=random_state
-)
+  # higher = better
+  print(f"Holdout Accuracy: {hold_out_accuracy:.4f}")
+  # lower = better
+  print(f"Holdout Log Loss: {hold_out_ll:.4f}")
+  # higher = better (1 - perfect)
+  print(f"Holdout Log Loss Reduction: {hold_out_ll_reduction:.4f}")
 
-pipeline = create_pipeline(random_state=random_state)
-print("Fitting...")
-estimator = clone(pipeline).fit(X_train, y_train)
-print("Fitted successfully.")
+  # Smaller the delta = better model and training set
+  # Negative - CV looks too optimistic but real world performance may be less accurate
+  # Positive - CV looks too pessimistic comparing to the real world performance. May need more training data.
+  print(f"Holdout vs CV Accuracy delta: {(hold_out_accuracy - cv_acc_mean):.4f}")
+  print(f"Holdout vs CV Log Loss Reduction delta: {(hold_out_ll_reduction - cv_ll_reduction_mean):.4f}")
 
-evaluate_model(pipeline, estimator, random_state, X_train, y_train, X_test, y_test)
+def main():
+  # main script
+  random_state = 500
 
-# print_top_k("red top white middle blue bottom", estimator, 5)
-# print_top_k("solid white plate", estimator, 5)
-# print_top_k("green top", estimator, 5)
-# print_top_k("blue white plate", estimator, 5)
-# print_top_k("green plate", estimator, 5)
+  base_dir = Path(__file__).parent
+  training_data_path = os.path.join(base_dir, "training_data", "plate_descriptions.json")
 
-# save to onnx
-onnx_export_path = os.path.join(base_dir, "..", "ui", "public", "skl_plates_model.onnx")
-export_to_onnx(estimator, onnx_export_path)
+  json_data = read_raw_data(training_data_path)
+  training_rows = transform_to_training_rows(json_data)
+  X = training_rows["text"]
+  y = training_rows["label"]
+  X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, stratify=y, random_state=random_state
+  )
+
+  pipeline = create_pipeline(random_state=random_state)
+  print("Fitting...")
+  estimator = clone(pipeline).fit(X_train, y_train)
+  print("Fitted successfully.")
+
+  evaluate_model(pipeline, estimator, random_state, X_train, y_train, X_test, y_test)
+
+  print_top_k("red top white middle blue bottom", estimator, 5)
+  print_top_k("solid white plate", estimator, 5)
+  print_top_k("green top", estimator, 5)
+  print_top_k("blue white plate", estimator, 5)
+  print_top_k("green plate", estimator, 5)
+
+  # save to onnx
+  onnx_export_path = os.path.join(base_dir, "..", "ui", "public", "skl_plates_model.onnx")
+  export_to_onnx(estimator, onnx_export_path)
+
+if __name__ == "__main__":
+  main()
