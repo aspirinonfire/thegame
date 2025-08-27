@@ -41,7 +41,8 @@ def transform_to_training_rows(training_data: list[RawTrainingDataRow]) -> pd.Da
     "bottom": ["lower"],
     "line": ["strip", "banner"],
     "lines": ["strips", "banners"],
-    "solid": ["all"]
+    "solid": ["all"],
+    "plate": ["background"]
   }
 
   print("Transforming to training rows...")
@@ -209,14 +210,6 @@ def evaluate_model(pipeline: Pipeline,
 
   print("Model evaluations:")
 
-  # Compute dummy log-loss baselines for log loss reduction calculations
-  # probabilities for each class before seeing any data (how often each label appears in the dataset)
-  priors = y_train.value_counts(normalize=True).reindex(fitted_estimator.classes_, fill_value=0).values
-  # dummy estimator that uses class priors and ignores actual text
-  baseline_proba = np.tile(priors, (len(y_test), 1))
-  # baseline of how well dummy estimator predicted the true label
-  ll_baseline = log_loss(y_test, baseline_proba, labels=fitted_estimator.classes_)
-
   # Compute cross-validations
   # These metrics help tune the model training params (algo, hyperparams, etc)
   # They also help to measure how balanced the training set is (labels + their descriptions)
@@ -238,7 +231,6 @@ def evaluate_model(pipeline: Pipeline,
   cv_acc_std  = cv_scores["test_accuracy"].std()
   cv_ll_mean  = -cv_scores["test_log_loss"].mean()
   cv_ll_std   = cv_scores["test_log_loss"].std()
-  cv_ll_reduction_mean = (ll_baseline - cv_ll_mean) / max(ll_baseline, 1e-12)
   cv_roc_auc_train_mean  = cv_scores["train_roc_auc"].mean()
   cv_roc_auc_train_std  = cv_scores["train_roc_auc"].std()
   cv_roc_auc_test_mean  = cv_scores["test_roc_auc"].mean()
@@ -248,8 +240,6 @@ def evaluate_model(pipeline: Pipeline,
   print(f"CV({n_splits}) Accuracy:    {cv_acc_mean:.4f} +/- {cv_acc_std:.4f}")
   # lower = better
   print(f"CV({n_splits}) Log Loss:    {cv_ll_mean:.4f} +/- {cv_ll_std:.4f}")
-  # higher = better (1 - perfect)
-  print(f"CV({n_splits}) Log Loss Reduction:    {cv_ll_reduction_mean:.4f} +/- {cv_ll_std:.4f}")
   # higher = better
   print(f"CV({n_splits}) ROC AUC Train:   {cv_roc_auc_train_mean:.4f} +/- {cv_roc_auc_train_std:.4f}")
   # higher = better
@@ -265,21 +255,14 @@ def evaluate_model(pipeline: Pipeline,
   y_proba = fitted_estimator.predict_proba(X_test)
   hold_out_ll = log_loss(y_test, y_proba, labels=fitted_estimator.classes_)
 
-  # compare fitted estimator to baseline. 1 - perfect fit, 0 - no better than dummy
-  hold_out_ll_reduction = (ll_baseline - hold_out_ll) / max(ll_baseline, 1e-12)
-
   # higher = better
   print(f"Holdout Accuracy: {hold_out_accuracy:.4f}")
   # lower = better
   print(f"Holdout Log Loss: {hold_out_ll:.4f}")
-  # higher = better (1 - perfect)
-  print(f"Holdout Log Loss Reduction: {hold_out_ll_reduction:.4f}")
-
   # Smaller the delta = better model and training set
   # Negative - CV looks too optimistic but real world performance may be less accurate
   # Positive - CV looks too pessimistic comparing to the real world performance. May need more training data.
   print(f"Holdout vs CV Accuracy delta: {(hold_out_accuracy - cv_acc_mean):.4f}")
-  print(f"Holdout vs CV Log Loss Reduction delta: {(hold_out_ll_reduction - cv_ll_reduction_mean):.4f}")
 
 def main():
   random_state = 500

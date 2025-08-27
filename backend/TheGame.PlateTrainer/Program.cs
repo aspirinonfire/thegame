@@ -6,8 +6,6 @@ using TheGame.PlateTrainer.Training;
 // TODO process args or env
 const int mlSeed = 123;
 const string jsonDataPath = @"c:\src\thegame\ai\training_data\plate_descriptions.json";
-const string trainedModelOnnxPath = @"c:\src\thegame\ui\public\sdca_plates_model.onnx";
-const string trainedModelOnnxLabelPath = @"c:\src\thegame\ui\public\sdca_plates_labels.json";
 
 var ml = new MLContext(mlSeed);
 
@@ -22,10 +20,6 @@ using (var trainingData = mlDataLoader.ReadTrainingData(jsonDataPath, mlSeed))
   trainedModel = trainerSvc.Train(trainingData.DataView);
   dataViewSchema = trainingData.DataView.Schema;
 }
-
-trainerSvc.ExportToOnnx(trainedModel,
-  trainedModelOnnxPath,
-  trainedModelOnnxLabelPath);
 
 var predictor = new Predictor(ml, trainedModel);
 

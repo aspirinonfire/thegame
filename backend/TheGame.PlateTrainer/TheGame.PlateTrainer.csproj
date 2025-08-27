@@ -8,8 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.ML" Version="5.0.0-preview.25373.1" />
-    <PackageReference Include="Microsoft.ML.OnnxConverter" Version="0.23.0-preview.25373.1" />
+    <PackageReference Include="Microsoft.ML" Version="4.0.2" />
   </ItemGroup>
 
 </Project>
