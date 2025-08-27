@@ -185,18 +185,6 @@ def create_vectorizer():
     sublinear_tf=True)
 
 # Train data set using Logistic Regression
-# Tuned values as of 2025-08-26
-# lbfgs:
-# C=8, tol=0.004, max_iter=30
-# ll-red: 0.4559, ROC AUC: .991 train/0.935 test
-#
-# saga:
-# C=8, tol=0.01, max_iter=30
-# ll-red: 0.4421, ROC AUC: .992 train/.934 test
-#
-# newton-cg:
-# C=8, tol=0.001, max_iter=30
-# ll-red: 0.4397, ROC AUC: .992 train/.934 test
 def create_lr_pipeline(random_state: int = 42,
     C: int = 8,
     tol: float = 0.004,
