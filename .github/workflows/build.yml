@@ -197,7 +197,7 @@ jobs:
         working-directory: ${{ env.AI_DIR }}
         run: pip install -r ${{ env.PY_REQS }}
 
-      - name: Install PY deps
+      - name: Run AI trainer unit tests
         working-directory: ${{ env.AI_DIR }}
         run: python -m unittest discover -v -s ${{ env.AI_TESTS }}
 
