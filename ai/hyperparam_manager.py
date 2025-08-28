@@ -92,6 +92,8 @@ def load_hyperparams_from_file(filepath: str) -> Dict[str, List[Any]]:
   hyperparam_file = Path(filepath)
 
   with hyperparam_file.open("r", encoding="utf-8") as file:
-    config: Dict = json.load(file)
+    config: ModelParams = json.load(file)
 
-  return config
+  training_params = config["best_params"]
+  training_params["vec__ngram_range"] = tuple(training_params["vec__ngram_range"])
+  return training_params
