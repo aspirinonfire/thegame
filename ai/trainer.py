@@ -29,6 +29,9 @@ def main():
   param_grid: Dict[str, List[Any]] = {
     # Vectorizer
     "tfidf__ngram_range": [(1, 1), (1, 2)],
+    "tfidf__use_idf": [True, False],
+    "tfidf__norm": ["l2", None],
+    "tfidf__sublinear_tf": [False, True],
     # Classifier
     "classifier__max_iter": [500],
     "classifier__tol": [0.001, 0.0001, 0.00001, 0.000001],
