@@ -95,11 +95,11 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
         toRender: territoriesByLowercaseKeyLkp.get(scoredLbl.label.toLowerCase()),
         confidence: scoredLbl.probability
       }))
-      .filter(ter => !!ter.toRender && ter.confidence > 0.05)
+      .filter(ter => !!ter.toRender && ter.confidence > 0.04)
       .slice(0, 10)
       .map(ter => ({
         ...ter.toRender!,
-        searchProbability: ter.confidence
+        searchConfidence: ter.confidence
       }));
   }
 
