@@ -80,3 +80,5 @@ backend/TheGame.Infra/stack.localdev.json
 # Backend from master branch
 /backend/**/*
 *.bin
+
+**/*/__pycache__
