@@ -104,7 +104,7 @@ cd ai
 py trainer.py
 ```
 For training model with grid_search
-``
+```
 cd ai
 py trainer.py --use-search
 ```
