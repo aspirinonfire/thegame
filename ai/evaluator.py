@@ -1,37 +1,44 @@
+from dataclasses import dataclass
 from sklearn import clone
+from sklearn.calibration import label_binarize
 from sklearn.model_selection import StratifiedKFold, cross_validate
 from sklearn.metrics import accuracy_score, log_loss
 from sklearn.naive_bayes import LabelBinarizer
 from sklearn.metrics import ndcg_score
 from sklearn.pipeline import Pipeline
+import numpy as np
 
+from pipeline_factory import CLF_STEP, VEC_STEP
+from model_utils import make_ndcg_scorer
+
+@dataclass
 class ModelEvaluations:
-  cv_folds: int
-  ndcg_k: int
-  cv_acc_mean: float
-  cv_acc_std: float
-  cv_ll_mean: float
-  cv_ll_std: float
-  cv_roc_auc_train_mean: float
-  cv_roc_auc_train_std: float
-  cv_roc_auc_test_mean: float
-  cv_roc_auc_test_std: float
-  cv_roc_auc_train_test_delta: float
-  cv_ndcg_train_mean: float
-  cv_ndcg_train_std: float
-  cv_ndcg_test_mean: float
-  cv_ndcg_test_std: float
-  cv_ncdg_train_test_delta: float
-  holdout_acc: float
-  holdout_ll: float
-  holdout_vs_cv_acc_delta: float
-  holdout_ndcg_score: float
-  holdout_vs_cv_ncdg_delta: float
+  cv_folds: int = 0
+  ndcg_k: int = 0
+  cv_acc_mean: float = 0.0
+  cv_acc_std: float = 0.0
+  cv_ll_mean: float = 0.0
+  cv_ll_std: float = 0.0
+  cv_roc_auc_train_mean: float = 0.0
+  cv_roc_auc_train_std: float = 0.0
+  cv_roc_auc_test_mean: float = 0.0
+  cv_roc_auc_test_std: float = 0.0
+  cv_roc_auc_train_test_delta: float = 0.0
+  cv_ndcg_train_mean: float = 0.0
+  cv_ndcg_train_std: float = 0.0
+  cv_ndcg_test_mean: float = 0.0
+  cv_ndcg_test_std: float = 0.0
+  cv_ndcg_train_test_delta: float = 0.0
+  holdout_acc: float = 0.0
+  holdout_ll: float = 0.0
+  holdout_vs_cv_acc_delta: float = 0.0
+  holdout_ndcg_score: float = 0.0
+  holdout_vs_cv_ndcg_delta: float = 0.0
 
   def print(self):
     # higher = better (1 - perfect)
     cv_num = f"CV({self.cv_folds})"
-    ncdg_num = f"NCDG({self.ndcg_k})"
+    ndcg_num = f"ndcg({self.ndcg_k})"
     print(f"{cv_num} Accuracy:    {self.cv_acc_mean:.4f} +/- {self.cv_acc_std:.4f}")
     # lower = better
     print(f"{cv_num} Log Loss:    {self.cv_ll_mean:.4f} +/- {self.cv_ll_std:.4f}")
@@ -42,15 +49,15 @@ class ModelEvaluations:
     # lower = better (higher difference suggests overfitting)
     print(f"{cv_num} ROC AUC Train/Test delta:    {(self.cv_roc_auc_train_mean-self.cv_roc_auc_test_mean):4f}")
     # higher = better
-    print(f"{cv_num} {ncdg_num} Train:    {self.cv_ndcg_train_mean:.4f} +/- {self.cv_ndcg_train_std:.4f}")
-    print(f"{cv_num} {ncdg_num} Test:    {self.cv_ndcg_test_mean:.4f} +/- {self.cv_ndcg_test_std:.4f}")
+    print(f"{cv_num} {ndcg_num} Train:    {self.cv_ndcg_train_mean:.4f} +/- {self.cv_ndcg_train_std:.4f}")
+    print(f"{cv_num} {ndcg_num} Test:    {self.cv_ndcg_test_mean:.4f} +/- {self.cv_ndcg_test_std:.4f}")
     # lower = better (higher difference suggests overfitting)
-    print(f"{cv_num} NCDG Train/Test delta: {(self.cv_ndcg_train_mean-self.cv_ndcg_test_mean):.4f}")
+    print(f"{cv_num} ndcg Train/Test delta: {(self.cv_ndcg_train_test_delta):.4f}")
 
     # higher = better
-    print(f"Holdout {ncdg_num} {self.holdout_ndcg_score:.4f}")
+    print(f"Holdout {ndcg_num} {self.holdout_ndcg_score:.4f}")
     # lower = better
-    print(f"Holdout vs CV {ncdg_num} {(self.holdout_ndcg_score-self.cv_ndcg_test_mean):.4f}")
+    print(f"Holdout vs CV {ndcg_num} {(self.holdout_vs_cv_ndcg_delta):.4f}")
     # higher = better
     print(f"Holdout Accuracy: {self.holdout_acc:.4f}")
     # lower = better
@@ -58,7 +65,7 @@ class ModelEvaluations:
     # Smaller the delta = better model and training set
     # Negative - CV looks too optimistic but real world performance may be less accurate
     # Positive - CV looks too pessimistic comparing to the real world performance. May need more training data.
-    print(f"Holdout vs CV Accuracy delta: {(self.holdout_acc - self.cv_acc_mean):.4f}")
+    print(f"Holdout vs CV Accuracy delta: {(self.holdout_vs_cv_acc_delta):.4f}")
 
 def compute_model_evaluations(pipeline: Pipeline,
   fitted_estimator: Pipeline,
@@ -70,16 +77,6 @@ def compute_model_evaluations(pipeline: Pipeline,
 
   print("Model evaluations:")
   evals = ModelEvaluations()
-  
-  lb = LabelBinarizer()
-
-  def make_ndcg_scorer(k=10):
-    def _scorer(estimator, X, y):
-        proba = estimator.predict_proba(X)
-        lb.fit(estimator.classes_)
-        y_true_bin = lb.transform(y)
-        return float(ndcg_score(y_true_bin, proba, k=k))
-    return _scorer
 
   ndcg_k = 10
   ndcg_at_k = make_ndcg_scorer(ndcg_k)
@@ -97,7 +94,7 @@ def compute_model_evaluations(pipeline: Pipeline,
       "accuracy": "accuracy",
       "log_loss": "neg_log_loss",
       "roc_auc": "roc_auc_ovr",
-      "ncdg": ndcg_at_k
+      "ndcg": ndcg_at_k
     },
     cv=cv,
     n_jobs=1,
@@ -116,10 +113,12 @@ def compute_model_evaluations(pipeline: Pipeline,
   evals.cv_roc_auc_train_std  = cv_scores["train_roc_auc"].std()
   evals.cv_roc_auc_test_mean  = cv_scores["test_roc_auc"].mean()
   evals.cv_roc_auc_test_std  = cv_scores["test_roc_auc"].std()
-  evals.cv_ndcg_train_mean = cv_scores["train_ncdg"].mean()
-  evals.cv_ndcg_train_std = cv_scores["train_ncdg"].std()
-  evals.cv_ndcg_test_mean = cv_scores["test_ncdg"].mean()
-  evals.cv_ndcg_test_std = cv_scores["test_ncdg"].std()
+  evals.cv_ndcg_train_mean = cv_scores["train_ndcg"].mean()
+  evals.cv_ndcg_train_std = cv_scores["train_ndcg"].std()
+  evals.cv_ndcg_test_mean = cv_scores["test_ndcg"].mean()
+  evals.cv_ndcg_test_std = cv_scores["test_ndcg"].std()
+  evals.cv_ndcg_train_test_delta = evals.cv_ndcg_train_mean - evals.cv_ndcg_test_mean
+  evals.cv_roc_auc_train_test_delta = evals.cv_roc_auc_train_mean - evals.cv_roc_auc_test_mean
 
   # Compute hold-out metrics using test set
   # These metrics show how well this model will perform in the real world on previously unseen data
@@ -127,17 +126,18 @@ def compute_model_evaluations(pipeline: Pipeline,
   evals.holdout_acc = accuracy_score(y_test, y_pred)
 
   y_proba = fitted_estimator.predict_proba(X_test)
-  y_test_bin = lb.fit(fitted_estimator.classes_).transform(y_test)
+
+  y_test_bin = label_binarize(y_test, classes=fitted_estimator.classes_)
   evals.holdout_ndcg_score = ndcg_score(y_test_bin, y_proba, k=ndcg_k)
   evals.holdout_ll = log_loss(y_test, y_proba, labels=fitted_estimator.classes_)
+  evals.holdout_vs_cv_acc_delta = evals.holdout_acc - evals.cv_acc_mean
+  evals.holdout_vs_cv_ndcg_delta = evals.holdout_ndcg_score - evals.cv_ndcg_train_mean
 
   return evals
 
-def get_feature_contribs(pipeline: Pipeline, class_labels: list[str], query: str):
-  import numpy as np
-  
-  vec = pipeline.named_steps["tfidf"]
-  clf = pipeline.named_steps["classifier"]
+def get_feature_contribs(pipeline: Pipeline, class_labels: list[str], query: str):  
+  vec = pipeline.named_steps[VEC_STEP]
+  clf = pipeline.named_steps[CLF_STEP]
 
   query_vector = vec.transform([query])
   active_token_indices = query_vector.nonzero()[1]
