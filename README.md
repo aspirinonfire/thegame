@@ -98,8 +98,13 @@ py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
-After that...
+For training model with pre-computed params:
 ```
 cd ai
 py trainer.py
+```
+For training model with grid_search
+```
+cd ai
+py trainer.py --use-search
 ```

@@ -31,6 +31,11 @@ env:
   NODE_VERSION: 22
   UI_ROOT: ui
   UI_PUBLISH_DIR: ui
+  # Other
+  AI_DIR: ai
+  AI_TESTS: tests
+  PY_VERSION: 3.13
+  PY_REQS: requirements.txt
 
 jobs:
   # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
@@ -53,6 +58,11 @@ jobs:
         with:
           dotnet-version: |
             9.0.x
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PY_VERSION }}
 
       # Build and Test backend
       
@@ -177,6 +187,19 @@ jobs:
           --self-contained \
           /p:PublishSingleFile=true \
           --output ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/${{ env.PULUMI_PUBLISH_DIR}}
+
+      # Run PY tests for AI models
+      - name: Upgrade pip
+        working-directory: ${{ env.AI_DIR }}
+        run: python -m pip install --upgrade pip
+
+      - name: Install PY deps
+        working-directory: ${{ env.AI_DIR }}
+        run: pip install -r ${{ env.PY_REQS }}
+
+      - name: Run AI trainer unit tests
+        working-directory: ${{ env.AI_DIR }}
+        run: python -m unittest discover -v -s ${{ env.AI_TESTS }}
 
       # Publish artifacts for deploy workflow
       - name: Upload combined artifacts for deployment
