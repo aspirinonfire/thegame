@@ -15,14 +15,14 @@ interface PickerControls {
 }
 
 interface TerritoryToRender extends Territory {
-  searchProbability: number | undefined 
+  searchConfidence: number | undefined 
 }
 
 const allTerritoriesToRender = territories
   .map(ter => {
     const toRender: TerritoryToRender = {
       ...ter,
-      searchProbability: undefined
+      searchConfidence: undefined
     }
     return toRender;
   });
@@ -93,13 +93,13 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
     return scoredMatches
       .map(scoredLbl =>({
         toRender: territoriesByLowercaseKeyLkp.get(scoredLbl.label.toLowerCase()),
-        prob: scoredLbl.probability
+        confidence: scoredLbl.probability
       }))
-      .filter(ter => !!ter.toRender && ter.prob > 0.05)
+      .filter(ter => !!ter.toRender && ter.confidence > 0.05)
       .slice(0, 10)
       .map(ter => ({
         ...ter.toRender!,
-        searchProbability: ter.prob
+        searchProbability: ter.confidence
       }));
   }
 
@@ -210,9 +210,9 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
                 height="500"
                 className={`w-300 h-auto ${ isSearching ? "blur-[3px] grayscale-90 opacity-50" : null }`} />) :
               (<h1 className="text-2xl">{territory.longName} ({territory.country})</h1>)}
-            { !!territory.searchProbability && !isSearching &&
+            { !!territory.searchConfidence && !isSearching &&
               <span className="text-xs text-gray-500">
-                Probability:&nbsp;{(territory.searchProbability! * 100.0).toFixed(2)}%
+                Confidence:&nbsp;{(territory.searchConfidence! * 100.0).toFixed(2)}%
               </span>
             }
           </div>
