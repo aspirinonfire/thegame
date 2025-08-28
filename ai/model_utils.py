@@ -1,6 +1,8 @@
+from typing import Any, Dict, List
 import pandas as pd
 from skl2onnx import to_onnx
 from skl2onnx.common.data_types import StringTensorType
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 
 # Print query predictions against trained model

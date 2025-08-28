@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any, Dict, List
 from sklearn import clone
 from sklearn.model_selection import train_test_split
 import os
@@ -6,7 +7,7 @@ import os
 from data_loader import read_raw_data, transform_to_training_rows
 from evaluator import compute_model_evaluations
 from model_utils import export_to_onnx, print_top_k
-from pipeline_factory import create_lr_pipeline;
+from pipeline_factory import create_hyperparams_search, create_lr_pipeline;
 
 def main():
   random_state = 500
@@ -23,51 +24,49 @@ def main():
     X, y, test_size=0.2, stratify=y, random_state=random_state
   )
 
-  current_best_lr_params = {
-    "random_state": random_state,
-    "C": 8,
-    "tol": 0.004,
-    "max_iter": 50
+  lr_pipeline = create_lr_pipeline()
+
+  param_grid: Dict[str, List[Any]] = {
+    # Vectorizer
+    "tfidf__ngram_range": [(1, 1), (1, 2)],
+    # Classifier
+    "classifier__max_iter": [500],
+    "classifier__tol": [0.001, 0.0001, 0.00001, 0.000001],
+    "classifier__C": [10.0, 20.0, 50, 100, 200],
   }
 
-  lr_pipeline = create_lr_pipeline(**current_best_lr_params)
-  print("Fitting LR...")
-  lr_estimator = clone(lr_pipeline).fit(X_train, y_train)
-  print("LR Fitted successfully.")
-  lr_evals = compute_model_evaluations(lr_pipeline, lr_estimator, random_state, X_train, y_train, X_test, y_test)
-  lr_evals.print()
+  search = create_hyperparams_search(lr_pipeline, param_grid)
 
-  # current_best_svc_params = {
-  #   "random_state": random_state,
-  #   "C": 500,
-  #   "cv": 5,
-  #   "tol": 0.004,
-  #   "max_iter": 100
-  # }
+  search.fit(X_train, y_train)
 
-  # svm_pipeline = create_svm_pipeline(**current_best_svc_params)
-  # print("Fitting SVM...")
-  # svm_estimator = clone(svm_pipeline).fit(X_train, y_train)
-  # print("SVM Fitted successfully.")
-  # svm_evals = compute_model_evaluations(svm_pipeline, svm_estimator, random_state, X_train, y_train, X_test, y_test)
-  # svm_evals.print()
+  print(f"Best params (by log-loss):\n{search.best_params_}")
+  print(f"Best CV log-loss: {search.best_score_:.4f} (negated; closer to 0 is better)")
 
-  print_top_k("red top white middle blue bottom", lr_estimator, 5)
-  print_top_k("solid white plate", lr_estimator, 5)
-  print_top_k("green top", lr_estimator, 5)
-  print_top_k("green top white bottom", lr_estimator, 5)
-  print_top_k("blue white plate", lr_estimator, 5)
-  print_top_k("green background", lr_estimator, 3)
-  print_top_k("green plate", lr_estimator, 3)
-  print_top_k("solid green background", lr_estimator, 3)
-  print_top_k("solid green plate", lr_estimator, 3)
-  print_top_k("solid green", lr_estimator, 3)
+  model_evals = compute_model_evaluations(lr_pipeline,
+    search.best_estimator_,
+    random_state,
+    X_train,
+    y_train,
+    X_test,
+    y_test)
+  model_evals.print()
 
-  # get_feature_contribs(lr_estimator, ["us-al", "us-nh", "us-tn", "us-vt"], "green plate")
-  # get_feature_contribs(lr_estimator, ["us-al", "us-nh", "us-tn", "us-vt"], "green background")
+  print_top_k("red top white middle blue bottom", search.best_estimator_, 5)
+  print_top_k("solid white plate", search.best_estimator_, 5)
+  print_top_k("green top", search.best_estimator_, 5)
+  print_top_k("green top white bottom", search.best_estimator_, 5)
+  print_top_k("blue white plate", search.best_estimator_, 5)
+  print_top_k("green background", search.best_estimator_, 3)
+  print_top_k("green plate", search.best_estimator_, 3)
+  print_top_k("solid green background", search.best_estimator_, 3)
+  print_top_k("solid green plate", search.best_estimator_, 3)
+  print_top_k("solid green", search.best_estimator_, 3)
+
+  # get_feature_contribs(search.best_estimator_, ["us-al", "us-nh", "us-tn", "us-vt"], "green plate")
+  # get_feature_contribs(search.best_estimator_, ["us-al", "us-nh", "us-tn", "us-vt"], "green background")
 
   # save to onnx
-  export_to_onnx(lr_estimator, onnx_export_path)
+  export_to_onnx(search.best_estimator_, onnx_export_path)
 
 if __name__ == "__main__":
   main()
