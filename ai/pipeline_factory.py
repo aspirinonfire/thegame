@@ -48,16 +48,21 @@ def create_lr_pipeline(random_state: int = 42, max_iter: int = 500) -> Pipeline:
     (CLF_STEP, clf)
   ])
 
-def create_svm_pipeline(random_state: int = 42) -> Pipeline:
+def create_svm_pipeline(random_state: int = 42,
+  max_iter: int = 10000,
+  cv_calib: int = 5) -> Pipeline:
+  
   clf = CalibratedClassifierCV(
     estimator=LinearSVC(
       loss="squared_hinge",
       penalty="l2",
       multi_class="ovr",
       random_state=random_state,
+      max_iter=max_iter
     ),
     n_jobs=-1,
     ensemble=True,
+    cv=cv_calib
   )
 
   return Pipeline(steps=[

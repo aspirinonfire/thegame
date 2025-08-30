@@ -1,6 +1,8 @@
 from dataclasses import asdict, dataclass, is_dataclass
 from pathlib import Path
 from sklearn.model_selection import GridSearchCV
+from sklearn.experimental import enable_halving_search_cv
+from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.pipeline import Pipeline
 from typing import Any, Dict, List, Literal, TypeAlias
 import json
@@ -34,7 +36,7 @@ class SearchResults:
 
 Refit: TypeAlias = Literal["neg_log_loss", "ndcg"]
 
-def create_hyperparams_search(estimator_pipeline: Pipeline,
+def create_hyperparams_grid_search(estimator_pipeline: Pipeline,
   param_grid: Dict[str, List[Any]],
   refit: TypeAlias):
   
@@ -55,7 +57,33 @@ def create_hyperparams_search(estimator_pipeline: Pipeline,
     n_jobs=-1
   )
 
-def find_best_lr_params(pipeline: Pipeline,
+def create_hyperparams_random_halving_search(estimator_pipeline: Pipeline,
+  param_distr: Dict[str, List[Any]],
+  refit: TypeAlias,
+  random_state: int,
+  resource: str,
+  min_resources: int,
+  max_resources: int,
+  pruning_aggressiveness_factor: int = 3):
+  
+  return HalvingRandomSearchCV(
+    estimator=estimator_pipeline,
+    param_distributions=param_distr,
+    factor=pruning_aggressiveness_factor,
+    aggressive_elimination=False,
+    resource=resource,
+    min_resources=min_resources,
+    max_resources=max_resources,
+    scoring=make_ndcg_scorer(k=10),
+    cv=5,
+    refit=refit,
+    random_state=random_state,
+    verbose=2,
+    return_train_score=False,
+    n_jobs=-1
+  )
+
+def find_best_params_grid_search(pipeline: Pipeline,
   X_train: Any,
   X_test: Any,
   y_train: Any,
@@ -64,7 +92,7 @@ def find_best_lr_params(pipeline: Pipeline,
   param_grid: Dict[str, List[Any]],
   refit: Refit) -> SearchResults:
 
-  search = create_hyperparams_search(pipeline, param_grid, refit=refit)
+  search = create_hyperparams_grid_search(pipeline, param_grid, refit=refit)
 
   search.fit(X_train, y_train)
 
@@ -82,6 +110,41 @@ def find_best_lr_params(pipeline: Pipeline,
     model_evals=model_evals,
     refit=refit)
 
+def find_best_params_random_halving_search(pipeline: Pipeline,
+  X_train: Any,
+  X_test: Any,
+  y_train: Any,
+  y_test: Any,
+  random_state: int,
+  param_distributions: Dict[str, List[Any]],
+  resource: str,
+  min_resources: int,
+  max_resources: int,
+  refit: Refit) -> SearchResults:
+
+  search = create_hyperparams_random_halving_search(estimator_pipeline=pipeline,
+    param_distr=param_distributions,
+    random_state=random_state,
+    resource=resource,
+    refit=refit,
+    min_resources=min_resources,
+    max_resources=max_resources)
+
+  search.fit(X_train, y_train)
+
+  model_evals = compute_model_evaluations(pipeline,
+    search.best_estimator_,
+    random_state,
+    X_train,
+    y_train,
+    X_test,
+    y_test)
+  
+  return SearchResults(best_estimator=search.best_estimator_,
+    best_score=search.best_score_,
+    estimator_params=search.best_params_,
+    model_evals=model_evals,
+    refit=refit)
 
 def save_hyperparams_to_file(filepath:str, params: ModelParams):
   with open(filepath, "w") as f:

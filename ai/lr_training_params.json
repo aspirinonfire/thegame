@@ -1,39 +1,40 @@
 {
   "refit": "ndcg",
   "best_params": {
-    "clf__C": 8.0,
-    "clf__class_weight": null,
+    "clf__C": 7.080389248899858,
+    "clf__class_weight": "balanced",
     "clf__solver": "lbfgs",
-    "clf__tol": 0.0001,
+    "clf__tol": 4.515669741338378e-05,
     "vec__ngram_range": [
       1,
       1
     ],
     "vec__norm": null,
     "vec__sublinear_tf": false,
-    "vec__use_idf": true
+    "vec__use_idf": true,
+    "clf__max_iter": 8100
   },
   "final_evals": {
     "cv_folds": 5,
     "ndcg_k": 10,
-    "cv_acc_mean": 0.4553031485006397,
-    "cv_acc_std": 0.02363463126997629,
-    "cv_ll_mean": 2.195837546432212,
-    "cv_ll_std": 0.05449427610941887,
-    "cv_roc_auc_train_mean": 0.9716287378944981,
-    "cv_roc_auc_train_std": 0.000531656521744255,
-    "cv_roc_auc_test_mean": 0.9485962225999008,
-    "cv_roc_auc_test_std": 0.002718283931590997,
-    "cv_roc_auc_train_test_delta": 0.023032515294597267,
-    "cv_ndcg_train_mean": 0.7343375057863767,
-    "cv_ndcg_train_std": 0.0026322919971892528,
-    "cv_ndcg_test_mean": 0.6593772242106599,
-    "cv_ndcg_test_std": 0.01882422680271277,
-    "cv_ndcg_train_test_delta": 0.07496028157571677,
-    "holdout_acc": 0.5036496350364964,
-    "holdout_ll": 1.3183808151098444,
-    "holdout_vs_cv_acc_delta": 0.048346486535856714,
-    "holdout_ndcg_score": 0.702885821660843,
-    "holdout_vs_cv_ndcg_delta": -0.031451684125533674
+    "cv_acc_mean": 0.4634002899150963,
+    "cv_acc_std": 0.010056965570375635,
+    "cv_ll_mean": 2.197110080178174,
+    "cv_ll_std": 0.01634255767316922,
+    "cv_roc_auc_train_mean": 0.9716576233211658,
+    "cv_roc_auc_train_std": 0.0007743531581621716,
+    "cv_roc_auc_test_mean": 0.9480240687266488,
+    "cv_roc_auc_test_std": 0.003209295609649482,
+    "cv_roc_auc_train_test_delta": 0.023633554594516992,
+    "cv_ndcg_train_mean": 0.7347488119734134,
+    "cv_ndcg_train_std": 0.0022344522145991644,
+    "cv_ndcg_test_mean": 0.6583553818473972,
+    "cv_ndcg_test_std": 0.007253969581049346,
+    "cv_ndcg_train_test_delta": 0.07639343012601618,
+    "holdout_acc": 0.49272727272727274,
+    "holdout_ll": 1.3617212961268148,
+    "holdout_vs_cv_acc_delta": 0.02932698281217644,
+    "holdout_ndcg_score": 0.702574068255824,
+    "holdout_vs_cv_ndcg_delta": -0.03217474371758933
   }
 }
