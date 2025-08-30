@@ -1,17 +1,17 @@
 {
   "refit": "ndcg",
   "best_params": {
-    "clf__C": 90.04177848328933,
-    "clf__class_weight": "balanced",
+    "clf__C": 3.440220269565972,
+    "clf__class_weight": null,
     "clf__solver": "lbfgs",
-    "clf__tol": 3.40139764350031e-05,
+    "clf__tol": 0.0001204633524087618,
     "vec__ngram_range": [
       1,
       1
     ],
     "vec__norm": null,
     "vec__sublinear_tf": false,
-    "vec__use_idf": false,
+    "vec__use_idf": true,
     "clf__max_iter": 8100
   },
   "final_evals": {
@@ -31,10 +31,10 @@
     "cv_ndcg_test_mean": 0.6593772242106599,
     "cv_ndcg_test_std": 0.01882422680271277,
     "cv_ndcg_train_test_delta": 0.07496028157571677,
-    "holdout_acc": 0.49635036496350365,
-    "holdout_ll": 1.3547430253831223,
-    "holdout_vs_cv_acc_delta": 0.04104721646286397,
-    "holdout_ndcg_score": 0.7058292773012284,
-    "holdout_vs_cv_ndcg_delta": -0.028508228485148335
+    "holdout_acc": 0.4981751824817518,
+    "holdout_ll": 1.3216340527715262,
+    "holdout_vs_cv_acc_delta": 0.04287203398111211,
+    "holdout_ndcg_score": 0.7008081729117754,
+    "holdout_vs_cv_ndcg_delta": -0.03352933287460125
   }
 }

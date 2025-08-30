@@ -59,7 +59,7 @@ def main(use_search: bool,
   # get_feature_contribs(estimator, ["us-al", "us-nh", "us-tn", "us-vt"], "green background")
 
   # save to onnx
-  # export_to_onnx(final_estimator, onnx_export_path)
+  export_to_onnx(final_estimator, onnx_export_path)
 
 
 def create_lr_estimator_from_precomputed_params(X_train: Any,
@@ -105,33 +105,16 @@ def create_lr_estimator_from_search(X_train: Any,
 
   lr_param_distr: Dict[str, List[Any]] = {
     # Vectorizer
-    f"{VEC_STEP}__ngram_range": [(1, 1), (1, 2)],
+    f"{VEC_STEP}__ngram_range": [(1, 1)],
     f"{VEC_STEP}__use_idf": [True, False],
     f"{VEC_STEP}__norm": [None],
     f"{VEC_STEP}__sublinear_tf": [True, False],
     # Classifier
-    f"{CLF_STEP}__solver": ["lbfgs"],
+    f"{CLF_STEP}__solver": ["lbfgs", "saga"],
     f"{CLF_STEP}__tol": loguniform(0.00001, 0.01),
-    f"{CLF_STEP}__C": loguniform(0.0001, 1000),
+    f"{CLF_STEP}__C": loguniform(0.00001, 1000),
     f"{CLF_STEP}__class_weight": [None, "balanced"]
   }
-
-  # svc_pipeline = create_svm_pipeline(random_state, max_iter=1000)
-  # svc_param_distr: Dict[str, List[Any]] = {
-  #   # Vectorizer
-  #   f"{VEC_STEP}__ngram_range": [(1, 1), (1, 2)],
-  #   f"{VEC_STEP}__use_idf": [True, False],
-  #   f"{VEC_STEP}__norm": [None],
-  #   f"{VEC_STEP}__sublinear_tf": [True, False],
-  #   # Classifier
-  #   f"{CLF_STEP}__estimator__C": loguniform(0.001, 1000),
-  #   f"{CLF_STEP}__estimator__tol": loguniform(0.00001, 0.001),
-  #   f"{CLF_STEP}__estimator__dual": [True, False],
-  #   f"{CLF_STEP}__estimator__class_weight": [None, "balanced"],
-  #   # Calibration method
-  #   f"{CLF_STEP}__method": ["sigmoid", "isotonic"],
-  #   f"{CLF_STEP}__cv": [5],
-  # }
 
   search_results = find_best_params_random_halving_search(pipeline=lr_pipeline,
     X_train=X_train,
@@ -141,6 +124,48 @@ def create_lr_estimator_from_search(X_train: Any,
     random_state=random_state,
     param_distributions=lr_param_distr,
     resource=f"{CLF_STEP}__max_iter",
+    min_resources=100,
+    max_resources=10000,
+    refit="ndcg")
+  
+  search_results.print_results()
+  save_hyperparams_to_file(lr_training_params_path, search_results.to_model_params())
+
+  return search_results.best_estimator
+
+def create_svm_estimator_from_search(X_train: Any,
+  X_test: Any,
+  y_train: Any,
+  y_test: Any,
+  random_state: int) -> Pipeline:
+
+  svc_pipeline = create_svm_pipeline(random_state, max_iter=1000)
+  svc_param_distr: Dict[str, List[Any]] = {
+    # Vectorizer
+    f"{VEC_STEP}__ngram_range": [(1, 1), (1, 2)],
+    f"{VEC_STEP}__use_idf": [True, False],
+    f"{VEC_STEP}__norm": [None],
+    f"{VEC_STEP}__sublinear_tf": [True, False],
+    # Classifier
+    f"{CLF_STEP}__estimator__C": loguniform(0.001, 1000),
+    f"{CLF_STEP}__estimator__tol": loguniform(0.00001, 0.001),
+    f"{CLF_STEP}__estimator__dual": [True, False],
+    f"{CLF_STEP}__estimator__class_weight": [None, "balanced"],
+    # Calibration method
+    f"{CLF_STEP}__method": ["sigmoid", "isotonic"],
+    f"{CLF_STEP}__cv": [5],
+  }
+
+  search_results = find_best_params_random_halving_search(pipeline=svc_pipeline,
+    X_train=X_train,
+    X_test=X_test,
+    y_train=y_train,
+    y_test=y_test,
+    random_state=random_state,
+    param_distributions=svc_param_distr,
+    resource=f"{CLF_STEP}__estimator__max_iter",
+    min_resources=500,
+    max_resources=20000,
     refit="ndcg")
   
   search_results.print_results()

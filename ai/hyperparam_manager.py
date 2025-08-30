@@ -62,6 +62,8 @@ def create_hyperparams_random_halving_search(estimator_pipeline: Pipeline,
   refit: TypeAlias,
   random_state: int,
   resource: str,
+  min_resources: int,
+  max_resources: int,
   pruning_aggressiveness_factor: int = 3):
   
   return HalvingRandomSearchCV(
@@ -70,8 +72,8 @@ def create_hyperparams_random_halving_search(estimator_pipeline: Pipeline,
     factor=pruning_aggressiveness_factor,
     aggressive_elimination=False,
     resource=resource,
-    max_resources=10000,
-    min_resources=100,
+    min_resources=min_resources,
+    max_resources=max_resources,
     scoring=make_ndcg_scorer(k=10),
     cv=5,
     refit=refit,
@@ -116,13 +118,17 @@ def find_best_params_random_halving_search(pipeline: Pipeline,
   random_state: int,
   param_distributions: Dict[str, List[Any]],
   resource: str,
+  min_resources: int,
+  max_resources: int,
   refit: Refit) -> SearchResults:
 
   search = create_hyperparams_random_halving_search(estimator_pipeline=pipeline,
     param_distr=param_distributions,
     random_state=random_state,
     resource=resource,
-    refit=refit)
+    refit=refit,
+    min_resources=min_resources,
+    max_resources=max_resources)
 
   search.fit(X_train, y_train)
 
