@@ -70,7 +70,7 @@
     "description": {
       "plate": "picture, mountains, mountain range, snowy peaks, snowy ridge, green white",
       "top": "green jagged line, green line, green",
-      "bottom": "white"
+      "bottom": "white, solid white"
     }
   },
   {
@@ -224,10 +224,10 @@
     "version": "default",
     "weight": 1.0,
     "description": {
-      "plate": "mostly white, white white green",
+      "plate": "mostly white, white green",
       "top": "white, solid white",
       "middle": "branch, green branch, pinecone, pine cone, small bird, bird, left bird, left branch, left pine cone",
-      "bottom": "green line"
+      "bottom": "green line, green"
     }
   },
   {
