@@ -1,5 +1,7 @@
 from pathlib import Path
+from random import uniform
 from typing import Any, Dict, List
+import numpy as np
 from sklearn.model_selection import train_test_split
 import os
 import argparse
@@ -9,13 +11,13 @@ from sklearn.pipeline import Pipeline
 
 from data_loader import read_raw_data, transform_to_training_rows
 from evaluator import compute_model_evaluations
-from hyperparam_manager import find_best_params_grid_search, find_best_params_random_halving_search, load_hyperparams_from_file, save_hyperparams_to_file
+from hyperparam_manager import find_best_params_random_halving_search, load_hyperparams_from_file, save_hyperparams_to_file
 from model_utils import export_to_onnx, print_top_k
 from pipeline_factory import CLF_STEP, VEC_STEP, create_lr_pipeline, create_svm_pipeline;
 
 def main(use_search: bool,
   training_data_path: str,
-  lr_training_params_path: str,
+  training_params_path: str,
   onnx_export_path: str):
   
   random_state = 500
@@ -34,14 +36,14 @@ def main(use_search: bool,
       y_train=y_train,
       y_test=y_test,
       random_state=random_state,
-      lr_training_params_path=lr_training_params_path)
+      training_params_path=training_params_path)
   else:
     final_estimator = create_lr_estimator_from_precomputed_params(X_train=X_train,
       X_test=X_test,
       y_train=y_train,
       y_test=y_test,
       random_state=random_state,
-      lr_training_params_path=lr_training_params_path)
+      lr_training_params_path=training_params_path)
 
   # Sanity check queries
   print_top_k("red top white middle blue bottom", final_estimator, 5)
@@ -99,7 +101,7 @@ def create_lr_estimator_from_search(X_train: Any,
   y_train: Any,
   y_test: Any,
   random_state: int,
-  lr_training_params_path: str) -> Pipeline:
+  training_params_path: str) -> Pipeline:
   
   lr_pipeline = create_lr_pipeline(random_state, max_iter=10000)
 
@@ -129,7 +131,7 @@ def create_lr_estimator_from_search(X_train: Any,
     refit="ndcg")
   
   search_results.print_results()
-  save_hyperparams_to_file(lr_training_params_path, search_results.to_model_params())
+  save_hyperparams_to_file(training_params_path, search_results.to_model_params())
 
   return search_results.best_estimator
 
@@ -137,7 +139,8 @@ def create_svm_estimator_from_search(X_train: Any,
   X_test: Any,
   y_train: Any,
   y_test: Any,
-  random_state: int) -> Pipeline:
+  random_state: int,
+  training_params_path: str) -> Pipeline:
 
   svc_pipeline = create_svm_pipeline(random_state, max_iter=1000)
   svc_param_distr: Dict[str, List[Any]] = {
@@ -147,10 +150,13 @@ def create_svm_estimator_from_search(X_train: Any,
     f"{VEC_STEP}__norm": [None],
     f"{VEC_STEP}__sublinear_tf": [True, False],
     # Classifier
+    f"{CLF_STEP}__estimator__kernel": ["poly", "rbf", "sigmoid"],
+    f"{CLF_STEP}__estimator__gamma": list(np.logspace(-5, 0, 100)) + ["scale", "auto"],
     f"{CLF_STEP}__estimator__C": loguniform(0.001, 1000),
     f"{CLF_STEP}__estimator__tol": loguniform(0.00001, 0.001),
-    f"{CLF_STEP}__estimator__dual": [True, False],
+    f"{CLF_STEP}__estimator__degree": [2, 3, 4],
     f"{CLF_STEP}__estimator__class_weight": [None, "balanced"],
+    f"{CLF_STEP}__estimator__coef0": [0, 1, 10],
     # Calibration method
     f"{CLF_STEP}__method": ["sigmoid", "isotonic"],
     f"{CLF_STEP}__cv": [5],
@@ -164,12 +170,12 @@ def create_svm_estimator_from_search(X_train: Any,
     random_state=random_state,
     param_distributions=svc_param_distr,
     resource=f"{CLF_STEP}__estimator__max_iter",
-    min_resources=500,
-    max_resources=20000,
+    min_resources=1000,
+    max_resources=30000,
     refit="ndcg")
   
   search_results.print_results()
-  save_hyperparams_to_file(lr_training_params_path, search_results.to_model_params())
+  save_hyperparams_to_file(training_params_path, search_results.to_model_params())
 
   return search_results.best_estimator
 
@@ -188,10 +194,10 @@ if __name__ == "__main__":
 
   base_dir = Path(__file__).parent
   training_data_path = os.path.join(base_dir, "training_data", "plate_descriptions.json")
-  lr_training_params_path = os.path.join(base_dir, "lr_training_params.json")
+  training_params_path = os.path.join(base_dir, "training_params.json")
   onnx_export_path = os.path.join(base_dir, "..", "ui", "public", "skl_plates_model.onnx")
 
   main(use_search=parsed_args.use_search,
     training_data_path=training_data_path,
-    lr_training_params_path=lr_training_params_path,
+    training_params_path=training_params_path,
     onnx_export_path=onnx_export_path)
