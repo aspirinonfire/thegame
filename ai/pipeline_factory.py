@@ -4,7 +4,7 @@ from skl2onnx.shape_calculators.text_vectorizer import calculate_sklearn_text_ve
 from skl2onnx.operator_converters.tfidf_vectoriser import convert_sklearn_tfidf_vectoriser
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
-from sklearn.svm import LinearSVC
+from sklearn.svm import SVC
 from sklearn.calibration import CalibratedClassifierCV
 
 VEC_STEP = "vec"
@@ -53,12 +53,11 @@ def create_svm_pipeline(random_state: int = 42,
   cv_calib: int = 5) -> Pipeline:
   
   clf = CalibratedClassifierCV(
-    estimator=LinearSVC(
-      loss="squared_hinge",
-      penalty="l2",
-      multi_class="ovr",
+    estimator=SVC(
+      cache_size=2048,
+      decision_function_shape="ovr",
       random_state=random_state,
-      max_iter=max_iter
+      max_iter=max_iter,
     ),
     n_jobs=-1,
     ensemble=True,
