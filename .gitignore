@@ -48,14 +48,8 @@ next-env.d.ts
 **/public/swe-worker*
 
 # Backend stuff
-appsettings.Development.json
-testsettings.override.json
-*.csproj.user
-testsettings.json
-bin/
-obj/
-Debug/
-Release/
+/backend/**/*
+*.bin
 
 # Docker stuff
 /backend/mssql_volume
@@ -77,8 +71,6 @@ backend/TheGame.Infra/stack.localdev.json
 **/*/blob-report/
 **/*/playwright/.cache/
 
-# Backend from master branch
-/backend/**/*
-*.bin
-
+# AI Stuff
 **/*/__pycache__
+skl_plates_model.onnx
