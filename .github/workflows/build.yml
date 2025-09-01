@@ -154,11 +154,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ env.AI_RELEASE_PREFIX }}/v${{ steps.training_params.outputs.version }}
         run: |
-          release_data="$(gh release view "$TAG")"
-          if echo "$release_data" | grep -F 'release not found' >/dev/null; then
+          output="$(gh release view "$TAG" 1>/dev/null 2>&1)"; rc=$?
+          if [ $rc -eq 0 ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          elif echo "$output" | grep -F 'release not found' >/dev/null; then
             echo "exists=false" >> "$GITHUB_OUTPUT"
           else
-            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "$output"
+            exit 1
           fi
       
       # If release exists, use it for deployment
