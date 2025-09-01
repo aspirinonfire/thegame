@@ -18,7 +18,7 @@ env:
   AI_TRAINING_DATA_PATH: training_data/plate_descriptions.json
   AI_ONNX_FILENAME: skl_plates_model.onnx
   AI_TESTS: tests
-  AI_RELEASE_PREFIX: "offlineonly"
+  AI_RELEASE_PREFIX: "offlineonly-model"
   AI_RELEASE_NOTES: "AI Search model for 'release/offline-only'"
   PY_VERSION: 3.13
   PY_REQS: requirements.txt
@@ -102,14 +102,14 @@ jobs:
           ${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}
           ${{ github.workspace }}/${{ env.AI_DIR }}/${{ env.AI_PARAMS_PATH }}
           --title "AI Search Model ${{ env.AI_RELEASE_PREFIX }} v${{ steps.training_params.outputs.version }}"
-          --notes ${{ env.AI_RELEASE_NOTES }}
+          --notes "${{ env.AI_RELEASE_NOTES }}"
       
       - name: Set version file
         id: vars
         run: |
           calculateSha=$(git rev-parse --short ${{ github.sha }})
           deployDate=$(date --iso-8601=seconds)
-          echo "{\"deployDate\":\"$deployDate\",\"sha\":\"$calculateSha\"}" > ./${{ env.UI_ROOT }}/public/version.json
+          echo "{\"deployDate\":\"$deployDate\",\"sha\":\"$calculateSha\", \"aiModelVersion\": \"${{ env.AI_RELEASE_PREFIX }}/v${{ steps.training_params.outputs.version }}\"}" > ./${{ env.UI_ROOT }}/public/version.json
 
       # Build React App
       - name: NPM install
