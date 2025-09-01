@@ -78,4 +78,6 @@ backend/TheGame.Infra/stack.localdev.json
 **/*/playwright/.cache/
 mssql_volume
 
+# AI Stuff
 **/*/__pycache__
+skl_plates_model.onnx

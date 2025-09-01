@@ -6,8 +6,9 @@ import LocalDateTime from "~/common-components/localDateTime";
 import { useAppState } from "~/appState/useAppState";
 
 export interface VersionInfo {
-  deployDate: Date,
+  deployDate: Date
   sha: string
+  aiModelVersion: string
 }
 
 export async function clientLoader({
@@ -25,7 +26,8 @@ const AboutPage = ({
   const [isShowDeleteConfirmation, setIsShowDeleteConfirmation] = useState(false);
   const [versionInfo, setVersionString] = useState<VersionInfo>({
     deployDate: new Date("2025-06-18T00:00:00Z"),
-    sha: "unknown"
+    sha: "unknown",
+    aiModelVersion: "unknown"
   });
 
   const refreshApiAccessToken = useAppState(s => s.refreshAccessToken);
@@ -93,9 +95,11 @@ const AboutPage = ({
           <p>
             Made with React, Tailwind, ASP Net Core, scikit-learn, onnxruntime-web, coffee, ducktape, and WD-40
           </p>
-          <p className="text-gray-400 pt-5">
-            App deploy date: <LocalDateTime isoDateTime={versionInfo.deployDate} format="MMMM D, YYYY" />. Commit: {versionInfo.sha}
-          </p>
+          <ul className="text-gray-400 pt-5">
+            <li>App deploy date: <LocalDateTime isoDateTime={versionInfo.deployDate} format="MMMM D, YYYY" /></li>
+            <li>Commit: {versionInfo.sha}</li>
+            <li>Search model version: {versionInfo.aiModelVersion}</li>
+          </ul>
         </div>
       </div>
 

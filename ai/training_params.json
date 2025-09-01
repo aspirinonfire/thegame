@@ -1,8 +1,10 @@
 {
+  "estimator": "LogisticRegression",
   "refit": "ndcg",
   "best_params": {
     "clf__C": 7.080389248899858,
     "clf__class_weight": "balanced",
+    "clf__random_state": 500,
     "clf__solver": "lbfgs",
     "clf__tol": 4.515669741338378e-05,
     "vec__ngram_range": [
@@ -36,5 +38,6 @@
     "holdout_vs_cv_acc_delta": 0.02932698281217644,
     "holdout_ndcg_score": 0.702574068255824,
     "holdout_vs_cv_ndcg_delta": -0.03217474371758933
-  }
+  },
+  "version": "0.0.1"
 }

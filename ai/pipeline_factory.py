@@ -34,13 +34,10 @@ def create_vectorizer():
     sublinear_tf=True)
 
 # Train data set using Logistic Regression
-def create_lr_pipeline(random_state: int = 42, max_iter: int = 500) -> Pipeline:
+def create_lr_pipeline() -> Pipeline:
   # see https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
   clf = LogisticRegression(
-    solver="lbfgs",
     penalty="l2",
-    max_iter=max_iter,
-    random_state=random_state,
     n_jobs=-1)
 
   return Pipeline(steps=[
@@ -48,20 +45,15 @@ def create_lr_pipeline(random_state: int = 42, max_iter: int = 500) -> Pipeline:
     (CLF_STEP, clf)
   ])
 
-def create_svm_pipeline(random_state: int = 42,
-  max_iter: int = 10000,
-  cv_calib: int = 5) -> Pipeline:
+def create_svm_pipeline() -> Pipeline:
   
   clf = CalibratedClassifierCV(
     estimator=SVC(
       cache_size=2048,
       decision_function_shape="ovr",
-      random_state=random_state,
-      max_iter=max_iter,
     ),
     n_jobs=-1,
-    ensemble=True,
-    cv=cv_calib
+    ensemble=True
   )
 
   return Pipeline(steps=[

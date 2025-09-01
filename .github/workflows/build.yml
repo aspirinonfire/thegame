@@ -34,6 +34,11 @@ env:
   # Other
   AI_DIR: ai
   AI_TESTS: tests
+  AI_PARAMS_PATH: training_params.json
+  AI_TRAINING_DATA_PATH: training_data/plate_descriptions.json
+  AI_ONNX_FILENAME: skl_plates_model.onnx
+  AI_RELEASE_PREFIX: "master-model"
+  AI_RELEASE_NOTES: "AI Search model for 'master'"
   PY_VERSION: 3.13
   PY_REQS: requirements.txt
 
@@ -124,17 +129,89 @@ jobs:
           mkdir -p ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/${{ env.API_PUBLISH_DIR }}
           docker save ${{ env.GAMEAPP_IMAGE_NAME }} | gzip > ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/${{ env.API_PUBLISH_DIR }}/${{ env.GAMEAPP_IMAGE_NAME }}.tar.gz
 
+      # Run PY tests for AI models
+      - name: Upgrade pip
+        working-directory: ${{ env.AI_DIR }}
+        run: python -m pip install --upgrade pip
+
+      - name: Install PY deps
+        working-directory: ${{ env.AI_DIR }}
+        run: pip install -r ${{ env.PY_REQS }}
+
+      - name: Run AI trainer unit tests
+        working-directory: ${{ env.AI_DIR }}
+        run: python -m unittest discover -v -s ${{ env.AI_TESTS }}
+
+      # Check if AI model release with given version exists
+      - name: Read Training Version
+        id: training_params
+        run: |
+          echo "version=$(jq -r .version ai/training_params.json)" >> "$GITHUB_OUTPUT"
+      
+      - name: Check if model version has existing release
+        id: model_version_release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ env.AI_RELEASE_PREFIX }}/v${{ steps.training_params.outputs.version }}
+        run: |
+          set +e
+          error_output="$({ gh release view "$TAG" >/dev/null; } 2>&1)"; return_code=$?
+          set -e
+          echo $error_output
+          if [ $return_code -eq 0 ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          elif echo "$error_output" | grep -F 'release not found' >/dev/null; then
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          else
+            exit 1
+          fi
+      
+      # If release exists, use it for deployment
+      - name: Fetch existing model
+        if: steps.model_version_release.outputs.exists == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release download "${{ env.AI_RELEASE_PREFIX }}/v${{ steps.training_params.outputs.version }}"
+          --pattern ${{ env.AI_ONNX_FILENAME }}
+          --dir ui/public
+          --clobber
+      
+      # If release does not exist, train a new model and create new release
+      - name: Train model
+        working-directory: ${{ env.AI_DIR }}
+        if: steps.model_version_release.outputs.exists == 'false'
+        run: >
+          python trainer.py
+          --data-path ${{ env.AI_TRAINING_DATA_PATH }}
+          --params-path ${{ env.AI_PARAMS_PATH }}
+          --onnx-path ${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}
+      
+      - name: Tag and Release new model
+        if: steps.model_version_release.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "${{ env.AI_RELEASE_PREFIX }}/v${{ steps.training_params.outputs.version }}"
+          ${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}
+          ${{ github.workspace }}/${{ env.AI_DIR }}/${{ env.AI_PARAMS_PATH }}
+          --title "AI Search Model ${{ env.AI_RELEASE_PREFIX }} v${{ steps.training_params.outputs.version }}"
+          --notes "${{ env.AI_RELEASE_NOTES }}"
+          --target "master"
+      
+      - name: Set version file
+        id: vars
+        run: |
+          calculateSha=$(git rev-parse --short ${{ github.sha }})
+          deployDate=$(date --iso-8601=seconds)
+          echo "{\"deployDate\":\"$deployDate\",\"sha\":\"$calculateSha\", \"aiModelVersion\": \"${{ env.AI_RELEASE_PREFIX }}/v${{ steps.training_params.outputs.version }}\"}" > ./${{ env.UI_ROOT }}/public/version.json
+
       # Build UI APP
       - name: NPM install
         working-directory: ${{ env.UI_ROOT }}
         run: npm install
-
-      - name: Set version file
-        working-directory: ${{ env.UI_ROOT }}
-        run: |
-          calculateSha=$(git rev-parse --short ${{ github.sha }})
-          deployDate=$(date --iso-8601=seconds)
-          echo "{\"deployDate\":\"$deployDate\",\"sha\":\"$calculateSha\"}" > ./public/version.json
 
       - name: Build and export UI App
         working-directory: ${{ env.UI_ROOT }}
@@ -187,19 +264,6 @@ jobs:
           --self-contained \
           /p:PublishSingleFile=true \
           --output ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/${{ env.PULUMI_PUBLISH_DIR}}
-
-      # Run PY tests for AI models
-      - name: Upgrade pip
-        working-directory: ${{ env.AI_DIR }}
-        run: python -m pip install --upgrade pip
-
-      - name: Install PY deps
-        working-directory: ${{ env.AI_DIR }}
-        run: pip install -r ${{ env.PY_REQS }}
-
-      - name: Run AI trainer unit tests
-        working-directory: ${{ env.AI_DIR }}
-        run: python -m unittest discover -v -s ${{ env.AI_TESTS }}
 
       # Publish artifacts for deploy workflow
       - name: Upload combined artifacts for deployment

@@ -24,7 +24,7 @@ synonyms_lkp = {
 # For larger data sets, we'll need to refactor solution to work with streams, and de-normalize once into a temp file.
 def read_raw_data(training_data_path: str) -> list[RawTrainingDataRow]:
   
-  print("Reading raw json data...")
+  print(f"Reading raw json data from {training_data_path}...")
 
   training_data_json = Path(training_data_path)
 
