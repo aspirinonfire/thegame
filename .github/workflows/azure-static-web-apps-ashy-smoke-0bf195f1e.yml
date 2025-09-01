@@ -19,7 +19,7 @@ env:
   AI_ONNX_FILENAME: skl_plates_model.onnx
   AI_TESTS: tests
   AI_RELEASE_PREFIX: "offlineonly"
-  AI_RELEASE_DESC: "AI Search model for 'release/offline-only'"
+  AI_RELEASE_NOTES: "AI Search model for 'release/offline-only'"
   PY_VERSION: 3.13
   PY_REQS: requirements.txt
 
@@ -102,7 +102,7 @@ jobs:
           ${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}
           ${{ github.workspace }}/${{ env.AI_DIR }}/${{ env.AI_PARAMS_PATH }}
           --title "AI Search Model ${{ env.AI_RELEASE_PREFIX }} v${{ steps.training_params.outputs.version }}"
-          --notes "AI Search Model for release/offline-only branch"
+          --notes ${{ env.AI_RELEASE_NOTES }}
       
       - name: Set version file
         id: vars
