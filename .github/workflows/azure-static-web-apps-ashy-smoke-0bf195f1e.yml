@@ -62,7 +62,7 @@ jobs:
           python trainer.py
           --data-path ${{ env.AI_TRAINING_DATA_PATH }}
           --params-path ${{ env.AI_PARAMS_PATH }}
-          --onnx-path ./${{ env.UI_ROOT}}/public/${{ env.AI_ONNX_FILENAME }}
+          --onnx-path "${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}
 
       # TODO if current version of the model doesn't exist, upload it to some storage (GH release, LFS, etc)
       
