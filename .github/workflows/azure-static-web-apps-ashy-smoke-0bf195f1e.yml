@@ -11,7 +11,6 @@ on:
       - release/offline-only
 
 env:
-  GH_TOKEN: ${{ github.token }}
   NODE_VERSION: 22
   UI_ROOT: ui
   AI_DIR: ai
@@ -76,6 +75,8 @@ jobs:
       # If release exists, use it for deployment
       - name: Fetch existing model
         if: steps.model_version_release.outputs.exists == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: >
           gh release download "${{ env.AI_RELEASE_PREFIX }}/v${{ steps.training_params.outputs.version }}"
           --pattern ${{ env.AI_ONNX_FILENAME }}
@@ -94,6 +95,8 @@ jobs:
 
       - name: Tag and Release new model
         if: steps.model_version_release.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: >
           gh release create "${{ env.AI_RELEASE_PREFIX }}/v${{ steps.training_params.outputs.version }}"
           ${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}
