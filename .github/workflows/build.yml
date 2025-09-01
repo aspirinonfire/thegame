@@ -154,13 +154,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ env.AI_RELEASE_PREFIX }}/v${{ steps.training_params.outputs.version }}
         run: |
-          error_output="$(gh release view "$TAG" 2>&1 >/dev/null)"; return_code=$?
+          error_output="$({ gh release view "$TAG" >/dev/null; } 2>&1)"; return_code=$?
+          echo $error_output
           if [ $return_code -eq 0 ]; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
+            exit 0
           elif echo "$error_output" | grep -F 'release not found' >/dev/null; then
             echo "exists=false" >> "$GITHUB_OUTPUT"
+            exit 0
           else
-            echo "::error::$error_output"
             exit 1
           fi
       
@@ -195,6 +197,7 @@ jobs:
           ${{ github.workspace }}/${{ env.AI_DIR }}/${{ env.AI_PARAMS_PATH }}
           --title "AI Search Model ${{ env.AI_RELEASE_PREFIX }} v${{ steps.training_params.outputs.version }}"
           --notes "${{ env.AI_RELEASE_NOTES }}"
+          --target "master"
       
       - name: Set version file
         id: vars
