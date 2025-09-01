@@ -9,12 +9,15 @@ import json
 
 from evaluator import ModelEvaluations, compute_model_evaluations
 from model_utils import make_ndcg_scorer
+from pipeline_factory import CLF_STEP
 
 @dataclass
 class ModelParams:
+  estimator: str
   refit: str
   best_params: Dict
   final_evals: ModelEvaluations
+  version: str | None = None
 
 @dataclass
 class SearchResults:
@@ -30,7 +33,15 @@ class SearchResults:
     self.model_evals.print()
   
   def to_model_params(self):
-    return ModelParams(best_params = self.estimator_params,
+    classifier = self.best_estimator[CLF_STEP]
+    estimator_name = (
+      classifier.estimator.__class__.__name__
+      if hasattr(classifier, "estimator")
+      else classifier.__class__.__name__
+    )
+
+    return ModelParams(estimator=estimator_name,
+      best_params = self.estimator_params,
       final_evals = self.model_evals,
       refit=self.refit)
 
@@ -146,9 +157,25 @@ def find_best_params_random_halving_search(pipeline: Pipeline,
     model_evals=model_evals,
     refit=refit)
 
+def bump_version(version: str | None) -> str:
+  if (version is None):
+    return "0.0.1"
+
+  parts = version.split(".")
+  parts[-1] = str(int(parts[-1]) + 1)
+  return ".".join(parts)
+
 def save_hyperparams_to_file(filepath:str, params: ModelParams):
-  with open(filepath, "w") as f:
-    json.dump(asdict(params), fp=f, indent=2, ensure_ascii=False)
+  try:
+    with open(filepath, mode="r", encoding="utf-8") as file:
+      old = json.load(file)
+      old_version = old.get("version")
+  except (FileNotFoundError, json.JSONDecodeError):
+      old_version = None
+
+  with open(filepath, mode="w", encoding="utf-8") as file:
+    params.version = bump_version(old_version)
+    json.dump(asdict(params), fp=file, indent=2, ensure_ascii=False)
 
 
 def load_hyperparams_from_file(filepath: str) -> Dict[str, List[Any]]:

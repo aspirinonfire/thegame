@@ -1,4 +1,5 @@
 {
   "deployDate": "2025-06-13T00:00:00Z",
-  "sha": "hash-goes-here"
+  "sha": "hash-goes-here",
+  "aiModelVersion": "version-goes-here"
 }

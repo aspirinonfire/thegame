@@ -81,9 +81,12 @@ The model is used for ranking the top-10 most relevant license plates based on a
 1. Overlap = class ambiguity. If multiple labels are nearly indistinguishable by the features provided, the model has no way to reach perfect accuracy. If multiple states all have "white with blue text," the model can only rely on subtler cues (extra words, frequency patterns) to separate them.
 
 ### Dev Notes
-#### Aspire setup
+#### Getting app to run in local dev
+1. Install `.Net >=9`, `Docker`, `Node >=22`, `Python`, `GH cli`.
 1. Copy `backend/TheGame.AppHost/appsettings.json` to `backend/TheGame.AppHost/appsettings.Development.json`. This new file should be already git-ignored.
 1. Set desired values for the Dev environment in `Parameters` node/object in the JSON settings file.
+1. Download an existing AI search model or train a new one from scratch. See below.
+1. Set Aspire project as a startup project and run it.
 #### Integration tests setup
 1. Copy `backend/TheGame.Tests/testsettings.sample.json` to `backend/TheGame.Tests/testsettings.json`. This new file should be already git-ignored.
 1. Set desired values for the Dev environment.
@@ -107,4 +110,8 @@ For training model with grid_search
 ```
 cd ai
 py trainer.py --use-search
+```
+For downloading a pre-built model:
+```
+gh release download "<release-tag>" --pattern "skl_plates_model.onnx" --dir "ui/public"
 ```
