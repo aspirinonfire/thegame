@@ -18,6 +18,8 @@ env:
   AI_TRAINING_DATA_PATH: training_data/plate_descriptions.json
   AI_ONNX_FILENAME: skl_plates_model.onnx
   AI_TESTS: tests
+  AI_RELEASE_PREFIX: "offlineonly"
+  AI_RELEASE_DESC: "AI Search model for 'release/offline-only'"
   PY_VERSION: 3.13
   PY_REQS: requirements.txt
 
@@ -42,7 +44,7 @@ jobs:
         with:
           submodules: true
 
-      # Build new search AI model
+      # Ensure AI training code is not broken
       - name: Upgrade pip
         working-directory: ${{ env.AI_DIR }}
         run: python -m pip install --upgrade pip
@@ -55,16 +57,48 @@ jobs:
         working-directory: ${{ env.AI_DIR }}
         run: python -m unittest discover -v -s ${{ env.AI_TESTS }}
 
-      # TODO check if current version of the model already exists, and download it instead
+      # Check if AI model release with given version exists
+      - name: Read Training Version
+        id: training_params
+        run: |
+          echo "version=$(jq -r .version ai/training_params.json)" >> "$GITHUB_OUTPUT"
+      
+      - name: Check if model version has existing release
+        id: model_version_release
+        run: |
+          if gh release view "${{ env.AI_RELEASE_PREFIX }}/v${{ steps.training_params.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # If release exists, use it for deployment
+      - name: Fetch existing model
+        if: steps.model_version_release.outputs.exists == 'true'
+        run: >
+          gh release download "${{ env.AI_RELEASE_PREFIX }}/v${{ steps.training_params.outputs.version }}"
+          --pattern ${{ env.AI_ONNX_FILENAME }}
+          --dir ui/public
+          --clobber
+
+      # If release does not exist, train a new model and create new release
       - name: Train model
         working-directory: ${{ env.AI_DIR }}
+        if: steps.model_version_release.outputs.exists == 'false'
         run: >
           python trainer.py
           --data-path ${{ env.AI_TRAINING_DATA_PATH }}
           --params-path ${{ env.AI_PARAMS_PATH }}
           --onnx-path ${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}
 
-      # TODO if current version of the model doesn't exist, upload it to some storage (GH release, LFS, etc)
+      - name: Tag and Release new model
+        if: steps.model_version_release.outputs.exists == 'false'
+        run: >
+          gh release create "${{ env.AI_RELEASE_PREFIX }}/v${{ steps.training_params.outputs.version }}"
+          ${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}
+          ${{ github.workspace }}/${{ env.AI_DIR }}/${{ env.AI_PARAMS_PATH }}
+          --title "AI Search Model ${{ env.AI_RELEASE_PREFIX }} v${{ steps.training_params.outputs.version }}"
+          --notes "AI Search Model for release/offline-only branch"
       
       - name: Set version file
         id: vars
