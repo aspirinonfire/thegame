@@ -154,7 +154,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ env.AI_RELEASE_PREFIX }}/v${{ steps.training_params.outputs.version }}
         run: |
+          set +e
           error_output="$({ gh release view "$TAG" >/dev/null; } 2>&1)"; return_code=$?
+          set -e
           echo $error_output
           if [ $return_code -eq 0 ]; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
