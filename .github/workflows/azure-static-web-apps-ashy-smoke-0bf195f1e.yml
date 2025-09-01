@@ -11,6 +11,7 @@ on:
       - release/offline-only
 
 env:
+  GH_TOKEN: ${{ github.token }}
   NODE_VERSION: 22
   UI_ROOT: ui
   AI_DIR: ai
