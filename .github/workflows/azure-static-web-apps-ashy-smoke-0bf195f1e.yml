@@ -65,11 +65,15 @@ jobs:
       
       - name: Check if model version has existing release
         id: model_version_release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ env.AI_RELEASE_PREFIX }}/v${{ steps.training_params.outputs.version }}
         run: |
-          if gh release view "${{ env.AI_RELEASE_PREFIX }}/v${{ steps.training_params.outputs.version }}" >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
+          release_data="$(gh release view "$TAG")"
+          if echo "$release_data" | grep -F 'release not found' >/dev/null; then
             echo "exists=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=true" >> "$GITHUB_OUTPUT"
           fi
 
       # If release exists, use it for deployment
