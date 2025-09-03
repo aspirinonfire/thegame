@@ -1,3 +1,7 @@
+[![Build Test and Publish](https://github.com/aspirinonfire/thegame/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/aspirinonfire/thegame/actions/workflows/build.yml)
+[![Deploy App](https://github.com/aspirinonfire/thegame/actions/workflows/deploy.yml/badge.svg?branch=master)](https://github.com/aspirinonfire/thegame/actions/workflows/deploy.yml)
+[![CodeQL](https://github.com/aspirinonfire/thegame/actions/workflows/github-code-scanning/codeql/badge.svg?branch=master)](https://github.com/aspirinonfire/thegame/actions/workflows/github-code-scanning/codeql)
+
 # The License Plate Game
 
 > Find all license plates for U.S. state and Canadian province.
