@@ -1,6 +1,8 @@
 # This action is responsible for building and deploying both backend and frontend code
 
 name: Build Test and Publish
+permissions:
+  contents: read
 
 on:
   push:

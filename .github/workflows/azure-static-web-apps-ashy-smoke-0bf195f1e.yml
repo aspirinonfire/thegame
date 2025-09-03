@@ -1,5 +1,8 @@
-name: Azure Static Web Apps CI/CD
 # https://learn.microsoft.com/en-us/azure/static-web-apps/build-configuration?tabs=github-actions#custom-build-commands
+name: Azure Static Web Apps CI/CD
+permissions:
+  contents: read
+  pull-requests: write
 
 on:
   push:
