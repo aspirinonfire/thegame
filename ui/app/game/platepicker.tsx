@@ -15,7 +15,8 @@ interface PickerControls {
 }
 
 interface TerritoryToRender extends Territory {
-  searchProbability: number | undefined 
+  searchProbability: number | undefined;
+  aiPrompt?: string | null;
 }
 
 const allTerritoriesToRender = territories
@@ -48,6 +49,8 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
   const debounceTimerRef = useRef<NodeJS.Timeout>(null);
 
   const [territoriesToRender, setTerritoriesToRender] = useState(allTerritoriesToRender);
+  // Per-plate prompt mapping for selections made during AI search
+  const [platePromptByKey, setPlatePromptByKey] = useState<Record<string, string>>({});
   useEffect(() => {
     if (!!debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
@@ -100,7 +103,8 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
       .slice(0, 10)
       .map(ter => ({
         ...ter.toRender!,
-        searchProbability: ter.prob
+        searchProbability: ter.prob,
+        aiPrompt: query
       }));
   }
 
@@ -134,7 +138,7 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
       });
   }
 
-  function handleCheckboxChange(territory: Territory, clickEvent: React.MouseEvent) {
+  function handleCheckboxChange(territory: TerritoryToRender, clickEvent: React.MouseEvent) {
     clickEvent.stopPropagation();
 
     const updatedForm = { ...formData };
@@ -145,6 +149,11 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
     if (!!matchingPlate) {
       delete updatedForm[territory.key];
       currentFormChanges.set(territory.key, false);
+      // Removing selection also removes any AI prompt association
+      if (platePromptByKey[territory.key]) {
+        const { [territory.key]: _, ...rest } = platePromptByKey;
+        setPlatePromptByKey(rest);
+      }
     } else {
       updatedForm[territory.key] = {
         key: territory.key,
@@ -155,6 +164,17 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
         spottedByPlayerName: user?.player?.playerName ?? "n/a"
       } as LicensePlateSpot;
       currentFormChanges.set(territory.key, true);
+
+      // If plate was selected from AI search results, attach its prompt
+      if (territory.aiPrompt) {
+        setPlatePromptByKey(prev => ({ ...prev, [territory.key]: territory.aiPrompt! }));
+      } else {
+        // Ensure no stale prompt is attached if not selecting from AI results
+        if (platePromptByKey[territory.key]) {
+          const { [territory.key]: _, ...rest } = platePromptByKey;
+          setPlatePromptByKey(rest);
+        }
+      }
     }
     
     setFormData(updatedForm);
@@ -163,7 +183,15 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
   }
 
   function handelSaveNewSpots() {
-    saveNewPlateData(Object.values(formData));
+    const toSave = Object.values(formData).map(lp => {
+      const prompt = platePromptByKey[lp.key];
+      if (!prompt) {
+        const { mlPrompt, ...rest } = lp as any;
+        return rest as LicensePlateSpot;
+      }
+      return ({ ...lp, mlPrompt: prompt });
+    });
+    saveNewPlateData(toSave);
     setShowPicker(false);
     setSearchTerm(null);
   }
@@ -234,12 +262,14 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
           autoFocus={true}
           ref={searchInputRef}
           id="default-search"
+          data-testid="plate-search-input"
           className="block w-full p-2 ps-10 placeholder:text-base text-gray-900 border border-gray-300 rounded-lg bg-gray-200 focus:ring-blue-500 focus:border-blue-500"
           placeholder="Name, abbreviation, or visual description"
           onChange={event => setSearchTerm(event.target.value)}
           value={searchTerm || ""} />
         <button type="button"
           className="text-white absolute end-2 bottom-1.25 bg-gray-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg text-sm px-3 py-1.5"
+          data-testid="plate-search-clear"
           onClick={_ => setSearchTerm(null)}>
           Clear
         </button>

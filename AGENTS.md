@@ -8,13 +8,15 @@ Frontend code, browser automation, and deployment configuration are **out of sco
 ## Project Layout
 - **AppHost (Aspire):** `./backend/TheGame.AppHost`
 - **API (Minimal API):** `./backend/TheGame.Api`
-- **Tests (xUnit):** `./backend/TheGame.Tests`
+- **Backend Tests (xUnit):** `./backend/TheGame.Tests`
   - Integration tests live under `./backend/TheGame.Tests/ItnegrationTests`
+- **SPA (React)** `./ui`
+- **UI Tests (playwright):** `./ui/tests`
 
 ---
 
 ## Toolchain
-- .NET SDK **9.x** (pinned by `global.json`)
+- .NET SDK **9.x**
 - Node.js 22 exists in repo but is not required for backend tasks
 - Aspire orchestrates backend services through AppHost
 
@@ -22,20 +24,27 @@ Frontend code, browser automation, and deployment configuration are **out of sco
 
 ## Commands
 ```bash
-# Build solution
-dotnet build .
+# Build bacend solution
+dotnet build ./backend
 
 # Build API
 dotnet build ./backend/TheGame.Api -c Debug
 
-# Run all tests (unit + integration)
+# Run all backend tests (unit + integration)
 dotnet test ./backend/TheGame.Tests --verbosity=detailed
 
 # Optional: run Aspire locally
 dotnet run --project ./backend/TheGame.AppHost
-```
 
-Integration tests use WebApplicationFactory<TEntryPoint> and Testcontainers (MsSqlFixture) to spin up SQL and apply migrations automatically. No manual DB setup is required.
+# Run UI in dev
+npm run dev
+
+# Run NPM in build
+npm run build
+
+# Run npm tests (headless)
+npm run teste2eci
+```
 
 ## Branching & PRs
 
@@ -77,6 +86,8 @@ Integration tests: in-memory test host + Testcontainers (MsSqlFixture)
 Auth in tests: use JWT bearer tokens as shown in
 IntegrationTests/UserEndpointTests.CanGetPlayerDataForAuthenticatedUser
 
+Backend Integration tests use WebApplicationFactory<TEntryPoint> and Testcontainers (MsSqlFixture) to spin up SQL and apply migrations automatically. No manual DB setup is required.
+
 Each new or changed endpoint must include:
 
 1. At least one happy-path test
@@ -85,6 +96,10 @@ Each new or changed endpoint must include:
 ## Frontend Testing
 
 Framework: Playwright
+
+Location: `./ui/tests`
+
+Example: `./ui/tests/game.spec.ts`
 
 ## Coding Style
 
@@ -97,7 +112,7 @@ Framework: Playwright
 1. Keep consistency with existing logging, validation, and test patterns
 1. Invert `if` statements to flatten the nested structure.
 1. Use LINQ instead of nested for loops whenever possible.
-1. Solution must build/compile successfully and all test report success. If there's an issue with either, fix these before calling it done. If it still fails after 3 attempts, stop and seek help from me.
+1. Solution must build/compile successfully and all test report success. If there's an issue with either, fix these before calling it done. If it still fails after 3 consecutive attempts with the same error message, stop and seek help from me.
 
 ## Do-Not-Touch Areas
 
