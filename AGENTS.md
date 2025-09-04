@@ -22,11 +22,14 @@ Frontend code, browser automation, and deployment configuration are **out of sco
 
 ## Commands
 ```bash
+# Build solution
+dotnet build .
+
 # Build API
 dotnet build ./backend/TheGame.Api -c Debug
 
 # Run all tests (unit + integration)
-dotnet test ./backend/TheGame.Tests -c Debug --logger "trx;LogFileName=TestResults.trx"
+dotnet test ./backend/TheGame.Tests --verbosity=detailed  --filter=Category=Unit & Category=Integration
 
 # Optional: run Aspire locally
 dotnet run --project ./backend/TheGame.AppHost
@@ -53,6 +56,7 @@ Do not commit directly to main
 1. Adjust DI wiring
 1. Create EF Core migrations
 1. Add or modify tests in ./backend/TheGame.Tests
+1. Run dotnet cli commands to build and test solutions.
 
 ### Not Allowed
 
@@ -87,6 +91,8 @@ Each new or changed endpoint must include:
 1. Use descriptive identifiers (no 1–2 letter names)
 1. Keep consistency with existing logging, validation, and test patterns
 1. Invert `if` statements to flatten the nested structure.
+1. Use LINQ instead of nested for loops whenever possible.
+1. Solution must build/compile successfully and all test report success. If there's an issue with either, fix these before calling it done. If it still fails after 3 attempts, stop and seek help from me.
 
 ## Do-Not-Touch Areas
 
