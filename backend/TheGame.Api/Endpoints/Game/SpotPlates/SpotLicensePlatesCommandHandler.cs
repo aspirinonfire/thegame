@@ -15,6 +15,8 @@ namespace TheGame.Api.Endpoints.Game.SpotPlates;
 
 public sealed record SpottedPlate(Country Country, StateOrProvince StateOrProvince)
 {
+  public string? MlPrompt { get; init; }
+
   public LicensePlate.PlateKey ToPlateKey() => new(Country, StateOrProvince);
 }
 
@@ -49,6 +51,20 @@ public sealed class SpotLicensePlatesCommandHandler(ITransactionExecutionWrapper
         return spotFailure;
       }
 
+      // Persist ML prompt records (API concern; not in domain)
+      foreach (var plateWithPrompt in command.SpottedPlates.Where(p => !string.IsNullOrWhiteSpace(p.MlPrompt)))
+      {
+        var plateKey = plateWithPrompt.ToPlateKey();
+        var plateLookup = LicensePlate.GetLicensePlate(plateKey);
+        if (!plateLookup.TryGetSuccessful(out var licensePlate, out _))
+        {
+          continue;
+        }
+
+        var mlRec = new LicensePlateSpotMlPrompt(command.GameId, command.SpottedByPlayerId, licensePlate, plateWithPrompt.MlPrompt!);
+        gameDb.Add(mlRec);
+      }
+
       await gameDb.SaveChangesAsync(cancellationToken);
       
       logger.LogInformation("Successfully spotted license plates.");
@@ -59,5 +75,3 @@ public sealed class SpotLicensePlatesCommandHandler(ITransactionExecutionWrapper
     logger,
     cancellationToken);
 }
-
-

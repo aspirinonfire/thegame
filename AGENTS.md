@@ -29,7 +29,7 @@ dotnet build .
 dotnet build ./backend/TheGame.Api -c Debug
 
 # Run all tests (unit + integration)
-dotnet test ./backend/TheGame.Tests --verbosity=detailed  --filter=Category=Unit & Category=Integration
+dotnet test ./backend/TheGame.Tests --verbosity=detailed
 
 # Optional: run Aspire locally
 dotnet run --project ./backend/TheGame.AppHost
@@ -57,15 +57,16 @@ Do not commit directly to main
 1. Create EF Core migrations
 1. Add or modify tests in ./backend/TheGame.Tests
 1. Run dotnet cli commands to build and test solutions.
+1. Run npm commands to build, dev, and test frontend
 
 ### Not Allowed
 
 1. Creating new projects or solutions
-1. Frontend or Playwright work
+1. Installing npm packages without explicit permission.
 1. Changing authentication provider setup
 1. Modifying production secrets or deployment configs
 
-## Testing
+## Backend Testing
 
 Framework: `xUnit`
 
@@ -80,6 +81,10 @@ Each new or changed endpoint must include:
 
 1. At least one happy-path test
 1. At least one unhappy-path test (validation, auth, or error flow)
+
+## Frontend Testing
+
+Framework: Playwright
 
 ## Coding Style
 
@@ -97,7 +102,7 @@ Each new or changed endpoint must include:
 ## Do-Not-Touch Areas
 
 1. Do not add new projects
-1. Do not modify frontend
+1. Do not add, update, or remove npm packages.
 1. Do not alter deployment pipeline files
 1. Do not introduce external dependencies without clear justification
 1. Do not commit into `main` or make PRs against `main`

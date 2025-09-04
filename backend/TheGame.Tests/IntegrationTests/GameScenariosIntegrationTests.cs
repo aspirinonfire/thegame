@@ -61,16 +61,16 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
     };
     using var sp = services.BuildServiceProvider(diOpts);
 
-    var newPlayerIdentity = await CreatePlayerWithIdentity(sp, 
+    var newPlayerIdentity = await IntegrationTestHelpers.CreatePlayerWithIdentity(sp, 
       new GetOrCreatePlayerRequest(
         new NewPlayerIdentityRequest("test_provider",
         "test_id_1",
         "Test Player 1")));
 
-    var newGameResult = await RunAsScopedRequest<StartNewGameCommand, OwnedOrInvitedGame>(sp, 
+    var newGameResult = await IntegrationTestHelpers.RunAsScopedRequest<StartNewGameCommand, OwnedOrInvitedGame>(sp, 
       new StartNewGameCommand("Test Game", newPlayerIdentity.PlayerId));
 
-    var spotResult = await RunAsScopedRequest<SpotLicensePlatesCommand, OwnedOrInvitedGame>(sp,
+    var spotResult = await IntegrationTestHelpers.RunAsScopedRequest<SpotLicensePlatesCommand, OwnedOrInvitedGame>(sp,
       new SpotLicensePlatesCommand(
         [
           new SpottedPlate(Country.US, StateOrProvince.CA),
@@ -104,16 +104,16 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
     using var sp = services.BuildServiceProvider(diOpts);
 
     // create new player with identity
-    var newPlayerIdentityCommandResult = await CreatePlayerWithIdentity(sp, 
+    var newPlayerIdentityCommandResult = await IntegrationTestHelpers.CreatePlayerWithIdentity(sp, 
       new GetOrCreatePlayerRequest(
         new NewPlayerIdentityRequest("test_provider",
         "test_id_2",
         "Test Player 2")));
 
-    var newGameCommandResult = await RunAsScopedRequest<StartNewGameCommand, OwnedOrInvitedGame>(sp, 
+    var newGameCommandResult = await IntegrationTestHelpers.RunAsScopedRequest<StartNewGameCommand, OwnedOrInvitedGame>(sp, 
       new StartNewGameCommand("Test Game 2", newPlayerIdentityCommandResult.PlayerId));
 
-    var actualEndGameResult = await RunAsScopedRequest<EndGameCommand, OwnedOrInvitedGame>(sp, 
+    var actualEndGameResult = await IntegrationTestHelpers.RunAsScopedRequest<EndGameCommand, OwnedOrInvitedGame>(sp, 
       new EndGameCommand(newGameCommandResult.GameId, newPlayerIdentityCommandResult.PlayerId));
 
     await using var scope = sp.CreateAsyncScope();
@@ -145,13 +145,13 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
     var newIdentityRequest = new NewPlayerIdentityRequest("test_provider",
       "test_id_3",
       "Test Player 3");
-    var newPlayerIdentityCommandResult = await CreatePlayerWithIdentity(
+    var newPlayerIdentityCommandResult = await IntegrationTestHelpers.CreatePlayerWithIdentity(
       sp,
       new GetOrCreatePlayerRequest(newIdentityRequest));
     playerId = newPlayerIdentityCommandResult.PlayerId;
 
     // start new game
-    var startNewGameCommandResult = await RunAsScopedRequest<StartNewGameCommand, OwnedOrInvitedGame>(
+    var startNewGameCommandResult = await IntegrationTestHelpers.RunAsScopedRequest<StartNewGameCommand, OwnedOrInvitedGame>(
       sp,
       new StartNewGameCommand("Respotted Plate Game", playerId));
     gameId = startNewGameCommandResult.GameId;
@@ -164,7 +164,7 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
       ],
       gameId,
       playerId);
-    var actualInitialSpotGameResult = await RunAsScopedRequest<SpotLicensePlatesCommand, OwnedOrInvitedGame>(sp, initialSpotRequest);
+    var actualInitialSpotGameResult = await IntegrationTestHelpers.RunAsScopedRequest<SpotLicensePlatesCommand, OwnedOrInvitedGame>(sp, initialSpotRequest);
     Assert.Equal(2, actualInitialSpotGameResult.Score.TotalScore);
 
     // remove one plate ~OR, +WA, +AL, -CA
@@ -176,7 +176,7 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
       ],
       gameId,
       playerId);
-    var actualGameAfterSpotRemoval = await RunAsScopedRequest<SpotLicensePlatesCommand, OwnedOrInvitedGame>(sp, spotRequestWithSpotRemoval);
+    var actualGameAfterSpotRemoval = await IntegrationTestHelpers.RunAsScopedRequest<SpotLicensePlatesCommand, OwnedOrInvitedGame>(sp, spotRequestWithSpotRemoval);
     Assert.Equal(3, actualGameAfterSpotRemoval.Score.TotalScore);
 
     // re-add plate ~OR, ~WA, ~AL, +CA
@@ -190,31 +190,9 @@ public class GameScenariosIntegrationTests(MsSqlFixture msSqlFixture) : IClassFi
       gameId,
       playerId);
     
-    var actualGameAfterReadd = await RunAsScopedRequest<SpotLicensePlatesCommand, OwnedOrInvitedGame>(sp, spotRequestWithReAdd);
+    var actualGameAfterReadd = await IntegrationTestHelpers.RunAsScopedRequest<SpotLicensePlatesCommand, OwnedOrInvitedGame>(sp, spotRequestWithReAdd);
     Assert.Equal(14, actualGameAfterReadd.Score.TotalScore);
   }
 
-  private static async Task<TResult> RunAsScopedRequest<TCommand, TResult>(IServiceProvider serviceProvider, TCommand command)
-    where TCommand : class
-    where TResult : class
-  {
-    await using var scope = serviceProvider.CreateAsyncScope();
-    var handler = scope.ServiceProvider.GetRequiredService<ICommandHandler<TCommand, TResult>>();
-
-    var result = await handler.Execute(command, CancellationToken.None);
-
-    result.AssertIsSucceessful(out var successfulResult);
-
-    return successfulResult;
-  }
-
-  private static async Task<GetOrCreatePlayerRequest.Result> CreatePlayerWithIdentity(IServiceProvider serviceProvider, GetOrCreatePlayerRequest request)
-  {
-    await using var scope = serviceProvider.CreateAsyncScope();
-    var playerService = scope.ServiceProvider.GetRequiredService<IPlayerService>();
-
-    var getOrAddPlayerResult = await playerService.GetOrCreatePlayer(request, CancellationToken.None);
-
-    return getOrAddPlayerResult.AssertIsSucceessful();
-  }
+  // helpers moved to TestUtils
 }
