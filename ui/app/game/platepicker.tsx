@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Modal, ModalBody, ModalFooter, ModalHeader, ToggleSwitch } from "flowbite-react";
 import type { LicensePlateSpot } from '~/game-core/models/LicensePlateSpot';
 import type { Territory } from '~/game-core/models/Territory';
@@ -15,39 +15,38 @@ interface PickerControls {
 }
 
 interface TerritoryToRender extends Territory {
-  searchProbability: number | undefined 
+  searchProbability: number | undefined;
+  aiPrompt?: string | null;
+  isSelected: boolean;
+  isVisible: boolean;
 }
-
-const allTerritoriesToRender = territories
-  .map(ter => {
-    const toRender: TerritoryToRender = {
-      ...ter,
-      searchProbability: undefined
-    }
-    return toRender;
-  });
-
-const territoriesByLowercaseKeyLkp = allTerritoriesToRender.reduce((map, ter) => {
-  map.set(ter.key.toLowerCase(), ter);
-  return map;
-}, new Map<string, TerritoryToRender>());
 
 export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, plateData }: PickerControls) => {
   const [user, getMatchingPlates] = useAppState(useShallow(state =>
     [state.activeUser, state.getMatchingPlates]));
 
-  const plateByKeyLkp = plateData.reduce((lkp, plate) => {
-    lkp[plate.key] = plate;
+  const initialSelectedLookup = useMemo(() => plateData.reduce((lkp, plate) => {
+    lkp[plate.key] = true;
     return lkp;
-  }, {} as {[key: string]: LicensePlateSpot});
-  
-  const [formData, setFormData] = useState(plateByKeyLkp);
+  }, {} as { [key: string]: boolean }), [plateData]);
+
+  const [platesToRender, setPlatesToRender] = useState<TerritoryToRender[]>(() =>
+    territories
+      .map(ter => ({
+        ...ter,
+        searchProbability: undefined,
+        aiPrompt: null,
+        isSelected: !!initialSelectedLookup[ter.key],
+        isVisible: true,
+      }))
+      .sort((a, b) => a.longName.localeCompare(b.longName))
+  );
   const [searchTerm, setSearchTerm] = useState<string | null>();
   const [isSearching, setIsSearching] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout>(null);
 
-  const [territoriesToRender, setTerritoriesToRender] = useState(allTerritoriesToRender);
+  const [isAiMode, setIsAiMode] = useState(false);
   useEffect(() => {
     if (!!debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
@@ -55,23 +54,28 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
     setIsSearching(false);
 
     if (!searchTerm) {
-      setTerritoriesToRender(allTerritoriesToRender);
+      setIsAiMode(false);
+      setPlatesToRender(prev => prev
+        .map(p => ({ ...p, isVisible: true, searchProbability: undefined }))
+        .sort((a, b) => a.longName.localeCompare(b.longName))
+      );
       return;
     }
 
     // do a quick search, and fallback to ai search on no quick match
-    const quickSearchResults = getQuickSearchResults(searchTerm);
-    if (quickSearchResults.length > 0) {
-      setTerritoriesToRender(quickSearchResults);
+    const quick = getQuickSearchResults(platesToRender, searchTerm);
+    const hasQuickMatch = quick.some(p => p.isVisible);
+    if (hasQuickMatch) {
+      setIsAiMode(false);
+      setPlatesToRender(quick);
     } else {
       setIsSearching(true);
+      setIsAiMode(true);
       
       const debounceTimeout = setTimeout(() => {
-        getPlatesMatchingAiSearch(searchTerm)
-          .then(setTerritoriesToRender)
-          .finally(() => {
-            setIsSearching(false);
-          })
+        getPlatesMatchingAiSearch(platesToRender, searchTerm)
+          .then(setPlatesToRender)
+          .finally(() => setIsSearching(false))
       }, 1000);
 
       if (!!debounceTimerRef.current) {
@@ -88,84 +92,87 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
     setFormChangePreview(new Map<string, boolean>());
   }, [isShowPicker]);
 
-  async function getPlatesMatchingAiSearch(query: string) {
+  async function getPlatesMatchingAiSearch(current: TerritoryToRender[], query: string) {
     const scoredMatches = await getMatchingPlates(query);
-
-    return scoredMatches
-      .map(scoredLbl =>({
-        toRender: territoriesByLowercaseKeyLkp.get(scoredLbl.label.toLowerCase()),
-        prob: scoredLbl.probability
-      }))
-      .filter(ter => !!ter.toRender && ter.prob > 0.05)
-      .slice(0, 10)
-      .map(ter => ({
-        ...ter.toRender!,
-        searchProbability: ter.prob
-      }));
+    const probByKey = new Map<string, number>(scoredMatches.map(m => [m.label.toLowerCase(), m.probability]));
+    return current
+      .map(p => {
+        const prob = probByKey.get(p.key.toLowerCase());
+        const visible = (prob ?? 0) > 0.03;
+        return { ...p, searchProbability: prob ?? undefined, isVisible: visible } as TerritoryToRender;
+      })
+      .sort((a, b) => (b.searchProbability ?? 0) - (a.searchProbability ?? 0));
   }
 
-  function getQuickSearchResults(query: string | null | undefined) {
+  function getQuickSearchResults(current: TerritoryToRender[], query: string | null | undefined) {
     if (!query) {
-      return allTerritoriesToRender;
+      return current
+        .map(p => ({ ...p, isVisible: true, searchProbability: undefined }) as TerritoryToRender)
+        .sort((a, b) => a.longName.localeCompare(b.longName));
     }
 
-    const searchValue = query.toLowerCase();
-
-    return allTerritoriesToRender
-      .filter(plate => {
-        const plateName = plate.longName.toLowerCase()
-
-        // full name starts with
-        if (plateName.startsWith(searchValue)) {
-          return true;
-        }
-
-        // contained in the second word
-        if (plateName.includes(` ${searchValue}`)) {
-          return true;
-        }
-
-        // short name matches
-        if (plate.shortName.toLowerCase() == searchValue) {
-          return true;
-        }
-
-        return false;
-      });
+    const searchL = query.toLowerCase();
+    return current
+      .map(p => {
+        const plateName = p.longName.toLowerCase();
+        const visible = plateName.startsWith(searchL) || plateName.includes(` ${searchL}`) || p.shortName.toLowerCase() === searchL;
+        return { ...p, isVisible: visible, searchProbability: undefined } as TerritoryToRender;
+      })
+      .sort((a, b) => a.longName.localeCompare(b.longName));
   }
 
-  function handleCheckboxChange(territory: Territory, clickEvent: React.MouseEvent) {
+  // quick search matching handled inline in effect
+
+  function handleCheckboxChange(territory: TerritoryToRender, clickEvent: React.MouseEvent) {
     clickEvent.stopPropagation();
 
-    const updatedForm = { ...formData };
+    const newSelected = !territory.isSelected;
+    setPlatesToRender(prev => prev.map(t => {
+      if (t.key !== territory.key) { return t; }
+      const next: TerritoryToRender = { ...t, isSelected: newSelected };
+      if (newSelected && isAiMode && searchTerm) {
+        next.aiPrompt = searchTerm;
+      } else if (!newSelected) {
+        next.aiPrompt = null;
+      }
+      return next;
+    }));
 
-    const currentFormChanges = formChangePreview;
+    // Track preview vs initial
+    setFormChangePreview(prev => {
+      const next = new Map(prev);
+      const initiallySelected = !!initialSelectedLookup[territory.key];
+      if (newSelected === initiallySelected) {
+        next.delete(territory.key);
+      } else {
+        next.set(territory.key, newSelected);
+      }
+      return next;
+    });
 
-    const matchingPlate = updatedForm[territory.key];
-    if (!!matchingPlate) {
-      delete updatedForm[territory.key];
-      currentFormChanges.set(territory.key, false);
-    } else {
-      updatedForm[territory.key] = {
-        key: territory.key,
-        country: territory.country,
-        stateOrProvince: territory.shortName,
-        spottedOn: new Date(),
-        spottedByPlayerId: user?.player?.playerId ?? -1,
-        spottedByPlayerName: user?.player?.playerName ?? "n/a"
-      } as LicensePlateSpot;
-      currentFormChanges.set(territory.key, true);
-    }
-    
-    setFormData(updatedForm);
-    setSearchTerm(null);
-    setFormChangePreview(currentFormChanges);
+    // aiPrompt handled in the single setPlatesToRender above
+
+    // keep current search term to allow multiple selections within the same mode
   }
 
   function handelSaveNewSpots() {
-    saveNewPlateData(Object.values(formData));
+    const playerId = user?.player?.playerId ?? -1;
+    const playerName = user?.player?.playerName ?? "n/a";
+
+    const toSave = platesToRender
+      .filter(t => t.isSelected)
+      .map<LicensePlateSpot>(t => ({
+        key: t.key,
+        country: t.country,
+        stateOrProvince: t.shortName,
+        spottedOn: new Date(),
+        spottedByPlayerId: playerId,
+        spottedByPlayerName: playerName,
+        mlPrompt: t.aiPrompt ?? null
+      }));
+    saveNewPlateData(toSave);
     setShowPicker(false);
-    setSearchTerm(null);
+    // keep searchTerm to allow multiple selections within current mode
   }
 
   function handleClose() {
@@ -196,14 +203,15 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
   }
 
   function renderCheckboxes() {
-    return territoriesToRender
+    return platesToRender
+      .filter(t => t.isVisible)
       .map((territory) => (
         <div key={territory.key}
           data-testid={`select-plate-${territory.key}`}
           onClick={e => !isSearching && handleCheckboxChange(territory, e)}
           className="flex flex-row grow gap-3 text-black justify-start items-center">
           <div className={`flex w-1/5 md:w-1/4 justify-end ${isSearching ? "blur-[2px]" : null}`}>
-            { !!formData[territory.key] ? renderCheckedBox() : renderUncheckedBox() }
+            { territory.isSelected ? renderCheckedBox() : renderUncheckedBox() }
           </div>
           <div className="flex flex-col flex-grow justify-start">
             {territory.country == "US" ?
@@ -234,12 +242,14 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
           autoFocus={true}
           ref={searchInputRef}
           id="default-search"
+          data-testid="plate-search-input"
           className="block w-full p-2 ps-10 placeholder:text-base text-gray-900 border border-gray-300 rounded-lg bg-gray-200 focus:ring-blue-500 focus:border-blue-500"
           placeholder="Name, abbreviation, or visual description"
           onChange={event => setSearchTerm(event.target.value)}
           value={searchTerm || ""} />
         <button type="button"
           className="text-white absolute end-2 bottom-1.25 bg-gray-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg text-sm px-3 py-1.5"
+          data-testid="plate-search-clear"
           onClick={_ => setSearchTerm(null)}>
           Clear
         </button>
