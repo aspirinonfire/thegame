@@ -18,10 +18,10 @@ using (var trainingData = mlDataLoader.ReadTrainingData(jsonDataPath, mlSeed))
 {
   var dataSplit = ml.Data.TrainTestSplit(trainingData.DataView, testFraction: 0.1, seed: mlSeed);
 
-  trainedModel = trainerSvc.Train(dataSplit.TrainSet);
+  trainedModel = trainerSvc.Train(dataSplit.TrainSet, mlSeed);
 
   var modelValidator = new TrainedModelValidationService(ml);
-  modelValidator.EvaluateModel(trainedModel, dataSplit.TestSet);
+  modelValidator.EvaluateHoldOutSet(trainedModel, dataSplit.TestSet);
 }
 
 

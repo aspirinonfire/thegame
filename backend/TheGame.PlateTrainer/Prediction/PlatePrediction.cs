@@ -1,6 +1,6 @@
 ﻿using Microsoft.ML.Data;
 
-namespace TheGame.PlateTrainer.Training;
+namespace TheGame.PlateTrainer.Prediction;
 
 public sealed record PlatePrediction
 {

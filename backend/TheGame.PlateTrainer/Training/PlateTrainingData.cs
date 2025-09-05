@@ -6,8 +6,8 @@ public sealed record PlateTrainingData
   public Dictionary<string, string?> Description { get; set; } = [];
 }
 
-public sealed record PlateTrainingRow(string Label, string Text)
+public sealed record PlateRow(string Label, string Text)
 {
-  public PlateTrainingRow() : this(string.Empty, string.Empty)
+  public PlateRow() : this(string.Empty, string.Empty)
   { }
 }

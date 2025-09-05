@@ -98,37 +98,37 @@ public sealed class DataLoader(MLContext ml)
   {
     return descriptions
       .SelectMany(
-          kvp => (kvp.Value ?? "n/a").Split(","),
-          (kvp, featureDescription) =>
-          {
-            var description = featureDescription.Trim();
+        kvp => (kvp.Value ?? "n/a").Split(","),
+        (kvp, featureDescription) =>
+        {
+          var description = featureDescription.Trim();
 
-            var textVariations = description.Split(" ")
-              .Select(word =>
-              {
-                synonyms.TryGetValue(word, out var wordSynonyms);
+          var textVariations = description.Split(" ")
+            .Select(word =>
+            {
+              synonyms.TryGetValue(word, out var wordSynonyms);
 
-                string[] wordVariations = [.. wordSynonyms ?? [], word];
-                return wordVariations;
+              string[] wordVariations = [.. wordSynonyms ?? [], word];
+              return wordVariations;
+            })
+            .ToArray();
+
+          var textStrings = CombineAsCarteseanProduct(textVariations);
+
+          synonyms.TryGetValue(kvp.Key, out var featureSynonyms);
+          string[] featureVariants = [.. featureSynonyms ?? [], kvp.Key];
+
+          return textStrings
+            .Select(text => featureVariants
+              .SelectMany(feat => new[] {
+                $"{feat} {text}",
+                $"{text} {feat}",
               })
-              .ToArray();
+              .Concat([text]))
+            .SelectMany(expanded => expanded);
 
-            var textStrings = CombineAsCarteseanProduct(textVariations);
-
-            synonyms.TryGetValue(kvp.Key, out var featureSynonyms);
-            string[] featureVariants = [.. featureSynonyms ?? [], kvp.Key];
-
-            return textStrings
-              .Select(text => featureVariants
-                .SelectMany(feat => new[] {
-                  $"{feat} {text}",
-                  $"{text} {feat}",
-                })
-                .Concat([text]))
-              .SelectMany(expanded => expanded);
-
-          })
-        .SelectMany(expanded => expanded);
+        })
+      .SelectMany(expanded => expanded);
   }
 
   /// <summary>
@@ -136,7 +136,7 @@ public sealed class DataLoader(MLContext ml)
   /// </summary>
   /// <param name="trainingDataPath"></param>
   /// <returns></returns>
-  private static IEnumerable<PlateTrainingRow> ReadTrainingDataAsJsonStream(string trainingDataPath)
+  private static IEnumerable<PlateRow> ReadTrainingDataAsJsonStream(string trainingDataPath)
   {
     FileStream? rawTrainingDataStream = null;
     IAsyncEnumerator<PlateTrainingData?>? plateRecordReader = null;
@@ -166,7 +166,7 @@ public sealed class DataLoader(MLContext ml)
 
         foreach (var platePhrase in descriptions)
         {
-          yield return new PlateTrainingRow
+          yield return new PlateRow
           {
             Label = currentPlateData.Key,
             Text = platePhrase
