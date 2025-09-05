@@ -10,7 +10,7 @@ public sealed class Predictor(MLContext ml, TrainedModel trainedModel)
   {
     Console.WriteLine($"----- Predictions for \"{query}\":");
 
-    var queryDataView = ml.Data.LoadFromEnumerable([new PlateQuery(query)]);
+    var queryDataView = ml.Data.LoadFromEnumerable([new PlateTrainingRow(Label: "", Text: query)]);
     var scoredPredictions = trainedModel.Model.Transform(queryDataView);
 
     var prediction = ml.Data.CreateEnumerable<PlatePrediction>(scoredPredictions, reuseRowObject: false)

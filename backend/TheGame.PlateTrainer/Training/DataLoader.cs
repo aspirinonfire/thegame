@@ -1,5 +1,6 @@
 ﻿using Microsoft.ML;
 using Microsoft.ML.Data;
+using System.Collections.Immutable;
 using System.Text.Json;
 
 namespace TheGame.PlateTrainer.Training;
@@ -31,6 +32,15 @@ public sealed class TrainingData(IDataView dataView, IFileHandle fileHandle, IDi
 
 public sealed class DataLoader(MLContext ml)
 {
+  private readonly static IReadOnlyDictionary<string, string[]> _synonymLkp = new Dictionary<string, string[]>()
+  {
+    { "middle", [ "center" ] },
+    { "line", [ "strip", "banner", "stripe" ] },
+    { "lines", [ "strips", "banners", "stripes" ] },
+    { "solid", [ "all" ] },
+    { "plate", [ "background" ] }
+  };
+
   private readonly static JsonSerializerOptions _jsonSerializerOpts = new()
   {
     PropertyNameCaseInsensitive = true
@@ -74,6 +84,53 @@ public sealed class DataLoader(MLContext ml)
     return new TrainingData(shuffledDataView, binDataFileHandle, preparsedTrainingDataView as IDisposable);
   }
 
+  public static IEnumerable<string> CombineAsCarteseanProduct(string[][] parts) => parts
+    .Aggregate(
+      (IEnumerable<string>)[string.Empty],
+      (prefixes, segment) => prefixes.SelectMany(
+        prefix => segment,
+        (prefix, item) => $"{prefix} {item}".Trim()
+      )
+    );
+
+  public static IEnumerable<string> CreateFeatureTextCombinations(IDictionary<string, string?> descriptions,
+    IReadOnlyDictionary<string, string[]> synonyms)
+  {
+    return descriptions
+      .SelectMany(
+          kvp => (kvp.Value ?? "n/a").Split(","),
+          (kvp, featureDescription) =>
+          {
+            var description = featureDescription.Trim();
+
+            var textVariations = description.Split(" ")
+              .Select(word =>
+              {
+                synonyms.TryGetValue(word, out var wordSynonyms);
+
+                string[] wordVariations = [.. wordSynonyms ?? [], word];
+                return wordVariations;
+              })
+              .ToArray();
+
+            var textStrings = CombineAsCarteseanProduct(textVariations);
+
+            synonyms.TryGetValue(kvp.Key, out var featureSynonyms);
+            string[] featureVariants = [.. featureSynonyms ?? [], kvp.Key];
+
+            return textStrings
+              .Select(text => featureVariants
+                .SelectMany(feat => new[] {
+                  $"{feat} {text}",
+                  $"{text} {feat}",
+                })
+                .Concat([text]))
+              .SelectMany(expanded => expanded);
+
+          })
+        .SelectMany(expanded => expanded);
+  }
+
   /// <summary>
   /// Read source json into async enumerable stream to prevent training data consuming too much memory
   /// </summary>
@@ -98,22 +155,20 @@ public sealed class DataLoader(MLContext ml)
       while (plateRecordReader.MoveNextAsync().AsTask().GetAwaiter().GetResult())
       {
         var currentPlateData = plateRecordReader.Current;
-        if (currentPlateData is null || currentPlateData.Description is null)
+        if (currentPlateData is null ||
+          currentPlateData.Description is null ||
+          currentPlateData.Key == "sample")
         {
           continue;
         }
 
-        var descriptions = currentPlateData.Description
-          .SelectMany(
-            kvp => (kvp.Value ?? "n/a").Split(","),
-            (kvp, featureDescription) => $"{featureDescription.Trim()} {kvp.Key}");
+        var descriptions = CreateFeatureTextCombinations(currentPlateData.Description, _synonymLkp);
 
         foreach (var platePhrase in descriptions)
         {
           yield return new PlateTrainingRow
           {
             Label = currentPlateData.Key,
-            Weight = currentPlateData.Weight,
             Text = platePhrase
           };
         }

@@ -34,7 +34,7 @@ public sealed class PlateTrainingService(MLContext mlContext, int numOfIteration
       .Append(mlContext.Transforms.Text.ProduceNgrams(
         inputColumnName: _cleanTokenKeyColumn,
         outputColumnName: _featuresColumn,
-        ngramLength: 4,
+        ngramLength: 2,
         useAllLengths: true,
         weighting: NgramExtractingEstimator.WeightingCriteria.TfIdf))
       // trainers work with numeric label Ids not strings.
@@ -50,7 +50,6 @@ public sealed class PlateTrainingService(MLContext mlContext, int numOfIteration
     {
       LabelColumnName = nameof(PlateTrainingRow.Label),
       FeatureColumnName = _featuresColumn,
-      ExampleWeightColumnName = nameof(PlateTrainingRow.Weight),
       MaximumNumberOfIterations = numOfIterations,
       L2Regularization = l2Reg,
       Shuffle = true,

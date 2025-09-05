@@ -51,6 +51,7 @@
     <ProjectReference Include="..\TheGame.Api\TheGame.Api.csproj" />
     <ProjectReference Include="..\TheGame.Domain\TheGame.Domain.csproj" />
     <ProjectReference Include="..\TheGame.Infra\TheGame.Infra.csproj" />
+    <ProjectReference Include="..\TheGame.PlateTrainer\TheGame.PlateTrainer.csproj" />
   </ItemGroup>
 
 </Project>
