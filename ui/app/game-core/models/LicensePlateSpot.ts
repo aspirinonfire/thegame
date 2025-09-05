@@ -5,6 +5,6 @@ export interface LicensePlateSpot {
   spottedOn: Date | null;
   spottedByPlayerName: string | null;
   spottedByPlayerId: number | null;
-  // Optional: when selected via AI search, attach its prompt
-  mlPrompt?: string;
+  // When selected via AI search, attach its prompt
+  mlPrompt?: string | null;
 }

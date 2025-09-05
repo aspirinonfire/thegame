@@ -43,6 +43,7 @@ npm run dev
 npm run build
 
 # Run npm tests (headless)
+npm run build
 npm run teste2eci
 ```
 
@@ -113,6 +114,8 @@ Example: `./ui/tests/game.spec.ts`
 1. Invert `if` statements to flatten the nested structure.
 1. Use LINQ instead of nested for loops whenever possible.
 1. Solution must build/compile successfully and all test report success. If there's an issue with either, fix these before calling it done. If it still fails after 3 consecutive attempts with the same error message, stop and seek help from me.
+1. If tests do not pass, you cannot execute a testsuite - for whatever reason - stop immediatelly. Seek my help!
+1. If you can't test it - you did not resolve my prompt!
 
 ## Do-Not-Touch Areas
 

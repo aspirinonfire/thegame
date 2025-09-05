@@ -63,7 +63,7 @@ export class OnnxPlateDescriptionClassifier {
     const wa = body.find(p => p.key === 'US-WA');
     expect(ca.mlPrompt).toBe(prompt);
     expect(or.mlPrompt).toBe(prompt);
-    expect(wa.mlPrompt).toBeUndefined();
+    expect(wa.mlPrompt).toBeNull();
   });
 
   test("supports multiple prompts for different AI selections", async ({ context }) => {

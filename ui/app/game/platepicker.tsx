@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Modal, ModalBody, ModalFooter, ModalHeader, ToggleSwitch } from "flowbite-react";
 import type { LicensePlateSpot } from '~/game-core/models/LicensePlateSpot';
 import type { Territory } from '~/game-core/models/Territory';
@@ -17,40 +17,36 @@ interface PickerControls {
 interface TerritoryToRender extends Territory {
   searchProbability: number | undefined;
   aiPrompt?: string | null;
+  isSelected: boolean;
+  isVisible: boolean;
 }
-
-const allTerritoriesToRender = territories
-  .map(ter => {
-    const toRender: TerritoryToRender = {
-      ...ter,
-      searchProbability: undefined
-    }
-    return toRender;
-  });
-
-const territoriesByLowercaseKeyLkp = allTerritoriesToRender.reduce((map, ter) => {
-  map.set(ter.key.toLowerCase(), ter);
-  return map;
-}, new Map<string, TerritoryToRender>());
 
 export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, plateData }: PickerControls) => {
   const [user, getMatchingPlates] = useAppState(useShallow(state =>
     [state.activeUser, state.getMatchingPlates]));
 
-  const plateByKeyLkp = plateData.reduce((lkp, plate) => {
-    lkp[plate.key] = plate;
+  const initialSelectedLookup = useMemo(() => plateData.reduce((lkp, plate) => {
+    lkp[plate.key] = true;
     return lkp;
-  }, {} as {[key: string]: LicensePlateSpot});
-  
-  const [formData, setFormData] = useState(plateByKeyLkp);
+  }, {} as { [key: string]: boolean }), [plateData]);
+
+  const [platesToRender, setPlatesToRender] = useState<TerritoryToRender[]>(() =>
+    territories
+      .map(ter => ({
+        ...ter,
+        searchProbability: undefined,
+        aiPrompt: null,
+        isSelected: !!initialSelectedLookup[ter.key],
+        isVisible: true,
+      }))
+      .sort((a, b) => a.longName.localeCompare(b.longName))
+  );
   const [searchTerm, setSearchTerm] = useState<string | null>();
   const [isSearching, setIsSearching] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout>(null);
 
-  const [territoriesToRender, setTerritoriesToRender] = useState(allTerritoriesToRender);
-  // Per-plate prompt mapping for selections made during AI search
-  const [platePromptByKey, setPlatePromptByKey] = useState<Record<string, string>>({});
+  const [isAiMode, setIsAiMode] = useState(false);
   useEffect(() => {
     if (!!debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
@@ -58,23 +54,28 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
     setIsSearching(false);
 
     if (!searchTerm) {
-      setTerritoriesToRender(allTerritoriesToRender);
+      setIsAiMode(false);
+      setPlatesToRender(prev => prev
+        .map(p => ({ ...p, isVisible: true, searchProbability: undefined }))
+        .sort((a, b) => a.longName.localeCompare(b.longName))
+      );
       return;
     }
 
     // do a quick search, and fallback to ai search on no quick match
-    const quickSearchResults = getQuickSearchResults(searchTerm);
-    if (quickSearchResults.length > 0) {
-      setTerritoriesToRender(quickSearchResults);
+    const quick = getQuickSearchResults(platesToRender, searchTerm);
+    const hasQuickMatch = quick.some(p => p.isVisible);
+    if (hasQuickMatch) {
+      setIsAiMode(false);
+      setPlatesToRender(quick);
     } else {
       setIsSearching(true);
+      setIsAiMode(true);
       
       const debounceTimeout = setTimeout(() => {
-        getPlatesMatchingAiSearch(searchTerm)
-          .then(setTerritoriesToRender)
-          .finally(() => {
-            setIsSearching(false);
-          })
+        getPlatesMatchingAiSearch(platesToRender, searchTerm)
+          .then(setPlatesToRender)
+          .finally(() => setIsSearching(false))
       }, 1000);
 
       if (!!debounceTimerRef.current) {
@@ -91,109 +92,87 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
     setFormChangePreview(new Map<string, boolean>());
   }, [isShowPicker]);
 
-  async function getPlatesMatchingAiSearch(query: string) {
+  async function getPlatesMatchingAiSearch(current: TerritoryToRender[], query: string) {
     const scoredMatches = await getMatchingPlates(query);
-
-    return scoredMatches
-      .map(scoredLbl =>({
-        toRender: territoriesByLowercaseKeyLkp.get(scoredLbl.label.toLowerCase()),
-        prob: scoredLbl.probability
-      }))
-      .filter(ter => !!ter.toRender && ter.prob > 0.05)
-      .slice(0, 10)
-      .map(ter => ({
-        ...ter.toRender!,
-        searchProbability: ter.prob,
-        aiPrompt: query
-      }));
+    const probByKey = new Map<string, number>(scoredMatches.map(m => [m.label.toLowerCase(), m.probability]));
+    return current
+      .map(p => {
+        const prob = probByKey.get(p.key.toLowerCase());
+        const visible = (prob ?? 0) > 0.03;
+        return { ...p, searchProbability: prob ?? undefined, isVisible: visible } as TerritoryToRender;
+      })
+      .sort((a, b) => (b.searchProbability ?? 0) - (a.searchProbability ?? 0));
   }
 
-  function getQuickSearchResults(query: string | null | undefined) {
+  function getQuickSearchResults(current: TerritoryToRender[], query: string | null | undefined) {
     if (!query) {
-      return allTerritoriesToRender;
+      return current
+        .map(p => ({ ...p, isVisible: true, searchProbability: undefined }) as TerritoryToRender)
+        .sort((a, b) => a.longName.localeCompare(b.longName));
     }
 
-    const searchValue = query.toLowerCase();
-
-    return allTerritoriesToRender
-      .filter(plate => {
-        const plateName = plate.longName.toLowerCase()
-
-        // full name starts with
-        if (plateName.startsWith(searchValue)) {
-          return true;
-        }
-
-        // contained in the second word
-        if (plateName.includes(` ${searchValue}`)) {
-          return true;
-        }
-
-        // short name matches
-        if (plate.shortName.toLowerCase() == searchValue) {
-          return true;
-        }
-
-        return false;
-      });
+    const searchL = query.toLowerCase();
+    return current
+      .map(p => {
+        const plateName = p.longName.toLowerCase();
+        const visible = plateName.startsWith(searchL) || plateName.includes(` ${searchL}`) || p.shortName.toLowerCase() === searchL;
+        return { ...p, isVisible: visible, searchProbability: undefined } as TerritoryToRender;
+      })
+      .sort((a, b) => a.longName.localeCompare(b.longName));
   }
+
+  // quick search matching handled inline in effect
 
   function handleCheckboxChange(territory: TerritoryToRender, clickEvent: React.MouseEvent) {
     clickEvent.stopPropagation();
 
-    const updatedForm = { ...formData };
-
-    const currentFormChanges = formChangePreview;
-
-    const matchingPlate = updatedForm[territory.key];
-    if (!!matchingPlate) {
-      delete updatedForm[territory.key];
-      currentFormChanges.set(territory.key, false);
-      // Removing selection also removes any AI prompt association
-      if (platePromptByKey[territory.key]) {
-        const { [territory.key]: _, ...rest } = platePromptByKey;
-        setPlatePromptByKey(rest);
+    const newSelected = !territory.isSelected;
+    setPlatesToRender(prev => prev.map(t => {
+      if (t.key !== territory.key) { return t; }
+      const next: TerritoryToRender = { ...t, isSelected: newSelected };
+      if (newSelected && isAiMode && searchTerm) {
+        next.aiPrompt = searchTerm;
+      } else if (!newSelected) {
+        next.aiPrompt = null;
       }
-    } else {
-      updatedForm[territory.key] = {
-        key: territory.key,
-        country: territory.country,
-        stateOrProvince: territory.shortName,
-        spottedOn: new Date(),
-        spottedByPlayerId: user?.player?.playerId ?? -1,
-        spottedByPlayerName: user?.player?.playerName ?? "n/a"
-      } as LicensePlateSpot;
-      currentFormChanges.set(territory.key, true);
+      return next;
+    }));
 
-      // If plate was selected from AI search results, attach its prompt
-      if (territory.aiPrompt) {
-        setPlatePromptByKey(prev => ({ ...prev, [territory.key]: territory.aiPrompt! }));
+    // Track preview vs initial
+    setFormChangePreview(prev => {
+      const next = new Map(prev);
+      const initiallySelected = !!initialSelectedLookup[territory.key];
+      if (newSelected === initiallySelected) {
+        next.delete(territory.key);
       } else {
-        // Ensure no stale prompt is attached if not selecting from AI results
-        if (platePromptByKey[territory.key]) {
-          const { [territory.key]: _, ...rest } = platePromptByKey;
-          setPlatePromptByKey(rest);
-        }
+        next.set(territory.key, newSelected);
       }
-    }
-    
-    setFormData(updatedForm);
-    setSearchTerm(null);
-    setFormChangePreview(currentFormChanges);
+      return next;
+    });
+
+    // aiPrompt handled in the single setPlatesToRender above
+
+    // keep current search term to allow multiple selections within the same mode
   }
 
   function handelSaveNewSpots() {
-    const toSave = Object.values(formData).map(lp => {
-      const prompt = platePromptByKey[lp.key];
-      if (!prompt) {
-        const { mlPrompt, ...rest } = lp as any;
-        return rest as LicensePlateSpot;
-      }
-      return ({ ...lp, mlPrompt: prompt });
-    });
+    const playerId = user?.player?.playerId ?? -1;
+    const playerName = user?.player?.playerName ?? "n/a";
+
+    const toSave = platesToRender
+      .filter(t => t.isSelected)
+      .map<LicensePlateSpot>(t => ({
+        key: t.key,
+        country: t.country,
+        stateOrProvince: t.shortName,
+        spottedOn: new Date(),
+        spottedByPlayerId: playerId,
+        spottedByPlayerName: playerName,
+        mlPrompt: t.aiPrompt ?? null
+      }));
     saveNewPlateData(toSave);
     setShowPicker(false);
-    setSearchTerm(null);
+    // keep searchTerm to allow multiple selections within current mode
   }
 
   function handleClose() {
@@ -224,14 +203,15 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
   }
 
   function renderCheckboxes() {
-    return territoriesToRender
+    return platesToRender
+      .filter(t => t.isVisible)
       .map((territory) => (
         <div key={territory.key}
           data-testid={`select-plate-${territory.key}`}
           onClick={e => !isSearching && handleCheckboxChange(territory, e)}
           className="flex flex-row grow gap-3 text-black justify-start items-center">
           <div className={`flex w-1/5 md:w-1/4 justify-end ${isSearching ? "blur-[2px]" : null}`}>
-            { !!formData[territory.key] ? renderCheckedBox() : renderUncheckedBox() }
+            { territory.isSelected ? renderCheckedBox() : renderUncheckedBox() }
           </div>
           <div className="flex flex-col flex-grow justify-start">
             {territory.country == "US" ?
