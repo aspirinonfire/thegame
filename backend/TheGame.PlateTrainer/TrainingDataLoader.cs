@@ -3,7 +3,19 @@ using Microsoft.ML.Data;
 using System.Collections.Immutable;
 using System.Text.Json;
 
-namespace TheGame.PlateTrainer.Training;
+namespace TheGame.PlateTrainer;
+
+public sealed record PlateTrainingData
+{
+  public string Key { get; set; } = default!;
+  public Dictionary<string, string?> Description { get; set; } = [];
+}
+
+public sealed record PlateRow(string Label, string Text)
+{
+  public PlateRow() : this(string.Empty, string.Empty)
+  { }
+}
 
 /// <summary>
 /// An intermediate object to control the lifecycle of BinaryReader
@@ -30,7 +42,7 @@ public sealed class TrainingData(IDataView dataView, IFileHandle fileHandle, IDi
   }
 }
 
-public sealed class DataLoader(MLContext ml)
+public sealed class TrainingDataLoader(MLContext ml)
 {
   private readonly static IReadOnlyDictionary<string, string[]> _synonymLkp = new Dictionary<string, string[]>()
   {

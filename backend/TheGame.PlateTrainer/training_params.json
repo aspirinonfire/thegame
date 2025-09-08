@@ -1,0 +1,30 @@
+{
+  "version": "0.0.1",
+  "modelHyperParams": {
+    "_pipeline_": {
+      "_SCHEMA_": "e0 * e1",
+      "e0": {
+        "Binarize": false,
+        "NgramLength": 1,
+        "Weighting": "TfIdf"
+      },
+      "e1": {
+        "DenseOptimizer": false,
+        "HistorySize": 30,
+        "L1Regularization": 0,
+        "L2Regularization": 0.22786404739327917,
+        "MaximumNumberOfIterations": 10001,
+        "OptimizationTolerance": 0.006262892422770565,
+        "StochasticGradientDescentInitilaizationTolerance": 0.001
+      }
+    }
+  },
+  "modelMetrics": {
+    "MicroAccuracy": 0.5856882406563355,
+    "MacroAccuracy": 0.5633925191200304,
+    "TopKAccuracy": 0.9530537830446673,
+    "LogLoss": 1.1559954544948357,
+    "Ndcg": 0.7664182929239828,
+    "K": 10
+  }
+}

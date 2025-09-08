@@ -1,8 +1,18 @@
 ﻿using Microsoft.ML;
+using Microsoft.ML.Data;
 using System.Collections.Immutable;
-using TheGame.PlateTrainer.Training;
 
-namespace TheGame.PlateTrainer.Prediction;
+namespace TheGame.PlateTrainer;
+
+public sealed record PlatePrediction
+{
+  [ColumnName("PredictedLabel")]
+  public uint PredictedLabel { get; set; }
+
+  // keep scores if you ever want top-k
+  [ColumnName("Score")]
+  public float[] Scores { get; set; } = [];
+}
 
 public sealed class Predictor(MLContext ml, TrainedModel trainedModel)
 {

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TheGame.PlateTrainer.Training;
+﻿using TheGame.PlateTrainer;
 
 namespace TheGame.Tests.MlTrainer;
 
@@ -21,7 +15,7 @@ public class DataLoaderTests
       [ "d", "e" ],
     };
 
-    var actualCombinations = DataLoader.CombineAsCarteseanProduct(variantsParts)
+    var actualCombinations = TrainingDataLoader.CombineAsCarteseanProduct(variantsParts)
       .ToArray();
 
     Assert.Collection(actualCombinations,
@@ -46,7 +40,7 @@ public class DataLoaderTests
       { "plate", [ "background" ] },
     };
 
-    var actualCombinations = DataLoader.CreateFeatureTextCombinations(description, synonyms)
+    var actualCombinations = TrainingDataLoader.CreateFeatureTextCombinations(description, synonyms)
       .ToArray();
 
     Assert.Collection(actualCombinations,

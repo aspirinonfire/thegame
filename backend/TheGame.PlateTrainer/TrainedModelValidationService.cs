@@ -1,8 +1,7 @@
 ﻿using Microsoft.ML;
-using TheGame.PlateTrainer.Prediction;
-using TheGame.PlateTrainer.Training;
+using System.Text.Json.Serialization;
 
-namespace TheGame.PlateTrainer.Validation;
+namespace TheGame.PlateTrainer;
 
 public sealed record CvFoldScores()
 {
@@ -10,6 +9,14 @@ public sealed record CvFoldScores()
   public float[] Score { get; set; } = [];
 }
 
+public sealed record SetMetrics(double MicroAccuracy,
+  double MacroAccuracy,
+  double TopKAccuracy,
+  double LogLoss,
+  double Ndcg,
+  int K,
+  [property:JsonIgnore] Microsoft.ML.Data.ConfusionMatrix ConfusionMatrix,
+  [property: JsonIgnore] IReadOnlyDictionary<string, double> PerClassLogLoss);
 
 public sealed class TrainedModelValidationService(MLContext ml)
 {
@@ -28,40 +35,62 @@ public sealed class TrainedModelValidationService(MLContext ml)
     .DefaultIfEmpty(0.0)
     .Average();
 
-  public void EvaluateHoldOutSet(TrainedModel trainedModel, IDataView holdOutDataView)
+  public SetMetrics CalculateMetricsForSet(IDataView scored, string[] labels, int k = 10)
   {
-    Console.WriteLine("----- Evaluating the trained model...");
-
-    var scored = trainedModel.Model.Transform(holdOutDataView);
-
-    var metrics = ml.MulticlassClassification.Evaluate(scored, labelColumnName: "Label", topKPredictionCount: 10);
+    var metrics = ml.MulticlassClassification.Evaluate(scored,
+      labelColumnName: "Label",
+      topKPredictionCount: k);
 
     var rows = ml.Data
       .CreateEnumerable<CvFoldScores>(scored,
         reuseRowObject: false,
         ignoreMissingColumns: false);
 
-    var ndcg = CalculateNdcg(rows, 10);
+    var perClassLl = metrics.PerClassLogLoss
+      .Select((loss, idx) => new
+      {
+        loss,
+        label = labels[idx]
+      })
+      .ToDictionary(x => x.label, x => x.loss);
+
+    return new
+    (
+      metrics.MicroAccuracy,
+      metrics.MacroAccuracy,
+      metrics.TopKAccuracy,
+      metrics.LogLoss,
+      Ndcg: CalculateNdcg(rows, k),
+      k,
+      metrics.ConfusionMatrix,
+      PerClassLogLoss: perClassLl.AsReadOnly()
+    );
+  }
+
+  public SetMetrics EvaluateHoldOutSet(ITransformer model, string[] labels, IDataView holdOutDataView)
+  {
+    Console.WriteLine("----- Evaluating the trained model...");
+
+    var scored = model.Transform(holdOutDataView);
+
+    var metrics = CalculateMetricsForSet(scored, labels);
 
     Console.WriteLine($"MacroAccuracy:  {metrics.MacroAccuracy:0.000}");
     Console.WriteLine($"MicroAccuracy:  {metrics.MicroAccuracy:0.000}");
     Console.WriteLine($"Top-K Accuracy: {metrics.TopKAccuracy:0.000}");
-    Console.WriteLine($"NDCG(10):       {ndcg:0.000}");
+    Console.WriteLine($"NDCG(10):       {metrics.Ndcg:0.000}");
     Console.WriteLine($"LogLoss:        {metrics.LogLoss:0.000}");
 
     var perClassLogLoss = metrics.PerClassLogLoss
-      .Select((loss, idx) => new
-      {
-        loss,
-        label = trainedModel.Labels[idx]
-      })
-      .OrderBy(pcll => pcll.loss);
+      .OrderBy(pcll => pcll.Value);
 
     Console.WriteLine("Per Class Log Loss:");
     foreach (var classLogLoss in perClassLogLoss)
     {
-      Console.WriteLine($"{classLogLoss.label}: {classLogLoss.loss:0.000}");
+      Console.WriteLine($"{classLogLoss.Key}: {classLogLoss.Value:0.000}");
     }
+
+    return metrics;
 
     //Console.WriteLine("Confusion Matrix (rows=actual, cols=predicted):");
 
