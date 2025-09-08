@@ -5,7 +5,7 @@ namespace TheGame.PlateTrainer.Prediction;
 public sealed record PlatePrediction
 {
   [ColumnName("PredictedLabel")]
-  public string PredictedLabel { get; set; } = default!;
+  public uint PredictedLabel { get; set; }
 
   // keep scores if you ever want top-k
   [ColumnName("Score")]

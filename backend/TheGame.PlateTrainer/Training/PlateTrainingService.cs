@@ -1,84 +1,52 @@
 ﻿using Microsoft.ML;
 using Microsoft.ML.Data;
 using Microsoft.ML.Trainers;
-using Microsoft.ML.Transforms.Text;
-using System.Text.Json;
-using TheGame.PlateTrainer.Prediction;
 using TheGame.PlateTrainer.Validation;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace TheGame.PlateTrainer.Training;
 
-public sealed class PlateTrainingService(MLContext mlContext, int numOfIterations = 200, float l2Reg = 0.001f)
+public sealed class PlateTrainingService(MLContext mlContext, PipelineFactory pipelineFactory, int numOfIterations = 200, float l2Reg = 0.001f)
 {
-  private const string _rawTokenColumn = "RawTokens";
-  private const string _cleanTokenColumn = "CleanTokens";
-  private const string _cleanTokenKeyColumn = "TokenKeys";
-  private const string _featuresColumn = "Features";
-
   /// <summary>
   /// See <see href="https://learn.microsoft.com/en-us/azure/machine-learning/algorithm-cheat-sheet?view=azureml-api-1"/>
   /// </summary>
   /// <returns></returns>
-  public EstimatorPipelineParts CreateEstimatorPipeline()
+  public SdcaMaximumEntropyMulticlassTrainer CreateSdcaTrainer()
   {
-    var featurizer = mlContext.Transforms.Text.TokenizeIntoWords(
-        inputColumnName: nameof(PlateRow.Text),
-        outputColumnName: _rawTokenColumn,
-        separators: [',', ' '])
-      .Append(mlContext.Transforms.Text.RemoveDefaultStopWords(
-        inputColumnName: _rawTokenColumn,
-        outputColumnName: _cleanTokenColumn,
-        language: StopWordsRemovingEstimator.Language.English))
-      // text transforms (producengram) works with numeric Id not strings, so we need to convert clean tokens to Ids.
-      .Append(mlContext.Transforms.Conversion.MapValueToKey(
-        inputColumnName: _cleanTokenColumn,
-        outputColumnName: _cleanTokenKeyColumn))
-      .Append(mlContext.Transforms.Text.ProduceNgrams(
-        inputColumnName: _cleanTokenKeyColumn,
-        outputColumnName: _featuresColumn,
-        ngramLength: 2,
-        useAllLengths: true,
-        weighting: NgramExtractingEstimator.WeightingCriteria.TfIdf))
-      // trainers work with numeric label Ids not strings.
-      // To avoid potential ONNX column name collisions - map to a new column
-      .Append(mlContext.Transforms.Conversion.MapValueToKey(
-        inputColumnName: nameof(PlateRow.Label),
-        outputColumnName: nameof(PlateRow.Label)));
-
-    // trainers produce predicted label as Id not string, convert it to human readable.
-
-
-    var trainer = mlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy(new SdcaMaximumEntropyMulticlassTrainer.Options()
+    return mlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy(new SdcaMaximumEntropyMulticlassTrainer.Options()
     {
       LabelColumnName = nameof(PlateRow.Label),
-      FeatureColumnName = _featuresColumn,
+      FeatureColumnName = PipelineFactory.FeaturesColumn,
       MaximumNumberOfIterations = numOfIterations,
       L2Regularization = l2Reg,
       Shuffle = true,
       NumberOfThreads = Environment.ProcessorCount
     });
-
-    return new EstimatorPipelineParts(featurizer, trainer);
   }
 
-  public TrainedModel Train(IDataView trainDataView, int mlSeed)
+  public LbfgsMaximumEntropyMulticlassTrainer CreateLbfgsTrainer()
   {
+    return mlContext.MulticlassClassification.Trainers.LbfgsMaximumEntropy(new LbfgsMaximumEntropyMulticlassTrainer.Options()
+    {
+      LabelColumnName = nameof(PlateRow.Label),
+      FeatureColumnName = PipelineFactory.FeaturesColumn,
+      MaximumNumberOfIterations = numOfIterations,
+      L2Regularization = l2Reg,
+      OptimizationTolerance = 4.515669741338378e-05f
+    });
+  }
 
-    var parts = CreateEstimatorPipeline();
+  public TrainedModel Train(IDataView trainDataView, int mlSeed, int cvFolds = 5)
+  {
+    var featurizer = pipelineFactory.CreateFeaturizer(NgramFeaturizerParams.CreateDefault());
 
-    var predictedLabelKey = mlContext.Transforms.Conversion.MapKeyToValue(
-      inputColumnName: nameof(PlatePrediction.PredictedLabel),
-      outputColumnName: nameof(PlatePrediction.PredictedLabel));
+    var trainer = CreateLbfgsTrainer();
 
-    var estimator = parts.Featurizer
-      //.Append(parts.LabelKey)
-      .Append(parts.Trainer)
-      .Append(predictedLabelKey);
+    var estimator = featurizer.Append(trainer);
 
-    Console.WriteLine("----- Cross Validating...");
+    Console.WriteLine($"----- Cross Validating ({cvFolds})...");
     
-    var folds = mlContext.Data.CrossValidationSplit(trainDataView, numberOfFolds: 5, seed: mlSeed);
+    var folds = mlContext.Data.CrossValidationSplit(trainDataView, numberOfFolds: cvFolds, seed: mlSeed);
 
     var foldMetrics = folds
       .Select(fold =>
@@ -138,17 +106,11 @@ public sealed class PlateTrainingService(MLContext mlContext, int numOfIteration
       .Select(x => x.ToString())
       .ToArray();
 
-    return new(trainedModel,
-      labels,
-      parts.Featurizer,
-      estimator);
+    return new(trainedModel, labels);
   }
 
   public sealed record EstimatorPipelineParts(IEstimator<ITransformer> Featurizer,
     IEstimator<MulticlassPredictionTransformer<MaximumEntropyModelParameters>> Trainer);
 }
 
-public sealed record TrainedModel(ITransformer Model,
-  string[] Labels,
-  IEstimator<ITransformer> Featurizer,
-  IEstimator<ITransformer> Estimator);
+public sealed record TrainedModel(ITransformer Model, string[] Labels);
