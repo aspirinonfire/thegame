@@ -73,6 +73,7 @@ public class PipelineFactory(MLContext mlContext)
     // trainers work with numeric label Ids not strings.
     return baseChain.Append(mlContext.Transforms.Conversion.MapValueToKey(
       inputColumnName: nameof(PlateRow.Label),
-      outputColumnName: nameof(PlateRow.Label)));
+      outputColumnName: nameof(PlateRow.Label),
+      keyOrdinality: ValueToKeyMappingEstimator.KeyOrdinality.ByValue));
   }
 }

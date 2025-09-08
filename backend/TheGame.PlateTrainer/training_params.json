@@ -2,6 +2,16 @@
   "Version": "0.0.1",
   "Seed": 123,
   "TestFraction": 0.2,
+  "Estimators": [
+    {
+      "Key": "e0",
+      "Value": "Microsoft.ML.AutoML.SweepableEstimator"
+    },
+    {
+      "Key": "e1",
+      "Value": "Microsoft.ML.AutoML.CodeGen.LbfgsMaximumEntropyMulti"
+    }
+  ],
   "ModelHyperParams": {
     "_pipeline_": {
       "_SCHEMA_": "e0 * e1",
@@ -11,22 +21,22 @@
         "Weighting": "TfIdf"
       },
       "e1": {
-        "DenseOptimizer": true,
+        "DenseOptimizer": false,
         "HistorySize": 30,
         "L1Regularization": 0,
-        "L2Regularization": 0.21833750640430372,
+        "L2Regularization": 0.22786404739327917,
         "MaximumNumberOfIterations": 10001,
-        "OptimizationTolerance": 0.007868771565816725,
+        "OptimizationTolerance": 0.006262892422770565,
         "StochasticGradientDescentInitilaizationTolerance": 0.001
       }
     }
   },
   "ModelMetrics": {
-    "MicroAccuracy": 0.585232452142206,
-    "MacroAccuracy": 0.5631345211840139,
-    "TopKAccuracy": 0.9535095715587967,
-    "LogLoss": 1.1544289419719223,
-    "Ndcg": 0.7664628704463451,
+    "MicroAccuracy": 0.5856882406563355,
+    "MacroAccuracy": 0.5633925191200305,
+    "TopKAccuracy": 0.9530537830446673,
+    "LogLoss": 1.1559905594385784,
+    "Ndcg": 0.7664248721770008,
     "K": 10
   }
 }

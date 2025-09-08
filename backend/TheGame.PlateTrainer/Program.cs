@@ -3,7 +3,7 @@ using TheGame.PlateTrainer;
 
 // TODO process args or env
 const int mlSeed = 123;
-const bool useSearch = false;
+const bool useSearch = true;
 const double testFraction = 0.2;
 const string jsonDataPath = @"c:\src\thegame\ai\training_data\plate_descriptions.json";
 const string hyperParamsJsonPath = @"C:\src\thegame\backend\TheGame.PlateTrainer\training_params.json";
@@ -42,13 +42,19 @@ async Task<TrainedModel> TrainFromExperiment(TrainingData trainingData, string p
 {
   var dataSplit = ml.Data.TrainTestSplit(trainingData.DataView, testFraction: testFraction, seed: mlSeed);
 
-  var experiment = trainerSvc.CreateMulticlassificationFitExperiment(dataSplit.TrainSet,
+  var (experiment, estimators) = trainerSvc.CreateMulticlassificationFitExperiment(dataSplit.TrainSet,
     numOfCvFolds: 5,
-    maxModelsToExplore: 100);
+    maxModelsToExplore: 100,
+    seed: mlSeed);
 
   var model = await trainerSvc.RunExperiment(experiment, dataSplit.TrainSet);
 
-  await trainerSvc.SaveModelHyperParams(paramsFilePath, model.BestFitParameters!, model.Metrics, mlSeed, testFraction);
+  var trainingParams = await trainerSvc.SaveModelHyperParams(paramsFilePath,
+    model.BestFitParameters!,
+    model.Metrics,
+    estimators,
+    mlSeed,
+    testFraction);
 
   return model;
 }

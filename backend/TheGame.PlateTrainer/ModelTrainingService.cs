@@ -104,9 +104,10 @@ public sealed class ModelTrainingService(MLContext mlContext, PipelineFactory pi
       factory: (ctx, searchParam) => pipelineFactory.CreateFeaturizer(searchParam),
       ss: featurizerSearchSpace);
 
-  public AutoMLExperiment CreateMulticlassificationFitExperiment(IDataView trainSplit,
+  public (AutoMLExperiment, IReadOnlyDictionary<string, SweepableEstimator>) CreateMulticlassificationFitExperiment(IDataView trainSplit,
     int numOfCvFolds,
     int maxModelsToExplore,
+    int seed,
     double maxRamMb = 1024 * 32)
   {
     Console.WriteLine("Creating experiment...");
@@ -157,13 +158,12 @@ public sealed class ModelTrainingService(MLContext mlContext, PipelineFactory pi
     );
 
     var pipeline = CreateSweepableFeaturizer(featurizerSearchSpace).Append(sweepableMulticlass);
-    foreach (var estimator in pipeline.Estimators)
-    {
-      Console.WriteLine($"{estimator.Key}: {estimator.Value.EstimatorType}");
-    }
 
     var experiment = mlContext.Auto()
-      .CreateExperiment()
+      .CreateExperiment(new AutoMLExperiment.AutoMLExperimentSettings()
+      {
+        Seed = seed
+      })
       .SetPipeline(pipeline)
       .SetMaximumMemoryUsageInMegaByte(maxRamMb)
       .SetMaxModelToExplore(maxModelsToExplore)
@@ -188,7 +188,7 @@ public sealed class ModelTrainingService(MLContext mlContext, PipelineFactory pi
       }
     };
 
-    return experiment;
+    return (experiment, pipeline.Estimators);
   }
 
   public async Task<TrainedModel> RunExperiment(AutoMLExperiment experiment, IDataView holdOutSet)
@@ -219,23 +219,32 @@ public sealed class ModelTrainingService(MLContext mlContext, PipelineFactory pi
     return new TrainedModel(bestFit.Model, labels, bestFit.TrialSettings.Parameter, holdOutMetrics);
   }
 
-  public async Task SaveModelHyperParams(string savePath, Parameter modelHyperParams, SetMetrics modelMetrics, int seed, double testFraction)
+  public async Task<TrainingParams> SaveModelHyperParams(string savePath,
+    Parameter modelHyperParams,
+    SetMetrics modelMetrics,
+    IReadOnlyDictionary<string, SweepableEstimator> estimators,
+    int seed,
+    double testFraction)
   {
-    var toSave = JsonSerializer.Serialize(
-      new TrainingParams
-      (
-        Version: "0.0.1",
-        Seed: seed,
-        TestFraction: testFraction,
-        modelHyperParams,
-        modelMetrics
-      ),
-      _jsonSerializerOptions);
+    var trainingParams = new TrainingParams
+    (
+      Version: "0.0.1",
+      Seed: seed,
+      TestFraction: testFraction,
+      Estimators: estimators
+        .Select(kvp => new KeyValuePair<string, string>(kvp.Key, kvp.Value?.ToString() ?? "n/a"))
+        .ToArray(),
+      modelHyperParams,
+      modelMetrics
+    );
+
+    var toSave = JsonSerializer.Serialize(trainingParams, _jsonSerializerOptions);
 
     Console.WriteLine($"Saving params:\n{toSave}");
 
-
     await File.WriteAllTextAsync(savePath, toSave);
+
+    return trainingParams;
   }
 
   public async Task<TrainingParams> ReadModelParamsFromFile(string paramsPath)
@@ -254,5 +263,6 @@ public sealed record TrainedModel(ITransformer Model,
 public sealed record TrainingParams(string Version,
   int Seed,
   double TestFraction,
+  KeyValuePair<string, string>[] Estimators,
   Parameter ModelHyperParams,
   SetMetrics ModelMetrics);
