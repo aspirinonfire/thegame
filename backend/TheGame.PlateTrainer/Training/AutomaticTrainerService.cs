@@ -3,6 +3,7 @@ using Microsoft.ML.AutoML;
 using Microsoft.ML.Data;
 using Microsoft.ML.SearchSpace;
 using Microsoft.ML.SearchSpace.Option;
+using Microsoft.ML.Trainers;
 using System.Text.Json;
 
 namespace TheGame.PlateTrainer.Training;
@@ -41,7 +42,23 @@ public class AutomaticTrainerService(MLContext mlContext, PipelineFactory pipeli
 
     // note: default algo options and search space will be used if optional params are omitted
     // for default values - see ml.auto package
-    var sweepableMulticlass = mlContext.Auto().MultiClassification();
+    var sweepableMulticlass = mlContext.Auto().MultiClassification(
+      useLbfgsMaximumEntrophy: true,
+      lbfgsMaximumEntrophyOption: new Microsoft.ML.AutoML.CodeGen.LbfgsOption(),
+      lbfgsMaximumEntrophySearchSpace: new SearchSpace<Microsoft.ML.AutoML.CodeGen.LbfgsOption>()
+      {
+        [nameof(LbfgsMaximumEntropyMulticlassTrainer.Options.L2Regularization)] = new UniformDoubleOption(0.0001, 10.0, defaultValue: 1),
+        [nameof(LbfgsMaximumEntropyMulticlassTrainer.Options.OptimizationTolerance)] = new UniformDoubleOption(1e-5, 1e-2, defaultValue: 1e-4),
+        [nameof(LbfgsMaximumEntropyMulticlassTrainer.Options.MaximumNumberOfIterations)] = new UniformIntOption(1000, 12000, defaultValue: 2000)
+      },
+
+      useFastForest: false,
+      useFastTree: false,
+      useLbfgsLogisticRegression: false,
+      useSdcaLogisticRegression: false,
+      useLgbm: false,
+      useSdcaMaximumEntrophy: false
+      );
       
     var pipeline = sweepableFeaturizer.Append(sweepableMulticlass);
 

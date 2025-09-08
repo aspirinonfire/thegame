@@ -5,18 +5,18 @@ using TheGame.PlateTrainer.Validation;
 
 namespace TheGame.PlateTrainer.Training;
 
-public sealed class PlateTrainingService(MLContext mlContext, PipelineFactory pipelineFactory, int numOfIterations = 200, float l2Reg = 0.001f)
+public sealed class PlateTrainingService(MLContext mlContext, PipelineFactory pipelineFactory)
 {
   /// <summary>
   /// See <see href="https://learn.microsoft.com/en-us/azure/machine-learning/algorithm-cheat-sheet?view=azureml-api-1"/>
   /// </summary>
   /// <returns></returns>
-  public SdcaMaximumEntropyMulticlassTrainer CreateSdcaTrainer()
+  public SdcaMaximumEntropyMulticlassTrainer CreateSdcaTrainer(int numOfIterations, float l2Reg)
   {
     return mlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy(new SdcaMaximumEntropyMulticlassTrainer.Options()
     {
       LabelColumnName = nameof(PlateRow.Label),
-      FeatureColumnName = PipelineFactory.FeaturesColumn,
+      FeatureColumnName = PipelineFactory.FeatureColumn,
       MaximumNumberOfIterations = numOfIterations,
       L2Regularization = l2Reg,
       Shuffle = true,
@@ -24,23 +24,23 @@ public sealed class PlateTrainingService(MLContext mlContext, PipelineFactory pi
     });
   }
 
-  public LbfgsMaximumEntropyMulticlassTrainer CreateLbfgsTrainer()
+  public LbfgsMaximumEntropyMulticlassTrainer CreateLbfgsTrainer(int numOfIterations, float l2Reg)
   {
     return mlContext.MulticlassClassification.Trainers.LbfgsMaximumEntropy(new LbfgsMaximumEntropyMulticlassTrainer.Options()
     {
       LabelColumnName = nameof(PlateRow.Label),
-      FeatureColumnName = PipelineFactory.FeaturesColumn,
+      FeatureColumnName = PipelineFactory.FeatureColumn,
       MaximumNumberOfIterations = numOfIterations,
       L2Regularization = l2Reg,
-      OptimizationTolerance = 4.515669741338378e-05f
+      OptimizationTolerance = 0.0001f
     });
   }
 
-  public TrainedModel Train(IDataView trainDataView, int mlSeed, int cvFolds = 5)
+  public TrainedModel Train(IDataView trainDataView, int mlSeed, int cvFolds = 5, int numOfIterations = 200, float l2Reg = 0.001f)
   {
     var featurizer = pipelineFactory.CreateFeaturizer(NgramFeaturizerParams.CreateDefault());
 
-    var trainer = CreateLbfgsTrainer();
+    var trainer = CreateLbfgsTrainer(numOfIterations, l2Reg);
 
     var estimator = featurizer.Append(trainer);
 

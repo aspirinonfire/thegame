@@ -62,5 +62,26 @@ public sealed class TrainedModelValidationService(MLContext ml)
     {
       Console.WriteLine($"{classLogLoss.label}: {classLogLoss.loss:0.000}");
     }
+
+    //Console.WriteLine("Confusion Matrix (rows=actual, cols=predicted):");
+
+    //Console.Write("actual\\pred");
+    //foreach (var name in trainedModel.Labels)
+    //{
+    //  Console.Write($"\t{name}");
+    //}
+    //Console.WriteLine();
+
+    //for (int actualIndex = 0; actualIndex < metrics.ConfusionMatrix.NumberOfClasses; actualIndex++)
+    //{
+    //  Console.Write(trainedModel.Labels[actualIndex]);
+    //  for (int predictedIndex = 0; predictedIndex < metrics.ConfusionMatrix.NumberOfClasses; predictedIndex++)
+    //  {
+    //    // Counts are integers represented as doubles; print as integers.
+    //    var count = (long)metrics.ConfusionMatrix.Counts[actualIndex][predictedIndex];
+    //    Console.Write($"\t{count}");
+    //  }
+    //  Console.WriteLine();
+    //}
   }
 }

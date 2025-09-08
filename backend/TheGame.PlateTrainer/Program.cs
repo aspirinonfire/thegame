@@ -11,7 +11,7 @@ var ml = new MLContext(mlSeed);
 
 var mlDataLoader = new DataLoader(ml);
 var pipelineFactory = new PipelineFactory(ml);
-var trainerSvc = new PlateTrainingService(ml, pipelineFactory, numOfIterations: 8100, l2Reg: (float)(1.0/7.080389));
+var trainerSvc = new PlateTrainingService(ml, pipelineFactory);
 var autoTrainer = new AutomaticTrainerService(ml, pipelineFactory);
 var modelValidator = new TrainedModelValidationService(ml);
 
@@ -25,9 +25,9 @@ using (var trainingData = mlDataLoader.ReadTrainingData(jsonDataPath, mlSeed))
   //  numOfCvFolds: 5,
   //  trainTimeoutSec: 60 * 3);
 
-  //trainedModel = await autoTrainer.RunExperiment(experiment, dataSplit.TrainSet);  
+  //trainedModel = await autoTrainer.RunExperiment(experiment, dataSplit.TrainSet);
 
-  trainedModel = trainerSvc.Train(dataSplit.TrainSet, mlSeed);
+  trainedModel = trainerSvc.Train(dataSplit.TrainSet, mlSeed, numOfIterations: 2000, l2Reg: 0.0001f);
 
   modelValidator.EvaluateHoldOutSet(trainedModel, dataSplit.TestSet);
 }

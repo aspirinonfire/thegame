@@ -18,7 +18,7 @@ public sealed record NgramFeaturizerParams()
 
   public static NgramFeaturizerParams CreateDefault() => new()
   {
-    NgramLength = 2,
+    NgramLength = 1,
     WeightingIndex =(int)NgramExtractingEstimator.WeightingCriteria.TfIdf
   };
 }
@@ -27,7 +27,7 @@ public class PipelineFactory(MLContext mlContext)
 {
   public const string CleanTokenColumn = "CleanTokens";
   public const string CleanTokenKeyColumn = "TokenKeys";
-  public const string FeaturesColumn = "Features";
+  public const string FeatureColumn = "Feature";
 
   public EstimatorChain<ValueToKeyMappingTransformer> CreateFeaturizer(NgramFeaturizerParams featurizerParams)
   {
@@ -41,7 +41,7 @@ public class PipelineFactory(MLContext mlContext)
         outputColumnName: CleanTokenKeyColumn))
       .Append(mlContext.Transforms.Text.ProduceNgrams(
         inputColumnName: CleanTokenKeyColumn,
-        outputColumnName: FeaturesColumn,
+        outputColumnName: FeatureColumn,
         ngramLength: featurizerParams.NgramLength,
         useAllLengths: true,
         weighting: featurizerParams.WeightingEnum))
