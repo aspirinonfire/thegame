@@ -18,7 +18,7 @@ public sealed record SetMetrics(double MicroAccuracy,
   [property:JsonIgnore] Microsoft.ML.Data.ConfusionMatrix ConfusionMatrix,
   [property: JsonIgnore] IReadOnlyDictionary<string, double> PerClassLogLoss);
 
-public sealed class TrainedModelValidationService(MLContext ml)
+public sealed class ModelEvaluationService(MLContext ml)
 {
   public static double CalculateNdcg(IEnumerable<CvFoldScores> rows, int k = 10) =>
     rows.Select(r =>

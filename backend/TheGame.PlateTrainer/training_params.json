@@ -1,8 +1,8 @@
 {
-  "version": "0.0.1",
-  "seed": 123,
-  "testFraction": 0.2,
-  "modelHyperParams": {
+  "Version": "0.0.1",
+  "Seed": 123,
+  "TestFraction": 0.2,
+  "ModelHyperParams": {
     "_pipeline_": {
       "_SCHEMA_": "e0 * e1",
       "e0": {
@@ -11,22 +11,22 @@
         "Weighting": "TfIdf"
       },
       "e1": {
-        "DenseOptimizer": false,
+        "DenseOptimizer": true,
         "HistorySize": 30,
         "L1Regularization": 0,
-        "L2Regularization": 0.22786404739327917,
+        "L2Regularization": 0.21833750640430372,
         "MaximumNumberOfIterations": 10001,
-        "OptimizationTolerance": 0.006262892422770565,
+        "OptimizationTolerance": 0.007868771565816725,
         "StochasticGradientDescentInitilaizationTolerance": 0.001
       }
     }
   },
-  "modelMetrics": {
-    "MicroAccuracy": 0.5856882406563355,
-    "MacroAccuracy": 0.5633925191200304,
-    "TopKAccuracy": 0.9530537830446673,
-    "LogLoss": 1.1559954544948357,
-    "Ndcg": 0.7664182929239828,
+  "ModelMetrics": {
+    "MicroAccuracy": 0.585232452142206,
+    "MacroAccuracy": 0.5631345211840139,
+    "TopKAccuracy": 0.9535095715587967,
+    "LogLoss": 1.1544289419719223,
+    "Ndcg": 0.7664628704463451,
     "K": 10
   }
 }

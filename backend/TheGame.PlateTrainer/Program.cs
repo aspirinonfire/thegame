@@ -11,8 +11,8 @@ const string hyperParamsJsonPath = @"C:\src\thegame\backend\TheGame.PlateTrainer
 var ml = new MLContext(mlSeed);
 var mlDataLoader = new TrainingDataLoader(ml);
 var pipelineFactory = new PipelineFactory(ml);
-var modelValidator = new TrainedModelValidationService(ml);
-var trainerSvc = new PlateTrainingService(ml, pipelineFactory, modelValidator);
+var modelValidator = new ModelEvaluationService(ml);
+var trainerSvc = new ModelTrainingService(ml, pipelineFactory, modelValidator);
 
 TrainedModel trainedModel = null!;
 

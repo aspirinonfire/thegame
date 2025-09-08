@@ -9,7 +9,7 @@ using System.Text.Json;
 
 namespace TheGame.PlateTrainer;
 
-public sealed class PlateTrainingService(MLContext mlContext, PipelineFactory pipelineFactory, TrainedModelValidationService modelValidationService)
+public sealed class ModelTrainingService(MLContext mlContext, PipelineFactory pipelineFactory, ModelEvaluationService modelValidationService)
 {
   private readonly static JsonSerializerOptions _jsonSerializerOptions = new()
   {
@@ -17,56 +17,25 @@ public sealed class PlateTrainingService(MLContext mlContext, PipelineFactory pi
     PropertyNameCaseInsensitive = true
   };
 
-  /// <summary>
-  /// See <see href="https://learn.microsoft.com/en-us/azure/machine-learning/algorithm-cheat-sheet?view=azureml-api-1"/>
-  /// </summary>
-  /// <returns></returns>
-  public SdcaMaximumEntropyMulticlassTrainer CreateSdcaTrainer(int numOfIterations, float l2Reg)
-  {
-    return mlContext.MulticlassClassification.Trainers.SdcaMaximumEntropy(new SdcaMaximumEntropyMulticlassTrainer.Options()
-    {
-      LabelColumnName = nameof(PlateRow.Label),
-      FeatureColumnName = PipelineFactory.FeatureColumn,
-      MaximumNumberOfIterations = numOfIterations,
-      L2Regularization = l2Reg,
-      Shuffle = true,
-      NumberOfThreads = Environment.ProcessorCount
-    });
-  }
-
-  public LbfgsMaximumEntropyMulticlassTrainer CreateLbfgsTrainer(int numOfIterations, float l2Reg)
-  {
-    return mlContext.MulticlassClassification.Trainers.LbfgsMaximumEntropy(new LbfgsMaximumEntropyMulticlassTrainer.Options()
-    {
-      LabelColumnName = nameof(PlateRow.Label),
-      FeatureColumnName = PipelineFactory.FeatureColumn,
-      MaximumNumberOfIterations = numOfIterations,
-      L2Regularization = l2Reg,
-      OptimizationTolerance = 0.0001f
-    });
-  }
-
   public TrainedModel TrainLbfgs(DataOperationsCatalog.TrainTestData trainTestData, TrainingParams trainingParams, int cvFolds = 5)
   {
-    var featurizer = pipelineFactory.CreateFeaturizer(NgramFeaturizerParams.CreateDefault());
-
-    var lbfgsSweepable = mlContext.Auto().MultiClassification(
-      useLbfgsMaximumEntrophy: true,
-      
-      useSdcaMaximumEntrophy: false,
-      useLbfgsLogisticRegression: false,
-      useSdcaLogisticRegression: false,
-      useFastForest: false,
-      useFastTree: false,
-      useLgbm: false
-    );
-
+    Console.WriteLine("----- Training from pre-set parameters...");
     var pipelineParams = trainingParams.ModelHyperParams["_pipeline_"];
     Console.WriteLine(JsonSerializer.Serialize(pipelineParams, _jsonSerializerOptions));
 
-    var estimator = CreateSweepableFeaturizer([])
-      .Append(lbfgsSweepable)
-      .BuildFromOption(mlContext, pipelineParams);
+    var pipeline = CreateSweepableFeaturizer([])
+      .Append(mlContext.Auto().MultiClassification(
+        useLbfgsMaximumEntrophy: true,
+
+        useSdcaMaximumEntrophy: false,
+        useLbfgsLogisticRegression: false,
+        useSdcaLogisticRegression: false,
+        useFastForest: false,
+        useFastTree: false,
+        useLgbm: false
+      ));
+
+    var estimator = pipeline.BuildFromOption(mlContext, pipelineParams);
 
     Console.WriteLine($"----- Cross Validating ({cvFolds})...");
     
@@ -103,7 +72,7 @@ public sealed class PlateTrainingService(MLContext mlContext, PipelineFactory pi
     Console.WriteLine($"NDCG({trainingParams.ModelMetrics.K}): {cvMetrics.Ndcg:0.000}");
     Console.WriteLine($"CV LogLoss: {cvMetrics.LogLoss:0.000}");
 
-    Console.WriteLine("----- Training...");
+    Console.WriteLine("----- Fitting a model...");
 
     var trainedModel = estimator.Fit(trainTestData.TrainSet);
 
@@ -187,9 +156,15 @@ public sealed class PlateTrainingService(MLContext mlContext, PipelineFactory pi
       useLgbm: false
     );
 
+    var pipeline = CreateSweepableFeaturizer(featurizerSearchSpace).Append(sweepableMulticlass);
+    foreach (var estimator in pipeline.Estimators)
+    {
+      Console.WriteLine($"{estimator.Key}: {estimator.Value.EstimatorType}");
+    }
+
     var experiment = mlContext.Auto()
       .CreateExperiment()
-      .SetPipeline(CreateSweepableFeaturizer(featurizerSearchSpace).Append(sweepableMulticlass))
+      .SetPipeline(pipeline)
       .SetMaximumMemoryUsageInMegaByte(maxRamMb)
       .SetMaxModelToExplore(maxModelsToExplore)
       //.SetEciCostFrugalTuner()
