@@ -46,17 +46,33 @@ public sealed class PlateTrainingService(MLContext mlContext, PipelineFactory pi
     });
   }
 
-  public TrainedModel Train(IDataView trainDataView, int mlSeed, int cvFolds = 5, int numOfIterations = 200, float l2Reg = 0.001f)
+  public TrainedModel TrainLbfgs(DataOperationsCatalog.TrainTestData trainTestData, TrainingParams trainingParams, int cvFolds = 5)
   {
     var featurizer = pipelineFactory.CreateFeaturizer(NgramFeaturizerParams.CreateDefault());
 
-    var trainer = CreateLbfgsTrainer(numOfIterations, l2Reg);
+    var lbfgsSweepable = mlContext.Auto().MultiClassification(
+      useLbfgsMaximumEntrophy: true,
+      
+      useSdcaMaximumEntrophy: false,
+      useLbfgsLogisticRegression: false,
+      useSdcaLogisticRegression: false,
+      useFastForest: false,
+      useFastTree: false,
+      useLgbm: false
+    );
 
-    var estimator = featurizer.Append(trainer);
+    var pipelineParams = trainingParams.ModelHyperParams["_pipeline_"];
+    Console.WriteLine(JsonSerializer.Serialize(pipelineParams, _jsonSerializerOptions));
+
+    var estimator = CreateSweepableFeaturizer([])
+      .Append(lbfgsSweepable)
+      .BuildFromOption(mlContext, pipelineParams);
 
     Console.WriteLine($"----- Cross Validating ({cvFolds})...");
     
-    var folds = mlContext.Data.CrossValidationSplit(trainDataView, numberOfFolds: cvFolds, seed: mlSeed);
+    var folds = mlContext.Data.CrossValidationSplit(trainTestData.TrainSet,
+      numberOfFolds: cvFolds,
+      seed: trainingParams.Seed);
 
     var foldMetrics = folds
       .Select(fold =>
@@ -65,36 +81,36 @@ public sealed class PlateTrainingService(MLContext mlContext, PipelineFactory pi
         var scored = model.Transform(fold.TestSet);
 
         return modelValidationService.CalculateMetricsForSet(scored,
-          Enumerable.Range(0, 51).Select(i => "").ToArray(),
-          10);
+          Enumerable.Range(0, 51).Select(i => $"{i}").ToArray(),
+          trainingParams.ModelMetrics.K);
       })
       .ToList();
 
-    var averagedMetrics = new SetMetrics(
+    var cvMetrics = new SetMetrics(
       MicroAccuracy: foldMetrics.Average(f => f.MicroAccuracy),
       MacroAccuracy: foldMetrics.Average(f => f.MacroAccuracy),
       TopKAccuracy: foldMetrics.Average(f => f.TopKAccuracy),
       LogLoss: foldMetrics.Average(f => f.LogLoss),
       Ndcg: foldMetrics.Average(f => f.Ndcg),
-      K: 10,
+      K: trainingParams.ModelMetrics.K,
       null!,
       null!);
 
 
-    Console.WriteLine($"CV MicroAccuracy: {averagedMetrics.MicroAccuracy:0.000}");
-    Console.WriteLine($"CV MacroAccuracy: {averagedMetrics.MacroAccuracy:0.000}");
-    Console.WriteLine($"Top-K accuracy:   {averagedMetrics.TopKAccuracy:0.000}");
-    Console.WriteLine($"NDCG(10):         {averagedMetrics.Ndcg:0.000}");
-    Console.WriteLine($"CV LogLoss:       {averagedMetrics.LogLoss:0.000}");
+    Console.WriteLine($"CV MicroAccuracy: {cvMetrics.MicroAccuracy:0.000}");
+    Console.WriteLine($"CV MacroAccuracy: {cvMetrics.MacroAccuracy:0.000}");
+    Console.WriteLine($"Top-{trainingParams.ModelMetrics.K} accuracy: {cvMetrics.TopKAccuracy:0.000}");
+    Console.WriteLine($"NDCG({trainingParams.ModelMetrics.K}): {cvMetrics.Ndcg:0.000}");
+    Console.WriteLine($"CV LogLoss: {cvMetrics.LogLoss:0.000}");
 
     Console.WriteLine("----- Training...");
 
-    var trainedModel = estimator.Fit(trainDataView);
+    var trainedModel = estimator.Fit(trainTestData.TrainSet);
 
     Console.WriteLine("----- Training completed successfully.");
 
     // map key indices -> label strings taken from the *Label* column
-    var outputSchema = trainedModel.GetOutputSchema(trainDataView.Schema);
+    var outputSchema = trainedModel.GetOutputSchema(trainTestData.TrainSet.Schema);
     var labelCol = outputSchema[nameof(PlateRow.Label)];
     var keyBuffer = default(VBuffer<ReadOnlyMemory<char>>);
     labelCol.GetKeyValues(ref keyBuffer);
@@ -102,7 +118,16 @@ public sealed class PlateTrainingService(MLContext mlContext, PipelineFactory pi
       .Select(x => x.ToString())
       .ToArray();
 
-    return new(trainedModel, labels, null, averagedMetrics);
+    Console.WriteLine("----- Metrics from params file:");
+    Console.WriteLine($"MicroAccuracy:  {trainingParams.ModelMetrics.MicroAccuracy:0.000}");
+    Console.WriteLine($"MacroAccuracy:  {trainingParams.ModelMetrics.MacroAccuracy:0.000}");
+    Console.WriteLine($"Top-K accuracy: {trainingParams.ModelMetrics.TopKAccuracy:0.000}");
+    Console.WriteLine($"NDCG:           {trainingParams.ModelMetrics.Ndcg:0.000}");
+    Console.WriteLine($"LogLoss:        {trainingParams.ModelMetrics.LogLoss:0.000}");
+
+    var holdOutMetrics = modelValidationService.EvaluateHoldOutSet(trainedModel, labels, trainTestData.TestSet);
+
+    return new(trainedModel, labels, trainingParams.ModelHyperParams, holdOutMetrics);
   }
 
   public SweepableEstimator CreateSweepableFeaturizer(SearchSpace<NgramFeaturizerParams> featurizerSearchSpace) =>
@@ -214,20 +239,22 @@ public sealed class PlateTrainingService(MLContext mlContext, PipelineFactory pi
       .Select(l => l.ToString())
       .ToArray();
 
-    var metrics = modelValidationService.EvaluateHoldOutSet(bestFit.Model, labels, holdOutSet);
+    var holdOutMetrics = modelValidationService.EvaluateHoldOutSet(bestFit.Model, labels, holdOutSet);
 
-    return new TrainedModel(bestFit.Model, labels, bestFit.TrialSettings.Parameter, metrics);
+    return new TrainedModel(bestFit.Model, labels, bestFit.TrialSettings.Parameter, holdOutMetrics);
   }
 
-  public async Task SaveModelHyperParams(string savePath, Parameter modelHyperParams, SetMetrics modelMetrics)
+  public async Task SaveModelHyperParams(string savePath, Parameter modelHyperParams, SetMetrics modelMetrics, int seed, double testFraction)
   {
     var toSave = JsonSerializer.Serialize(
-      new
-      {
-        version = "0.0.1",
+      new TrainingParams
+      (
+        Version: "0.0.1",
+        Seed: seed,
+        TestFraction: testFraction,
         modelHyperParams,
         modelMetrics
-      },
+      ),
       _jsonSerializerOptions);
 
     Console.WriteLine($"Saving params:\n{toSave}");
@@ -235,9 +262,22 @@ public sealed class PlateTrainingService(MLContext mlContext, PipelineFactory pi
 
     await File.WriteAllTextAsync(savePath, toSave);
   }
+
+  public async Task<TrainingParams> ReadModelParamsFromFile(string paramsPath)
+  {
+    var rawFileString = await File.ReadAllTextAsync(paramsPath);
+
+    return JsonSerializer.Deserialize<TrainingParams>(rawFileString, _jsonSerializerOptions)!;
+  }
 }
 
 public sealed record TrainedModel(ITransformer Model,
   string[] Labels,
   Parameter? BestFitParameters,
   SetMetrics Metrics);
+
+public sealed record TrainingParams(string Version,
+  int Seed,
+  double TestFraction,
+  Parameter ModelHyperParams,
+  SetMetrics ModelMetrics);

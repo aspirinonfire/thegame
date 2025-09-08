@@ -1,5 +1,7 @@
 {
   "version": "0.0.1",
+  "seed": 123,
+  "testFraction": 0.2,
   "modelHyperParams": {
     "_pipeline_": {
       "_SCHEMA_": "e0 * e1",
