@@ -21,13 +21,13 @@ using (var trainingData = mlDataLoader.ReadTrainingData(jsonDataPath, mlSeed))
 {
   var dataSplit = ml.Data.TrainTestSplit(trainingData.DataView, testFraction: 0.1, seed: mlSeed);
 
-  //var experiment = autoTrainer.CreateMulticlassificationFitExperiment(dataSplit.TrainSet,
-  //  numOfCvFolds: 5,
-  //  trainTimeoutSec: 60 * 3);
+  var experiment = autoTrainer.CreateMulticlassificationFitExperiment(dataSplit.TrainSet,
+    numOfCvFolds: 3,
+    maxModelsToExplore: 300);
 
-  //trainedModel = await autoTrainer.RunExperiment(experiment, dataSplit.TrainSet);
+  trainedModel = await autoTrainer.RunExperiment(experiment, dataSplit.TrainSet);
 
-  trainedModel = trainerSvc.Train(dataSplit.TrainSet, mlSeed, numOfIterations: 2000, l2Reg: 0.0001f);
+  //trainedModel = trainerSvc.Train(dataSplit.TrainSet, mlSeed, numOfIterations: 2000, l2Reg: 0.0001f);
 
   modelValidator.EvaluateHoldOutSet(trainedModel, dataSplit.TestSet);
 }

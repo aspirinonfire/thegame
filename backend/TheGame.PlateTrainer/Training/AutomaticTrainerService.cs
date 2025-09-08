@@ -5,6 +5,8 @@ using Microsoft.ML.SearchSpace;
 using Microsoft.ML.SearchSpace.Option;
 using Microsoft.ML.Trainers;
 using System.Text.Json;
+using Microsoft.ML.AutoML.CodeGen;
+using Microsoft.ML.Trainers.LightGbm;
 
 namespace TheGame.PlateTrainer.Training;
 
@@ -16,9 +18,9 @@ public class AutomaticTrainerService(MLContext mlContext, PipelineFactory pipeli
 
     var featuizerSearch = new SearchSpace<NgramFeaturizerParams>
     {
-      [nameof(NgramFeaturizerParams.NgramLength)] = new UniformIntOption(min: 1, max: 3, defaultValue: 2),
+      [nameof(NgramFeaturizerParams.NgramLength)] = new ChoiceOption(1, 2),
 
-      [nameof(NgramFeaturizerParams.WeightingIndex)] = new UniformIntOption(min: 0, max: 2, defaultValue: 2)
+      [nameof(NgramFeaturizerParams.WeightingIndex)] = new ChoiceOption(2)
     };
 
     return mlContext.Auto().CreateSweepableEstimator(
@@ -26,14 +28,9 @@ public class AutomaticTrainerService(MLContext mlContext, PipelineFactory pipeli
       ss: featuizerSearch);
   }
 
-  //public SweepableEstimator CreateSweepableLbfgs()
-  //{
-
-  //}
-
   public AutoMLExperiment CreateMulticlassificationFitExperiment(IDataView trainSplit,
     int numOfCvFolds,
-    uint trainTimeoutSec,
+    int maxModelsToExplore,
     double maxRamMb = 1024 * 32)
   {
     Console.WriteLine("Creating experiment...");
@@ -44,21 +41,65 @@ public class AutomaticTrainerService(MLContext mlContext, PipelineFactory pipeli
     // for default values - see ml.auto package
     var sweepableMulticlass = mlContext.Auto().MultiClassification(
       useLbfgsMaximumEntrophy: true,
-      lbfgsMaximumEntrophyOption: new Microsoft.ML.AutoML.CodeGen.LbfgsOption(),
-      lbfgsMaximumEntrophySearchSpace: new SearchSpace<Microsoft.ML.AutoML.CodeGen.LbfgsOption>()
+      lbfgsLogisticRegressionOption: new LbfgsOption()
       {
-        [nameof(LbfgsMaximumEntropyMulticlassTrainer.Options.L2Regularization)] = new UniformDoubleOption(0.0001, 10.0, defaultValue: 1),
+        FeatureColumnName = PipelineFactory.FeatureColumn
+      },
+      lbfgsMaximumEntrophySearchSpace: new SearchSpace<LbfgsOption>()
+      {
+        [nameof(LbfgsMaximumEntropyMulticlassTrainer.Options.L2Regularization)] = new UniformDoubleOption(0.0001, 1.0, defaultValue: 0.1),
         [nameof(LbfgsMaximumEntropyMulticlassTrainer.Options.OptimizationTolerance)] = new UniformDoubleOption(1e-5, 1e-2, defaultValue: 1e-4),
-        [nameof(LbfgsMaximumEntropyMulticlassTrainer.Options.MaximumNumberOfIterations)] = new UniformIntOption(1000, 12000, defaultValue: 2000)
+        [nameof(LbfgsMaximumEntropyMulticlassTrainer.Options.MaximumNumberOfIterations)] = new ChoiceOption(10_001)
+      },
+
+      useLbfgsLogisticRegression: false,
+      lbfgsLogisticRegressionSearchSpace: new SearchSpace<LbfgsOption>()
+      {
+        [nameof(LbfgsMaximumEntropyMulticlassTrainer.Options.L2Regularization)] = new UniformDoubleOption(0.0001, 1.0, defaultValue: 0.1),
+        [nameof(LbfgsMaximumEntropyMulticlassTrainer.Options.OptimizationTolerance)] = new UniformDoubleOption(1e-5, 1e-2, defaultValue: 1e-4),
+        [nameof(LbfgsMaximumEntropyMulticlassTrainer.Options.MaximumNumberOfIterations)] = new ChoiceOption(10_002)
+      },
+
+      useSdcaMaximumEntrophy: true,
+      sdcaMaximumEntrophyOption: new SdcaOption()
+      {
+        FeatureColumnName = PipelineFactory.FeatureColumn
+      },
+      sdcaMaximumEntorphySearchSpace: new SearchSpace<SdcaOption>()
+      {
+        [nameof(SdcaMaximumEntropyMulticlassTrainer.Options.L1Regularization)] = new ChoiceOption(0.0),
+        [nameof(SdcaMaximumEntropyMulticlassTrainer.Options.L2Regularization)] = new UniformDoubleOption(0.0001, 10),
+        [nameof(SdcaMaximumEntropyMulticlassTrainer.Options.ConvergenceTolerance)] = new UniformDoubleOption(0.000 - 01, 0.01),
+        [nameof(SdcaMaximumEntropyMulticlassTrainer.Options.MaximumNumberOfIterations)] = new ChoiceOption(10_003),
+      },
+
+      useSdcaLogisticRegression: false,
+
+      useLgbm: false,
+      lgbmOption: new LgbmOption()
+      {
+        FeatureColumnName = PipelineFactory.FeatureColumn
+      },
+      lgbmSearchSpace: new SearchSpace<LgbmOption>()
+      {
+        [nameof(LightGbmMulticlassTrainer.Options.NumberOfIterations)] = new UniformIntOption(100, 5000),
+        [nameof(LightGbmMulticlassTrainer.Options.NumberOfLeaves)] = new UniformIntOption(16, 4096),
+        [nameof(LightGbmMulticlassTrainer.Options.MinimumExampleCountPerLeaf)] = new UniformIntOption(50, 200),
+        [nameof(LightGbmMulticlassTrainer.Options.MaximumBinCountPerFeature)] = new UniformIntOption(32, 255),
+        [nameof(LightGbmMulticlassTrainer.Options.LearningRate)] = new UniformDoubleOption(0.001, 1),
+        [nameof(LightGbmMulticlassTrainer.Options.UnbalancedSets)] = new ChoiceOption(true, false),
+        [nameof(LightGbmMulticlassTrainer.Options.UseSoftmax)] = new ChoiceOption(true),
+        [nameof(LightGbmMulticlassTrainer.Options.Sigmoid)] = new UniformDoubleOption(0.1, 1),
+
+        [nameof(LightGbmMulticlassTrainer.Options.Booster.FeatureFraction)] = new UniformDoubleOption(0.1, 1.0),
+        [nameof(LightGbmMulticlassTrainer.Options.Booster.SubsampleFraction)] = new UniformDoubleOption(0.1, 1.0),
+        [nameof(LightGbmMulticlassTrainer.Options.Booster.L2Regularization)] = new UniformDoubleOption(0.0001, 100.0),
+        [nameof(LightGbmMulticlassTrainer.Options.Booster.L1Regularization)] = new ChoiceOption(0.0)
       },
 
       useFastForest: false,
-      useFastTree: false,
-      useLbfgsLogisticRegression: false,
-      useSdcaLogisticRegression: false,
-      useLgbm: false,
-      useSdcaMaximumEntrophy: false
-      );
+      useFastTree: false
+    );
       
     var pipeline = sweepableFeaturizer.Append(sweepableMulticlass);
 
@@ -66,12 +107,27 @@ public class AutomaticTrainerService(MLContext mlContext, PipelineFactory pipeli
       .CreateExperiment()
       .SetPipeline(pipeline)
       .SetMaximumMemoryUsageInMegaByte(maxRamMb)
-      .SetTrainingTimeInSeconds(trainTimeoutSec)
+      .SetMaxModelToExplore(maxModelsToExplore)
+      //.SetEciCostFrugalTuner()
+      .SetSmacTuner(
+        numberOfTrees: 30,
+        numRandomEISearchConfigurations: 3000,
+        // ignore tiny improvements
+        epsilon: 0.00001,
+        numNeighboursForNumericalParams: 4)
       .SetDataset(trainSplit, fold: numOfCvFolds)
       // Important! default Label value for metrics is lowercase that may break due to other setup
       .SetMulticlassClassificationMetric(
         MulticlassClassificationMetric.LogLoss,
         labelColumn: nameof(PlateRow.Label));
+
+    mlContext.Log += (o, e) =>
+    {
+      if (e.Source.Equals("AutoMLExperiment"))
+      {
+        Console.WriteLine(e.RawMessage);
+      }
+    };
 
     return experiment;
   }
