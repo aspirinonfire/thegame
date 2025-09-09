@@ -5,7 +5,7 @@ import { isApiError } from "./ApiError";
 import type { PlayerInfo } from "./UserAccount";
 import type { Game } from "~/game-core/models/Game";
 import { type WindowWithGoogle } from "./GoogleAuthService";
-import { onnxModel } from "./AppAiSearchSlice";
+import { onnxModel, onnxModelLabels } from "./AppAiSearchSlice";
 
 export interface PlayerData {
   player: PlayerInfo | null,
@@ -71,7 +71,7 @@ export const createAppInitSlice: StateCreator<AppStore, [], [], AppInitSlice> = 
         console.log("User data initialized: ", isDataRetrieved);
       }
 
-      await get().plateClassifier.init(onnxModel)
+      await get().plateClassifier.init(onnxModel, onnxModelLabels)
 
       set({ isInitialized: true });
 

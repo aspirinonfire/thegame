@@ -1,8 +1,12 @@
 import * as ort from 'onnxruntime-node';
+import { readFile } from 'fs/promises';
 
 const model_file = 'skl_plates_model.onnx';
+const labels_file = 'skl_plates_model.labels.json';
 
 const sess = await ort.InferenceSession.create(`public/${model_file}`);
+const classLabels = JSON.parse(await readFile(`public/${labels_file}`, 'utf8'));
+console.log(classLabels);
 
 console.log('inputs', sess.inputNames);
 console.log('outputs', sess.outputNames);
@@ -18,8 +22,7 @@ const feeds = {
 const results = await sess.run(feeds);
 console.log(results);
 
-const probabilitiesTensor = results.probabilities; // ort.Tensor
-const classLabels = Array.from(results.class_labels.data);
+const probabilitiesTensor = results['Score.output']; // ort.Tensor
 const probabilitiesData = probabilitiesTensor.data;
 // note batchSize depends on input feed. It is possible to query multiple strings at one time
 const [batchSize, classCount] = probabilitiesTensor.dims;

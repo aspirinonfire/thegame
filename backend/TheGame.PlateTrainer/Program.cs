@@ -16,6 +16,7 @@ var pipelineFactory = new PipelineFactory(ml);
 var modelValidator = new ModelEvaluationService(ml);
 var trainerSvc = new ModelTrainingService(ml, pipelineFactory, modelValidator);
 var modelParamsSvc = new ModelParamsService();
+var onnxService = new OnnxModelService(ml);
 
 TrainedModel trainedModel = null!;
 
@@ -23,7 +24,7 @@ using (var trainingData = mlDataLoader.ReadTrainingData(jsonDataPath, mlSeed))
 {
   trainedModel = useSearch ?
     await TrainFromExperiment(ml, trainerSvc, modelParamsSvc, trainingData, hyperParamsJsonPath, mlSeed) :
-    await TrainFromParamsFile(ml, trainerSvc, modelParamsSvc, trainingData, hyperParamsJsonPath);
+    await TrainFromParamsFile(ml, trainerSvc, modelParamsSvc, onnxService, trainingData, onnxPath, hyperParamsJsonPath);
 }
 
 var predictor = new Predictor(ml, trainedModel);
@@ -35,7 +36,9 @@ predictor.Predict("top red white middle blue bottom");
 static async Task<TrainedModel> TrainFromParamsFile(MLContext ml,
   ModelTrainingService trainerSvc,
   ModelParamsService modelParamsSvc,
+  OnnxModelService onnxService,
   TrainingData trainingData,
+  string onnxFilePath,
   string paramsFilePath)
 {
   var modelParams = await modelParamsSvc.ReadModelParamsFromFile(paramsFilePath);
@@ -44,19 +47,7 @@ static async Task<TrainedModel> TrainFromParamsFile(MLContext ml,
 
   var trainedModel = trainerSvc.TrainLbfgs(dataSplit, modelParams);
 
-  Console.WriteLine("Exporting to ONNX...");
-
-  var probe = ml.Data.TakeRows(dataSplit.TrainSet, 1);
-  var scoredProbe = trainedModel.Model.Transform(probe);
-
-  var keyToValue = ml.Transforms.Conversion
-    .MapKeyToValue(outputColumnName: "PredictedLabel", inputColumnName: "PredictedLabel")
-    .Fit(scoredProbe);
-
-  var exportable = trainedModel.Model.Append(keyToValue);
-
-  using var fs = File.Create(onnxPath);
-  ml.Model.ConvertToOnnx(exportable, dataSplit.TestSet, fs);
+  onnxService.ExportToOnnx(trainedModel, dataSplit.TestSet, onnxFilePath);
 
   return trainedModel;
 }
@@ -90,47 +81,3 @@ static async Task<TrainedModel> TrainFromExperiment(MLContext ml,
   return model;
 }
 
-//static void EmbedLabelsAsOutput(string onnxPath, IReadOnlyList<string> labels)
-//{
-//  var model = ModelProto.Parser.ParseFrom(File.ReadAllBytes(onnxPath));
-//  var g = model.Graph;
-
-//  // Build a string tensor with class names
-//  var lblTensor = new TensorProto
-//  {
-//    Name = "ClassLabels.const",
-//    DataType = (int)TensorProto.Types.DataType.String
-//  };
-//  lblTensor.Dims.Add(labels.Count);
-//  // string_data is repeated bytes
-//  lblTensor.StringData.Add(labels.Select(s => ByteString.CopyFromUtf8(s)));
-
-//  // Constant node producing the labels
-//  var constNode = new NodeProto
-//  {
-//    Name = "ClassLabels_Const",
-//    OpType = "Constant",
-//  };
-//  constNode.Output.Add("ClassLabels.output");
-//  constNode.Attribute.Add(new AttributeProto
-//  {
-//    Name = "value",
-//    Type = AttributeProto.Types.AttributeType.Tensor,
-//    T = lblTensor
-//  });
-//  g.Node.Add(constNode);
-
-//  // Declare graph output for the labels
-//  var outInfo = new ValueInfoProto { Name = "ClassLabels.output" };
-//  outInfo.Type = new TypeProto
-//  {
-//    TensorType = new TypeProto.Types.Tensor
-//    {
-//      ElemType = (int)TensorProto.Types.DataType.String,
-//      Shape = new TensorShapeProto { Dim = { new TensorShapeProto.Types.Dimension { DimValue = labels.Count } } }
-//    }
-//  };
-//  g.Output.Add(outInfo);
-
-//  File.WriteAllBytes(onnxPath, model.ToByteArray());
-//}

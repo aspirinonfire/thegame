@@ -131,19 +131,6 @@ jobs:
           mkdir -p ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/${{ env.API_PUBLISH_DIR }}
           docker save ${{ env.GAMEAPP_IMAGE_NAME }} | gzip > ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/${{ env.API_PUBLISH_DIR }}/${{ env.GAMEAPP_IMAGE_NAME }}.tar.gz
 
-      # Run PY tests for AI models
-      - name: Upgrade pip
-        working-directory: ${{ env.AI_DIR }}
-        run: python -m pip install --upgrade pip
-
-      - name: Install PY deps
-        working-directory: ${{ env.AI_DIR }}
-        run: pip install -r ${{ env.PY_REQS }}
-
-      - name: Run AI trainer unit tests
-        working-directory: ${{ env.AI_DIR }}
-        run: python -m unittest discover -v -s ${{ env.AI_TESTS }}
-
       # Check if AI model release with given version exists
       - name: Read Training Version
         id: training_params
@@ -181,6 +168,7 @@ jobs:
           --dir ui/public
           --clobber
       
+      # TODO invoke dotnet PlateTrainer
       # If release does not exist, train a new model and create new release
       - name: Train model
         working-directory: ${{ env.AI_DIR }}
