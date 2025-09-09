@@ -1,6 +1,8 @@
 ﻿using Microsoft.ML;
 using Microsoft.ML.AutoML;
 using Microsoft.ML.Data;
+using Microsoft.ML.SearchSpace;
+using Microsoft.ML.Trainers;
 using Microsoft.ML.Transforms;
 using System.Text.Json.Serialization;
 
@@ -81,4 +83,14 @@ public class PipelineFactory(MLContext mlContext)
       keyOrdinality: ValueToKeyMappingEstimator.KeyOrdinality.ByValue,
       addKeyValueAnnotationsAsText: true));
   }
+
+  public SweepableEstimator CreateSweepableFeaturizer(SearchSpace<NgramFeaturizerParams> featurizerSearchSpace) =>
+  mlContext.Auto().CreateSweepableEstimator(
+    factory: (ctx, searchParam) => CreateFeaturizer(searchParam),
+    ss: featurizerSearchSpace);
+
+  public SweepableEstimator CreateSweepableLbfgsEstimator(SearchSpace<LbfgsMaximumEntropyMulticlassTrainer.Options> estimatorSearchSpace) =>
+    mlContext.Auto().CreateSweepableEstimator(
+      factory: (ctx, searchParam) => ctx.MulticlassClassification.Trainers.LbfgsMaximumEntropy(searchParam),
+      ss: estimatorSearchSpace);
 }

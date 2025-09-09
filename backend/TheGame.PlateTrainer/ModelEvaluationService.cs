@@ -16,7 +16,32 @@ public sealed record SetMetrics(double MicroAccuracy,
   double Ndcg,
   int K,
   [property:JsonIgnore] Microsoft.ML.Data.ConfusionMatrix ConfusionMatrix,
-  [property: JsonIgnore] IReadOnlyDictionary<string, double> PerClassLogLoss);
+  [property: JsonIgnore] IReadOnlyDictionary<string, double> PerClassLogLoss)
+{
+  public static SetMetrics FromAverage(IEnumerable<SetMetrics> metrics) => new SetMetrics(
+    MicroAccuracy: metrics.Average(f => f.MicroAccuracy),
+    MacroAccuracy: metrics.Average(f => f.MacroAccuracy),
+    TopKAccuracy: metrics.Average(f => f.TopKAccuracy),
+    LogLoss: metrics.Average(f => f.LogLoss),
+    Ndcg: metrics.Average(f => f.Ndcg),
+    K: metrics.Select(m => m.K).FirstOrDefault(),
+    null!,
+    null!);
+
+  public void Print(string prefix = "")
+  {
+    if (!string.IsNullOrEmpty(prefix))
+    {
+      prefix = $"{prefix} ";
+    }
+    
+    Console.WriteLine($"{prefix}MicroAccuracy: {MicroAccuracy:0.000}");
+    Console.WriteLine($"{prefix}MacroAccuracy: {MacroAccuracy:0.000}");
+    Console.WriteLine($"{prefix}Top-{K} accuracy: {TopKAccuracy:0.000}");
+    Console.WriteLine($"{prefix}NDCG({K}): {Ndcg:0.000}");
+    Console.WriteLine($"{prefix}LogLoss: {LogLoss:0.000}");
+  }
+}
 
 public sealed class ModelEvaluationService(MLContext ml)
 {
@@ -38,7 +63,7 @@ public sealed class ModelEvaluationService(MLContext ml)
   public SetMetrics CalculateMetricsForSet(IDataView scored, string[] labels, int k = 10)
   {
     var metrics = ml.MulticlassClassification.Evaluate(scored,
-      labelColumnName: "Label",
+      labelColumnName: nameof(PlateRow.Label),
       topKPredictionCount: k);
 
     var rows = ml.Data
@@ -75,11 +100,7 @@ public sealed class ModelEvaluationService(MLContext ml)
 
     var metrics = CalculateMetricsForSet(scored, labels);
 
-    Console.WriteLine($"MacroAccuracy:  {metrics.MacroAccuracy:0.000}");
-    Console.WriteLine($"MicroAccuracy:  {metrics.MicroAccuracy:0.000}");
-    Console.WriteLine($"Top-K Accuracy: {metrics.TopKAccuracy:0.000}");
-    Console.WriteLine($"NDCG(10):       {metrics.Ndcg:0.000}");
-    Console.WriteLine($"LogLoss:        {metrics.LogLoss:0.000}");
+    metrics.Print("Holdout");
 
     var perClassLogLoss = metrics.PerClassLogLoss
       .OrderBy(pcll => pcll.Value);
@@ -91,26 +112,29 @@ public sealed class ModelEvaluationService(MLContext ml)
     }
 
     return metrics;
+  }
 
-    //Console.WriteLine("Confusion Matrix (rows=actual, cols=predicted):");
+  public void OutputConfusionMatrix(string[] labels, SetMetrics metrics)
+  {
+    Console.WriteLine("Confusion Matrix (rows=actual, cols=predicted):");
 
-    //Console.Write("actual\\pred");
-    //foreach (var name in trainedModel.Labels)
-    //{
-    //  Console.Write($"\t{name}");
-    //}
-    //Console.WriteLine();
+    Console.Write("actual\\pred");
+    foreach (var name in labels)
+    {
+      Console.Write($"\t{name}");
+    }
+    Console.WriteLine();
 
-    //for (int actualIndex = 0; actualIndex < metrics.ConfusionMatrix.NumberOfClasses; actualIndex++)
-    //{
-    //  Console.Write(trainedModel.Labels[actualIndex]);
-    //  for (int predictedIndex = 0; predictedIndex < metrics.ConfusionMatrix.NumberOfClasses; predictedIndex++)
-    //  {
-    //    // Counts are integers represented as doubles; print as integers.
-    //    var count = (long)metrics.ConfusionMatrix.Counts[actualIndex][predictedIndex];
-    //    Console.Write($"\t{count}");
-    //  }
-    //  Console.WriteLine();
-    //}
+    for (int actualIndex = 0; actualIndex < metrics.ConfusionMatrix.NumberOfClasses; actualIndex++)
+    {
+      Console.Write(labels[actualIndex]);
+      for (int predictedIndex = 0; predictedIndex < metrics.ConfusionMatrix.NumberOfClasses; predictedIndex++)
+      {
+        // Counts are integers represented as doubles; print as integers.
+        var count = (long)metrics.ConfusionMatrix.Counts[actualIndex][predictedIndex];
+        Console.Write($"\t{count}");
+      }
+      Console.WriteLine();
+    }
   }
 }

@@ -18,29 +18,29 @@
       "e0": {
         "Binarize": false,
         "NgramLength": 1,
-        "Weighting": "Idf"
+        "Weighting": "TfIdf"
       },
       "e1": {
-        "DenseOptimizer": false,
+        "DenseOptimizer": true,
         "EnforceNonNegativity": true,
         "FeatureColumnName": "Features",
         "HistorySize": 30,
         "InitialWeightsDiameter": 0.1,
         "L1Regularization": 0,
-        "L2Regularization": 0.7104890448658211,
+        "L2Regularization": 0.9831906925493342,
         "LabelColumnName": "Label",
         "MaximumNumberOfIterations": 10001,
-        "OptimizationTolerance": 0.005174224289713532,
+        "OptimizationTolerance": 0.007535135500270471,
         "StochasticGradientDescentInitilaizationTolerance": 0.001
       }
     }
   },
   "ModelMetrics": {
-    "MicroAccuracy": 0.5026269702276708,
-    "MacroAccuracy": 0.47832098766276343,
-    "TopKAccuracy": 0.9176882661996497,
-    "LogLoss": 1.5468432697792054,
-    "Ndcg": 0.6996051716326069,
+    "MicroAccuracy": 0.4938704028021016,
+    "MacroAccuracy": 0.4734734324065455,
+    "TopKAccuracy": 0.9159369527145358,
+    "LogLoss": 1.518171746887339,
+    "Ndcg": 0.6958372038842832,
     "K": 10
   }
 }

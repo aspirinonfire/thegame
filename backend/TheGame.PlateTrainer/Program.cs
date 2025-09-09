@@ -1,13 +1,11 @@
-﻿using Google.Protobuf;
-using Microsoft.ML;
-using System.IO;
+﻿using Microsoft.ML;
 using TheGame.PlateTrainer;
 
 // TODO process args or env
 const int mlSeed = 123;
 const bool useSearch = false;
 const double testFraction = 0.2;
-const int modelsToExplore = 100;
+const int modelsToExplore = 200;
 const string jsonDataPath = @"c:\src\thegame\ai\training_data\plate_descriptions.json";
 const string hyperParamsJsonPath = @"c:\src\thegame\backend\TheGame.PlateTrainer\training_params.json";
 const string onnxPath = @"c:\src\thegame\ui\public\skl_plates_model.onnx";
@@ -17,14 +15,15 @@ var mlDataLoader = new TrainingDataLoader(ml);
 var pipelineFactory = new PipelineFactory(ml);
 var modelValidator = new ModelEvaluationService(ml);
 var trainerSvc = new ModelTrainingService(ml, pipelineFactory, modelValidator);
+var modelParamsSvc = new ModelParamsService();
 
 TrainedModel trainedModel = null!;
 
 using (var trainingData = mlDataLoader.ReadTrainingData(jsonDataPath, mlSeed))
 {
   trainedModel = useSearch ?
-    await TrainFromExperiment(ml, trainerSvc, trainingData, hyperParamsJsonPath, mlSeed) :
-    await TrainFromParamsFile(ml, trainerSvc, trainingData, hyperParamsJsonPath);
+    await TrainFromExperiment(ml, trainerSvc, modelParamsSvc, trainingData, hyperParamsJsonPath, mlSeed) :
+    await TrainFromParamsFile(ml, trainerSvc, modelParamsSvc, trainingData, hyperParamsJsonPath);
 }
 
 var predictor = new Predictor(ml, trainedModel);
@@ -33,9 +32,13 @@ predictor.Predict("solid white plate");
 
 predictor.Predict("top red white middle blue bottom");
 
-static async Task<TrainedModel> TrainFromParamsFile(MLContext ml, ModelTrainingService trainerSvc, TrainingData trainingData, string paramsFilePath)
+static async Task<TrainedModel> TrainFromParamsFile(MLContext ml,
+  ModelTrainingService trainerSvc,
+  ModelParamsService modelParamsSvc,
+  TrainingData trainingData,
+  string paramsFilePath)
 {
-  var modelParams = await trainerSvc.ReadModelParamsFromFile(paramsFilePath);
+  var modelParams = await modelParamsSvc.ReadModelParamsFromFile(paramsFilePath);
 
   var dataSplit = ml.Data.TrainTestSplit(trainingData.DataView, testFraction: modelParams.TestFraction, seed: modelParams.Seed);
 
@@ -58,17 +61,24 @@ static async Task<TrainedModel> TrainFromParamsFile(MLContext ml, ModelTrainingS
   return trainedModel;
 }
 
-static async Task<TrainedModel> TrainFromExperiment(MLContext ml, ModelTrainingService trainerSvc, TrainingData trainingData, string paramsFilePath, int mlSeed)
+static async Task<TrainedModel> TrainFromExperiment(MLContext ml,
+  ModelTrainingService trainerSvc,
+  ModelParamsService modelParamsSvc,
+  TrainingData trainingData,
+  string paramsFilePath,
+  int mlSeed)
 {
   var dataSplit = ml.Data.TrainTestSplit(trainingData.DataView, testFraction: testFraction, seed: mlSeed);
 
   var (experiment, estimators) = trainerSvc.CreateMulticlassificationFitExperiment(
     maxModelsToExplore: modelsToExplore,
-    seed: mlSeed);
+    dataSplit.TrainSet,
+    seed: mlSeed,
+    cvFolds: 3);
 
-  var model = await trainerSvc.RunExperiment(experiment, dataSplit, cvFolds: 10);
+  var model = await trainerSvc.RunExperiment(experiment, dataSplit);
 
-  var trainingParams = await trainerSvc.SaveModelHyperParams(paramsFilePath,
+  var trainingParams = await modelParamsSvc.SaveModelHyperParams(paramsFilePath,
     model.BestFitParameters!,
     model.Metrics,
     estimators,

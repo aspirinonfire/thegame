@@ -8,23 +8,16 @@ using System.Text.Json;
 
 namespace TheGame.PlateTrainer;
 
-public sealed class ModelTrainingService(MLContext mlContext, PipelineFactory pipelineFactory, ModelEvaluationService modelValidationService)
+public sealed class ModelTrainingService(MLContext mlContext, PipelineFactory pipelineFactory, ModelEvaluationService modelEvalService)
 {
-  private readonly static JsonSerializerOptions _jsonSerializerOptions = new()
-  {
-    WriteIndented = true,
-    PropertyNameCaseInsensitive = true,
-    IncludeFields = true
-  };
-
   public TrainedModel TrainLbfgs(DataOperationsCatalog.TrainTestData trainTestData, TrainingParams trainingParams, int cvFolds = 5)
   {
     Console.WriteLine("----- Training from pre-set parameters...");
     var pipelineParams = trainingParams.ModelHyperParams["_pipeline_"];
-    Console.WriteLine(JsonSerializer.Serialize(pipelineParams, _jsonSerializerOptions));
+    Console.WriteLine(JsonSerializer.Serialize(pipelineParams, ModelParamsService.JsonSerializerOptions));
 
-    var featurizerParams = JsonSerializer.Deserialize< NgramFeaturizerParams>(pipelineParams["e0"].ToString(), _jsonSerializerOptions);
-    var lbfgsParams = JsonSerializer.Deserialize<LbfgsMaximumEntropyMulticlassTrainer.Options>(pipelineParams["e1"].ToString(), _jsonSerializerOptions);
+    var featurizerParams = JsonSerializer.Deserialize< NgramFeaturizerParams>(pipelineParams["e0"].ToString(), ModelParamsService.JsonSerializerOptions);
+    var lbfgsParams = JsonSerializer.Deserialize<LbfgsMaximumEntropyMulticlassTrainer.Options>(pipelineParams["e1"].ToString(), ModelParamsService.JsonSerializerOptions);
 
     var estimator = pipelineFactory
       .CreateFeaturizer(featurizerParams!)
@@ -42,28 +35,13 @@ public sealed class ModelTrainingService(MLContext mlContext, PipelineFactory pi
         var model = estimator.Fit(fold.TrainSet);
         var scored = model.Transform(fold.TestSet);
 
-        return modelValidationService.CalculateMetricsForSet(scored,
+        return modelEvalService.CalculateMetricsForSet(scored,
           Enumerable.Range(0, 51).Select(i => $"{i}").ToArray(),
           trainingParams.ModelMetrics.K);
       })
       .ToList();
 
-    var cvMetrics = new SetMetrics(
-      MicroAccuracy: foldMetrics.Average(f => f.MicroAccuracy),
-      MacroAccuracy: foldMetrics.Average(f => f.MacroAccuracy),
-      TopKAccuracy: foldMetrics.Average(f => f.TopKAccuracy),
-      LogLoss: foldMetrics.Average(f => f.LogLoss),
-      Ndcg: foldMetrics.Average(f => f.Ndcg),
-      K: trainingParams.ModelMetrics.K,
-      null!,
-      null!);
-
-
-    Console.WriteLine($"CV MicroAccuracy: {cvMetrics.MicroAccuracy:0.000}");
-    Console.WriteLine($"CV MacroAccuracy: {cvMetrics.MacroAccuracy:0.000}");
-    Console.WriteLine($"Top-{trainingParams.ModelMetrics.K} accuracy: {cvMetrics.TopKAccuracy:0.000}");
-    Console.WriteLine($"NDCG({trainingParams.ModelMetrics.K}): {cvMetrics.Ndcg:0.000}");
-    Console.WriteLine($"CV LogLoss: {cvMetrics.LogLoss:0.000}");
+    SetMetrics.FromAverage(foldMetrics).Print("CV");
 
     Console.WriteLine("----- Fitting a model...");
 
@@ -81,34 +59,23 @@ public sealed class ModelTrainingService(MLContext mlContext, PipelineFactory pi
       .ToArray();
 
     Console.WriteLine("----- Metrics from params file:");
-    Console.WriteLine($"MicroAccuracy:  {trainingParams.ModelMetrics.MicroAccuracy:0.000}");
-    Console.WriteLine($"MacroAccuracy:  {trainingParams.ModelMetrics.MacroAccuracy:0.000}");
-    Console.WriteLine($"Top-K accuracy: {trainingParams.ModelMetrics.TopKAccuracy:0.000}");
-    Console.WriteLine($"NDCG:           {trainingParams.ModelMetrics.Ndcg:0.000}");
-    Console.WriteLine($"LogLoss:        {trainingParams.ModelMetrics.LogLoss:0.000}");
+    trainingParams.ModelMetrics.Print();
 
-    var holdOutMetrics = modelValidationService.EvaluateHoldOutSet(trainedModel, labels, trainTestData.TestSet);
+    var holdOutMetrics = modelEvalService.EvaluateHoldOutSet(trainedModel, labels, trainTestData.TestSet);
 
     return new(trainedModel, labels, trainingParams.ModelHyperParams, holdOutMetrics);
   }
 
-  public SweepableEstimator CreateSweepableFeaturizer(SearchSpace<NgramFeaturizerParams> featurizerSearchSpace) =>
-    mlContext.Auto().CreateSweepableEstimator(
-      factory: (ctx, searchParam) => pipelineFactory.CreateFeaturizer(searchParam),
-      ss: featurizerSearchSpace);
-
-  public SweepableEstimator CreateSweepableLbfgsEstimator(SearchSpace<LbfgsMaximumEntropyMulticlassTrainer.Options> estimatorSearchSpace) =>
-    mlContext.Auto().CreateSweepableEstimator(
-      factory: (ctx, searchParam) => ctx.MulticlassClassification.Trainers.LbfgsMaximumEntropy(searchParam),
-      ss: estimatorSearchSpace);
 
   public (AutoMLExperiment, IReadOnlyDictionary<string, SweepableEstimator>) CreateMulticlassificationFitExperiment(int maxModelsToExplore,
+    IDataView trainSet,
     int seed,
+    int cvFolds,
     double maxRamMb = 1024 * 32)
   {
     Console.WriteLine("Creating experiment...");
 
-    var sweepablePipeline = CreateSweepableFeaturizer(
+    var sweepablePipeline = pipelineFactory.CreateSweepableFeaturizer(
       new SearchSpace<NgramFeaturizerParams>
       {
         [nameof(NgramFeaturizerParams.NgramLength)] = new ChoiceOption(1, 2),
@@ -120,7 +87,7 @@ public sealed class ModelTrainingService(MLContext mlContext, PipelineFactory pi
 
         [nameof(NgramFeaturizerParams.Binarize)] = new ChoiceOption(true, false)
       })
-      .Append(CreateSweepableLbfgsEstimator(new SearchSpace<LbfgsMaximumEntropyMulticlassTrainer.Options>()
+      .Append(pipelineFactory.CreateSweepableLbfgsEstimator(new SearchSpace<LbfgsMaximumEntropyMulticlassTrainer.Options>()
       {
         [nameof(LbfgsMaximumEntropyMulticlassTrainer.Options.L1Regularization)] = new ChoiceOption(0.0),
         [nameof(LbfgsMaximumEntropyMulticlassTrainer.Options.L2Regularization)] = new UniformDoubleOption(0.0001, 1.0, defaultValue: 0.1),
@@ -140,6 +107,7 @@ public sealed class ModelTrainingService(MLContext mlContext, PipelineFactory pi
       {
         Seed = seed
       })
+      // pipeline must be set so trial runner can receive proper settings object
       .SetPipeline(sweepablePipeline)
       .SetMaximumMemoryUsageInMegaByte(maxRamMb)
       .SetMaxModelToExplore(maxModelsToExplore)
@@ -150,10 +118,15 @@ public sealed class ModelTrainingService(MLContext mlContext, PipelineFactory pi
         // ignore tiny improvements
         epsilon: 0.000001,
         numNeighboursForNumericalParams: 4)
-      // Important! default Label value for metrics is lowercase that may break due to other setup
-      .SetMulticlassClassificationMetric(
-        MulticlassClassificationMetric.LogLoss,
-        labelColumn: nameof(PlateRow.Label));
+      // The trial runner will contain the training data, and experiment metric configuration
+      .SetTrialRunner(new MulticlassRankerTrialRunner(mlContext,
+        modelEvalService,
+        sweepablePipeline,
+        trainSet,
+        MulticlassRankerMetric.Ndcg,
+        seed,
+        cvFolds,
+        10));
 
     mlContext.Log += (o, e) =>
     {
@@ -167,12 +140,8 @@ public sealed class ModelTrainingService(MLContext mlContext, PipelineFactory pi
   }
 
   public async Task<TrainedModel> RunExperiment(AutoMLExperiment experiment,
-    DataOperationsCatalog.TrainTestData trainTestData,
-    int cvFolds)
+    DataOperationsCatalog.TrainTestData trainTestData)
   {
-    experiment = experiment
-      .SetDataset(trainTestData.TrainSet, fold: cvFolds);
-
     Console.WriteLine("Running experiment...");
 
     var bestFit = await experiment.RunAsync();
@@ -196,44 +165,9 @@ public sealed class ModelTrainingService(MLContext mlContext, PipelineFactory pi
       .Select(l => l.ToString())
       .ToArray();
 
-    var holdOutMetrics = modelValidationService.EvaluateHoldOutSet(bestFit.Model, labels, trainTestData.TestSet);
+    var holdOutMetrics = modelEvalService.EvaluateHoldOutSet(bestFit.Model, labels, trainTestData.TestSet);
 
     return new TrainedModel(bestFit.Model, labels, bestFit.TrialSettings.Parameter, holdOutMetrics);
-  }
-
-  public async Task<TrainingParams> SaveModelHyperParams(string savePath,
-    Parameter modelHyperParams,
-    SetMetrics modelMetrics,
-    IReadOnlyDictionary<string, SweepableEstimator> estimators,
-    int seed,
-    double testFraction)
-  {
-    var trainingParams = new TrainingParams
-    (
-      Version: "0.0.1",
-      Seed: seed,
-      TestFraction: testFraction,
-      Estimators: estimators
-        .Select(kvp => new KeyValuePair<string, string>(kvp.Key, kvp.Value?.ToString() ?? "n/a"))
-        .ToArray(),
-      modelHyperParams,
-      modelMetrics
-    );
-
-    var toSave = JsonSerializer.Serialize(trainingParams, _jsonSerializerOptions);
-
-    Console.WriteLine($"Saving params:\n{toSave}");
-
-    await File.WriteAllTextAsync(savePath, toSave);
-
-    return trainingParams;
-  }
-
-  public async Task<TrainingParams> ReadModelParamsFromFile(string paramsPath)
-  {
-    var rawFileString = await File.ReadAllTextAsync(paramsPath);
-
-    return JsonSerializer.Deserialize<TrainingParams>(rawFileString, _jsonSerializerOptions)!;
   }
 }
 
@@ -242,9 +176,3 @@ public sealed record TrainedModel(ITransformer Model,
   Parameter? BestFitParameters,
   SetMetrics Metrics);
 
-public sealed record TrainingParams(string Version,
-  int Seed,
-  double TestFraction,
-  KeyValuePair<string, string>[] Estimators,
-  Parameter ModelHyperParams,
-  SetMetrics ModelMetrics);
