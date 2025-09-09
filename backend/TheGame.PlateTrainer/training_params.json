@@ -9,7 +9,7 @@
     },
     {
       "Key": "e1",
-      "Value": "Microsoft.ML.AutoML.CodeGen.LbfgsMaximumEntropyMulti"
+      "Value": "Microsoft.ML.AutoML.SweepableEstimator"
     }
   ],
   "ModelHyperParams": {
@@ -18,25 +18,29 @@
       "e0": {
         "Binarize": false,
         "NgramLength": 1,
-        "Weighting": "TfIdf"
+        "Weighting": "Idf"
       },
       "e1": {
         "DenseOptimizer": false,
+        "EnforceNonNegativity": true,
+        "FeatureColumnName": "Features",
         "HistorySize": 30,
+        "InitialWeightsDiameter": 0.1,
         "L1Regularization": 0,
-        "L2Regularization": 0.22786404739327917,
+        "L2Regularization": 0.7104890448658211,
+        "LabelColumnName": "Label",
         "MaximumNumberOfIterations": 10001,
-        "OptimizationTolerance": 0.006262892422770565,
+        "OptimizationTolerance": 0.005174224289713532,
         "StochasticGradientDescentInitilaizationTolerance": 0.001
       }
     }
   },
   "ModelMetrics": {
-    "MicroAccuracy": 0.5856882406563355,
-    "MacroAccuracy": 0.5633925191200305,
-    "TopKAccuracy": 0.9530537830446673,
-    "LogLoss": 1.1559905594385784,
-    "Ndcg": 0.7664248721770008,
+    "MicroAccuracy": 0.5026269702276708,
+    "MacroAccuracy": 0.47832098766276343,
+    "TopKAccuracy": 0.9176882661996497,
+    "LogLoss": 1.5468432697792054,
+    "Ndcg": 0.6996051716326069,
     "K": 10
   }
 }

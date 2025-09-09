@@ -2,6 +2,7 @@
 using Microsoft.ML.AutoML;
 using Microsoft.ML.Data;
 using Microsoft.ML.Transforms;
+using System.Text.Json.Serialization;
 
 namespace TheGame.PlateTrainer;
 
@@ -9,6 +10,7 @@ public sealed record NgramFeaturizerParams()
 {
   public int NgramLength { get; set; }
 
+  [JsonConverter(typeof(JsonStringEnumConverter))]
   public Microsoft.ML.Transforms.Text.NgramExtractingEstimator.WeightingCriteria Weighting { get; set; }
 
   /// <summary>
@@ -18,7 +20,7 @@ public sealed record NgramFeaturizerParams()
 
   public static NgramFeaturizerParams CreateDefault() => new()
   {
-    NgramLength = 1,
+    NgramLength = 2,
     Weighting = Microsoft.ML.Transforms.Text.NgramExtractingEstimator.WeightingCriteria.TfIdf
   };
 }
@@ -27,7 +29,7 @@ public class PipelineFactory(MLContext mlContext)
 {
   public const string CleanTokenColumn = "CleanTokens";
   public const string CleanTokenKeyColumn = "TokenKeys";
-  public const string FeatureColumn = "Feature";
+  public const string FeatureColumn = "Features";
 
   public EstimatorChain<ValueToKeyMappingTransformer> CreateFeaturizer(NgramFeaturizerParams featurizerParams)
   {
@@ -38,7 +40,9 @@ public class PipelineFactory(MLContext mlContext)
       // text transforms (producengram) works with numeric Id not strings, so we need to convert clean tokens to Ids.
       .Append(mlContext.Transforms.Conversion.MapValueToKey(
         inputColumnName: CleanTokenColumn,
-        outputColumnName: CleanTokenKeyColumn));
+        outputColumnName: CleanTokenKeyColumn,
+        keyOrdinality: ValueToKeyMappingEstimator.KeyOrdinality.ByValue,
+        addKeyValueAnnotationsAsText: true));
 
     if (featurizerParams.Binarize)
     {
@@ -48,7 +52,7 @@ public class PipelineFactory(MLContext mlContext)
           outputColumnName: "ngram_col",
           ngramLength: featurizerParams.NgramLength,
           useAllLengths: true,
-          weighting: Microsoft.ML.Transforms.Text.NgramExtractingEstimator.WeightingCriteria.Tf))
+          weighting: featurizerParams.Weighting))
         // binarize in place: non-zero -> true, then cast back to 0/1 float
         .Append(mlContext.Transforms.Conversion.ConvertType(
           inputColumnName: "ngram_col",
@@ -74,6 +78,7 @@ public class PipelineFactory(MLContext mlContext)
     return baseChain.Append(mlContext.Transforms.Conversion.MapValueToKey(
       inputColumnName: nameof(PlateRow.Label),
       outputColumnName: nameof(PlateRow.Label),
-      keyOrdinality: ValueToKeyMappingEstimator.KeyOrdinality.ByValue));
+      keyOrdinality: ValueToKeyMappingEstimator.KeyOrdinality.ByValue,
+      addKeyValueAnnotationsAsText: true));
   }
 }

@@ -11,10 +11,12 @@ console.log('meta', sess.inputMetadata);
 const query = 'red top white middle blue bottom';
 
 const feeds = {
-  text: new ort.Tensor('string', [ query ], [1, 1]),
+  Text: new ort.Tensor('string', [ query ], [1, 1]),
+  Label: new ort.Tensor('string', [ '' ], [1, 1]),
 };
 
 const results = await sess.run(feeds);
+console.log(results);
 
 const probabilitiesTensor = results.probabilities; // ort.Tensor
 const classLabels = Array.from(results.class_labels.data);

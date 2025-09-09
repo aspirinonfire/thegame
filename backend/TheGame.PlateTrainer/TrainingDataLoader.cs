@@ -87,13 +87,7 @@ public sealed class TrainingDataLoader(MLContext ml)
 
     var preparsedTrainingDataView = ml.Data.LoadFromBinary(new FileHandleSource(binDataFileHandle));
 
-    // Bounded-memory shuffle to break label blocks
-    var shuffledDataView = ml.Data.ShuffleRows(input: preparsedTrainingDataView,
-     seed: seed,
-     shufflePoolSize: 1_000,
-     shuffleSource: true);
-
-    return new TrainingData(shuffledDataView, binDataFileHandle, preparsedTrainingDataView as IDisposable);
+    return new TrainingData(preparsedTrainingDataView, binDataFileHandle, preparsedTrainingDataView as IDisposable);
   }
 
   public static IEnumerable<string> CombineAsCarteseanProduct(string[][] parts) => parts
