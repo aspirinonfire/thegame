@@ -171,6 +171,7 @@ jobs:
           --configuration ${{ env.DOTNET_BUILD_CONFIG }}
           --no-build
           --no-restore
+          --no-launch-profile
           --project "${{ env.AI_TRAINER_PROJ }}"
           --
           --params-path "${{ env.AI_PARAMS_PATH }}"
