@@ -6,6 +6,7 @@ import type { PlayerInfo } from "./UserAccount";
 import type { Game } from "~/game-core/models/Game";
 import { type WindowWithGoogle } from "./GoogleAuthService";
 import { onnxModel, onnxModelLabels } from "./AppAiSearchSlice";
+import { AppPaths } from "~/routes";
 
 export interface PlayerData {
   player: PlayerInfo | null,
@@ -84,12 +85,6 @@ export const createAppInitSlice: StateCreator<AppStore, [], [], AppInitSlice> = 
         return;
       }
 
-      // TODO simplify this mess!
-      const existing = document.querySelector<HTMLScriptElement>(
-        'script[src="https://accounts.google.com/gsi/client"]'
-      );
-      const script = existing ?? document.createElement('script');
-
       const onLoad = () => {
         const google = (window as WindowWithGoogle).google;
 
@@ -106,7 +101,7 @@ export const createAppInitSlice: StateCreator<AppStore, [], [], AppInitSlice> = 
           callback: ({ code }) => {
             get().processGoogleAuthCode(code)
               .then(_ => {
-                return get().retrievePlayerData()
+                window.location.href = AppPaths.home;
               })
               .finally(() => {
                 set({
@@ -130,21 +125,15 @@ export const createAppInitSlice: StateCreator<AppStore, [], [], AppInitSlice> = 
       
       const onError = () => alert("Failed to load Google Sign-In SDK. Please try again later.");
 
-      if (!existing) {
-        script.src = 'https://accounts.google.com/gsi/client';
-        script.async = true;
-        script.addEventListener('load', onLoad, { once: true });
-        script.addEventListener('error', onError, { once: true });
-        document.head.appendChild(script);
+      const existing = document.querySelector<HTMLScriptElement>(
+        'script[src="https://accounts.google.com/gsi/client"]'
+      ) as HTMLScriptElement;
+
+      if ((window as WindowWithGoogle).google) {
+        onLoad();
       } else {
-        // tag was already there but might have loaded while we weren’t listening
-        if ((window as any).google) {
-          onLoad();
-        }
-        else {
-          existing.addEventListener('load', onLoad, { once: true });
-          existing.addEventListener('error', onError, { once: true });
-        }
+        existing.addEventListener('load', onLoad, { once: true });
+        existing.addEventListener('error', onError, { once: true });
       }
     },
 

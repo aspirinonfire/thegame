@@ -4,6 +4,7 @@ import type { ElementType } from "react";
 import { Link, useLocation } from "react-router";
 import { useShallow } from "zustand/shallow";
 import { useAppState } from "~/appState/useAppState";
+import { AppPaths } from "~/routes";
 
 const AppNavbar = () => {
   const pathname = useLocation();
@@ -97,9 +98,9 @@ const AppNavbar = () => {
 
     <NavbarCollapse>
       <div className="block md:flex md:flex-row md:gap-5 m-0 p-0 md:items-center">
-        {navlink('/game', 'Game', MapIcon)}
-        {navlink('/history', 'History', ClockIcon)}
-        {navlink('/about', 'About', InformationCircleIcon)}
+        {navlink(AppPaths.game, 'Game', MapIcon)}
+        {navlink(AppPaths.history, 'History', ClockIcon)}
+        {navlink(AppPaths.about, 'About', InformationCircleIcon)}
         <div className="hidden md:block">
           { renderAccountDropdown() }
         </div>

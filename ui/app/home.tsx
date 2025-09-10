@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useAppState } from "./appState/useAppState";
+import { AppPaths } from "./routes";
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -8,9 +9,9 @@ const HomePage = () => {
 
   useEffect(() => {
     if (currentGame) {
-      navigate("/game");
+      navigate(AppPaths.game);
     } else {
-      navigate("/history");
+      navigate(AppPaths.history);
     }
   }, [currentGame]);
 }

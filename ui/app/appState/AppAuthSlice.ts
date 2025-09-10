@@ -4,6 +4,7 @@ import type UserAccount from "~/appState/UserAccount";
 import type { ApiTokenResponse } from "./ApiTokenResponse";
 import type { AppStore } from "./AppStore";
 import type { CodeClient, IdClient } from "./GoogleAuthService";
+import { AppPaths } from "~/routes";
 
 export const guestUser: UserAccount = {
   player: {
@@ -70,6 +71,7 @@ export const createAppAuthSlice: StateCreator<AppStore, [], [], AppAuthSlice> = 
   
   signOut: () => {
     get().resetSessionState();
+    window.location.href = AppPaths.home;
   },
 
   refreshAccessToken: async () => {

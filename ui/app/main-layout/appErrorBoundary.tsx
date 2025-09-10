@@ -1,5 +1,6 @@
 import { Button, Card } from "flowbite-react";
 import { type ReactNode, Component } from "react";
+import { AppPaths } from "~/routes";
 
 type ErrorBoundaryProps = {
   children: ReactNode;
@@ -30,7 +31,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     return <div className="cdnext-full-content flex gap-5 flex-col justify-start">
       <Card className="w-auto">
         <h5 className="tracking-tight text-gray-600">Something went wrong! Please refresh the page and try again.</h5>
-        <Button size="sm" onClick={() => window.location.href = '/'}>
+        <Button size="sm" onClick={() => window.location.href = AppPaths.home}>
           Go back to Dashboard
         </Button>
       </Card>
