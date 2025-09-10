@@ -34,8 +34,8 @@ env:
   UI_ROOT: ui
   UI_PUBLISH_DIR: ui
   # Other
-  AI_TRAINER_PROJ: backend/TheGame.PlateTrainer/TheGame.PlateTrainer.csproj
-  AI_PARAMS_PATH: backend/TheGame.PlateTrainer/training_params.json
+  AI_TRAINER_PROJ: TheGame.PlateTrainer/TheGame.PlateTrainer.csproj
+  AI_PARAMS_PATH: TheGame.PlateTrainer/training_params.json
   AI_TRAINING_DATA_PATH: ai/training_data/plate_descriptions.json
   AI_ONNX_FILENAME: mlnet_plates_model.onnx
   AI_ONNX_LABELS_FILENAME: mlnet_plates_model.labels.json
@@ -165,12 +165,12 @@ jobs:
       # If release does not exist, train a new model and create new release
       - name: Train model
         if: steps.model_version_release.outputs.exists == 'false'
-        working-directory: ${{ github.workspace }}
+        working-directory: ${{ env.BACKEND_ROOT }}
         run: >
           dotnet run -c Release --no-build --no-restore --project "${{ env.AI_TRAINER_PROJ }}" --
-          --data-path "${{ env.AI_TRAINING_DATA_PATH }}"
-          --params-path "${{ env.AI_PARAMS_PATH }}"
-          --onnx-path "${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}"
+          --params-path "./${{ env.AI_PARAMS_PATH }}"
+          --data-path "./${{ github.workspace }}/${{ env.AI_TRAINING_DATA_PATH }}"
+          --onnx-path "./${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}"
       
       - name: Tag and Release new model
         if: steps.model_version_release.outputs.exists == 'false'
