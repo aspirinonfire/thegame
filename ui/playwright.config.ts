@@ -12,8 +12,8 @@ const DEV  = !!process.env.PW_DEV;          // set by `npm run teste2edev`
 const PORT = DEV ? 3000 : 3030;             // 3030 = your preview port
 
 const appEnvVars = {
-  VITE_GOOGLE_CLIENT_ID: "test-client-id",
-  VITE_API_URL: "http://localhost"
+  VITE_GOOGLE_CLIENT_ID: "pw-test-client-id",
+  VITE_API_URL: "http://localhost-pw"
 }
 
 const webServer = DEV ?
