@@ -167,10 +167,10 @@ jobs:
         if: steps.model_version_release.outputs.exists == 'false'
         working-directory: ${{ github.workspace }}
         run: >
-          dotnet run -c Release --no-build --no-restore ${{ env.AI_TRAINER_PROJ }} --
-          --data-path ${{ env.AI_TRAINING_DATA_PATH }}
-          --params-path ${{ env.AI_PARAMS_PATH }}
-          --onnx-path ${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}
+          dotnet run -c Release --no-build --no-restore --project "${{ env.AI_TRAINER_PROJ }}" --
+          --data-path "${{ env.AI_TRAINING_DATA_PATH }}"
+          --params-path "${{ env.AI_PARAMS_PATH }}"
+          --onnx-path "${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}"
       
       - name: Tag and Release new model
         if: steps.model_version_release.outputs.exists == 'false'
