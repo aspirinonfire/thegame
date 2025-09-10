@@ -1,5 +1,4 @@
 import {
-  isRouteErrorResponse,
   Links,
   Meta,
   Outlet,
@@ -10,7 +9,7 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
-import { Button, ThemeConfig } from "flowbite-react";
+import { ThemeConfig } from "flowbite-react";
 import AppNavbar from "./main-layout/appNavbar";
 import { useAppState } from "./appState/useAppState";
 import { useShallow } from "zustand/shallow";
@@ -62,6 +61,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
+        <script id="google-identity" src="https://accounts.google.com/gsi/client" async defer />
       </head>
       <body className="antialiased min-h-screen flex flex-col bg-gray-300">
         <ThemeConfig dark={false} />

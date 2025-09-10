@@ -48,7 +48,16 @@ export default defineConfig({
                 purgeOnQuotaError: true
               }
             }
-          }
+          },
+          // cache GSI lib
+          {
+            urlPattern: /^https:\/\/accounts\.google\.com\/gsi\/(client|style)/,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'google-identity',
+              expiration: { maxEntries: 4, maxAgeSeconds: 60 * 60 * 24 * 7 }, // 7 days
+            },
+          },
         ],
         maximumFileSizeToCacheInBytes: 1024 * 1024 * 30
       },
