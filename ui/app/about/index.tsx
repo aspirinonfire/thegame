@@ -93,7 +93,7 @@ const AboutPage = ({
         </div>
         <div className="leading-relaxed mt-5 text-xs">
           <p>
-            Made with React, Tailwind, ASP Net Core, scikit-learn, onnxruntime-web, coffee, ducktape, and WD-40
+            Made with React, Tailwind, ASP Net Core, ML.NET, scikit-learn, onnxruntime-web, coffee, ducktape, and WD-40
           </p>
           <ul className="text-gray-400 pt-5">
             <li>App deploy date: <LocalDateTime isoDateTime={versionInfo.deployDate} format="MMMM D, YYYY" /></li>

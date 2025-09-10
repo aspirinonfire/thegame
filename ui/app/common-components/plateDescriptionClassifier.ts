@@ -16,7 +16,9 @@ export class OnnxPlateDescriptionClassifier {
 
   public async init(modelUrl: string, labelUrl: string): Promise<void> {
     this.session = await ort.InferenceSession.create(modelUrl, {
-      executionProviders: ["wasm"]
+      executionProviders: ["wasm"],
+      logSeverityLevel: 3, // error
+      logVerbosityLevel: 0
     });
     this.labels = await (await fetch(labelUrl)).json();
   }
