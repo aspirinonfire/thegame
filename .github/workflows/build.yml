@@ -168,12 +168,7 @@ jobs:
         env:
           TRAINER_DLL: ${{ env.BACKEND_ROOT }}/TheGame.PlateTrainer/bin/${{ env.DOTNET_BUILD_CONFIG }}/net9.0/TheGame.PlateTrainer.dll
         run: >
-          dotnet $TRAINER_DLL
-          --configuration ${{ env.DOTNET_BUILD_CONFIG }}
-          --no-build
-          --no-restore
-          --no-launch-profile
-          --
+          dotnet "$TRAINER_DLL"
           --params-path "${{ env.AI_PARAMS_PATH }}"
           --data-path "${{ github.workspace }}/${{ env.AI_TRAINING_DATA_PATH }}"
           --onnx-path "${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}"
