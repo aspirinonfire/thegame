@@ -14,6 +14,11 @@ public sealed record PlatePrediction
   public float[] Scores { get; set; } = [];
 }
 
+public sealed class PredictorFactory(MLContext ml)
+{
+  public Predictor CreatePredictor(TrainedModel trainedModel) => new(ml, trainedModel);
+}
+
 public sealed class Predictor(MLContext ml, TrainedModel trainedModel)
 {
   public void Predict(string query, int topK = 5)

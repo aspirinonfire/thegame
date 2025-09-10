@@ -80,6 +80,6 @@ mssql_volume
 
 # AI Stuff
 **/*/__pycache__
-skl_plates_model.onnx
 plate_descriptions.bin
-skl_plates_model.labels.json
+skl_plates_model.*
+mlnet_plates_model.*

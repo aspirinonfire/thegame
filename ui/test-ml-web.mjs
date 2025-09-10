@@ -1,8 +1,8 @@
 import * as ort from 'onnxruntime-node';
 import { readFile } from 'fs/promises';
 
-const model_file = 'skl_plates_model.onnx';
-const labels_file = 'skl_plates_model.labels.json';
+const model_file = 'mlnet_plates_model.onnx';
+const labels_file = 'mlnet_plates_model.labels.json';
 
 const sess = await ort.InferenceSession.create(`public/${model_file}`);
 const classLabels = JSON.parse(await readFile(`public/${labels_file}`, 'utf8'));

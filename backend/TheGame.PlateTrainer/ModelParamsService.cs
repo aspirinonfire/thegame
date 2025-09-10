@@ -20,6 +20,17 @@ public sealed class ModelParamsService
     IncludeFields = true
   };
 
+  public static string BumpFileVersion(string currentVersion, string defaultVersion = "0.0.0")
+  {
+    currentVersion = string.IsNullOrEmpty(currentVersion) ? defaultVersion : currentVersion;
+
+    var lastDot = currentVersion.LastIndexOf(".");
+    (var head, var tail) = lastDot < 0 ? ("", currentVersion) : (currentVersion[..lastDot], currentVersion[(lastDot + 1)..]);
+
+    var minorBump = int.Parse(tail) + 1;
+    return $"{head}.{minorBump}";
+  }
+
   public async Task<TrainingParams> SaveModelHyperParams(string savePath,
     Parameter modelHyperParams,
     SetMetrics modelMetrics,
@@ -27,9 +38,12 @@ public sealed class ModelParamsService
     int seed,
     double testFraction)
   {
+    var currentParams = await ReadModelParamsFromFile(savePath);
+    var version = BumpFileVersion(currentParams.Version);
+
     var trainingParams = new TrainingParams
     (
-      Version: "0.0.1",
+      Version: version,
       Seed: seed,
       TestFraction: testFraction,
       Estimators: estimators

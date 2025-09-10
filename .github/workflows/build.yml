@@ -34,15 +34,13 @@ env:
   UI_ROOT: ui
   UI_PUBLISH_DIR: ui
   # Other
-  AI_DIR: ai
-  AI_TESTS: tests
-  AI_PARAMS_PATH: training_params.json
-  AI_TRAINING_DATA_PATH: training_data/plate_descriptions.json
-  AI_ONNX_FILENAME: skl_plates_model.onnx
+  AI_TRAINER_PROJ: backend/TheGame.PlateTrainer/TheGame.PlateTrainer.csproj
+  AI_PARAMS_PATH: backend/TheGame.PlateTrainer/training_params.json
+  AI_TRAINING_DATA_PATH: ai/training_data/plate_descriptions.json
+  AI_ONNX_FILENAME: mlnet_plates_model.onnx
+  AI_ONNX_LABELS_FILENAME: mlnet_plates_model.labels.json
   AI_RELEASE_PREFIX: "master-model"
   AI_RELEASE_NOTES: "AI Search model for 'master'"
-  PY_VERSION: 3.13
-  PY_REQS: requirements.txt
 
 jobs:
   # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
@@ -65,11 +63,6 @@ jobs:
         with:
           dotnet-version: |
             9.0.x
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PY_VERSION }}
 
       # Build and Test backend
       
@@ -165,19 +158,19 @@ jobs:
         run: >
           gh release download "${{ env.AI_RELEASE_PREFIX }}/v${{ steps.training_params.outputs.version }}"
           --pattern ${{ env.AI_ONNX_FILENAME }}
+          --pattern ${{ env.AI_ONNX_LABELS_FILENAME }}
           --dir ui/public
           --clobber
       
-      # TODO invoke dotnet PlateTrainer
       # If release does not exist, train a new model and create new release
       - name: Train model
-        working-directory: ${{ env.AI_DIR }}
         if: steps.model_version_release.outputs.exists == 'false'
+        working-directory: ${{ github.workspace }}
         run: >
-          python trainer.py
+          dotnet run -c Release --no-build --no-restore ${{ env.AI_TRAINER_PROJ }} --
           --data-path ${{ env.AI_TRAINING_DATA_PATH }}
           --params-path ${{ env.AI_PARAMS_PATH }}
-          --onnx-path ${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}
+          --onnx-path ${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}
       
       - name: Tag and Release new model
         if: steps.model_version_release.outputs.exists == 'false'
@@ -186,7 +179,8 @@ jobs:
         run: >
           gh release create "${{ env.AI_RELEASE_PREFIX }}/v${{ steps.training_params.outputs.version }}"
           ${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}
-          ${{ github.workspace }}/${{ env.AI_DIR }}/${{ env.AI_PARAMS_PATH }}
+          ${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_LABELS_FILENAME }}
+          ${{ github.workspace }}/${{ env.AI_PARAMS_PATH }}
           --title "AI Search Model ${{ env.AI_RELEASE_PREFIX }} v${{ steps.training_params.outputs.version }}"
           --notes "${{ env.AI_RELEASE_NOTES }}"
           --target "master"

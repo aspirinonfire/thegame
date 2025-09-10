@@ -1,83 +1,119 @@
-﻿using Microsoft.ML;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.ML;
 using TheGame.PlateTrainer;
 
-// TODO process args or env
-const int mlSeed = 123;
-const bool useSearch = false;
-const double testFraction = 0.2;
-const int modelsToExplore = 200;
-const string jsonDataPath = @"c:\src\thegame\ai\training_data\plate_descriptions.json";
-const string hyperParamsJsonPath = @"c:\src\thegame\backend\TheGame.PlateTrainer\training_params.json";
-const string onnxPath = @"c:\src\thegame\ui\public\skl_plates_model.onnx";
+var parsedArgs = TrainerArgParser.ParseCommandArguments(args);
 
-var ml = new MLContext(mlSeed);
-var mlDataLoader = new TrainingDataLoader(ml);
-var pipelineFactory = new PipelineFactory(ml);
-var modelValidator = new ModelEvaluationService(ml);
-var trainerSvc = new ModelTrainingService(ml, pipelineFactory, modelValidator);
-var modelParamsSvc = new ModelParamsService();
-var onnxService = new OnnxModelService(ml);
+var services = new ServiceCollection()
+  .AddSingleton(_ => new MLContext(parsedArgs.Seed))
+  .AddSingleton<TrainingDataLoader>()
+  .AddSingleton<PipelineFactory>()
+  .AddSingleton<ModelEvaluationService>()
+  .AddSingleton<ModelTrainingService>()
+  .AddSingleton<ModelParamsService>()
+  .AddSingleton<ModelParamsService>()
+  .AddSingleton<PredictorFactory>()
+  .AddSingleton<OnnxModelService>();
+
+await using var sp = services.BuildServiceProvider(new ServiceProviderOptions()
+{
+  ValidateOnBuild = true,
+  ValidateScopes = true
+});
+
+var mlDataLoader = sp.GetRequiredService<TrainingDataLoader>();
+var predictorFactory = sp.GetRequiredService<PredictorFactory>();
 
 TrainedModel trainedModel = null!;
-
-using (var trainingData = mlDataLoader.ReadTrainingData(jsonDataPath, mlSeed))
+using (var trainingData = mlDataLoader.ReadTrainingData(parsedArgs.DataPath, parsedArgs.Seed))
 {
-  trainedModel = useSearch ?
-    await TrainFromExperiment(ml, trainerSvc, modelParamsSvc, trainingData, hyperParamsJsonPath, mlSeed) :
-    await TrainFromParamsFile(ml, trainerSvc, modelParamsSvc, onnxService, trainingData, onnxPath, hyperParamsJsonPath);
+  trainedModel = parsedArgs.UseSearch ?
+    await TrainFromExperiment(sp, trainingData, parsedArgs) :
+    await TrainFromParamsFile(sp, trainingData, parsedArgs);
 }
 
-var predictor = new Predictor(ml, trainedModel);
+var predictor = predictorFactory.CreatePredictor(trainedModel);
 
 predictor.Predict("solid white plate");
 
 predictor.Predict("top red white middle blue bottom");
 
-static async Task<TrainedModel> TrainFromParamsFile(MLContext ml,
-  ModelTrainingService trainerSvc,
-  ModelParamsService modelParamsSvc,
-  OnnxModelService onnxService,
+static async Task<TrainedModel> TrainFromParamsFile(ServiceProvider serviceProvider,
   TrainingData trainingData,
-  string onnxFilePath,
-  string paramsFilePath)
+  TrainerArgs args)
 {
-  var modelParams = await modelParamsSvc.ReadModelParamsFromFile(paramsFilePath);
+  var ml = serviceProvider.GetRequiredService<MLContext>();
+  var trainerSvc = serviceProvider.GetRequiredService<ModelTrainingService>();
+  var modelParamsSvc = serviceProvider.GetRequiredService<ModelParamsService>();
+  var onnxService = serviceProvider.GetRequiredService<OnnxModelService>();
+
+  var modelParams = await modelParamsSvc.ReadModelParamsFromFile(args.HyperParamsPath);
 
   var dataSplit = ml.Data.TrainTestSplit(trainingData.DataView, testFraction: modelParams.TestFraction, seed: modelParams.Seed);
 
   var trainedModel = trainerSvc.TrainLbfgs(dataSplit, modelParams);
 
-  onnxService.ExportToOnnx(trainedModel, dataSplit.TestSet, onnxFilePath);
+  var currentParams = await modelParamsSvc.ReadModelParamsFromFile(args.HyperParamsPath);
+  if (currentParams.ModelMetrics.Ndcg - trainedModel.Metrics.Ndcg > args.NdcgCurrentVsNewThreshold)
+  {
+    throw new InvalidOperationException("Experiment produced model with NDCG score that is 5% worse!");
+  }
+
+  if (string.IsNullOrEmpty(args.OnnxPath))
+  {
+    Console.WriteLine("ONNX path omitted. Model will not be saved");
+  }
+  else
+  {
+    onnxService.ExportToOnnx(trainedModel, dataSplit.TestSet, args.OnnxPath);
+  }
 
   return trainedModel;
 }
 
-static async Task<TrainedModel> TrainFromExperiment(MLContext ml,
-  ModelTrainingService trainerSvc,
-  ModelParamsService modelParamsSvc,
+static async Task<TrainedModel> TrainFromExperiment(ServiceProvider serviceProvider,
   TrainingData trainingData,
-  string paramsFilePath,
-  int mlSeed)
+  TrainerArgs args)
 {
-  var dataSplit = ml.Data.TrainTestSplit(trainingData.DataView, testFraction: testFraction, seed: mlSeed);
+  var ml = serviceProvider.GetRequiredService<MLContext>();
+  var trainerSvc = serviceProvider.GetRequiredService<ModelTrainingService>();
+  var modelParamsSvc = serviceProvider.GetRequiredService<ModelParamsService>();
+  var onnxService = serviceProvider.GetRequiredService<OnnxModelService>();
+
+  var dataSplit = ml.Data.TrainTestSplit(trainingData.DataView, testFraction: args.TestFraction, seed: args.Seed);
 
   var (experiment, estimators) = trainerSvc.CreateMulticlassificationFitExperiment(
-    maxModelsToExplore: modelsToExplore,
+    maxModelsToExplore: args.MaxModels,
     dataSplit.TrainSet,
-    seed: mlSeed,
+    seed: args.Seed,
     cvFolds: 3);
 
-  var model = await trainerSvc.RunExperiment(experiment, dataSplit);
+  var modelFromExperiment = await trainerSvc.RunExperiment(experiment, dataSplit);
 
-  var trainingParams = await modelParamsSvc.SaveModelHyperParams(paramsFilePath,
-    model.BestFitParameters!,
-    model.Metrics,
+  var currentParams = await modelParamsSvc.ReadModelParamsFromFile(args.HyperParamsPath);
+  if (currentParams.ModelMetrics.Ndcg - modelFromExperiment.Metrics.Ndcg > args.NdcgCurrentVsNewThreshold)
+  {
+    throw new InvalidOperationException("Experiment produced model with NDCG score that is 5% worse!");
+  }
+
+  var trainingParams = await modelParamsSvc.SaveModelHyperParams(args.HyperParamsPath,
+    modelFromExperiment.BestFitParameters!,
+    modelFromExperiment.Metrics,
     estimators,
-    mlSeed,
-    testFraction);
+    args.Seed,
+    args.TestFraction);
 
-  trainerSvc.TrainLbfgs(dataSplit, trainingParams);
+  var trainedModel = trainerSvc.TrainLbfgs(dataSplit, trainingParams);
 
-  return model;
+  if (string.IsNullOrEmpty(args.OnnxPath))
+  {
+    Console.WriteLine("ONNX path omitted. Model will not be saved");
+  }
+  else
+  {
+    onnxService.ExportToOnnx(trainedModel, dataSplit.TestSet, args.OnnxPath);
+  }
+
+  return trainedModel;
 }
 

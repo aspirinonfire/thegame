@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TheGame.PlateTrainer": {
+      "commandName": "Project",
+      "commandLineArgs": "--data-path \"c:\\src\\thegame\\ai\\training_data\\plate_descriptions.json\" --params-path \"c:\\src\\thegame\\backend\\TheGame.PlateTrainer\\training_params.json\" --onnx-path \"c:\\src\\thegame\\ui\\public\\skl_plates_model.onnx\" --use-search"
+    }
+  }
+}
