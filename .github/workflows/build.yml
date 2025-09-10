@@ -143,7 +143,7 @@ jobs:
           if [ $return_code -eq 0 ]; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
             exit 0
-          elif echo "$error_output" | grep -F 'release not found|no assets match the file pattern' >/dev/null; then
+          elif echo "$error_output" | grep -E 'release not found|no assets match the file pattern' >/dev/null; then
             echo "exists=false" >> "$GITHUB_OUTPUT"
             exit 0
           else
