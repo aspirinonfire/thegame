@@ -5,7 +5,7 @@
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev --port 3000",
-    "prodpreview": "vite preview --port 3030",
+    "prodpreview": "react-router build && vite preview --port 3030",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
     "postinstall": "flowbite-react patch",
