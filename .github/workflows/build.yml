@@ -75,48 +75,48 @@ jobs:
 
       - name: Build dotnet solution
         working-directory: ${{ env.BACKEND_ROOT }}
-        run: |
-          dotnet build *.sln \
-          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
-          --no-restore \
-          --nologo \
-          /p:ContinuousIntegrationBuild=true \
-          /p:Deterministic=true \
+        run: >
+          dotnet build *.sln
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }}
+          --no-restore
+          --nologo
+          /p:ContinuousIntegrationBuild=true
+          /p:Deterministic=true
           /p:UseAppHost=false
 
       - name: Run dotnet tests
         working-directory: ${{ env.BACKEND_ROOT }}
-        run: |
-          dotnet test *.sln \
-          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
-          --no-build \
-          --no-restore \
-          --nologo \
-          --verbosity normal \
-          /p:CollectCoverage=true \
-          /p:CoverletOutputFormat=opencover \
-          --logger trx \
-          --collect 'XPlat Code Coverage' \
+        run: >
+          dotnet test *.sln
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }}
+          --no-build
+          --no-restore
+          --nologo
+          --verbosity normal
+          /p:CollectCoverage=true
+          /p:CoverletOutputFormat=opencover
+          --logger trx
+          --collect 'XPlat Code Coverage'
           --settings './coverlet.runsettings'
 
       - name: Publish API
         working-directory: ${{ env.BACKEND_ROOT }}
-        run: |
-          dotnet publish ${{ env.API_PROJECT_TO_PUBLISH }} \
-          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
-          --no-build \
-          --no-restore \
-          --nologo \
-          --verbosity normal \
-          /p:UseAppHost=false \
+        run: >
+          dotnet publish ${{ env.API_PROJECT_TO_PUBLISH }}
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }}
+          --no-build
+          --no-restore
+          --nologo
+          --verbosity normal
+          /p:UseAppHost=false
           --output ${{ github.workspace }}/_temp/${{ env.API_PUBLISH_DIR }}
 
       - name: Build Docker image
         working-directory: ${{ env.BACKEND_ROOT }}
-        run: |
-          docker build \
-          --file ${{ env.API_PROJECT_DIR }}/Dockerfile-pipelines \
-          --tag ${{ env.GAMEAPP_IMAGE_NAME }} \
+        run: >
+          docker build
+          --file ${{ env.API_PROJECT_DIR }}/Dockerfile-pipelines
+          --tag ${{ env.GAMEAPP_IMAGE_NAME }}
           ${{ github.workspace }}/_temp/${{ env.API_PUBLISH_DIR }}
 
       - name: Save and compress Docker image
@@ -167,10 +167,15 @@ jobs:
         if: steps.model_version_release.outputs.exists == 'false'
         working-directory: ${{ env.BACKEND_ROOT }}
         run: >
-          dotnet run -c Release --no-build --no-restore --project "${{ env.AI_TRAINER_PROJ }}" --
-          --params-path "./${{ env.AI_PARAMS_PATH }}"
-          --data-path "./${{ github.workspace }}/${{ env.AI_TRAINING_DATA_PATH }}"
-          --onnx-path "./${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}"
+          dotnet run
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }}
+          --no-build
+          --no-restore
+          --project "${{ env.AI_TRAINER_PROJ }}"
+          --
+          --params-path "${{ env.AI_PARAMS_PATH }}"
+          --data-path "${{ github.workspace }}/${{ env.AI_TRAINING_DATA_PATH }}"
+          --onnx-path "${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}"
       
       - name: Tag and Release new model
         if: steps.model_version_release.outputs.exists == 'false'
@@ -227,26 +232,26 @@ jobs:
 
       - name: Create EF Migration bundle
         working-directory: ${{ env.BACKEND_ROOT }}
-        run: |
-          dotnet ef migrations bundle \
-          --project ${{ env.DBCONTEXT_PROJECT }} \
-          --startup-project ${{ env.MIGRATOR_PROJECT }} \
-          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
-          --runtime linux-x64 \
-          --self-contained \
-          --force \
+        run: >
+          dotnet ef migrations bundle
+          --project ${{ env.DBCONTEXT_PROJECT }}
+          --startup-project ${{ env.MIGRATOR_PROJECT }}
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }}
+          --runtime linux-x64
+          --self-contained
+          --force
           --output ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/efbundle
 
       # Publish IaC artifacts (Pulumi).
       - name: Publish Pulumi runner
         working-directory: ${{ env.BACKEND_ROOT }}
-        run: |
-          dotnet publish ${{ env.PULUMI_PROJECT_TO_PUBLISH }} \
-          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
-          --nologo \
-          --runtime linux-x64 \
-          --self-contained \
-          /p:PublishSingleFile=true \
+        run: >
+          dotnet publish ${{ env.PULUMI_PROJECT_TO_PUBLISH }}
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }}
+          --nologo
+          --runtime linux-x64
+          --self-contained
+          /p:PublishSingleFile=true
           --output ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/${{ env.PULUMI_PUBLISH_DIR}}
 
       # Publish artifacts for deploy workflow
