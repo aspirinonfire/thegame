@@ -2,7 +2,7 @@
 
 name: Build Test and Publish
 permissions:
-  contents: read
+  contents: write # need for creation of tags and releases
 
 on:
   push:
@@ -34,15 +34,12 @@ env:
   UI_ROOT: ui
   UI_PUBLISH_DIR: ui
   # Other
-  AI_DIR: ai
-  AI_TESTS: tests
-  AI_PARAMS_PATH: training_params.json
-  AI_TRAINING_DATA_PATH: training_data/plate_descriptions.json
-  AI_ONNX_FILENAME: skl_plates_model.onnx
+  AI_PARAMS_PATH: TheGame.PlateTrainer/training_params.json
+  AI_TRAINING_DATA_PATH: ai/training_data/plate_descriptions.json
+  AI_ONNX_FILENAME: mlnet_plates_model.onnx
+  AI_ONNX_LABELS_FILENAME: mlnet_plates_model.labels.json
   AI_RELEASE_PREFIX: "master-model"
   AI_RELEASE_NOTES: "AI Search model for 'master'"
-  PY_VERSION: 3.13
-  PY_REQS: requirements.txt
 
 jobs:
   # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
@@ -66,11 +63,6 @@ jobs:
           dotnet-version: |
             9.0.x
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PY_VERSION }}
-
       # Build and Test backend
       
       - name: Create Test Settings placeholder config
@@ -82,67 +74,54 @@ jobs:
 
       - name: Build dotnet solution
         working-directory: ${{ env.BACKEND_ROOT }}
-        run: |
-          dotnet build *.sln \
-          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
-          --no-restore \
-          --nologo \
-          /p:ContinuousIntegrationBuild=true \
-          /p:Deterministic=true \
+        run: >
+          dotnet build *.sln
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }}
+          --no-restore
+          --nologo
+          /p:ContinuousIntegrationBuild=true
+          /p:Deterministic=true
           /p:UseAppHost=false
 
       - name: Run dotnet tests
         working-directory: ${{ env.BACKEND_ROOT }}
-        run: |
-          dotnet test *.sln \
-          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
-          --no-build \
-          --no-restore \
-          --nologo \
-          --verbosity normal \
-          /p:CollectCoverage=true \
-          /p:CoverletOutputFormat=opencover \
-          --logger trx \
-          --collect 'XPlat Code Coverage' \
+        run: >
+          dotnet test *.sln
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }}
+          --no-build
+          --no-restore
+          --nologo
+          --verbosity normal
+          /p:CollectCoverage=true
+          /p:CoverletOutputFormat=opencover
+          --logger trx
+          --collect 'XPlat Code Coverage'
           --settings './coverlet.runsettings'
 
       - name: Publish API
         working-directory: ${{ env.BACKEND_ROOT }}
-        run: |
-          dotnet publish ${{ env.API_PROJECT_TO_PUBLISH }} \
-          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
-          --no-build \
-          --no-restore \
-          --nologo \
-          --verbosity normal \
-          /p:UseAppHost=false \
+        run: >
+          dotnet publish ${{ env.API_PROJECT_TO_PUBLISH }}
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }}
+          --no-build
+          --no-restore
+          --nologo
+          --verbosity normal
+          /p:UseAppHost=false
           --output ${{ github.workspace }}/_temp/${{ env.API_PUBLISH_DIR }}
 
       - name: Build Docker image
         working-directory: ${{ env.BACKEND_ROOT }}
-        run: |
-          docker build \
-          --file ${{ env.API_PROJECT_DIR }}/Dockerfile-pipelines \
-          --tag ${{ env.GAMEAPP_IMAGE_NAME }} \
+        run: >
+          docker build
+          --file ${{ env.API_PROJECT_DIR }}/Dockerfile-pipelines
+          --tag ${{ env.GAMEAPP_IMAGE_NAME }}
           ${{ github.workspace }}/_temp/${{ env.API_PUBLISH_DIR }}
 
       - name: Save and compress Docker image
         run: |
           mkdir -p ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/${{ env.API_PUBLISH_DIR }}
           docker save ${{ env.GAMEAPP_IMAGE_NAME }} | gzip > ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/${{ env.API_PUBLISH_DIR }}/${{ env.GAMEAPP_IMAGE_NAME }}.tar.gz
-
-      # Run PY tests for AI models
-      - name: Upgrade pip
-        working-directory: ${{ env.AI_DIR }}
-        run: python -m pip install --upgrade pip
-
-      - name: Install PY deps
-        working-directory: ${{ env.AI_DIR }}
-        run: pip install -r ${{ env.PY_REQS }}
-
-      - name: Run AI trainer unit tests
-        working-directory: ${{ env.AI_DIR }}
-        run: python -m unittest discover -v -s ${{ env.AI_TESTS }}
 
       # Check if AI model release with given version exists
       - name: Read Training Version
@@ -163,7 +142,7 @@ jobs:
           if [ $return_code -eq 0 ]; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
             exit 0
-          elif echo "$error_output" | grep -F 'release not found' >/dev/null; then
+          elif echo "$error_output" | grep -e 'release not found' >/dev/null; then
             echo "exists=false" >> "$GITHUB_OUTPUT"
             exit 0
           else
@@ -178,18 +157,19 @@ jobs:
         run: >
           gh release download "${{ env.AI_RELEASE_PREFIX }}/v${{ steps.training_params.outputs.version }}"
           --pattern ${{ env.AI_ONNX_FILENAME }}
+          --pattern ${{ env.AI_ONNX_LABELS_FILENAME }}
           --dir ui/public
           --clobber
       
       # If release does not exist, train a new model and create new release
       - name: Train model
-        working-directory: ${{ env.AI_DIR }}
         if: steps.model_version_release.outputs.exists == 'false'
+        working-directory: ${{ env.BACKEND_ROOT }}
         run: >
-          python trainer.py
-          --data-path ${{ env.AI_TRAINING_DATA_PATH }}
-          --params-path ${{ env.AI_PARAMS_PATH }}
-          --onnx-path ${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}
+          dotnet "TheGame.PlateTrainer/bin/${{ env.DOTNET_BUILD_CONFIG }}/net9.0/TheGame.PlateTrainer.dll"
+          --params-path "${{ env.AI_PARAMS_PATH }}"
+          --data-path "${{ github.workspace }}/${{ env.AI_TRAINING_DATA_PATH }}"
+          --onnx-path "${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}"
       
       - name: Tag and Release new model
         if: steps.model_version_release.outputs.exists == 'false'
@@ -198,7 +178,8 @@ jobs:
         run: >
           gh release create "${{ env.AI_RELEASE_PREFIX }}/v${{ steps.training_params.outputs.version }}"
           ${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}
-          ${{ github.workspace }}/${{ env.AI_DIR }}/${{ env.AI_PARAMS_PATH }}
+          ${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_LABELS_FILENAME }}
+          ${{ github.workspace }}/${{ env.BACKEND_ROOT }}/${{ env.AI_PARAMS_PATH }}
           --title "AI Search Model ${{ env.AI_RELEASE_PREFIX }} v${{ steps.training_params.outputs.version }}"
           --notes "${{ env.AI_RELEASE_NOTES }}"
           --target "master"
@@ -245,26 +226,26 @@ jobs:
 
       - name: Create EF Migration bundle
         working-directory: ${{ env.BACKEND_ROOT }}
-        run: |
-          dotnet ef migrations bundle \
-          --project ${{ env.DBCONTEXT_PROJECT }} \
-          --startup-project ${{ env.MIGRATOR_PROJECT }} \
-          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
-          --runtime linux-x64 \
-          --self-contained \
-          --force \
+        run: >
+          dotnet ef migrations bundle
+          --project ${{ env.DBCONTEXT_PROJECT }}
+          --startup-project ${{ env.MIGRATOR_PROJECT }}
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }}
+          --runtime linux-x64
+          --self-contained
+          --force
           --output ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/efbundle
 
       # Publish IaC artifacts (Pulumi).
       - name: Publish Pulumi runner
         working-directory: ${{ env.BACKEND_ROOT }}
-        run: |
-          dotnet publish ${{ env.PULUMI_PROJECT_TO_PUBLISH }} \
-          --configuration ${{ env.DOTNET_BUILD_CONFIG }} \
-          --nologo \
-          --runtime linux-x64 \
-          --self-contained \
-          /p:PublishSingleFile=true \
+        run: >
+          dotnet publish ${{ env.PULUMI_PROJECT_TO_PUBLISH }}
+          --configuration ${{ env.DOTNET_BUILD_CONFIG }}
+          --nologo
+          --runtime linux-x64
+          --self-contained
+          /p:PublishSingleFile=true
           --output ${{ github.workspace }}/${{ env.ARTIFACTS_DIR }}/${{ env.PULUMI_PUBLISH_DIR}}
 
       # Publish artifacts for deploy workflow

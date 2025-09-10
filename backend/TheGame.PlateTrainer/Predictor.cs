@@ -1,8 +1,23 @@
 ﻿using Microsoft.ML;
+using Microsoft.ML.Data;
 using System.Collections.Immutable;
-using TheGame.PlateTrainer.Training;
 
-namespace TheGame.PlateTrainer.Prediction;
+namespace TheGame.PlateTrainer;
+
+public sealed record PlatePrediction
+{
+  [ColumnName("PredictedLabel")]
+  public uint PredictedLabel { get; set; }
+
+  // keep scores if you ever want top-k
+  [ColumnName("Score")]
+  public float[] Scores { get; set; } = [];
+}
+
+public sealed class PredictorFactory(MLContext ml)
+{
+  public Predictor CreatePredictor(TrainedModel trainedModel) => new(ml, trainedModel);
+}
 
 public sealed class Predictor(MLContext ml, TrainedModel trainedModel)
 {
@@ -10,7 +25,7 @@ public sealed class Predictor(MLContext ml, TrainedModel trainedModel)
   {
     Console.WriteLine($"----- Predictions for \"{query}\":");
 
-    var queryDataView = ml.Data.LoadFromEnumerable([new PlateQuery(query)]);
+    var queryDataView = ml.Data.LoadFromEnumerable([new PlateRow(Label: "", Text: query)]);
     var scoredPredictions = trainedModel.Model.Transform(queryDataView);
 
     var prediction = ml.Data.CreateEnumerable<PlatePrediction>(scoredPredictions, reuseRowObject: false)

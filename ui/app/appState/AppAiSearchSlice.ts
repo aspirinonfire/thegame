@@ -2,7 +2,8 @@ import { OnnxPlateDescriptionClassifier, type ScoredLabel } from "~/common-compo
 import type { StateCreator } from "zustand";
 import type { AppStore } from "./AppStore";
 
-export const onnxModel = "skl_plates_model.onnx";
+export const onnxModel = "mlnet_plates_model.onnx";
+export const onnxModelLabels = "mlnet_plates_model.labels.json"
 
 export interface AppAiSearchSlice {
   plateClassifier: OnnxPlateDescriptionClassifier;

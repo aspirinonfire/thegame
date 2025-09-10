@@ -117,5 +117,5 @@ py trainer.py --use-search
 ```
 For downloading a pre-built model:
 ```
-gh release download "<release-tag>" --pattern "skl_plates_model.onnx" --dir "ui/public"
+gh release download "<release-tag>" --pattern "mlnet_plates_model.onnx" --pattern "mlnet_plates_model.labels.json"--dir "ui/public"
 ```

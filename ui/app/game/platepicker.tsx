@@ -27,6 +27,10 @@ const allTerritoriesToRender = territories
     return toRender;
   });
 
+const aiSearchConfidenceThreshold = 0.02;
+const aiSearchMaxResults = 20;
+const aiSearchDebounceMs = 500;
+
 const territoriesByLowercaseKeyLkp = allTerritoriesToRender.reduce((map, ter) => {
   map.set(ter.key.toLowerCase(), ter);
   return map;
@@ -72,7 +76,7 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
           .finally(() => {
             setIsSearching(false);
           })
-      }, 1000);
+      }, aiSearchDebounceMs);
 
       if (!!debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
@@ -96,8 +100,8 @@ export const PlatePicker = ({ isShowPicker, setShowPicker, saveNewPlateData, pla
         toRender: territoriesByLowercaseKeyLkp.get(scoredLbl.label.toLowerCase()),
         prob: scoredLbl.probability
       }))
-      .filter(ter => !!ter.toRender && ter.prob > 0.05)
-      .slice(0, 10)
+      .filter(ter => !!ter.toRender && ter.prob > aiSearchConfidenceThreshold)
+      .slice(0, aiSearchMaxResults)
       .map(ter => ({
         ...ter.toRender!,
         searchProbability: ter.prob

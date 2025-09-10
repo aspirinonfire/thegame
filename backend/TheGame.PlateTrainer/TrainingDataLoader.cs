@@ -1,8 +1,21 @@
 ﻿using Microsoft.ML;
 using Microsoft.ML.Data;
+using System.Collections.Immutable;
 using System.Text.Json;
 
-namespace TheGame.PlateTrainer.Training;
+namespace TheGame.PlateTrainer;
+
+public sealed record PlateTrainingData
+{
+  public string Key { get; set; } = default!;
+  public Dictionary<string, string?> Description { get; set; } = [];
+}
+
+public sealed record PlateRow(string Label, string Text)
+{
+  public PlateRow() : this(string.Empty, string.Empty)
+  { }
+}
 
 /// <summary>
 /// An intermediate object to control the lifecycle of BinaryReader
@@ -29,8 +42,17 @@ public sealed class TrainingData(IDataView dataView, IFileHandle fileHandle, IDi
   }
 }
 
-public sealed class DataLoader(MLContext ml)
+public sealed class TrainingDataLoader(MLContext ml)
 {
+  private readonly static IReadOnlyDictionary<string, string[]> _synonymLkp = new Dictionary<string, string[]>()
+  {
+    { "middle", [ "center" ] },
+    { "line", [ "strip", "banner", "stripe" ] },
+    { "lines", [ "strips", "banners", "stripes" ] },
+    { "solid", [ "all" ] },
+    { "plate", [ "background" ] }
+  };
+
   private readonly static JsonSerializerOptions _jsonSerializerOpts = new()
   {
     PropertyNameCaseInsensitive = true
@@ -65,13 +87,54 @@ public sealed class DataLoader(MLContext ml)
 
     var preparsedTrainingDataView = ml.Data.LoadFromBinary(new FileHandleSource(binDataFileHandle));
 
-    // Bounded-memory shuffle to break label blocks
-    var shuffledDataView = ml.Data.ShuffleRows(input: preparsedTrainingDataView,
-     seed: seed,
-     shufflePoolSize: 1_000,
-     shuffleSource: true);
+    return new TrainingData(preparsedTrainingDataView, binDataFileHandle, preparsedTrainingDataView as IDisposable);
+  }
 
-    return new TrainingData(shuffledDataView, binDataFileHandle, preparsedTrainingDataView as IDisposable);
+  public static IEnumerable<string> CombineAsCarteseanProduct(string[][] parts) => parts
+    .Aggregate(
+      (IEnumerable<string>)[string.Empty],
+      (prefixes, segment) => prefixes.SelectMany(
+        prefix => segment,
+        (prefix, item) => $"{prefix} {item}".Trim()
+      )
+    );
+
+  public static IEnumerable<string> CreateFeatureTextCombinations(IDictionary<string, string?> descriptions,
+    IReadOnlyDictionary<string, string[]> synonyms)
+  {
+    return descriptions
+      .SelectMany(
+        kvp => (kvp.Value ?? "n/a").Split(","),
+        (kvp, featureDescription) =>
+        {
+          var description = featureDescription.Trim();
+
+          var textVariations = description.Split(" ")
+            .Select(word =>
+            {
+              synonyms.TryGetValue(word, out var wordSynonyms);
+
+              string[] wordVariations = [.. wordSynonyms ?? [], word];
+              return wordVariations;
+            })
+            .ToArray();
+
+          var textStrings = CombineAsCarteseanProduct(textVariations);
+
+          synonyms.TryGetValue(kvp.Key, out var featureSynonyms);
+          string[] featureVariants = [.. featureSynonyms ?? [], kvp.Key];
+
+          return textStrings
+            .Select(text => featureVariants
+              .SelectMany(feat => new[] {
+                $"{feat} {text}",
+                $"{text} {feat}",
+              })
+              .Concat([text]))
+            .SelectMany(expanded => expanded);
+
+        })
+      .SelectMany(expanded => expanded);
   }
 
   /// <summary>
@@ -79,7 +142,7 @@ public sealed class DataLoader(MLContext ml)
   /// </summary>
   /// <param name="trainingDataPath"></param>
   /// <returns></returns>
-  private static IEnumerable<PlateTrainingRow> ReadTrainingDataAsJsonStream(string trainingDataPath)
+  private static IEnumerable<PlateRow> ReadTrainingDataAsJsonStream(string trainingDataPath)
   {
     FileStream? rawTrainingDataStream = null;
     IAsyncEnumerator<PlateTrainingData?>? plateRecordReader = null;
@@ -98,22 +161,20 @@ public sealed class DataLoader(MLContext ml)
       while (plateRecordReader.MoveNextAsync().AsTask().GetAwaiter().GetResult())
       {
         var currentPlateData = plateRecordReader.Current;
-        if (currentPlateData is null || currentPlateData.Description is null)
+        if (currentPlateData is null ||
+          currentPlateData.Description is null ||
+          currentPlateData.Key == "sample")
         {
           continue;
         }
 
-        var descriptions = currentPlateData.Description
-          .SelectMany(
-            kvp => (kvp.Value ?? "n/a").Split(","),
-            (kvp, featureDescription) => $"{featureDescription.Trim()} {kvp.Key}");
+        var descriptions = CreateFeatureTextCombinations(currentPlateData.Description, _synonymLkp);
 
         foreach (var platePhrase in descriptions)
         {
-          yield return new PlateTrainingRow
+          yield return new PlateRow
           {
             Label = currentPlateData.Key,
-            Weight = currentPlateData.Weight,
             Text = platePhrase
           };
         }
