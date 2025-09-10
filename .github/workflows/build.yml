@@ -2,7 +2,7 @@
 
 name: Build Test and Publish
 permissions:
-  contents: read
+  contents: write # need for creation of tags and releases
 
 on:
   push:
