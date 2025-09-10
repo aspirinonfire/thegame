@@ -179,7 +179,7 @@ jobs:
           gh release create "${{ env.AI_RELEASE_PREFIX }}/v${{ steps.training_params.outputs.version }}"
           ${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_FILENAME }}
           ${{ github.workspace }}/${{ env.UI_ROOT }}/public/${{ env.AI_ONNX_LABELS_FILENAME }}
-          ${{ github.workspace }}/${{ env.AI_PARAMS_PATH }}
+          ${{ github.workspace }}/${{ env.BACKEND_ROOT }}/${{ env.AI_PARAMS_PATH }}
           --title "AI Search Model ${{ env.AI_RELEASE_PREFIX }} v${{ steps.training_params.outputs.version }}"
           --notes "${{ env.AI_RELEASE_NOTES }}"
           --target "master"
