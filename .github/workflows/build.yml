@@ -34,7 +34,6 @@ env:
   UI_ROOT: ui
   UI_PUBLISH_DIR: ui
   # Other
-  AI_TRAINER_PROJ: TheGame.PlateTrainer/TheGame.PlateTrainer.csproj
   AI_PARAMS_PATH: TheGame.PlateTrainer/training_params.json
   AI_TRAINING_DATA_PATH: ai/training_data/plate_descriptions.json
   AI_ONNX_FILENAME: mlnet_plates_model.onnx
@@ -166,13 +165,14 @@ jobs:
       - name: Train model
         if: steps.model_version_release.outputs.exists == 'false'
         working-directory: ${{ env.BACKEND_ROOT }}
+        env:
+          TRAINER_DLL: ${{ env.BACKEND_ROOT }}/TheGame.PlateTrainer/bin/${{ env.DOTNET_BUILD_CONFIG }}/net9.0/TheGame.PlateTrainer.dll
         run: >
-          dotnet run
+          dotnet $TRAINER_DLL
           --configuration ${{ env.DOTNET_BUILD_CONFIG }}
           --no-build
           --no-restore
           --no-launch-profile
-          --project "${{ env.AI_TRAINER_PROJ }}"
           --
           --params-path "${{ env.AI_PARAMS_PATH }}"
           --data-path "${{ github.workspace }}/${{ env.AI_TRAINING_DATA_PATH }}"
