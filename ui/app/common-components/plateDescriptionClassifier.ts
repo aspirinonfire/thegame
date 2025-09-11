@@ -25,7 +25,7 @@ export class OnnxPlateDescriptionClassifier {
 
   public async predictAll(query: string): Promise<ScoredLabel[]> {
     const feeds = {
-      Text: new ort.Tensor('string', [ query ], [1, 1]),
+      Text: new ort.Tensor('string', [ (query ?? "").toLowerCase() ], [1, 1]),
       Label: new ort.Tensor('string', [''], [1, 1])
     };
 
